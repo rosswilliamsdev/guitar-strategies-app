@@ -1,0 +1,303 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Core application models
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String?
+  name      String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // NextAuth relations
+  accounts Account[]
+  sessions Session[]
+
+  // App-specific relations
+  teacherProfile TeacherProfile?
+  studentProfile StudentProfile?
+
+  @@index([email])
+  @@index([role])
+}
+
+model TeacherProfile {
+  id              String  @id @default(cuid())
+  userId          String  @unique
+  calendlyUrl     String? // Teacher's Calendly booking link
+  stripeAccountId String? // For Connect payments
+  bio             String? @db.Text
+  hourlyRate      Int?    // stored in cents
+  isActive        Boolean @default(true)
+  
+  // Profile settings
+  timezone        String? @default("America/New_York")
+  phoneNumber     String?
+  profileImageUrl String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  students        StudentProfile[] @relation("TeacherStudents")
+  lessons         Lesson[]
+  recommendations Recommendation[]
+  libraryItems    LibraryItem[]
+  payments        Payment[]        @relation("TeacherPayments")
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+model StudentProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  teacherId String
+  joinedAt  DateTime @default(now())
+  
+  // Student preferences
+  skill_level       SkillLevel @default(BEGINNER)
+  goals             String?    @db.Text
+  instrument        String     @default("guitar")
+  phoneNumber       String?
+  parentEmail       String?    // For minor students
+  emergencyContact  String?
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teacher  TeacherProfile @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+  payments Payment[]      @relation("StudentPayments")
+
+  @@index([userId])
+  @@index([teacherId])
+  @@index([isActive])
+}
+
+model Lesson {
+  id              String     @id @default(cuid())
+  teacherId       String
+  studentId       String
+  date            DateTime
+  duration        Int        // minutes
+  notes           String?    @db.Text
+  homework        String?    @db.Text // assignments for next lesson
+  progress        String?    @db.Text // skill progression notes
+  calendlyEventId String?    // optional link to Calendly event
+  status          LessonStatus @default(COMPLETED)
+  
+  // Lesson details
+  focusAreas      String?    @db.Text // JSON array of focus areas
+  songsPracticed  String?    @db.Text // JSON array of songs
+  nextSteps       String?    @db.Text
+  studentRating   Int?       // 1-5 scale, student feedback
+  teacherRating   Int?       // 1-5 scale, teacher assessment
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId, date])
+  @@index([studentId, date])
+  @@index([status])
+  @@index([date])
+}
+
+model LibraryItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  fileUrl     String   // Vercel Blob URL
+  fileName    String
+  fileSize    Int
+  teacherId   String
+  isPublic    Boolean  @default(false)
+  category    LibraryCategory @default(SHEET_MUSIC)
+  
+  // Metadata
+  difficulty  SkillLevel? // Difficulty level if applicable
+  tags        String?     // JSON array of tags
+  downloadCount Int      @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([isPublic])
+  @@index([category])
+}
+
+model Recommendation {
+  id          String                 @id @default(cuid())
+  title       String
+  description String                 @db.Text
+  link        String?
+  category    RecommendationCategory
+  teacherId   String
+  
+  // Additional fields
+  price       String?  // e.g., "$299", "Free", "$50-100"
+  priority    Int      @default(1) // 1-5, higher = more important
+  isArchived  Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([category])
+  @@index([isArchived])
+}
+
+model Payment {
+  id                    String        @id @default(cuid())
+  teacherId             String
+  studentId             String
+  amount                Int           // cents
+  month                 String        // "2024-01" format
+  stripePaymentIntentId String        @unique
+  status                PaymentStatus @default(PENDING)
+  
+  // Payment metadata
+  currency              String        @default("usd")
+  description           String?
+  lessonsIncluded       Int           @default(0) // Number of lessons this payment covers
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher TeacherProfile @relation("TeacherPayments", fields: [teacherId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation("StudentPayments", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId, month])
+  @@index([studentId, month])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+}
+
+// System models for admin functionality
+model SystemSettings {
+  id    String @id @default("system")
+  
+  // Platform settings
+  platformFeePercentage   Float   @default(10.0) // Platform fee percentage
+  maxFileSize             Int     @default(10485760) // 10MB in bytes
+  allowedFileTypes        String  @default("pdf,doc,docx,jpg,png") // comma-separated
+  
+  // Feature flags
+  paymentsEnabled         Boolean @default(true)
+  libraryEnabled          Boolean @default(true)
+  recommendationsEnabled  Boolean @default(true)
+  
+  updatedAt DateTime @updatedAt
+}
+
+// Enums
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum LessonStatus {
+  SCHEDULED   // Future lessons (from Calendly)
+  COMPLETED   // Logged by teacher post-lesson
+  CANCELLED   // Cancelled/no-show
+  MISSED      // Student didn't attend
+}
+
+enum RecommendationCategory {
+  GEAR
+  BOOKS
+  SOFTWARE
+  ONLINE_COURSES
+  APPS
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  PROFESSIONAL
+}
+
+enum LibraryCategory {
+  SHEET_MUSIC
+  TAB
+  CHORD_CHARTS
+  EXERCISES
+  THEORY
+  AUDIO
+  VIDEO
+  OTHER
+}
