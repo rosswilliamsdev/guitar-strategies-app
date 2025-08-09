@@ -262,14 +262,23 @@ export const paginationSchema = z.object({
 
 export const searchSchema = z.object({
   query: z.string().min(1, "Search query is required"),
-  filters: z.record(z.any()).optional(),
+  filters: z
+    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+    .optional(),
 });
 
 // ========================================
 // Calendly Integration Schemas
 // ========================================
 export const calendlySettingsSchema = z.object({
-  url: z.string().url("Please enter a valid Calendly URL"),
+  url: z.string().min(1, "Calendly URL is required").refine((val) => {
+    try {
+      const url = new URL(val);
+      return url.hostname.includes('calendly.com');
+    } catch {
+      return false;
+    }
+  }, "Please enter a valid Calendly URL"),
   eventType: z.string().min(1, "Event type is required"),
   duration: z.number().min(15).max(180),
   timezone: z.string().min(1, "Timezone is required"),

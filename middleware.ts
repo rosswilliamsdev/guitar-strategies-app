@@ -70,6 +70,8 @@ export default withAuth(
         if (
           pathname === "/" ||
           pathname.startsWith("/auth") ||
+          pathname === "/login" ||
+          pathname === "/register" ||
           pathname.startsWith("/_next") ||
           pathname.startsWith("/favicon.ico") ||
           pathname.startsWith("/api/auth")

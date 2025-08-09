@@ -45,18 +45,16 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-button">
+        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
           {error}
         </div>
       )}
       
       <div>
-        <label htmlFor="email" className="block text-ui-label text-brand-black mb-1">
-          Email
-        </label>
         <Input
           id="email"
           type="email"
+          label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your email"
@@ -66,12 +64,10 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-ui-label text-brand-black mb-1">
-          Password
-        </label>
         <Input
           id="password"
           type="password"
+          label="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Enter your password"

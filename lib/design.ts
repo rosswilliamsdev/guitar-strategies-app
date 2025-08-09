@@ -41,31 +41,22 @@ export function getButtonVariant(
   role?: Role
 ) {
   const baseClasses =
-    "font-ui font-semibold py-3 px-6 rounded-button shadow-button transition-colors duration-200 min-h-touch min-w-touch focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer";
+    "inline-flex items-center justify-center rounded-md font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
   switch (variant) {
     case "primary":
-      return cn(baseClasses, "bg-cta-primary hover:bg-cta-hover text-white focus:ring-cta-primary");
+      return cn(baseClasses, "bg-primary text-white hover:bg-turquoise-600 focus-visible:ring-turquoise-500");
     case "secondary":
       return cn(
         baseClasses,
-        "bg-white border border-brand-gray text-brand-black hover:bg-gray-50 focus:ring-brand-turquoise"
+        "bg-background border border-border text-foreground hover:bg-muted focus-visible:ring-neutral-500"
       );
     case "role":
       if (!role)
-        return cn(baseClasses, "bg-brand-gray hover:bg-gray-600 text-white focus:ring-brand-gray");
+        return cn(baseClasses, "bg-neutral-600 hover:bg-neutral-700 text-white focus-visible:ring-neutral-500");
       
-      // Use brand colors based on role
-      switch (role) {
-        case "STUDENT":
-          return cn(baseClasses, "bg-student-primary hover:bg-student-hover text-white focus:ring-student-primary");
-        case "TEACHER":
-          return cn(baseClasses, "bg-teacher-primary hover:bg-teacher-hover text-white focus:ring-teacher-primary");
-        case "ADMIN":
-          return cn(baseClasses, "bg-admin-primary hover:bg-admin-hover text-white focus:ring-admin-primary");
-        default:
-          return cn(baseClasses, "bg-brand-gray hover:bg-gray-600 text-white focus:ring-brand-gray");
-      }
+      // Use turquoise accent for all roles in OpenAI style
+      return cn(baseClasses, "bg-primary text-white hover:bg-turquoise-600 focus-visible:ring-turquoise-500");
     default:
       return baseClasses;
   }
@@ -74,23 +65,23 @@ export function getButtonVariant(
 // Status badge utilities
 export function getStatusBadge(status: string) {
   const baseClasses =
-    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-ui font-medium";
+    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
 
   switch (status.toLowerCase()) {
     case "completed":
-      return cn(baseClasses, "bg-green-100 text-green-800");
+      return cn(baseClasses, "bg-green-50 text-green-700 border border-green-200");
     case "scheduled":
-      return cn(baseClasses, "bg-blue-100 text-blue-800");
+      return cn(baseClasses, "bg-blue-50 text-blue-700 border border-blue-200");
     case "cancelled":
-      return cn(baseClasses, "bg-red-100 text-red-800");
+      return cn(baseClasses, "bg-red-50 text-red-700 border border-red-200");
     case "missed":
-      return cn(baseClasses, "bg-yellow-100 text-yellow-800");
+      return cn(baseClasses, "bg-yellow-50 text-yellow-700 border border-yellow-200");
     case "pending":
-      return cn(baseClasses, "bg-yellow-100 text-yellow-800");
+      return cn(baseClasses, "bg-yellow-50 text-yellow-700 border border-yellow-200");
     case "failed":
-      return cn(baseClasses, "bg-red-100 text-red-800");
+      return cn(baseClasses, "bg-red-50 text-red-700 border border-red-200");
     default:
-      return cn(baseClasses, "bg-gray-100 text-gray-800");
+      return cn(baseClasses, "bg-neutral-50 text-neutral-700 border border-neutral-200");
   }
 }
 

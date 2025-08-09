@@ -58,7 +58,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="min-h-screen bg-white font-body antialiased">
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <AuthProvider>
           {children}
           <Toaster />

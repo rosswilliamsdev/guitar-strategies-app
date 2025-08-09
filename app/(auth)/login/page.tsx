@@ -11,10 +11,10 @@ export default function LoginPage() {
   return (
     <Card className="p-6">
       <div className="text-center mb-6">
-        <h1 className="text-display-lg font-display text-brand-black mb-2">
+        <h1 className="text-2xl font-semibold text-foreground mb-2">
           Welcome back
         </h1>
-        <p className="text-body text-brand-gray">
+        <p className="text-muted-foreground">
           Sign in to your account to continue
         </p>
       </div>
@@ -22,11 +22,11 @@ export default function LoginPage() {
       <LoginForm />
 
       <div className="mt-6 text-center">
-        <p className="text-body-sm text-brand-gray">
+        <p className="text-sm text-muted-foreground">
           Don't have an account?{' '}
           <Link 
             href="/register" 
-            className="text-cta-primary hover:text-cta-hover font-medium"
+            className="text-turquoise-600 hover:text-turquoise-700 font-medium"
           >
             Sign up
           </Link>

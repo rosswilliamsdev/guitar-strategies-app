@@ -17,7 +17,11 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={cn("card", hover && "card-hover cursor-pointer", className)}
+      className={cn(
+        "rounded-lg border bg-background p-6 shadow-sm",
+        hover && "hover:shadow-md cursor-pointer transition-shadow",
+        className
+      )}
       {...props}
     >
       {children}
@@ -32,7 +36,7 @@ export function CardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("border-b border-brand-tiffany pb-4 mb-4", className)}
+      className={cn("border-b border-border pb-4 mb-4", className)}
       {...props}
     >
       {children}
@@ -47,7 +51,7 @@ export function CardTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("font-display text-display-sm text-brand-black", className)}
+      className={cn("text-xl font-semibold text-foreground", className)}
       {...props}
     >
       {children}
@@ -61,7 +65,7 @@ export function CardContent({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("text-body text-brand-black", className)} {...props}>
+    <div className={cn("text-base text-foreground", className)} {...props}>
       {children}
     </div>
   );
@@ -74,7 +78,7 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("border-t border-brand-tiffany pt-4 mt-4", className)}
+      className={cn("border-t border-border pt-4 mt-4", className)}
       {...props}
     >
       {children}

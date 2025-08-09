@@ -1,0 +1,466 @@
+# Guitar Strategies - Claude Code Reference Guide
+
+## Project Overview
+
+Guitar lesson management platform that integrates with Calendly for scheduling. Teachers use Calendly for booking, then manually log completed lessons in our app to track student progress and handle payments.
+
+## Tech Stack
+
+- **Framework**: Next.js 15.4.6 with App Router
+- **Language**: TypeScript 5
+- **Styling**: TailwindCSS 3.4.17 with custom design system
+- **Database**: PostgreSQL with Prisma ORM 6.13.0
+- **Authentication**: NextAuth.js v4.24.11 with Prisma Adapter
+- **File Storage**: Vercel Blob 1.1.1
+- **Payments**: Stripe 18.4.0
+- **Scheduling**: Calendly integration (external)
+- **Validation**: Zod 4.0.15
+- **Styling Utils**: clsx + tailwind-merge
+
+## Design System Colors (OpenAI-Inspired)
+
+```css
+/* Neutral Palette (OpenAI Style) */
+--neutral-50: #fafafa
+--neutral-100: #f5f5f5 
+--neutral-200: #e5e5e5
+--neutral-300: #d4d4d4
+--neutral-400: #a3a3a3
+--neutral-500: #737373
+--neutral-600: #525252
+--neutral-700: #404040
+--neutral-800: #262626
+--neutral-900: #171717
+--neutral-950: #0a0a0a
+
+/* Turquoise Accent System */
+--turquoise-50: #f0fdfc
+--turquoise-100: #ccfbf7
+--turquoise-200: #99f6ef
+--turquoise-300: #5eebe4
+--turquoise-400: #2dd4cc
+--turquoise-500: #14b8b3   /* Primary turquoise */
+--turquoise-600: #0d9289
+--turquoise-700: #0f766e
+--turquoise-800: #115e59
+--turquoise-900: #134e4a
+
+/* Semantic Colors */
+--primary: #14b8b3        /* turquoise-500 */
+--accent: #73EEDC         /* Original turquoise as accent */
+--background: #fafafa     /* neutral-50 */
+--foreground: #0a0a0a     /* neutral-950 */
+--muted: #f5f5f5          /* neutral-100 */
+--muted-foreground: #737373 /* neutral-500 */
+--border: #e5e5e5         /* neutral-200 */
+--input: #ffffff
+--ring: #14b8b3           /* Primary focus ring */
+```
+
+## Typography System (OpenAI-Inspired)
+
+```css
+/* Font Families */
+font-sans: Inter, system-ui, sans-serif    /* Primary font (OpenAI standard) */
+font-serif: Charter, Georgia, serif        /* Serif fallback */
+font-mono: Menlo, Monaco, 'Courier New', monospace
+
+/* Font Scale (OpenAI Style) */
+text-xs: 0.75rem (12px)     /* Small captions */
+text-sm: 0.875rem (14px)    /* Small text, buttons */
+text-base: 1rem (16px)      /* Body text */
+text-lg: 1.125rem (18px)    /* Large body */
+text-xl: 1.25rem (20px)     /* Small headings */
+text-2xl: 1.5rem (24px)     /* Medium headings */
+text-3xl: 1.875rem (30px)   /* Large headings */
+text-4xl: 2.25rem (36px)    /* Extra large headings */
+text-5xl: 3rem (48px)       /* Display text */
+text-6xl: 3.75rem (60px)    /* Hero text */
+```
+
+## Design Patterns (OpenAI-Inspired)
+
+- **Clean Minimalism**: Use neutral grays as primary palette
+- **Turquoise Accent**: Use turquoise system for CTAs, highlights, and interactive elements
+- **Consistent Typography**: Inter font family throughout
+- **Subtle Shadows**: Minimal shadows for depth (`shadow-sm`, `shadow-md`)
+- **Focus States**: Clean `focus-visible` rings using turquoise
+- **All Roles**: Unified design with turquoise as primary accent (no role-specific colors)
+
+## Component Patterns (Updated for OpenAI Style)
+
+```css
+/* Buttons */
+.btn-primary     /* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+.btn-secondary   /* Neutral button with border (bg-background border text-foreground hover:bg-muted) */
+
+/* Cards */
+.card           /* Clean card (rounded-lg border bg-background p-6 shadow-sm) */
+.card-hover     /* Hoverable card (hover:shadow-md cursor-pointer transition-shadow) */
+
+/* Form Elements */
+.input-field    /* Clean input styling with neutral colors */
+.label          /* Form labels using text-sm font-medium */
+
+/* Status Badges */
+.badge          /* Subtle badges with borders (bg-*-50 text-*-700 border border-*-200) */
+```
+
+## Database Schema Key Models
+
+### User Model
+
+```typescript
+{
+  id: string
+  email: string
+  name: string
+  role: 'STUDENT' | 'TEACHER' | 'ADMIN'
+  teacherProfile?: TeacherProfile
+  studentProfile?: StudentProfile
+}
+```
+
+### TeacherProfile Model
+
+```typescript
+{
+  id: string
+  userId: string
+  calendlyUrl?: string        // Key integration point
+  stripeAccountId?: string    // For Connect payments
+  bio?: string
+  hourlyRate?: number         // In cents
+  isActive: boolean
+  
+  // Profile settings
+  timezone?: string           // Default: "America/New_York"
+  phoneNumber?: string
+  profileImageUrl?: string
+}
+```
+
+### StudentProfile Model
+
+```typescript
+{
+  id: string
+  userId: string
+  teacherId: string
+  joinedAt: DateTime
+  
+  // Student preferences
+  skill_level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'PROFESSIONAL'
+  goals?: string
+  instrument: string              // Default: "guitar"
+  phoneNumber?: string
+  parentEmail?: string           // For minor students
+  emergencyContact?: string
+  isActive: boolean
+}
+```
+
+### Lesson Model
+
+```typescript
+{
+  id: string
+  teacherId: string
+  studentId: string
+  date: DateTime
+  duration: number              // minutes
+  notes?: string
+  homework?: string             // assignments for next lesson
+  progress?: string             // skill progression notes
+  calendlyEventId?: string      // optional link to Calendly event
+  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'MISSED'
+  
+  // Lesson details
+  focusAreas?: string           // JSON array of focus areas
+  songsPracticed?: string       // JSON array of songs
+  nextSteps?: string
+  studentRating?: number        // 1-5 scale, student feedback
+  teacherRating?: number        // 1-5 scale, teacher assessment
+}
+```
+
+## Authentication Patterns
+
+### Route Protection
+
+```typescript
+// Use middleware.ts for route protection
+// Teacher-only: /students, /lessons/new
+// Student access: /dashboard/student, /lessons (view only)
+// Admin access: /admin/*
+```
+
+### Auth Configuration
+
+```typescript
+// In lib/auth.ts - NextAuth pages config
+pages: {
+  signIn: "/login",        // Maps to app/(auth)/login/page.tsx
+  error: "/error",         // Maps to app/(auth)/error/page.tsx
+},
+```
+
+### Session Structure
+
+```typescript
+session.user = {
+  id: string
+  email: string
+  name: string
+  role: Role
+  teacherProfile?: { id, calendlyUrl, bio, hourlyRate }
+  studentProfile?: { id, teacherId, skillLevel }
+}
+```
+
+## Key File Locations
+
+### Configuration Files
+
+- `tailwind.config.js` - Complete design system configuration
+- `lib/auth.ts` - NextAuth.js configuration
+- `lib/db.ts` - Prisma client
+- `middleware.ts` - Route protection
+- `types/index.ts` - All TypeScript definitions
+
+### Core Components Path
+
+- `components/ui/` - Base UI components (Button, Input, Card, etc.)
+- `components/auth/` - Login/register forms
+- `components/layout/` - Headers, sidebars, navigation
+- `components/dashboard/` - Role-specific dashboards
+
+### Validation Schemas
+
+- `lib/validations.ts` - All Zod schemas for forms and API validation
+
+## Environment Variables Required
+
+```bash
+# Database (working configuration in .env file)
+DATABASE_URL="postgresql://rosswilliams@localhost:5432/guitar_strategies_dev"
+
+# Auth (NextAuth v4) - in .env file
+NEXTAUTH_SECRET="your-secret-key-here-change-in-production"  # ⚠️ SHOULD UPDATE
+NEXTAUTH_URL="http://localhost:3000"
+
+# Additional configs in .env.local (for future features)
+# File Storage (when implementing uploads)
+BLOB_READ_WRITE_TOKEN="vercel_blob_rw_xxxxxxxxxxxxxxxxxxxx"  # ⚠️ NEEDS REAL VALUE
+
+# Payments (when implementing Stripe)
+STRIPE_SECRET_KEY="your_stripe_secret_key_here"              # ⚠️ NEEDS REAL VALUE
+STRIPE_PUBLISHABLE_KEY="your_stripe_publishable_key_here"    # ⚠️ NEEDS REAL VALUE
+STRIPE_WEBHOOK_SECRET="your_stripe_webhook_secret_here"      # ⚠️ NEEDS REAL VALUE
+
+# Optional integrations
+CALENDLY_ACCESS_TOKEN="your-calendly-api-token"             # Optional for API access
+```
+
+## Environment Setup Notes
+
+- **Database**: Using Postgres.app with `rosswilliams` user (working ✅)
+- **Auth**: Basic setup working, should generate proper secret for security
+- **File Structure**: `.env` for core app, `.env.local` for additional services
+- **Development Ready**: Auth and database fully functional
+- **Admin User**: Seeded for development and testing (see below)
+- **Future Services**: Stripe and Vercel Blob tokens needed when implementing those features
+
+## Development Admin User
+
+An admin user is created automatically for development and testing:
+
+```bash
+# Create admin user (safe to run multiple times)
+npm run seed
+
+# Admin credentials for testing
+Email: admin@guitarstrategies.com
+Password: admin123
+Role: ADMIN
+```
+
+**Note**: This is for development only. Production should use proper admin user creation flow.
+
+## Generate Secure Auth Secret
+
+```bash
+# Replace the placeholder with a real secret
+openssl rand -base64 32
+# Then update NEXTAUTH_SECRET in .env file
+```
+
+### Payment Model
+
+```typescript
+{
+  id: string
+  teacherId: string
+  studentId: string
+  amount: number                    // cents
+  month: string                     // "2024-01" format
+  stripePaymentIntentId: string
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'CANCELLED'
+  
+  // Payment metadata
+  currency: string                  // default: "usd"
+  description?: string
+  lessonsIncluded: number          // Number of lessons this payment covers
+}
+
+// Payment calculation:
+// Monthly cost = (Number of lessons scheduled in month) × (Teacher's hourly rate)
+// Students pay for scheduled lessons, regardless of attendance
+```
+
+### Calendly Integration Strategy
+
+1. Teachers add their Calendly URL in settings (`/settings/calendly`)
+2. Students book lessons through teacher's Calendly (external)
+3. Teachers manually log completed lessons in our app (`/lessons/new`)
+4. Our app tracks progress, notes, payments - NOT scheduling
+
+### User Flow Patterns
+
+- **Teacher Registration**: Create account → Set up Calendly URL → Invite students
+- **Student Registration**: Need teacher invitation or teacher ID during signup
+- **Lesson Flow**: Student books via Calendly → Lesson happens → Teacher logs in our app
+- **Payment Flow**: Monthly billing based on number of lessons scheduled/completed in that month
+
+## API Route Patterns
+
+```typescript
+// Use Server Actions for forms when possible
+// API routes for:
+GET / api / lessons; // List lessons with filters
+POST / api / lessons; // Create new lesson
+GET / api / lessons / [id]; // Get lesson details
+PUT / api / lessons / [id]; // Update lesson
+DELETE / api / lessons / [id]; // Delete lesson
+
+// Similar patterns for students, library, recommendations
+```
+
+## Form Validation Patterns
+
+Always use Zod schemas from `lib/validations.ts`:
+
+- `loginSchema` - Login form
+- `registerSchema` - Registration with role-specific fields
+- `createLessonSchema` - Lesson logging
+- `teacherProfileSchema` - Teacher settings
+- `studentProfileSchema` - Student settings
+
+## Component Naming Conventions
+
+- **Pages**: `page.tsx` (App Router requirement)
+- **Layouts**: `layout.tsx` (App Router requirement)
+- **Components**: PascalCase with descriptive names
+  - `TeacherDashboard` not `Dashboard`
+  - `LessonForm` not `Form`
+  - `StudentCard` not `Card`
+
+## Dependencies In Use
+
+```json
+{
+  "dependencies": {
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@prisma/client": "^6.13.0",
+    "@vercel/blob": "^1.1.1",
+    "autoprefixer": "^10.4.21",
+    "bcrypt": "^6.0.0",
+    "clsx": "^2.1.1",
+    "next": "15.4.6",
+    "next-auth": "^4.24.11",
+    "prisma": "^6.13.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "stripe": "^18.4.0",
+    "tailwind-merge": "^3.3.1",
+    "zod": "^4.0.15"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.4.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}
+```
+
+```typescript
+// Use absolute imports with @ alias
+import { Button } from "@/components/ui/button";
+import { prisma } from "@/lib/db";
+import { authOptions } from "@/lib/auth";
+import type { TeacherProfile } from "@/types";
+
+// NextAuth v4 patterns (not v5)
+import { getServerSession } from "next-auth/next";
+import { useSession, signIn, signOut } from "next-auth/react";
+
+// Utility imports
+import { cn } from "@/lib/design";
+import { z } from "zod";
+```
+
+## Error Handling Patterns
+
+- Use Next.js error boundaries (`error.tsx` files)
+- Validate all inputs with Zod schemas
+- Return proper HTTP status codes from API routes
+- Show user-friendly error messages with toast notifications
+
+## Performance Considerations
+
+- Use Server Components by default
+- Add 'use client' only when needed (forms, interactivity)
+- Implement proper loading states
+- Use Prisma with proper relations and includes
+- Cache API responses where appropriate
+
+## Accessibility Requirements
+
+- All interactive elements minimum 44px touch target
+- Proper focus management with `focus-visible` class
+- ARIA labels for complex components
+- Color contrast meets WCAG AA standards
+- Keyboard navigation support
+
+## Mobile Responsiveness
+
+- Mobile-first approach with TailwindCSS
+- Responsive navigation (hamburger menu on mobile)
+- Touch-friendly button sizes
+- Readable typography on all screen sizes
+
+## Key Features Priority Order
+
+1. **Authentication** (login/register with role assignment)
+2. **Basic Dashboards** (role-specific landing pages)
+3. **Lesson Logging** (core teacher workflow)
+4. **Student Management** (teacher views/manages students)
+5. **Library System** (file upload/sharing)
+6. **Calendly Integration** (settings + embed)
+7. **Payment Tracking** (basic Stripe integration)
+
+## Development Notes
+
+- Always test with different user roles
+- Use TypeScript strictly - no `any` types
+- Follow the established design system exactly
+- Keep components small and focused
+- Write self-documenting code with clear names

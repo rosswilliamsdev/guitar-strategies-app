@@ -25,9 +25,9 @@ export function Button({
   ...props
 }: ButtonProps) {
   const sizeClasses = {
-    sm: "py-2 px-4 text-ui-caption",
-    md: "py-3 px-6 text-ui-button", 
-    lg: "py-4 px-8 text-ui",
+    sm: "px-3 py-1.5 text-sm font-medium",
+    md: "px-4 py-2 text-sm font-medium", 
+    lg: "px-6 py-3 text-base font-medium",
   };
 
   return (
