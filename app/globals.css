@@ -26,3 +26,21 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Rich Text Editor Styles */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Rich text editor toolbar button active state */
+[data-active="true"] {
+  @apply bg-accent text-accent-foreground;
+}

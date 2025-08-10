@@ -106,10 +106,11 @@ export const createLessonSchema = z.object({
   duration: z
     .number()
     .min(15, "Lesson must be at least 15 minutes")
-    .max(180, "Lesson cannot exceed 3 hours"),
+    .max(180, "Lesson cannot exceed 3 hours")
+    .default(30),
   notes: z
     .string()
-    .max(1000, "Notes must be less than 1000 characters")
+    .max(5000, "Notes must be less than 5000 characters")
     .optional(),
   homework: z
     .string()
@@ -125,6 +126,7 @@ export const createLessonSchema = z.object({
     .string()
     .max(300, "Next steps must be less than 300 characters")
     .optional(),
+  status: z.nativeEnum(LessonStatus).default('COMPLETED'),
   studentRating: z.number().min(1).max(5).optional(),
   teacherRating: z.number().min(1).max(5).optional(),
 });

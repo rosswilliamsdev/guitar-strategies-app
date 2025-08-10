@@ -35,7 +35,10 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <Button 
             variant="secondary" 
             size="sm"
-            onClick={() => signOut()}
+            onClick={() => signOut({ 
+              callbackUrl: '/login',
+              redirect: true 
+            })}
           >
             Sign Out
           </Button>

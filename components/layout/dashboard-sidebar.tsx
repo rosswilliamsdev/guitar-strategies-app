@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { User } from 'next-auth';
+import { Button } from '@/components/ui/button';
+import { signOut } from 'next-auth/react';
+import { LogOut } from 'lucide-react';
 
 interface DashboardSidebarProps {
   user: User;
@@ -59,11 +62,27 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       </nav>
 
       <div className="absolute bottom-0 w-64 p-4 border-t border-border">
-        <div className="text-xs text-muted-foreground">
-          Signed in as {user.name}
-        </div>
-        <div className="text-xs text-muted-foreground/60">
-          {user.role.toLowerCase()}
+        <div className="space-y-3">
+          <div>
+            <div className="text-xs text-muted-foreground">
+              Signed in as {user.name}
+            </div>
+            <div className="text-xs text-muted-foreground/60">
+              {user.role.toLowerCase()}
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            onClick={() => signOut({ 
+              callbackUrl: '/login',
+              redirect: true 
+            })}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
       </div>
     </aside>
