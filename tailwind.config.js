@@ -61,7 +61,8 @@ module.exports = {
           800: "#115e59",
           900: "#134e4a",
         },
-        accent: "#73EEDC", // Your original turquoise as accent
+        accent: "#f5f5f5", // muted for select component
+        "accent-foreground": "#0a0a0a",
         background: "#fafafa", // neutral-50
         foreground: "#0a0a0a", // neutral-950
         muted: "#f5f5f5", // neutral-100
@@ -69,6 +70,8 @@ module.exports = {
         border: "#e5e5e5", // neutral-200
         input: "#ffffff",
         ring: "#14b8b3", // primary focus ring
+        popover: "#ffffff",
+        "popover-foreground": "#0a0a0a"
       },
       fontFamily: {
         // OpenAI-inspired typography system

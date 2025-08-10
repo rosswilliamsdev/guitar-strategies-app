@@ -1,25 +1,28 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+'use client';
+
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
+import { User } from 'next-auth';
 
-export async function DashboardHeader() {
-  const session = await getServerSession(authOptions);
+interface DashboardHeaderProps {
+  user: User;
+}
 
-  if (!session) {
+export function DashboardHeader({ user }: DashboardHeaderProps) {
+  if (!user) {
     return null;
   }
 
   return (
-    <header className="border-b bg-white px-6 py-4">
+    <header className="border-b border-border bg-background px-6 py-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">
-            Welcome back, {session.user.name}
+          <h1 className="text-xl font-semibold text-foreground">
+            Welcome back, {user.name}
           </h1>
-          <p className="text-sm text-gray-600 capitalize">
-            {session.user.role.toLowerCase()} Dashboard
+          <p className="text-sm text-muted-foreground capitalize">
+            {user.role.toLowerCase()} Dashboard
           </p>
         </div>
         

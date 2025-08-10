@@ -19,8 +19,8 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Lessons', href: '/lessons' },
   { label: 'Students', href: '/students', roles: ['TEACHER'] },
-  { label: 'Library', href: '/library' },
-  { label: 'Recommendations', href: '/recommendations' },
+  { label: 'Library', href: '/library', roles: ['TEACHER'] },
+  { label: 'Recommendations', href: '/recommendations', roles: ['TEACHER', 'STUDENT'] },
   { label: 'Schedule', href: '/schedule', roles: ['TEACHER'] },
   { label: 'Payments', href: '/payments', roles: ['TEACHER'] },
   { label: 'Settings', href: '/settings' },
@@ -34,9 +34,9 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
   );
 
   return (
-    <aside className="w-64 bg-white border-r min-h-screen">
+    <aside className="w-64 bg-background border-r border-border min-h-screen">
       <div className="p-6">
-        <Link href="/dashboard" className="text-display-sm font-display text-brand-black">
+        <Link href="/dashboard" className="text-xl font-semibold text-foreground">
           Guitar Strategies
         </Link>
       </div>
@@ -47,10 +47,10 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
             key={item.href}
             href={item.href}
             className={cn(
-              'flex items-center px-3 py-2 text-ui rounded-button transition-colors',
+              'flex items-center px-3 py-2 text-sm rounded-md transition-colors',
               pathname === item.href || pathname.startsWith(item.href + '/')
-                ? 'bg-brand-turquoise/10 text-brand-black font-medium'
-                : 'text-brand-gray hover:bg-gray-100 hover:text-brand-black'
+                ? 'bg-turquoise-100 text-foreground font-medium'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             )}
           >
             {item.label}
@@ -58,11 +58,11 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
         ))}
       </nav>
 
-      <div className="absolute bottom-0 w-64 p-4 border-t">
-        <div className="text-ui-caption text-brand-gray">
+      <div className="absolute bottom-0 w-64 p-4 border-t border-border">
+        <div className="text-xs text-muted-foreground">
           Signed in as {user.name}
         </div>
-        <div className="text-ui-caption text-brand-gray/60">
+        <div className="text-xs text-muted-foreground/60">
           {user.role.toLowerCase()}
         </div>
       </div>

@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/20">
       <DashboardHeader user={session.user} />
       <div className="flex">
         <DashboardSidebar user={session.user} />

@@ -1,6 +1,184 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/db';
+import { MainDashboard } from './main-dashboard';
+import { TeacherDashboard } from '@/components/dashboard/teacher-dashboard';
+import { StudentDashboard } from '@/components/dashboard/student-dashboard';
+
+export const metadata = {
+  title: 'Dashboard',
+  description: 'Your Guitar Strategies dashboard',
+};
+
+async function getTeacherData(userId: string) {
+  try {
+    // Get teacher profile
+    const teacherProfile = await prisma.teacherProfile.findUnique({
+      where: { userId },
+      include: {
+        students: {
+          where: { isActive: true },
+          include: { user: true }
+        },
+        lessons: {
+          include: { student: { include: { user: true } } },
+          orderBy: { date: 'desc' }
+        },
+        libraryItems: true,
+      }
+    });
+
+    if (!teacherProfile) {
+      return null;
+    }
+
+    // Calculate stats
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const lessonsThisWeek = teacherProfile.lessons.filter(
+      lesson => new Date(lesson.date) >= startOfWeek
+    ).length;
+
+    const lessonsThisMonth = teacherProfile.lessons.filter(
+      lesson => new Date(lesson.date) >= startOfMonth
+    ).length;
+
+    const monthlyEarnings = lessonsThisMonth * (teacherProfile.hourlyRate || 6000);
+
+    const ratingsWithValues = teacherProfile.lessons
+      .map(l => l.studentRating)
+      .filter(rating => rating !== null && rating !== undefined) as number[];
+    
+    const avgRating = ratingsWithValues.length > 0 
+      ? ratingsWithValues.reduce((sum, rating) => sum + rating, 0) / ratingsWithValues.length
+      : null;
+
+    // Recent lessons
+    const recentLessons = teacherProfile.lessons.slice(0, 5).map(lesson => ({
+      id: lesson.id,
+      studentName: lesson.student.user.name,
+      date: lesson.date.toLocaleDateString(),
+      duration: lesson.duration,
+      status: lesson.status,
+      notes: lesson.notes,
+    }));
+
+    return {
+      teacherId: teacherProfile.id,
+      stats: {
+        activeStudents: teacherProfile.students.length,
+        lessonsThisWeek,
+        lessonsThisMonth,
+        monthlyEarnings,
+        avgRating,
+        totalLessons: teacherProfile.lessons.length,
+        libraryItems: teacherProfile.libraryItems.length,
+      },
+      recentLessons,
+      teacherProfile: {
+        bio: teacherProfile.bio,
+        hourlyRate: teacherProfile.hourlyRate,
+        calendlyUrl: teacherProfile.calendlyUrl,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching teacher data:', error);
+    return null;
+  }
+}
+
+async function getStudentData(userId: string) {
+  try {
+    console.log('Looking for student with userId:', userId);
+    
+    // Get student profile
+    const studentProfile = await prisma.studentProfile.findUnique({
+      where: { userId },
+      include: {
+        user: true,
+        teacher: {
+          include: { user: true }
+        },
+        lessons: {
+          orderBy: { date: 'desc' }
+        }
+      }
+    });
+
+    console.log('Student profile found:', !!studentProfile);
+
+    if (!studentProfile) {
+      return null;
+    }
+
+    // Calculate stats
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const lessonsThisMonth = studentProfile.lessons.filter(
+      lesson => new Date(lesson.date) >= startOfMonth && lesson.status === 'COMPLETED'
+    ).length;
+
+    const completedLessons = studentProfile.lessons.filter(
+      lesson => lesson.status === 'COMPLETED'
+    ).length;
+
+    const ratingsWithValues = studentProfile.lessons
+      .map(l => l.teacherRating)
+      .filter(rating => rating !== null && rating !== undefined) as number[];
+    
+    const avgLessonRating = ratingsWithValues.length > 0 
+      ? ratingsWithValues.reduce((sum, rating) => sum + rating, 0) / ratingsWithValues.length
+      : null;
+
+    // Recent lessons
+    const recentLessons = studentProfile.lessons.slice(0, 5).map(lesson => ({
+      id: lesson.id,
+      date: lesson.date.toLocaleDateString(),
+      duration: lesson.duration,
+      status: lesson.status,
+      notes: lesson.notes,
+      homework: lesson.homework,
+    }));
+
+    // Upcoming assignments (from recent lessons with homework)
+    const upcomingAssignments = studentProfile.lessons
+      .filter(lesson => lesson.homework && lesson.status === 'COMPLETED')
+      .slice(0, 3)
+      .map(lesson => ({
+        id: lesson.id,
+        homework: lesson.homework!,
+        fromLesson: lesson.date.toLocaleDateString(),
+      }));
+
+    return {
+      studentId: studentProfile.id,
+      stats: {
+        totalLessons: studentProfile.lessons.length,
+        lessonsThisMonth,
+        practiceStreak: 7, // TODO: Calculate based on actual practice data
+        skillLevel: studentProfile.skill_level,
+        avgLessonRating,
+        completedLessons,
+      },
+      recentLessons,
+      studentProfile: {
+        teacherName: studentProfile.teacher.user.name,
+        teacherEmail: studentProfile.teacher.user.email,
+        goals: studentProfile.goals,
+        instrument: studentProfile.instrument,
+        skillLevel: studentProfile.skill_level,
+      },
+      upcomingAssignments,
+    };
+  } catch (error) {
+    console.error('Error fetching student data:', error);
+    return null;
+  }
+}
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -9,15 +187,26 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // Redirect to role-specific dashboard
+  // If user is a teacher, render the teacher-specific dashboard
   if (session.user.role === 'TEACHER') {
-    redirect('/dashboard/teacher');
-  } else if (session.user.role === 'STUDENT') {
-    redirect('/dashboard/student');
-  } else if (session.user.role === 'ADMIN') {
-    redirect('/dashboard/admin');
+    const teacherData = await getTeacherData(session.user.id);
+    
+    if (teacherData) {
+      return <TeacherDashboard {...teacherData} />;
+    }
   }
 
-  // Fallback redirect
-  redirect('/login');
+  // If user is a student, render the student-specific dashboard
+  if (session.user.role === 'STUDENT') {
+    const studentData = await getStudentData(session.user.id);
+    
+    if (studentData) {
+      return <StudentDashboard {...studentData} />;
+    } else {
+      console.log('Student data not found for user:', session.user.id);
+    }
+  }
+
+  // For non-specific roles or if data fails to load, use the main dashboard
+  return <MainDashboard user={session.user} />;
 }
