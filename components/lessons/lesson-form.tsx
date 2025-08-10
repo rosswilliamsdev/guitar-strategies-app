@@ -74,7 +74,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
       // Prepare data for submission with automatic date/time and default duration
       const submitData = {
         studentId: formData.studentId,
-        date: new Date(), // Current date/time
+        date: new Date().toISOString(), // Current date/time as ISO string
         duration: 30, // Default 30 minutes
         notes: formData.notes || '',
         status: 'COMPLETED'
@@ -151,12 +151,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
             <RichTextEditor
               content={formData.notes}
               onChange={(content) => setFormData({ ...formData, notes: content })}
-              placeholder="What did you work on in this lesson? Include techniques practiced, songs played, areas of improvement, etc.
-
-You can use formatting like:
-• Bold text for important points
-• Lists for techniques or songs
-• Quotes for student feedback"
+              placeholder="What did you work on in this lesson? Techniques practiced, songs played, progress notes..."
               className="min-h-[150px] w-full"
             />
           </div>

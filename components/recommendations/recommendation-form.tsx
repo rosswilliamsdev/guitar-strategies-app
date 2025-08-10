@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Star } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 
 interface RecommendationFormProps {
   teacherId: string;
@@ -130,8 +131,8 @@ export function RecommendationForm({
   };
 
   return (
-    <Card className="p-8 max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <Card className="p-8 max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
             <AlertCircle className="h-5 w-5 text-red-500" />
@@ -153,15 +154,20 @@ export function RecommendationForm({
         </div>
 
         {/* Description */}
-        <div>
-          <Label htmlFor="description">Description *</Label>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="description">Description *</Label>
+            <p className="text-xs text-muted-foreground mt-1 mb-3">
+              Provide details about this recommendation and why you suggest it
+            </p>
+          </div>
           <Textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter a description"
-            rows={4}
-            className="mt-2"
+            placeholder="Why do you recommend this? Key features, benefits, and what makes it special for students..."
+            rows={5}
+            className="w-full"
             required
           />
         </div>
@@ -210,19 +216,7 @@ export function RecommendationForm({
                 {priorities.map((p) => (
                   <SelectItem key={p.value} value={p.value}>
                     <div className="flex items-center space-x-2">
-                      <div className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`h-3 w-3 ${
-                              star <= parseInt(p.value)
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span>{p.label}</span>
+                      <PriorityBadge priority={parseInt(p.value)} size="sm" />
                     </div>
                   </SelectItem>
                 ))}
@@ -250,22 +244,8 @@ export function RecommendationForm({
         {priority && (
           <div className="p-4 bg-muted rounded-lg">
             <Label className="text-sm font-medium">Priority Preview:</Label>
-            <div className="flex items-center space-x-2 mt-2">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`h-4 w-4 ${
-                      star <= parseInt(priority)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {priorities.find((p) => p.value === priority)?.label}
-              </span>
+            <div className="mt-2">
+              <PriorityBadge priority={parseInt(priority)} />
             </div>
           </div>
         )}

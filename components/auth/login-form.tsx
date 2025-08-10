@@ -57,7 +57,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter your email"
+          placeholder="Email address"
           required
           disabled={isLoading}
         />
@@ -70,7 +70,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           label="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Enter your password"
+          placeholder="Password"
           required
           disabled={isLoading}
         />

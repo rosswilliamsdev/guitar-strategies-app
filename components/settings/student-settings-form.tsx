@@ -309,7 +309,7 @@ export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFor
                   id="goals"
                   value={goals}
                   onChange={(e) => setGoals(e.target.value)}
-                  placeholder="What would you like to achieve with your guitar lessons?"
+                  placeholder="What are your musical goals and aspirations?"
                   rows={4}
                   className="mt-2"
                 />

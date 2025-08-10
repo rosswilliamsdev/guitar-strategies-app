@@ -102,7 +102,7 @@ export const studentProfileSchema = z.object({
 // ========================================
 export const createLessonSchema = z.object({
   studentId: z.string().min(1, "Student is required"),
-  date: z.date(),
+  date: z.string().datetime().or(z.date()).transform((val) => new Date(val)),
   duration: z
     .number()
     .min(15, "Lesson must be at least 15 minutes")

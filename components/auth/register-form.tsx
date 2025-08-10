@@ -71,7 +71,7 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
           type="text"
           value={formData.name}
           onChange={handleChange}
-          placeholder="Enter your full name"
+          placeholder="Full name"
           required
           disabled={isLoading}
         />
@@ -87,7 +87,7 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
           type="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Enter your email"
+          placeholder="Email address"
           required
           disabled={isLoading}
         />
@@ -103,7 +103,7 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
           type="password"
           value={formData.password}
           onChange={handleChange}
-          placeholder="Create a password"
+          placeholder="Password"
           required
           disabled={isLoading}
         />

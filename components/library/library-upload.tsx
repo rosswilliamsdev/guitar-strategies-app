@@ -219,7 +219,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter a descriptive title for this resource"
+            placeholder="Resource title"
             className="mt-2"
             required
           />
@@ -232,7 +232,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe this resource, its content, and how students should use it"
+            placeholder="Describe the resource content"
             rows={4}
             className="mt-2"
           />
@@ -300,7 +300,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={handleTagKeyPress}
-                placeholder="Add tags (e.g., scales, fingerpicking, chords)"
+                placeholder="Add tags"
               />
               <Button type="button" onClick={addTag} variant="secondary">
                 Add Tag

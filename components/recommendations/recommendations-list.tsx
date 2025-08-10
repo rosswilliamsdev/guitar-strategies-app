@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { 
   ExternalLink, 
-  Star,
   Package,
   BookOpen,
   Monitor,
@@ -27,6 +26,7 @@ import {
   Edit,
   Trash2
 } from "lucide-react";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 
 interface Recommendation {
   id: string;
@@ -87,22 +87,6 @@ const priorityConfig = {
   1: { label: "Consider Later", color: "bg-gray-50 text-gray-700 border-gray-200" },
 };
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star 
-          key={star}
-          className={`h-4 w-4 ${
-            star <= rating 
-              ? "text-yellow-400 fill-yellow-400" 
-              : "text-gray-300"
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
 
 async function handleArchive(id: string) {
   try {
@@ -168,7 +152,7 @@ export function RecommendationsList({ items, teacherId }: RecommendationsListPro
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search recommendations by title or description..."
+                placeholder="Search recommendations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -318,10 +302,7 @@ export function RecommendationsList({ items, teacherId }: RecommendationsListPro
                         
                         <div className="flex items-center justify-between mt-4">
                           <div className="flex items-center space-x-4">
-                            <StarRating rating={item.priority} />
-                            <span className="text-xs text-muted-foreground">
-                              Priority: {item.priority}/5
-                            </span>
+                            <PriorityBadge priority={item.priority} size="sm" />
                           </div>
                           <span className="text-xs text-muted-foreground">
                             Added {item.createdAt}

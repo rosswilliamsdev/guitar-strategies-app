@@ -238,7 +238,7 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
                 id="bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell your students about your musical background and teaching experience..."
+                placeholder="Share your musical background and teaching experience"
                 rows={4}
                 className="mt-2"
               />

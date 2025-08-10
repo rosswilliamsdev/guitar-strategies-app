@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { 
   ExternalLink, 
-  Star,
   Package,
   BookOpen,
   Monitor,
@@ -26,6 +25,7 @@ import {
   Heart,
   ShoppingCart
 } from "lucide-react";
+import { PriorityBadge } from "@/components/ui/priority-badge";
 
 interface StudentRecommendation {
   id: string;
@@ -91,27 +91,6 @@ const priorityConfig = {
   1: { label: "Future", color: "bg-gray-50 text-gray-700 border-gray-200", description: "Consider later" },
 };
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center space-x-1">
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star 
-            key={star}
-            className={`h-4 w-4 ${
-              star <= rating 
-                ? "text-yellow-400 fill-yellow-400" 
-                : "text-gray-300"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="text-xs text-muted-foreground">
-        ({rating}/5)
-      </span>
-    </div>
-  );
-}
 
 function PriorityBadge({ priority }: { priority: number }) {
   const config = priorityConfig[priority as keyof typeof priorityConfig];
@@ -164,7 +143,7 @@ export function StudentRecommendationsList({ items, teacherName }: StudentRecomm
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search recommendations by title or description..."
+                placeholder="Search recommendations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -288,7 +267,7 @@ export function StudentRecommendationsList({ items, teacherName }: StudentRecomm
                       
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center space-x-4">
-                          <StarRating rating={item.priority} />
+                          <PriorityBadge priority={item.priority} size="sm" />
                           <span className="text-muted-foreground">
                             {priorityConfig[item.priority as keyof typeof priorityConfig].description}
                           </span>
@@ -309,26 +288,10 @@ export function StudentRecommendationsList({ items, teacherName }: StudentRecomm
       {/* Legend */}
       {sortedItems.length > 0 && (
         <Card className="p-6">
-          <h3 className="font-semibold text-foreground mb-4">Priority Guide</h3>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm">
-            {Object.entries(priorityConfig).reverse().map(([level, config]) => (
-              <div key={level} className="flex items-center space-x-2">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star 
-                      key={star}
-                      className={`h-3 w-3 ${
-                        star <= parseInt(level)
-                          ? "text-yellow-400 fill-yellow-400" 
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className={`text-xs px-2 py-1 rounded ${config.color}`}>
-                  {config.label}
-                </span>
-              </div>
+          <h3 className="font-semibold text-foreground mb-4">Priority Levels</h3>
+          <div className="flex flex-wrap gap-3">
+            {[5, 4, 3, 2, 1].map((level) => (
+              <PriorityBadge key={level} priority={level} size="sm" />
             ))}
           </div>
         </Card>
