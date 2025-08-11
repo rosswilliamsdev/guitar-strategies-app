@@ -180,30 +180,33 @@ export function TeacherDashboard({
           <div className="space-y-3">
             {recentLessons.length > 0 ? (
               recentLessons.slice(0, 4).map((lesson) => (
-                <div
+                <Link
                   key={lesson.id}
-                  className="flex items-center justify-between py-2 border-b border-border last:border-b-0"
+                  href={`/lessons/${lesson.id}`}
+                  className="block hover:bg-muted/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-colors"
                 >
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground text-sm">
-                      {lesson.studentName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {lesson.duration} min • {lesson.date}
-                    </p>
+                  <div className="flex items-center justify-between py-2 border-b border-border last:border-b-0">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground text-sm">
+                        {lesson.studentName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {lesson.duration} min • {lesson.date}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        lesson.status === "COMPLETED"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : lesson.status === "SCHEDULED"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "bg-gray-50 text-gray-700 border border-gray-200"
+                      }`}
+                    >
+                      {lesson.status.toLowerCase()}
+                    </span>
                   </div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${
-                      lesson.status === "COMPLETED"
-                        ? "bg-green-50 text-green-700 border border-green-200"
-                        : lesson.status === "SCHEDULED"
-                        ? "bg-blue-50 text-blue-700 border border-blue-200"
-                        : "bg-gray-50 text-gray-700 border border-gray-200"
-                    }`}
-                  >
-                    {lesson.status.toLowerCase()}
-                  </span>
-                </div>
+                </Link>
               ))
             ) : (
               <p className="text-muted-foreground text-sm py-4 text-center">

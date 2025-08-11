@@ -79,21 +79,60 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
+    // Get teacher profile to verify ownership
+    const teacherProfile = await prisma.teacherProfile.findUnique({
+      where: { userId: session.user.id }
+    });
+    
+    if (!teacherProfile) {
+      return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+    }
+
+    // Verify lesson exists and belongs to teacher
+    const existingLesson = await prisma.lesson.findFirst({
+      where: { 
+        id: params.id,
+        teacherId: teacherProfile.id 
+      }
+    });
+
+    if (!existingLesson) {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+    }
+
     const body = await request.json();
     
-    // TODO: Update lesson with validation
-    // const lesson = await db.lesson.update({
-    //   where: { id: params.id },
-    //   data: body,
-    //   include: {
-    //     student: true,
-    //   },
-    // });
+    // Update lesson with validation
+    const lesson = await prisma.lesson.update({
+      where: { id: params.id },
+      data: {
+        studentId: body.studentId,
+        duration: body.duration || 30,
+        notes: body.notes || null,
+        homework: body.homework || null,
+        progress: body.progress || null,
+        focusAreas: body.focusAreas || null,
+        songsPracticed: body.songsPracticed || null,
+        nextSteps: body.nextSteps || null,
+        status: body.status || 'COMPLETED',
+        // Don't update date when editing existing lesson
+      },
+      include: {
+        student: {
+          include: { user: true }
+        },
+        teacher: {
+          include: { user: true }
+        },
+        attachments: true,
+        links: true,
+      },
+    });
 
-    return NextResponse.json({ lesson: null });
+    return NextResponse.json({ lesson });
   } catch (error) {
     console.error('Error updating lesson:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json({ error: 'Failed to update lesson' }, { status: 500 });
   }
 }
 

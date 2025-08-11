@@ -1,21 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { AlertCircle, Save, X, Upload, Link as LinkIcon, FileText, Trash2, ExternalLink } from 'lucide-react';
+} from "@/components/ui/select";
+import {
+  AlertCircle,
+  Save,
+  X,
+  Upload,
+  Link as LinkIcon,
+  FileText,
+  Trash2,
+  ExternalLink,
+} from "lucide-react";
 
 interface LessonFormProps {
   teacherId: string;
@@ -31,21 +40,44 @@ interface Student {
   };
 }
 
-export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps) {
+export function LessonForm({
+  teacherId,
+  lessonId,
+  initialData,
+}: LessonFormProps) {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-  
+  const [error, setError] = useState<string>("");
+
   const [formData, setFormData] = useState({
-    studentId: initialData?.studentId || '',
-    notes: initialData?.notes || '',
+    studentId: initialData?.studentId || "",
+    notes: initialData?.notes || "",
+    duration: initialData?.duration || 30,
+    status: initialData?.status || "COMPLETED",
   });
 
   // File and link management
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState(
+    initialData?.existingAttachments || []
+  );
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
   const [links, setLinks] = useState<string[]>([]);
-  const [currentLink, setCurrentLink] = useState('');
+  const [existingLinks, setExistingLinks] = useState(
+    initialData?.existingLinks || []
+  );
+  const [currentLink, setCurrentLink] = useState("");
+
+  // Initialize existing links as URLs in the links array for easier editing
+  useEffect(() => {
+    if (initialData?.existingLinks && initialData.existingLinks.length > 0) {
+      const existingUrls = initialData.existingLinks.map(
+        (link: any) => link.url
+      );
+      setLinks(existingUrls);
+    }
+  }, [initialData]);
 
   // Fetch teacher's students
   useEffect(() => {
@@ -57,7 +89,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
           setStudents(data.students || []);
         }
       } catch (error) {
-        console.error('Error fetching students:', error);
+        console.error("Error fetching students:", error);
       }
     };
 
@@ -67,7 +99,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
   // File handling
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(file => {
+    const validFiles = files.filter((file) => {
       // 10MB limit
       if (file.size > 10 * 1024 * 1024) {
         setError(`File ${file.name} is too large. Maximum size is 10MB.`);
@@ -75,26 +107,34 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
       }
       return true;
     });
-    
-    setSelectedFiles(prev => [...prev, ...validFiles]);
-    setError('');
+
+    setSelectedFiles((prev) => [...prev, ...validFiles]);
+    setError("");
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeExistingAttachment = (attachmentId: string) => {
+    setExistingAttachments((prev) =>
+      prev.filter((att: any) => att.id !== attachmentId)
+    );
+    setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
 
   // Link handling
   const detectLinkType = (url: string) => {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'YOUTUBE';
-    if (url.includes('vimeo.com')) return 'VIMEO';
-    if (url.includes('spotify.com')) return 'SPOTIFY';
-    return 'WEBSITE';
+    if (url.includes("youtube.com") || url.includes("youtu.be"))
+      return "YOUTUBE";
+    if (url.includes("vimeo.com")) return "VIMEO";
+    if (url.includes("spotify.com")) return "SPOTIFY";
+    return "WEBSITE";
   };
 
   const addLink = () => {
     if (!currentLink.trim()) {
-      setError('Please enter a URL');
+      setError("Please enter a URL");
       return;
     }
 
@@ -102,112 +142,188 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
     try {
       new URL(currentLink);
     } catch {
-      setError('Please enter a valid URL');
+      setError("Please enter a valid URL");
       return;
     }
 
-    setLinks(prev => [...prev, currentLink.trim()]);
-    setCurrentLink('');
-    setError('');
+    setLinks((prev) => [...prev, currentLink.trim()]);
+    setCurrentLink("");
+    setError("");
   };
 
   const removeLink = (index: number) => {
-    setLinks(prev => prev.filter((_, i) => i !== index));
+    setLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       // Validate required fields
       if (!formData.studentId) {
-        setError('Please select a student');
+        setError("Please select a student");
         return;
       }
 
-      // First, create the lesson
+      // Prepare lesson data
       const submitData = {
         studentId: formData.studentId,
-        date: new Date().toISOString(),
-        duration: 30,
-        notes: formData.notes || '',
-        status: 'COMPLETED'
+        date: lessonId ? undefined : new Date().toISOString(), // Don't change date when editing
+        duration: formData.duration,
+        notes: formData.notes || "",
+        status: formData.status,
       };
 
-      const url = lessonId ? `/api/lessons/${lessonId}` : '/api/lessons';
-      const method = lessonId ? 'PUT' : 'POST';
+      const url = lessonId ? `/api/lessons/${lessonId}` : "/api/lessons";
+      const method = lessonId ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(submitData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save lesson');
+        throw new Error(errorData.error || "Failed to save lesson");
       }
 
       const lessonResponse = await response.json();
-      const createdLessonId = lessonResponse.lesson.id;
+      const currentLessonId = lessonId || lessonResponse.lesson?.id;
+
+      if (!currentLessonId) {
+        throw new Error('Failed to get lesson ID from response');
+      }
 
       // Upload files if any
       if (selectedFiles.length > 0) {
+        console.log(`Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`);
         const fileFormData = new FormData();
         selectedFiles.forEach((file, index) => {
           fileFormData.append(`files`, file);
+          console.log(`Added file: ${file.name}, size: ${file.size}`);
         });
-        fileFormData.append('lessonId', createdLessonId);
+        fileFormData.append("lessonId", currentLessonId);
 
-        const fileResponse = await fetch('/api/lessons/attachments', {
-          method: 'POST',
-          body: fileFormData,
-        });
+        try {
+          const fileResponse = await fetch("/api/lessons/attachments", {
+            method: "POST",
+            body: fileFormData,
+          });
 
-        if (!fileResponse.ok) {
-          console.error('Failed to upload files, but lesson was saved');
+          if (!fileResponse.ok) {
+            const errorData = await fileResponse.json();
+            console.error("File upload failed:", errorData);
+            throw new Error(`File upload failed: ${errorData.error || 'Unknown error'}`);
+          }
+
+          const fileResult = await fileResponse.json();
+          console.log("Files uploaded successfully:", fileResult);
+        } catch (fileError) {
+          console.error("File upload error:", fileError);
+          // Don't fail the entire save, but show a warning
+          setError(`Lesson saved but file upload failed: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
         }
       }
 
-      // Create links if any
-      if (links.length > 0) {
-        const linksData = links.map(url => ({
-          title: 'Resource Link',
+      // Handle removed attachments when editing
+      if (lessonId && removedAttachmentIds.length > 0) {
+        console.log(`Removing ${removedAttachmentIds.length} attachments`);
+        try {
+          const removeResponse = await fetch("/api/lessons/attachments", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              lessonId: currentLessonId,
+              removedAttachmentIds: removedAttachmentIds,
+            }),
+          });
+
+          if (!removeResponse.ok) {
+            const errorData = await removeResponse.json();
+            console.error("Failed to remove attachments:", errorData);
+          } else {
+            console.log("Attachments removed successfully");
+          }
+        } catch (removeError) {
+          console.error("Error removing attachments:", removeError);
+        }
+      }
+
+      // Handle links - use PUT for editing, POST for new lessons
+      if (lessonId) {
+        // Editing lesson - replace all links
+        const linksData = links.map((url) => ({
+          title: "Resource Link",
           url: url,
           description: null,
-          lessonId: createdLessonId,
-          linkType: detectLinkType(url)
+          linkType: detectLinkType(url),
         }));
 
-        const linksResponse = await fetch('/api/lessons/links', {
-          method: 'POST',
+        const linksResponse = await fetch("/api/lessons/links", {
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            lessonId: currentLessonId,
+            links: linksData 
+          }),
+        });
+
+        if (!linksResponse.ok) {
+          const errorData = await linksResponse.json();
+          console.error("Failed to update links:", errorData);
+        }
+      } else if (links.length > 0) {
+        // Creating new lesson - add all links
+        const linksData = links.map((url) => ({
+          title: "Resource Link",
+          url: url,
+          description: null,
+          lessonId: currentLessonId,
+          linkType: detectLinkType(url),
+        }));
+
+        const linksResponse = await fetch("/api/lessons/links", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ links: linksData }),
         });
 
         if (!linksResponse.ok) {
           const errorData = await linksResponse.json();
-          console.error('Failed to save links:', errorData);
+          console.error("Failed to save links:", errorData);
         }
       }
 
-      // Success - redirect to lessons page
-      router.push('/lessons');
+      // Success - redirect appropriately
+      if (lessonId) {
+        router.push(`/lessons/${lessonId}`);
+      } else {
+        router.push("/lessons");
+      }
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = () => {
-    router.push('/lessons');
+    if (lessonId) {
+      router.push(`/lessons/${lessonId}`);
+    } else {
+      router.push("/lessons");
+    }
   };
 
   return (
@@ -223,7 +339,12 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
         {/* Student Selection */}
         <div>
           <Label htmlFor="student">Student *</Label>
-          <Select value={formData.studentId} onValueChange={(value) => setFormData({ ...formData, studentId: value })}>
+          <Select
+            value={formData.studentId}
+            onValueChange={(value) =>
+              setFormData({ ...formData, studentId: value })
+            }
+          >
             <SelectTrigger className="mt-2">
               <SelectValue placeholder="Select a student" />
             </SelectTrigger>
@@ -251,7 +372,9 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
           <div className="w-full">
             <RichTextEditor
               content={formData.notes}
-              onChange={(content) => setFormData({ ...formData, notes: content })}
+              onChange={(content) =>
+                setFormData({ ...formData, notes: content })
+              }
               placeholder="What did you work on in this lesson? Techniques practiced, songs played, progress notes..."
               className="min-h-[150px] w-full"
             />
@@ -266,7 +389,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
               Add YouTube videos, websites, or other resource URLs
             </p>
           </div>
-          
+
           <div className="space-y-4">
             {/* Add Link Input */}
             <div className="flex gap-2">
@@ -277,7 +400,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
                 placeholder="https://youtube.com/watch?v=..."
                 className="flex-1"
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addLink();
                   }
@@ -293,13 +416,16 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
                 Add
               </Button>
             </div>
-            
+
             {/* Added Links List */}
             {links.length > 0 && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Added Links:</Label>
                 {links.map((link, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                  >
                     <div className="flex items-center space-x-3 flex-1">
                       <LinkIcon className="h-4 w-4 text-muted-foreground" />
                       <p className="text-sm truncate">{link}</p>
@@ -309,7 +435,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => window.open(link, '_blank')}
+                        onClick={() => window.open(link, "_blank")}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
@@ -337,7 +463,7 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
               Attach PDFs, images, audio files, or other lesson materials
             </p>
           </div>
-          
+
           <div className="space-y-4">
             {/* File Upload */}
             <div>
@@ -349,13 +475,66 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
                 className="cursor-pointer"
               />
             </div>
-            
+
+            {/* Existing Attachments */}
+            {existingAttachments.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Current Attachments:
+                </Label>
+                {existingAttachments.map((attachment: any) => (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {attachment.originalName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {(attachment.fileSize / 1024 / 1024).toFixed(2)} MB •{" "}
+                          {attachment.mimeType}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          window.open(attachment.fileUrl, "_blank")
+                        }
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeExistingAttachment(attachment.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Selected Files List */}
             {selectedFiles.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Selected Files:</Label>
+                <Label className="text-sm font-medium">
+                  New Files to Upload:
+                </Label>
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
                       <FileText className="h-4 w-4 text-muted-foreground" />
                       <div>
@@ -381,8 +560,8 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
         </div>
 
         <div className="flex justify-end space-x-4">
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="secondary"
             onClick={handleCancel}
             disabled={isLoading}
@@ -392,12 +571,11 @@ export function LessonForm({ teacherId, lessonId, initialData }: LessonFormProps
           </Button>
           <Button type="submit" disabled={isLoading}>
             <Save className="h-4 w-4 mr-2" />
-            {isLoading 
-              ? 'Saving...' 
-              : lessonId 
-                ? 'Update Lesson' 
-                : 'Save Lesson'
-            }
+            {isLoading
+              ? "Saving..."
+              : lessonId
+              ? "Update Lesson"
+              : "Save Lesson"}
           </Button>
         </div>
       </form>

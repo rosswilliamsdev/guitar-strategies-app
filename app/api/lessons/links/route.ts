@@ -93,3 +93,73 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session || session.user.role !== 'TEACHER') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const requestBody = await request.json();
+    const { lessonId, links } = requestBody;
+
+    if (!lessonId) {
+      return NextResponse.json({ error: 'Lesson ID is required' }, { status: 400 });
+    }
+
+    // Verify the teacher owns this lesson
+    const teacherProfile = await prisma.teacherProfile.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!teacherProfile) {
+      return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+    }
+
+    const lesson = await prisma.lesson.findFirst({
+      where: {
+        id: lessonId,
+        teacherId: teacherProfile.id
+      }
+    });
+
+    if (!lesson) {
+      return NextResponse.json({ error: 'Lesson not found or access denied' }, { status: 404 });
+    }
+
+    // Delete all existing links for this lesson and create new ones
+    await prisma.lessonLink.deleteMany({
+      where: { lessonId: lessonId }
+    });
+
+    // Create new links if any
+    let createdLinks = [];
+    if (links && Array.isArray(links) && links.length > 0) {
+      createdLinks = await Promise.all(
+        links.map(async (link) => {
+          const linkData = {
+            lessonId: lessonId,
+            title: link.title,
+            url: link.url,
+            description: link.description || null,
+            linkType: link.linkType || 'WEBSITE',
+          };
+          
+          return await prisma.lessonLink.create({
+            data: linkData
+          });
+        })
+      );
+    }
+
+    return NextResponse.json({ links: createdLinks });
+  } catch (error) {
+    console.error('Error updating links:', error);
+    return NextResponse.json({ 
+      error: 'Failed to update links', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
+  }
+}

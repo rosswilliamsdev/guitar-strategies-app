@@ -36,21 +36,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-display-xl font-display text-brand-black mb-2">
-            Lesson Details
-          </h1>
-          <p className="text-body text-brand-gray">
-            View lesson information and progress notes.
-          </p>
-        </div>
-        {canEdit && (
-          <Link href={`/lessons/${params.id}/edit`}>
-            <Button>Edit Lesson</Button>
-          </Link>
-        )}
-      </div>
 
       <LessonDetails 
         lessonId={params.id} 
