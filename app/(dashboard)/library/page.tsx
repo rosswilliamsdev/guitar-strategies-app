@@ -111,33 +111,6 @@ export default async function LibraryPage() {
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Items</h3>
-          <p className="text-2xl font-semibold text-foreground mt-1">
-            {libraryItems.length}
-          </p>
-        </Card>
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Sheet Music</h3>
-          <p className="text-2xl font-semibold text-foreground mt-1">
-            {libraryItems.filter(item => item.category === 'SHEET_MUSIC').length}
-          </p>
-        </Card>
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Exercises</h3>
-          <p className="text-2xl font-semibold text-foreground mt-1">
-            {libraryItems.filter(item => item.category === 'EXERCISES').length}
-          </p>
-        </Card>
-        <Card className="p-6">
-          <h3 className="text-sm font-medium text-muted-foreground">Total Downloads</h3>
-          <p className="text-2xl font-semibold text-foreground mt-1">
-            {libraryItems.reduce((sum, item) => sum + item.downloadCount, 0)}
-          </p>
-        </Card>
-      </div>
 
       {/* Library List */}
       <LibraryList items={libraryItems} teacherId={teacherProfile.id} />

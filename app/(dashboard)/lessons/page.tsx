@@ -33,7 +33,7 @@ export default async function LessonsPage() {
         </div>
         {session.user.role === 'TEACHER' && (
           <Link href="/lessons/new">
-            <Button>Log Lesson</Button>
+            <Button>New Lesson</Button>
           </Link>
         )}
       </div>

@@ -89,8 +89,7 @@ export async function GET(request: NextRequest) {
     // Get recommendations
     const recommendations = await prisma.recommendation.findMany({
       where: {
-        teacherId: teacherProfile.id,
-        isArchived: false
+        teacherId: teacherProfile.id
       },
       orderBy: [
         { priority: 'desc' },

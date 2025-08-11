@@ -1,12 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { Calendar, Clock, User, FileText } from 'lucide-react';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { Calendar, Clock, User, FileText, Search, CalendarDays } from 'lucide-react';
 
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
@@ -20,8 +27,14 @@ interface Lesson {
   date: string;
   duration: number;
   notes?: string;
+  homework?: string;
+  progress?: string;
+  focusAreas?: string;
+  songsPracticed?: string;
+  nextSteps?: string;
   status: string;
   student: {
+    id: string;
     user: {
       name: string;
     };
@@ -38,10 +51,13 @@ interface LessonListProps {
   userRole: string;
 }
 
-export function LessonList({ userId, userRole }: LessonListProps) {
+export function LessonList({ userRole }: LessonListProps) {
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -63,6 +79,79 @@ export function LessonList({ userId, userRole }: LessonListProps) {
     fetchLessons();
   }, []);
 
+  // Get unique students for filter dropdown (teachers only)
+  const students = useMemo(() => {
+    if (userRole !== 'TEACHER') return [];
+    const uniqueStudents = lessons.reduce((acc, lesson) => {
+      const student = lesson.student;
+      if (!acc.find(s => s.id === student.id)) {
+        acc.push(student);
+      }
+      return acc;
+    }, [] as Array<{ id: string; user: { name: string } }>);
+    return uniqueStudents;
+  }, [lessons, userRole]);
+
+  // Filter lessons based on search term, student, and date
+  const filteredLessons = useMemo(() => {
+    return lessons.filter(lesson => {
+      // Search filter - searches in notes, homework, progress, focusAreas, songsPracticed, nextSteps
+      const searchableContent = [
+        lesson.notes || '',
+        lesson.homework || '',
+        lesson.progress || '',
+        lesson.focusAreas || '',
+        lesson.songsPracticed || '',
+        lesson.nextSteps || '',
+        lesson.student.user.name,
+        lesson.teacher.user.name
+      ].join(' ').toLowerCase();
+      
+      const matchesSearch = searchTerm.length === 0 || 
+        stripHtml(searchableContent).toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Student filter (teachers only)
+      const matchesStudent = selectedStudent === 'all' || 
+        lesson.student.id === selectedStudent;
+
+      // Date filter
+      const lessonDate = new Date(lesson.date);
+      const now = new Date();
+      let matchesDate = true;
+
+      switch (dateFilter) {
+        case 'thisWeek':
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          endOfWeek.setHours(23, 59, 59, 999);
+          matchesDate = lessonDate >= startOfWeek && lessonDate <= endOfWeek;
+          break;
+        case 'thisMonth':
+          const monthStart = startOfMonth(now);
+          const monthEnd = endOfMonth(now);
+          matchesDate = lessonDate >= monthStart && lessonDate <= monthEnd;
+          break;
+        case 'lastMonth':
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const lastMonthStart = startOfMonth(lastMonth);
+          const lastMonthEnd = endOfMonth(lastMonth);
+          matchesDate = lessonDate >= lastMonthStart && lessonDate <= lastMonthEnd;
+          break;
+        case 'last3Months':
+          const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+          matchesDate = lessonDate >= threeMonthsAgo;
+          break;
+        default:
+          matchesDate = true;
+      }
+
+      return matchesSearch && matchesStudent && matchesDate;
+    });
+  }, [lessons, searchTerm, selectedStudent, dateFilter]);
+
   if (loading) {
     return (
       <Card className="p-8 text-center">
@@ -82,6 +171,7 @@ export function LessonList({ userId, userRole }: LessonListProps) {
     );
   }
 
+  // Show empty state only if there are no lessons at all, not when filtered results are empty
   if (lessons.length === 0) {
     return (
       <Card className="p-8 text-center">
@@ -90,13 +180,13 @@ export function LessonList({ userId, userRole }: LessonListProps) {
         </h3>
         <p className="text-gray-600 mb-4">
           {userRole === 'TEACHER' 
-            ? 'Start by logging your first lesson with a student.'
-            : 'Your teacher will log lessons here after each session.'
+            ? 'Start by creating your first lesson with a student.'
+            : 'Your teacher will create lessons here after each session.'
           }
         </p>
         {userRole === 'TEACHER' && (
           <Link href="/lessons/new">
-            <Button>Log First Lesson</Button>
+            <Button>New Lesson</Button>
           </Link>
         )}
       </Card>
@@ -104,53 +194,131 @@ export function LessonList({ userId, userRole }: LessonListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {lessons.map((lesson) => (
-        <Card key={lesson.id} className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center space-x-4 mb-3">
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>{format(new Date(lesson.date), 'PPp')}</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{lesson.duration} min</span>
-                </div>
-                <Badge variant={lesson.status === 'COMPLETED' ? 'default' : 'secondary'}>
-                  {lesson.status}
-                </Badge>
-              </div>
-              
-              <div className="flex items-center space-x-2 mb-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium text-foreground">
-                  {userRole === 'TEACHER' 
-                    ? `Student: ${lesson.student.user.name}`
-                    : `Teacher: ${lesson.teacher.user.name}`
-                  }
-                </span>
-              </div>
-              
-              {lesson.notes && (
-                <div className="flex items-start space-x-2 mt-3">
-                  <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div className="text-sm text-muted-foreground">
-                    <p className="line-clamp-2">{stripHtml(lesson.notes)}</p>
-                  </div>
-                </div>
-              )}
+    <div className="space-y-6">
+      {/* Search and Filter Controls */}
+      <Card className="p-6">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search lessons (notes, homework, songs, students)..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            
-            <Link href={`/lessons/${lesson.id}`}>
-              <Button variant="secondary" size="sm">
-                View Details
-              </Button>
-            </Link>
           </div>
-        </Card>
-      ))}
+          <div className="flex gap-4">
+            {userRole === 'TEACHER' && students.length > 0 && (
+              <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+                <SelectTrigger className="w-48">
+                  <User className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="All Students" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Students</SelectItem>
+                  {students.map(student => (
+                    <SelectItem key={student.id} value={student.id}>
+                      {student.user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="w-48">
+                <CalendarDays className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="All Time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="thisWeek">This Week</SelectItem>
+                <SelectItem value="thisMonth">This Month</SelectItem>
+                <SelectItem value="lastMonth">Last Month</SelectItem>
+                <SelectItem value="last3Months">Last 3 Months</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </Card>
+
+      {/* Results */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            {filteredLessons.length} {filteredLessons.length === 1 ? 'Lesson' : 'Lessons'}
+            {searchTerm && ` matching "${searchTerm}"`}
+          </h2>
+        </div>
+
+        {filteredLessons.length === 0 ? (
+          <Card className="p-8 text-center">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              No lessons found
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Try adjusting your search or filter criteria.
+            </p>
+            <Button 
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedStudent('all');
+                setDateFilter('all');
+              }}
+              variant="secondary"
+            >
+              Clear Filters
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredLessons.map((lesson) => (
+              <Card key={lesson.id} className="p-3 hover:shadow-md transition-shadow">
+                <div className="space-y-1">
+                  {/* Header with date, duration, and student/teacher name in one row */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      <span>{format(new Date(lesson.date), 'MMM d')}</span>
+                      <span>•</span>
+                      <Clock className="h-3 w-3" />
+                      <span>{lesson.duration}min</span>
+                    </div>
+                    
+                  </div>
+                  
+                  {/* Student/Teacher name and View button in one row */}
+                  <div className="flex items-center justify-between space-x-2">
+                    <span className="font-medium text-sm text-foreground truncate flex-1">
+                      {userRole === 'TEACHER' 
+                        ? lesson.student.user.name
+                        : lesson.teacher.user.name
+                      }
+                    </span>
+                    <Link href={`/lessons/${lesson.id}`}>
+                      <Button size="sm" className="bg-primary hover:bg-turquoise-600 text-white text-xs px-2 py-1 h-6">
+                        View
+                      </Button>
+                    </Link>
+                  </div>
+                  
+                  {/* Notes preview */}
+                  {lesson.notes && (
+                    <div className="text-xs text-muted-foreground">
+                      <p className="line-clamp-1 leading-tight">
+                        {stripHtml(lesson.notes)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

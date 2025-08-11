@@ -229,7 +229,6 @@ model Recommendation {
   // Additional fields
   price       String?  // e.g., "$299", "Free", "$50-100"
   priority    Int      @default(1) // 1-5, higher = more important
-  isArchived  Boolean  @default(false)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -239,7 +238,6 @@ model Recommendation {
 
   @@index([teacherId])
   @@index([category])
-  @@index([isArchived])
 }
 
 model Payment {
@@ -325,13 +323,13 @@ enum SkillLevel {
 }
 
 enum LibraryCategory {
+  TABLATURE
   SHEET_MUSIC
-  TAB
   CHORD_CHARTS
+  SCALES
+  ETUDES
   EXERCISES
   THEORY
-  AUDIO
-  VIDEO
   OTHER
 }
 

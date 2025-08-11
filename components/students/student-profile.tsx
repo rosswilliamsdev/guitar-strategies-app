@@ -39,7 +39,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
           <div className="flex items-center space-x-2">
             <Badge variant="secondary">Active</Badge>
             <Link href={`/lessons/new?studentId=${studentId}`}>
-              <Button size="sm">Log Lesson</Button>
+              <Button size="sm">New Lesson</Button>
             </Link>
           </div>
         </div>

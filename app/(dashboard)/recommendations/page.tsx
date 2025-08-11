@@ -17,8 +17,7 @@ async function getRecommendationsData(teacherId: string) {
   try {
     const recommendations = await prisma.recommendation.findMany({
       where: { 
-        teacherId,
-        isArchived: false 
+        teacherId
       },
       orderBy: [
         { priority: 'desc' },
@@ -39,7 +38,6 @@ async function getRecommendationsData(teacherId: string) {
       category: rec.category,
       price: rec.price,
       priority: rec.priority,
-      isArchived: rec.isArchived,
       createdAt: rec.createdAt.toLocaleDateString(),
       teacherName: rec.teacher.user.name,
     }));
@@ -58,7 +56,6 @@ async function getStudentRecommendationsData(studentId: string) {
         teacher: {
           include: {
             recommendations: {
-              where: { isArchived: false },
               orderBy: [
                 { priority: 'desc' },
                 { createdAt: 'desc' }
@@ -82,7 +79,6 @@ async function getStudentRecommendationsData(studentId: string) {
       category: rec.category,
       price: rec.price,
       priority: rec.priority,
-      isArchived: rec.isArchived,
       createdAt: rec.createdAt.toLocaleDateString(),
     }));
 
@@ -144,39 +140,6 @@ export default async function RecommendationsPage() {
           </Link>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Total Active</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.length}
-            </p>
-          </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Gear</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.filter(r => r.category === 'GEAR').length}
-            </p>
-          </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Books</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.filter(r => r.category === 'BOOKS').length}
-            </p>
-          </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Software</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.filter(r => r.category === 'SOFTWARE').length}
-            </p>
-          </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">High Priority</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.filter(r => r.priority >= 4).length}
-            </p>
-          </Card>
-        </div>
 
         {/* Recommendations List */}
         <RecommendationsList items={recommendations} teacherId={teacherProfile.id} />

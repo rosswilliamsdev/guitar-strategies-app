@@ -57,6 +57,8 @@ export async function GET(request: NextRequest) {
         teacher: {
           include: { user: true }
         },
+        attachments: true,
+        links: true,
       },
       orderBy: {
         date: 'desc',

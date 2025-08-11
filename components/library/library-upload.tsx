@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +23,13 @@ interface LibraryUploadProps {
 }
 
 const categories = [
+  { value: "TABLATURE", label: "Tablature" },
   { value: "SHEET_MUSIC", label: "Sheet Music" },
-  { value: "TAB", label: "Guitar Tabs" },
   { value: "CHORD_CHARTS", label: "Chord Charts" },
+  { value: "SCALES", label: "Scales" },
+  { value: "ETUDES", label: "Etudes" },
   { value: "EXERCISES", label: "Exercises" },
   { value: "THEORY", label: "Music Theory" },
-  { value: "AUDIO", label: "Audio Files" },
-  { value: "VIDEO", label: "Video Files" },
   { value: "OTHER", label: "Other" },
 ];
 
@@ -41,18 +41,23 @@ const difficulties = [
 ];
 
 const allowedFileTypes = [
-  ".pdf", ".doc", ".docx", ".txt", 
-  ".jpg", ".jpeg", ".png", ".gif",
-  ".mp3", ".wav", ".m4a", ".ogg",
-  ".mp4", ".mov", ".avi", ".webm",
-  ".midi", ".mid"
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".txt",
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".midi",
+  ".mid",
 ];
 
 export function LibraryUpload({ teacherId }: LibraryUploadProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  
+
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -74,18 +79,20 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
     }
 
     // Validate file type
-    const fileExtension = "." + file.name.split('.').pop()?.toLowerCase();
+    const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
     if (!allowedFileTypes.includes(fileExtension)) {
-      setError(`File type not supported. Allowed types: ${allowedFileTypes.join(', ')}`);
+      setError(
+        `File type not supported. Allowed types: ${allowedFileTypes.join(", ")}`
+      );
       return;
     }
 
     setSelectedFile(file);
     setError("");
-    
+
     // Auto-fill title if empty
     if (!title) {
-      const fileName = file.name.split('.').slice(0, -1).join('.');
+      const fileName = file.name.split(".").slice(0, -1).join(".");
       setTitle(fileName);
     }
   };
@@ -98,11 +105,11 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
   };
 
   const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleTagKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
       e.preventDefault();
       addTag();
     }
@@ -110,7 +117,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedFile || !title || !category) {
       setError("Please fill in all required fields and select a file");
       return;
@@ -122,29 +129,29 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
     try {
       // Create form data
       const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('category', category);
-      formData.append('difficulty', difficulty);
-      formData.append('isPublic', isPublic.toString());
-      formData.append('tags', JSON.stringify(tags));
-      formData.append('teacherId', teacherId);
+      formData.append("file", selectedFile);
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("category", category);
+      formData.append("difficulty", difficulty);
+      formData.append("isPublic", isPublic.toString());
+      formData.append("tags", JSON.stringify(tags));
+      formData.append("teacherId", teacherId);
 
-      const response = await fetch('/api/library/upload', {
-        method: 'POST',
+      const response = await fetch("/api/library/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
+        throw new Error(errorData.error || "Upload failed");
       }
 
       // Success - redirect to library
-      router.push('/library');
+      router.push("/library");
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -167,17 +174,18 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
           </Label>
           <div className="mt-2">
             {!selectedFile ? (
-              <label 
+              <label
                 htmlFor="file"
                 className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <Upload className="w-10 h-10 mb-3 text-muted-foreground" />
                   <p className="mb-2 text-sm text-foreground">
-                    <span className="font-semibold">Click to upload</span> or drag and drop
+                    <span className="font-semibold">Click to upload</span> or
+                    drag and drop
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    PDF, DOC, images, audio, video files (max 10MB)
+                    PDF, DOC, images, MIDI files (max 10MB)
                   </p>
                 </div>
                 <input
@@ -214,12 +222,12 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
 
         {/* Title */}
         <div>
-          <Label htmlFor="title">Resource Title *</Label>
+          <Label htmlFor="title">Title *</Label>
           <Input
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Resource title"
+            placeholder="Title"
             className="mt-2"
             required
           />
@@ -232,7 +240,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the resource content"
+            placeholder="Describe the content"
             rows={4}
             className="mt-2"
           />
@@ -247,7 +255,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(cat => (
+                {categories.map((cat) => (
                   <SelectItem key={cat.value} value={cat.value}>
                     {cat.label}
                   </SelectItem>
@@ -263,7 +271,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
                 <SelectValue placeholder="Select difficulty (optional)" />
               </SelectTrigger>
               <SelectContent>
-                {difficulties.map(diff => (
+                {difficulties.map((diff) => (
                   <SelectItem key={diff.value} value={diff.value}>
                     {diff.label}
                   </SelectItem>
@@ -278,11 +286,10 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
           <Label htmlFor="tags">Tags</Label>
           <div className="mt-2">
             <div className="flex flex-wrap gap-2 mb-2">
-              {tags.map(tag => (
-                <Badge 
-                  key={tag} 
-                  variant="secondary" 
-                  className="flex items-center space-x-1"
+              {tags.map((tag) => (
+                <Badge
+                  key={tag}
+                  className="flex items-center space-x-1 bg-muted text-muted-foreground border"
                 >
                   <span>{tag}</span>
                   <button
@@ -299,7 +306,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
               <Input
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleTagKeyPress}
+                onKeyDown={handleTagKeyDown}
                 placeholder="Add tags"
               />
               <Button type="button" onClick={addTag} variant="secondary">
@@ -323,17 +330,17 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
 
         {/* Submit */}
         <div className="flex space-x-4">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading || !selectedFile}
             className="flex-1"
           >
             {isLoading ? "Uploading..." : "Upload Resource"}
           </Button>
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="secondary"
-            onClick={() => router.push('/library')}
+            onClick={() => router.push("/library")}
           >
             Cancel
           </Button>

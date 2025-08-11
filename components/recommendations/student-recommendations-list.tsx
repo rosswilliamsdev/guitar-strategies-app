@@ -35,7 +35,6 @@ interface StudentRecommendation {
   category: string;
   price?: string;
   priority: number;
-  isArchived: boolean;
   createdAt: string;
 }
 

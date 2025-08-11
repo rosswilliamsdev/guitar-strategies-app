@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 const features = [
   {
     title: 'Lesson Management',
-    description: 'Easily log and track lessons with detailed notes, homework assignments, and progress tracking.',
+    description: 'Easily create and track lessons with detailed notes, homework assignments, and progress tracking.',
     icon: '📚'
   },
   {

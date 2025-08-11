@@ -41,15 +41,19 @@ interface StatCardProps {
   color?: string;
 }
 
-function StatCard({ title, value, description, trend, color = "text-primary" }: StatCardProps) {
+function StatCard({
+  title,
+  value,
+  description,
+  trend,
+  color = "text-primary",
+}: StatCardProps) {
   return (
     <Card className="p-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>
-          <h3 className={`text-2xl font-semibold mt-1 ${color}`}>
-            {value}
-          </h3>
+          <h3 className={`text-2xl font-semibold mt-1 ${color}`}>{value}</h3>
           {description && (
             <p className="text-xs text-muted-foreground mt-1">{description}</p>
           )}
@@ -69,11 +73,11 @@ function StatCard({ title, value, description, trend, color = "text-primary" }: 
   );
 }
 
-export function TeacherDashboard({ 
-  teacherId, 
-  stats, 
+export function TeacherDashboard({
+  teacherId,
+  stats,
   recentLessons,
-  teacherProfile 
+  teacherProfile,
 }: TeacherDashboardProps) {
   const dashboardStats = [
     {
@@ -83,7 +87,7 @@ export function TeacherDashboard({
       color: "text-blue-600",
     },
     {
-      title: "This Week", 
+      title: "This Week",
       value: stats.lessonsThisWeek,
       description: "Lessons completed",
       color: "text-green-600",
@@ -105,20 +109,20 @@ export function TeacherDashboard({
   const quickActions = [
     {
       href: "/lessons/new",
-      text: "Log New Lesson",
-      variant: "default" as const,
+      text: "New Lesson",
+      variant: "primary" as const,
       description: "Record a completed lesson",
     },
     {
       href: "/students",
-      text: "View Students", 
+      text: "View Students",
       variant: "secondary" as const,
       description: "Manage your students",
     },
     {
       href: "/library/upload",
       text: "Upload Resource",
-      variant: "secondary" as const, 
+      variant: "secondary" as const,
       description: "Add to your library",
     },
     {
@@ -141,13 +145,6 @@ export function TeacherDashboard({
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {dashboardStats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
-      </div>
-
       {/* Quick Actions & Recent Lessons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
@@ -158,8 +155,8 @@ export function TeacherDashboard({
           <div className="space-y-2">
             {quickActions.map((action, index) => (
               <Link key={index} href={action.href} className="block">
-                <Button 
-                  variant={action.variant} 
+                <Button
+                  variant={action.variant}
                   className="w-full justify-start"
                   size="sm"
                 >
@@ -199,7 +196,7 @@ export function TeacherDashboard({
                     className={`text-xs px-2 py-1 rounded-full ${
                       lesson.status === "COMPLETED"
                         ? "bg-green-50 text-green-700 border border-green-200"
-                        : lesson.status === "SCHEDULED" 
+                        : lesson.status === "SCHEDULED"
                         ? "bg-blue-50 text-blue-700 border border-blue-200"
                         : "bg-gray-50 text-gray-700 border border-gray-200"
                     }`}
@@ -210,9 +207,13 @@ export function TeacherDashboard({
               ))
             ) : (
               <p className="text-muted-foreground text-sm py-4 text-center">
-                No recent lessons found.<br />
-                <Link href="/lessons/new" className="text-primary hover:underline">
-                  Log your first lesson
+                No recent lessons found.
+                <br />
+                <Link
+                  href="/lessons/new"
+                  className="text-primary hover:underline"
+                >
+                  Create your first lesson
                 </Link>
               </p>
             )}
@@ -220,68 +221,11 @@ export function TeacherDashboard({
         </Card>
       </div>
 
-      {/* Teaching Insights & Profile */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Teaching Insights */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Teaching Insights</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Total Lessons</span>
-              <span className="font-semibold">{stats.totalLessons}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Average Rating</span>
-              <span className="font-semibold">
-                {stats.avgRating ? `${stats.avgRating.toFixed(1)}/5` : "No ratings yet"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Lessons per Student</span>
-              <span className="font-semibold">
-                {stats.activeStudents > 0 
-                  ? Math.round(stats.totalLessons / stats.activeStudents)
-                  : 0}
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Profile Summary */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Profile Summary</h3>
-          <div className="space-y-3">
-            {teacherProfile?.hourlyRate && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Hourly Rate</span>
-                <span className="font-semibold">
-                  ${(teacherProfile.hourlyRate / 100).toFixed(2)}/hr
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Calendly Status</span>
-              <span className={`text-sm ${
-                teacherProfile?.calendlyUrl ? "text-green-600" : "text-amber-600"
-              }`}>
-                {teacherProfile?.calendlyUrl ? "Connected" : "Not set up"}
-              </span>
-            </div>
-            {!teacherProfile?.calendlyUrl && (
-              <Link href="/settings/calendly" className="block">
-                <Button size="sm" variant="secondary" className="w-full">
-                  Set up Calendly
-                </Button>
-              </Link>
-            )}
-            {teacherProfile?.bio && (
-              <div className="pt-2">
-                <p className="text-sm text-muted-foreground">Bio</p>
-                <p className="text-sm mt-1 line-clamp-2">{teacherProfile.bio}</p>
-              </div>
-            )}
-          </div>
-        </Card>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {dashboardStats.map((stat, index) => (
+          <StatCard key={index} {...stat} />
+        ))}
       </div>
     </div>
   );

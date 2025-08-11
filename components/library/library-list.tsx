@@ -16,8 +16,6 @@ import {
   Download, 
   FileText, 
   Music, 
-  Video, 
-  Headphones, 
   BookOpen, 
   Target,
   Search,
@@ -46,20 +44,30 @@ interface LibraryListProps {
 }
 
 const categoryConfig = {
+  TABLATURE: { 
+    label: "Tablature", 
+    icon: FileText, 
+    color: "bg-green-50 text-green-700 border-green-200" 
+  },
   SHEET_MUSIC: { 
     label: "Sheet Music", 
     icon: Music, 
     color: "bg-blue-50 text-blue-700 border-blue-200" 
   },
-  TAB: { 
-    label: "Guitar Tabs", 
-    icon: FileText, 
-    color: "bg-green-50 text-green-700 border-green-200" 
-  },
   CHORD_CHARTS: { 
     label: "Chord Charts", 
     icon: Target, 
     color: "bg-purple-50 text-purple-700 border-purple-200" 
+  },
+  SCALES: { 
+    label: "Scales", 
+    icon: Music, 
+    color: "bg-cyan-50 text-cyan-700 border-cyan-200" 
+  },
+  ETUDES: { 
+    label: "Etudes", 
+    icon: BookOpen, 
+    color: "bg-teal-50 text-teal-700 border-teal-200" 
   },
   EXERCISES: { 
     label: "Exercises", 
@@ -70,16 +78,6 @@ const categoryConfig = {
     label: "Music Theory", 
     icon: BookOpen, 
     color: "bg-indigo-50 text-indigo-700 border-indigo-200" 
-  },
-  AUDIO: { 
-    label: "Audio Files", 
-    icon: Headphones, 
-    color: "bg-pink-50 text-pink-700 border-pink-200" 
-  },
-  VIDEO: { 
-    label: "Video Files", 
-    icon: Video, 
-    color: "bg-red-50 text-red-700 border-red-200" 
   },
   OTHER: { 
     label: "Other", 
@@ -251,7 +249,6 @@ export function LibraryList({ items, teacherId }: LibraryListProps) {
                         
                         <div className="flex flex-wrap items-center gap-2 mt-3">
                           <Badge 
-                            variant="secondary" 
                             className={categoryInfo.color}
                           >
                             {categoryInfo.label}
@@ -259,7 +256,6 @@ export function LibraryList({ items, teacherId }: LibraryListProps) {
                           
                           {item.difficulty && (
                             <Badge 
-                              variant="secondary"
                               className={difficultyColors[item.difficulty as keyof typeof difficultyColors]}
                             >
                               {item.difficulty.toLowerCase()}
@@ -267,7 +263,7 @@ export function LibraryList({ items, teacherId }: LibraryListProps) {
                           )}
                           
                           {item.tags.map(tag => (
-                            <Badge key={tag} variant="outline" className="text-xs">
+                            <Badge key={tag} className="text-xs bg-background border text-foreground">
                               {tag}
                             </Badge>
                           ))}

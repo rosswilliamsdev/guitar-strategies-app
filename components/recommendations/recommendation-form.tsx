@@ -142,12 +142,12 @@ export function RecommendationForm({
 
         {/* Title */}
         <div>
-          <Label htmlFor="title">Recommendation Title *</Label>
+          <Label htmlFor="title">Title *</Label>
           <Input
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g., Fender Player Stratocaster"
+            placeholder="e.g., Fender Stratocaster"
             className="mt-2"
             required
           />
@@ -232,7 +232,7 @@ export function RecommendationForm({
             id="price"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            placeholder="e.g., $299, Free, $50-100"
+            placeholder="e.g. Free, $50-100, $299"
             className="mt-2"
           />
           <p className="text-xs text-muted-foreground mt-1">
