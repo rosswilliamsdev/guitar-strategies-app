@@ -6,14 +6,6 @@ import Link from "next/link";
 
 interface StudentDashboardProps {
   studentId: string;
-  stats: {
-    totalLessons: number;
-    lessonsThisMonth: number;
-    practiceStreak: number;
-    skillLevel: string;
-    avgLessonRating: number | null;
-    completedLessons: number;
-  };
   recentLessons: Array<{
     id: string;
     date: string;
@@ -36,62 +28,12 @@ interface StudentDashboardProps {
   }>;
 }
 
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  description?: string;
-  color?: string;
-  trend?: {
-    value: number;
-    isPositive: boolean;
-  };
-}
-
-function StatCard({ title, value, description, color = "text-primary", trend }: StatCardProps) {
-  return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">{title}</p>
-          <h3 className={`text-2xl font-semibold mt-1 ${color}`}>
-            {value}
-          </h3>
-          {description && (
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          )}
-        </div>
-        {trend && (
-          <div
-            className={`text-xs ${
-              trend.isPositive ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {trend.isPositive ? "+" : ""}
-            {trend.value}%
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-}
-
 export function StudentDashboard({ 
   studentId, 
-  stats, 
   recentLessons = [],
   studentProfile,
   upcomingAssignments = [] 
 }: StudentDashboardProps) {
-  // Provide default values if data is missing
-  const safeStats = stats || {
-    totalLessons: 0,
-    lessonsThisMonth: 0,
-    practiceStreak: 0,
-    skillLevel: 'Beginner',
-    avgLessonRating: null,
-    completedLessons: 0,
-  };
-
   const safeStudentProfile = studentProfile || {
     teacherName: 'Unknown Teacher',
     teacherEmail: 'unknown@guitarstrategies.com',
@@ -99,38 +41,12 @@ export function StudentDashboard({
     instrument: 'guitar',
     skillLevel: 'BEGINNER',
   };
-  const dashboardStats = [
-    {
-      title: "Total Lessons",
-      value: safeStats.totalLessons,
-      description: "Completed lessons",
-      color: "text-blue-600",
-    },
-    {
-      title: "This Month", 
-      value: safeStats.lessonsThisMonth,
-      description: "Lessons completed",
-      color: "text-green-600",
-    },
-    {
-      title: "Practice Streak",
-      value: `${safeStats.practiceStreak} days`,
-      description: "Keep it up!",
-      color: "text-orange-600",
-    },
-    {
-      title: "Skill Level",
-      value: safeStats.skillLevel,
-      description: "Current level",
-      color: "text-purple-600",
-    },
-  ];
 
   const quickActions = [
     {
       href: `/teacher/${safeStudentProfile.teacherEmail.replace('@guitarstrategies.com', '')}`,
       text: "Book Lesson",
-      variant: "default" as const,
+      variant: "primary" as const,
       description: "Schedule with your teacher",
     },
     {
@@ -169,12 +85,6 @@ export function StudentDashboard({
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {dashboardStats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
-      </div>
 
       {/* Quick Actions & Recent Lessons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -249,20 +159,10 @@ export function StudentDashboard({
 
       {/* Learning Progress & Assignments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Learning Progress */}
+        {/* Learning Profile */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Learning Progress</h3>
+          <h3 className="text-lg font-semibold mb-4">Your Learning Profile</h3>
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Lessons Completed</span>
-              <span className="font-semibold">{safeStats.completedLessons}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Average Rating</span>
-              <span className="font-semibold">
-                {safeStats.avgLessonRating ? `${safeStats.avgLessonRating.toFixed(1)}/5` : "Not rated yet"}
-              </span>
-            </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Instrument</span>
               <span className="font-semibold capitalize">{safeStudentProfile.instrument}</span>
@@ -272,6 +172,13 @@ export function StudentDashboard({
               <span className="font-semibold capitalize">
                 {safeStudentProfile.skillLevel.toLowerCase()}
               </span>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border">
+              <Link href="/settings">
+                <Button variant="secondary" size="sm" className="w-full">
+                  Update Profile
+                </Button>
+              </Link>
             </div>
           </div>
         </Card>

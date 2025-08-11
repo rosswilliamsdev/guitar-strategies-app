@@ -151,11 +151,44 @@ model Lesson {
   // Relations
   teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  attachments LessonAttachment[]
+  links LessonLink[]
 
   @@index([teacherId, date])
   @@index([studentId, date])
   @@index([status])
   @@index([date])
+}
+
+model LessonAttachment {
+  id          String @id @default(cuid())
+  lessonId    String
+  fileName    String
+  originalName String
+  fileSize    Int
+  mimeType    String
+  fileUrl     String
+  uploadedAt  DateTime @default(now())
+  
+  // Relations
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  @@index([lessonId])
+}
+
+model LessonLink {
+  id          String @id @default(cuid())
+  lessonId    String
+  title       String
+  url         String
+  description String?
+  linkType    LinkType @default(WEBSITE)
+  createdAt   DateTime @default(now())
+  
+  // Relations  
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  @@index([lessonId])
 }
 
 model LibraryItem {
@@ -299,5 +332,13 @@ enum LibraryCategory {
   THEORY
   AUDIO
   VIDEO
+  OTHER
+}
+
+enum LinkType {
+  WEBSITE
+  YOUTUBE
+  VIMEO
+  SPOTIFY
   OTHER
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/db';
 
 interface RouteContext {
   params: {
@@ -14,25 +14,60 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const session = await getServerSession(authOptions);
     
     if (!session) {
-      return new NextResponse('Unauthorized', { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // TODO: Fetch lesson by ID with access control
-    // const lesson = await db.lesson.findFirst({
-    //   where: {
-    //     id: params.id,
-    //     // Access control based on user role
-    //   },
-    //   include: {
-    //     student: true,
-    //     teacher: true,
-    //   },
-    // });
+    // Build access control conditions based on user role
+    let whereCondition: any = { id: params.id };
+    
+    if (session.user.role === 'TEACHER') {
+      // Teachers can access lessons they taught
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id }
+      });
+      
+      if (!teacherProfile) {
+        return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+      }
+      
+      whereCondition.teacherId = teacherProfile.id;
+    } else if (session.user.role === 'STUDENT') {
+      // Students can access their own lessons
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id }
+      });
+      
+      if (!studentProfile) {
+        return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
+      }
+      
+      whereCondition.studentId = studentProfile.id;
+    } else {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
 
-    return NextResponse.json({ lesson: null });
+    const lesson = await prisma.lesson.findFirst({
+      where: whereCondition,
+      include: {
+        student: {
+          include: { user: true }
+        },
+        teacher: {
+          include: { user: true }
+        },
+        attachments: true,
+        links: true,
+      },
+    });
+
+    if (!lesson) {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ lesson });
   } catch (error) {
     console.error('Error fetching lesson:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 

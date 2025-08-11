@@ -215,33 +215,6 @@ export default async function RecommendationsPage() {
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Total Recommendations</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.length}
-            </p>
-          </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">Essential Items</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.filter(r => r.priority === 5).length}
-            </p>
-          </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">High Priority</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.filter(r => r.priority >= 4).length}
-            </p>
-          </Card>
-          <Card className="p-6">
-            <h3 className="text-sm font-medium text-muted-foreground">With Links</h3>
-            <p className="text-2xl font-semibold text-foreground mt-1">
-              {recommendations.filter(r => r.link).length}
-            </p>
-          </Card>
-        </div>
 
         {/* Student Recommendations List */}
         <StudentRecommendationsList items={recommendations} teacherName={teacherName} />
