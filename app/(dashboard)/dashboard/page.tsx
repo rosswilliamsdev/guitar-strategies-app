@@ -160,7 +160,6 @@ async function getStudentData(userId: string) {
         totalLessons: studentProfile.lessons.length,
         lessonsThisMonth,
         practiceStreak: 7, // TODO: Calculate based on actual practice data
-        skillLevel: studentProfile.skill_level,
         avgLessonRating,
         completedLessons,
       },
@@ -170,7 +169,6 @@ async function getStudentData(userId: string) {
         teacherEmail: studentProfile.teacher.user.email,
         goals: studentProfile.goals,
         instrument: studentProfile.instrument,
-        skillLevel: studentProfile.skill_level,
       },
       upcomingAssignments,
     };

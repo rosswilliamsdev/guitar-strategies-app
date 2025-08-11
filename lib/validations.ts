@@ -7,7 +7,6 @@ import {
   LessonStatus,
   RecommendationCategory,
   PaymentStatus,
-  SkillLevel,
   LibraryCategory,
 } from "@prisma/client";
 
@@ -38,7 +37,6 @@ export const registerSchema = z
     calendlyUrl: z.string().url("Please enter a valid Calendly URL").optional(),
     // Student-specific fields
     teacherId: z.string().optional(),
-    skillLevel: z.nativeEnum(SkillLevel).optional(),
     goals: z.string().optional(),
     phoneNumber: z.string().optional(),
     parentEmail: z.string().email().optional(),
@@ -85,7 +83,6 @@ export const teacherProfileSchema = z.object({
 export const studentProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  skillLevel: z.nativeEnum(SkillLevel),
   goals: z
     .string()
     .max(500, "Goals must be less than 500 characters")
@@ -102,7 +99,11 @@ export const studentProfileSchema = z.object({
 // ========================================
 export const createLessonSchema = z.object({
   studentId: z.string().min(1, "Student is required"),
-  date: z.string().datetime().or(z.date()).transform((val) => new Date(val)),
+  date: z
+    .string()
+    .datetime()
+    .or(z.date())
+    .transform((val) => new Date(val)),
   duration: z
     .number()
     .min(15, "Lesson must be at least 15 minutes")
@@ -126,7 +127,7 @@ export const createLessonSchema = z.object({
     .string()
     .max(300, "Next steps must be less than 300 characters")
     .optional(),
-  status: z.nativeEnum(LessonStatus).default('COMPLETED'),
+  status: z.nativeEnum(LessonStatus).default("COMPLETED"),
   studentRating: z.number().min(1).max(5).optional(),
   teacherRating: z.number().min(1).max(5).optional(),
 });
@@ -162,7 +163,6 @@ export const createLibraryItemSchema = z.object({
     .max(500, "Description must be less than 500 characters")
     .optional(),
   category: z.nativeEnum(LibraryCategory),
-  difficulty: z.nativeEnum(SkillLevel).optional(),
   tags: z.array(z.string()).optional(),
   isPublic: z.boolean().default(false),
 });
@@ -175,7 +175,6 @@ export const updateLibraryItemSchema = createLibraryItemSchema
 
 export const libraryFiltersSchema = z.object({
   category: z.nativeEnum(LibraryCategory).optional(),
-  difficulty: z.nativeEnum(SkillLevel).optional(),
   isPublic: z.boolean().optional(),
   teacherId: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -273,14 +272,17 @@ export const searchSchema = z.object({
 // Calendly Integration Schemas
 // ========================================
 export const calendlySettingsSchema = z.object({
-  url: z.string().min(1, "Calendly URL is required").refine((val) => {
-    try {
-      const url = new URL(val);
-      return url.hostname.includes('calendly.com');
-    } catch {
-      return false;
-    }
-  }, "Please enter a valid Calendly URL"),
+  url: z
+    .string()
+    .min(1, "Calendly URL is required")
+    .refine((val) => {
+      try {
+        const url = new URL(val);
+        return url.hostname.includes("calendly.com");
+      } catch {
+        return false;
+      }
+    }, "Please enter a valid Calendly URL"),
   eventType: z.string().min(1, "Event type is required"),
   duration: z.number().min(15).max(180),
   timezone: z.string().min(1, "Timezone is required"),

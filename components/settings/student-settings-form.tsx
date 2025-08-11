@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle, Save, Key, User, GraduationCap, Phone, Mail } from "lucide-react";
 import { studentProfileSchema, passwordChangeSchema } from "@/lib/validations";
-import { SkillLevel } from "@prisma/client";
 
 interface StudentSettingsFormProps {
   user: {
@@ -29,7 +28,6 @@ interface StudentSettingsFormProps {
   };
   studentProfile: {
     id: string;
-    skillLevel: SkillLevel;
     goals?: string;
     phoneNumber?: string;
     parentEmail?: string;
@@ -42,12 +40,6 @@ interface StudentSettingsFormProps {
   };
 }
 
-const skillLevelOptions = [
-  { value: 'BEGINNER', label: 'Beginner', description: 'Just starting out' },
-  { value: 'INTERMEDIATE', label: 'Intermediate', description: 'Some experience' },
-  { value: 'ADVANCED', label: 'Advanced', description: 'Experienced player' },
-  { value: 'PROFESSIONAL', label: 'Professional', description: 'Expert level' },
-];
 
 export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFormProps) {
   const router = useRouter();
@@ -59,7 +51,6 @@ export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFor
   // Profile form state
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
-  const [skillLevel, setSkillLevel] = useState(studentProfile.skillLevel);
   const [goals, setGoals] = useState(studentProfile.goals || "");
   const [phoneNumber, setPhoneNumber] = useState(studentProfile.phoneNumber || "");
   const [parentEmail, setParentEmail] = useState(studentProfile.parentEmail || "");
@@ -80,7 +71,6 @@ export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFor
       const formData = {
         name,
         email,
-        skillLevel,
         goals: goals || undefined,
         phoneNumber: phoneNumber || undefined,
         parentEmail: parentEmail || undefined,
@@ -256,24 +246,6 @@ export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFor
 
               {/* Student-Specific Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="skillLevel">Skill Level *</Label>
-                  <Select value={skillLevel} onValueChange={(value) => setSkillLevel(value as SkillLevel)}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Select your skill level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {skillLevelOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          <div className="flex flex-col">
-                            <span>{option.label}</span>
-                            <span className="text-xs text-muted-foreground">{option.description}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div>
                   <Label htmlFor="phoneNumber">Phone Number</Label>
                   <Input

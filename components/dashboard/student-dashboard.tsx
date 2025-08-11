@@ -19,7 +19,6 @@ interface StudentDashboardProps {
     teacherEmail: string;
     goals?: string;
     instrument: string;
-    skillLevel: string;
   };
   upcomingAssignments: Array<{
     id: string;
@@ -39,7 +38,6 @@ export function StudentDashboard({
     teacherEmail: 'unknown@guitarstrategies.com',
     goals: undefined,
     instrument: 'guitar',
-    skillLevel: 'BEGINNER',
   };
 
   const quickActions = [
@@ -166,12 +164,6 @@ export function StudentDashboard({
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Instrument</span>
               <span className="font-semibold capitalize">{safeStudentProfile.instrument}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Current Level</span>
-              <span className="font-semibold capitalize">
-                {safeStudentProfile.skillLevel.toLowerCase()}
-              </span>
             </div>
             <div className="mt-4 pt-4 border-t border-border">
               <Link href="/settings">

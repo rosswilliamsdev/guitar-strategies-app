@@ -45,7 +45,6 @@ export async function PUT(request: NextRequest) {
       await tx.studentProfile.update({
         where: { userId: session.user.id },
         data: {
-          skillLevel: validatedData.skillLevel,
           goals: validatedData.goals,
           phoneNumber: validatedData.phoneNumber,
           parentEmail: validatedData.parentEmail,

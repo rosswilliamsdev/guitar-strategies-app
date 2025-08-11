@@ -105,7 +105,6 @@ async function main() {
           studentProfile: {
             create: {
               teacherId: teacherUser.teacherProfile!.id,
-              skill_level: 'INTERMEDIATE',
               goals: 'Learn to play acoustic guitar and improve fingerpicking technique. Interested in folk and indie music styles.',
               instrument: 'guitar',
               phoneNumber: '+1-555-0123',

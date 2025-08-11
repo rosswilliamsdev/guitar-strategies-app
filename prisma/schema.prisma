@@ -104,7 +104,6 @@ model StudentProfile {
   joinedAt  DateTime @default(now())
   
   // Student preferences
-  skill_level       SkillLevel @default(BEGINNER)
   goals             String?    @db.Text
   instrument        String     @default("guitar")
   phoneNumber       String?

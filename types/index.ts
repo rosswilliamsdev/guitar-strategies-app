@@ -98,6 +98,56 @@ export interface UpdateLessonData extends Partial<CreateLessonData> {
 }
 
 // ========================================
+// Payment Types
+// ========================================
+export type Payment = PrismaPayment & {
+  teacher: TeacherProfile;
+  student: StudentProfile;
+};
+
+export interface PaymentCalculation {
+  teacherId: string;
+  studentId: string;
+  month: string; // "2024-01" format
+  lessonsCount: number;
+  hourlyRate: number;
+  totalAmount: number; // in cents
+  currency: string;
+}
+
+export interface CreatePaymentData {
+  teacherId: string;
+  studentId: string;
+  month: string;
+  amount: number; // in cents
+  lessonsIncluded: number;
+  description?: string;
+}
+
+export interface TeacherPaymentSummary {
+  month: string;
+  totalEarnings: number; // in cents
+  paymentCount: number;
+  pendingPayments: number;
+  completedPayments: number;
+  students: Array<{
+    studentId: string;
+    studentName: string;
+    amount: number;
+    lessonsCount: number;
+    status: PaymentStatus;
+  }>;
+}
+
+export interface StripeConnectData {
+  accountId: string;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  onboardingComplete: boolean;
+}
+
+// ========================================
 // Library Types
 // ========================================
 export type LibraryItem = PrismaLibraryItem & {

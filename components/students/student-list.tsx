@@ -7,7 +7,6 @@ import Link from 'next/link';
 
 interface Student {
   id: string;
-  skill_level: string;
   instrument: string;
   user: {
     id: string;
@@ -68,7 +67,7 @@ export function StudentList({ teacherId }: StudentListProps) {
             <h3 className="font-medium text-lg mb-2">{student.user.name}</h3>
             <p className="text-sm text-muted-foreground mb-2">{student.user.email}</p>
             <p className="text-xs text-muted-foreground mb-4">
-              {student.skill_level} • {student.instrument}
+              {student.instrument}
             </p>
             
             <div className="space-y-2">

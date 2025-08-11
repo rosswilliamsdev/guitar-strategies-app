@@ -7,11 +7,11 @@ This changelog tracks all major changes, features, and fixes made during develop
 ## [Current Version] - 2024-12-XX
 
 ### 🎯 **Latest Session Summary (Aug 11, 2025)**
-- **LESSON EDITING**: Complete lesson edit functionality with populated forms and data persistence
-- **ATTACHMENT SYSTEM**: Fixed file attachment saving with development fallback for missing blob storage
-- **LINK MANAGEMENT**: Resolved duplicate links issue when editing lessons with atomic operations
-- **UI OPTIMIZATION**: Removed dashboard header, made recent lesson cards clickable, moved lesson overview to bottom
-- **BUG FIXES**: Fixed lesson save errors, API endpoints, and form validation issues
+- **PAYMENT SYSTEM**: Complete teacher payment dashboard with Stripe Connect integration and earnings tracking
+- **CALENDLY INTEGRATION**: Full scheduling system with embedded calendly widgets and URL validation
+- **MODEL CLEANUP**: Removed skill_level field from student model across database and all components
+- **TIMEZONE ENHANCEMENT**: Professional timezone selector with grouped options in teacher settings
+- **BUILD FIXES**: Resolved Next.js build issues and corrupted .next directory problems
 
 ### 🎯 **Previous Session Summary (Aug 10, 2025)**
 - Improved placeholder text conciseness across all forms
