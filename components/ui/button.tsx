@@ -2,7 +2,8 @@
 // FILE: components/ui/button.tsx
 // ========================================
 import React from "react";
-import { cn, getButtonVariant } from "@/lib/design";
+import { cn } from "@/lib/utils";
+import { getButtonVariant } from "@/lib/design";
 import type { Role } from "@prisma/client";
 
 export interface ButtonProps

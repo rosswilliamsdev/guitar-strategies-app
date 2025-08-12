@@ -4,7 +4,7 @@
 "use client";
 
 import React from "react";
-import { cn } from "@/lib/design";
+import { cn } from "@/lib/utils";
 
 // Simple toast implementation - can be replaced with react-hot-toast or similar
 export function Toaster() {

@@ -6,10 +6,13 @@ import type {
   Lesson as PrismaLesson,
   LibraryItem as PrismaLibraryItem,
   Recommendation as PrismaRecommendation,
+  Invoice as PrismaInvoice,
+  InvoiceItem as PrismaInvoiceItem,
   Payment as PrismaPayment,
   Role,
   LessonStatus,
   RecommendationCategory,
+  InvoiceStatus,
   PaymentStatus,
   SkillLevel,
   LibraryCategory,
@@ -22,6 +25,7 @@ export type {
   Role,
   LessonStatus,
   RecommendationCategory,
+  InvoiceStatus,
   PaymentStatus,
   SkillLevel,
   LibraryCategory,
@@ -98,53 +102,40 @@ export interface UpdateLessonData extends Partial<CreateLessonData> {
 }
 
 // ========================================
-// Payment Types
+// Invoice Types
 // ========================================
-export type Payment = PrismaPayment & {
+export type Invoice = PrismaInvoice & {
   teacher: TeacherProfile;
-  student: StudentProfile;
+  student: StudentProfile & { user: User };
+  items: InvoiceItem[];
 };
 
-export interface PaymentCalculation {
-  teacherId: string;
-  studentId: string;
-  month: string; // "2024-01" format
-  lessonsCount: number;
-  hourlyRate: number;
-  totalAmount: number; // in cents
-  currency: string;
-}
+export type InvoiceItem = PrismaInvoiceItem & {
+  lesson?: Lesson;
+};
 
-export interface CreatePaymentData {
-  teacherId: string;
-  studentId: string;
-  month: string;
-  amount: number; // in cents
-  lessonsIncluded: number;
-  description?: string;
-}
-
-export interface TeacherPaymentSummary {
+export interface InvoiceSummary {
   month: string;
   totalEarnings: number; // in cents
-  paymentCount: number;
-  pendingPayments: number;
-  completedPayments: number;
+  invoiceCount: number;
+  pendingInvoices: number;
+  paidInvoices: number;
+  overdueInvoices: number;
   students: Array<{
     studentId: string;
     studentName: string;
     amount: number;
     lessonsCount: number;
-    status: PaymentStatus;
+    status: InvoiceStatus;
+    invoiceId: string;
+    dueDate: Date;
   }>;
 }
 
-export interface StripeConnectData {
-  accountId: string;
-  chargesEnabled: boolean;
-  payoutsEnabled: boolean;
-  detailsSubmitted: boolean;
-  onboardingComplete: boolean;
+export interface PaymentMethodInfo {
+  venmoHandle?: string;
+  paypalEmail?: string;
+  zelleEmail?: string;
 }
 
 // ========================================

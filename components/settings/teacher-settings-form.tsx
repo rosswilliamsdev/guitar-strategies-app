@@ -28,6 +28,9 @@ interface TeacherSettingsFormProps {
     calendlyUrl?: string;
     timezone?: string;
     phoneNumber?: string;
+    venmoHandle?: string;
+    paypalEmail?: string;
+    zelleEmail?: string;
   };
 }
 
@@ -46,6 +49,11 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   const [calendlyUrl, setCalendlyUrl] = useState(teacherProfile.calendlyUrl || "");
   const [timezone, setTimezone] = useState(teacherProfile.timezone || getCurrentTimezone());
   const [phoneNumber, setPhoneNumber] = useState(teacherProfile.phoneNumber || "");
+  
+  // Payment method fields
+  const [venmoHandle, setVenmoHandle] = useState(teacherProfile.venmoHandle || "");
+  const [paypalEmail, setPaypalEmail] = useState(teacherProfile.paypalEmail || "");
+  const [zelleEmail, setZelleEmail] = useState(teacherProfile.zelleEmail || "");
 
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -75,6 +83,9 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
         calendlyUrl: calendlyUrl || undefined,
         timezone: timezone || undefined,
         phoneNumber: phoneNumber || undefined,
+        venmoHandle: venmoHandle || undefined,
+        paypalEmail: paypalEmail || undefined,
+        zelleEmail: zelleEmail || undefined,
       };
 
       const validatedData = teacherProfileSchema.parse(formData);
@@ -396,6 +407,83 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
                   Students will use this link to book lessons with you directly through Calendly
                 </p>
               </div>
+            </div>
+
+            <Separator />
+
+            {/* Payment Methods */}
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <DollarSign className="h-6 w-6 text-primary" />
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Payment Methods
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Add your payment info to include on invoices
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="venmoHandle">Venmo Username</Label>
+                  <div className="relative mt-2">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                    <Input
+                      id="venmoHandle"
+                      value={venmoHandle}
+                      onChange={(e) => setVenmoHandle(e.target.value)}
+                      placeholder="yourname"
+                      className="pl-8"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your Venmo @username
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="paypalEmail">PayPal Email</Label>
+                  <Input
+                    id="paypalEmail"
+                    type="email"
+                    value={paypalEmail}
+                    onChange={(e) => setPaypalEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Email linked to PayPal account
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="zelleEmail">Zelle Email/Phone</Label>
+                  <Input
+                    id="zelleEmail"
+                    value={zelleEmail}
+                    onChange={(e) => setZelleEmail(e.target.value)}
+                    placeholder="email@example.com or phone"
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Email or phone number for Zelle
+                  </p>
+                </div>
+              </div>
+
+              {(!venmoHandle && !paypalEmail && !zelleEmail) && (
+                <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <h4 className="font-medium text-orange-900 mb-2">
+                    Add Payment Methods
+                  </h4>
+                  <p className="text-sm text-orange-800">
+                    Add at least one payment method so students know how to pay you. 
+                    These will be automatically included on your invoices.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Submit */}

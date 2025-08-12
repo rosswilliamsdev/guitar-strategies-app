@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
-import { TeacherPaymentsDashboard } from '@/components/payments/teacher-payments-dashboard';
+import { InvoiceDashboard } from '@/components/payments/invoice-dashboard';
 
 export default async function PaymentsPage() {
   const session = await getServerSession(authOptions);
@@ -15,5 +15,5 @@ export default async function PaymentsPage() {
     redirect('/dashboard');
   }
 
-  return <TeacherPaymentsDashboard />;
+  return <InvoiceDashboard />;
 }

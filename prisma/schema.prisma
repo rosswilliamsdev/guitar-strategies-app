@@ -72,10 +72,14 @@ model TeacherProfile {
   id              String  @id @default(cuid())
   userId          String  @unique
   calendlyUrl     String? // Teacher's Calendly booking link
-  stripeAccountId String? // For Connect payments
   bio             String? @db.Text
   hourlyRate      Int?    // stored in cents
   isActive        Boolean @default(true)
+  
+  // Payment methods for invoice generation
+  venmoHandle     String? // @username
+  paypalEmail     String? // email@example.com
+  zelleEmail      String? // email@example.com or phone number
   
   // Profile settings
   timezone        String? @default("America/New_York")
@@ -91,7 +95,7 @@ model TeacherProfile {
   lessons         Lesson[]
   recommendations Recommendation[]
   libraryItems    LibraryItem[]
-  payments        Payment[]        @relation("TeacherPayments")
+  invoices        Invoice[]
 
   @@index([userId])
   @@index([isActive])
@@ -118,7 +122,7 @@ model StudentProfile {
   user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   teacher  TeacherProfile @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: Cascade)
   lessons  Lesson[]
-  payments Payment[]      @relation("StudentPayments")
+  invoices Invoice[]
 
   @@index([userId])
   @@index([teacherId])
@@ -152,6 +156,7 @@ model Lesson {
   student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   attachments LessonAttachment[]
   links LessonLink[]
+  invoiceItems InvoiceItem[]
 
   @@index([teacherId, date])
   @@index([studentId, date])
@@ -239,31 +244,60 @@ model Recommendation {
   @@index([category])
 }
 
-model Payment {
-  id                    String        @id @default(cuid())
-  teacherId             String
-  studentId             String
-  amount                Int           // cents
-  month                 String        // "2024-01" format
-  stripePaymentIntentId String        @unique
-  status                PaymentStatus @default(PENDING)
+model Invoice {
+  id        String        @id @default(cuid())
+  teacherId String
+  studentId String
   
-  // Payment metadata
-  currency              String        @default("usd")
-  description           String?
-  lessonsIncluded       Int           @default(0) // Number of lessons this payment covers
+  // Invoice details
+  invoiceNumber String        // INV-2025-001, etc.
+  month         String        // "2025-01" format
+  dueDate       DateTime
+  status        InvoiceStatus @default(PENDING)
+  
+  // Totals (calculated from items)
+  subtotal      Int           // cents
+  total         Int           // cents (same as subtotal for now, room for taxes/fees)
+  
+  // Payment tracking
+  paidAt        DateTime?
+  paymentMethod String?       // "Venmo", "PayPal", "Zelle", "Cash", "Check"
+  paymentNotes  String?       // Reference number, etc.
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  teacher TeacherProfile @relation("TeacherPayments", fields: [teacherId], references: [id], onDelete: Cascade)
-  student StudentProfile @relation("StudentPayments", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentId], references: [id])
+  items   InvoiceItem[]
 
   @@index([teacherId, month])
   @@index([studentId, month])
   @@index([status])
-  @@index([stripePaymentIntentId])
+  @@index([dueDate])
+}
+
+model InvoiceItem {
+  id          String @id @default(cuid())
+  invoiceId   String
+  
+  // Item details
+  description String // "Guitar Lesson - Jan 15, 2025"
+  quantity    Int    @default(1)
+  rate        Int    // cents (hourly rate)
+  amount      Int    // cents (quantity * rate)
+  lessonDate  DateTime?
+  lessonId    String? // Optional reference to actual lesson
+  
+  createdAt DateTime @default(now())
+
+  // Relations
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  lesson  Lesson? @relation(fields: [lessonId], references: [id])
+
+  @@index([invoiceId])
+  @@index([lessonId])
 }
 
 // System models for admin functionality
@@ -306,11 +340,12 @@ enum RecommendationCategory {
   OTHER
 }
 
-enum PaymentStatus {
+enum InvoiceStatus {
   PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
+  SENT
+  VIEWED
+  PAID
+  OVERDUE
   CANCELLED
 }
 

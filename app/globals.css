@@ -44,3 +44,86 @@
 [data-active="true"] {
   @apply bg-accent text-accent-foreground;
 }
+
+/* Print Styles */
+@media print {
+  /* Hide all page elements by default */
+  body > * {
+    visibility: hidden;
+  }
+  
+  /* Show only the main content area */
+  main, main * {
+    visibility: visible;
+  }
+  
+  /* Hide sidebar, navigation, and other UI elements */
+  nav,
+  aside,
+  .sidebar,
+  [data-sidebar],
+  header,
+  footer {
+    display: none !important;
+  }
+  
+  /* Position main content to fill page */
+  main {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+  
+  /* Hide action buttons and interactive elements */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Remove shadows and borders for clean printing */
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+  
+  .print\:border-0 {
+    border: none !important;
+  }
+  
+  /* Ensure white background */
+  * {
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Keep specific colors for badges and status indicators */
+  .text-green-600, .text-green-700, .text-green-800, .text-green-900 {
+    color: #059669 !important;
+  }
+  
+  .text-red-600, .text-red-700, .text-red-800, .text-red-900 {
+    color: #dc2626 !important;
+  }
+  
+  .text-orange-600, .text-orange-700, .text-orange-800, .text-orange-900 {
+    color: #ea580c !important;
+  }
+  
+  .bg-green-50, .bg-green-100 {
+    background: #f0fdf4 !important;
+  }
+  
+  .bg-red-50, .bg-red-100 {
+    background: #fef2f2 !important;
+  }
+  
+  .bg-orange-50, .bg-orange-100 {
+    background: #fff7ed !important;
+  }
+  
+  /* Remove page margins */
+  @page {
+    margin: 0.5in;
+  }
+}

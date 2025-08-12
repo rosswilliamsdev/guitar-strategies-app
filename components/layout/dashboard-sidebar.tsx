@@ -29,6 +29,7 @@ const navItems: NavItem[] = [
     roles: ["TEACHER", "STUDENT"],
   },
   { label: "Schedule", href: "/schedule", roles: ["TEACHER"] },
+  { label: "Invoices", href: "/invoices", roles: ["TEACHER"] },
   { label: "Payments", href: "/payments", roles: ["TEACHER"] },
   { label: "Settings", href: "/settings" },
 ];

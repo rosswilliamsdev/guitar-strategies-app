@@ -64,6 +64,20 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.sub!;
         session.user.role = token.role;
+        
+        // Fetch profile information for the session
+        const userWithProfiles = await prisma.user.findUnique({
+          where: { id: token.sub! },
+          include: {
+            teacherProfile: true,
+            studentProfile: true,
+          },
+        });
+        
+        if (userWithProfiles) {
+          session.user.teacherProfile = userWithProfiles.teacherProfile;
+          session.user.studentProfile = userWithProfiles.studentProfile;
+        }
       }
       return session;
     },

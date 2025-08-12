@@ -1,4 +1,4 @@
-import { cn } from "@/lib/design";
+import { cn } from "@/lib/utils";
 
 interface PriorityBadgeProps {
   priority: number;

@@ -6,7 +6,7 @@ import {
   Role,
   LessonStatus,
   RecommendationCategory,
-  PaymentStatus,
+  InvoiceStatus,
   LibraryCategory,
 } from "@prisma/client";
 
@@ -78,6 +78,10 @@ export const teacherProfileSchema = z.object({
   calendlyUrl: z.string().url("Please enter a valid Calendly URL").optional(),
   timezone: z.string().optional(),
   phoneNumber: z.string().optional(),
+  // Payment method fields for invoice generation
+  venmoHandle: z.string().optional(),
+  paypalEmail: z.string().optional().refine(val => !val || val.includes('@'), "Please enter a valid PayPal email"),
+  zelleEmail: z.string().optional(),
 });
 
 export const studentProfileSchema = z.object({
@@ -206,28 +210,37 @@ export const updateRecommendationSchema = createRecommendationSchema
   });
 
 // ========================================
-// Payment Schemas
+// Invoice Schemas
 // ========================================
-export const createPaymentSchema = z.object({
+export const createInvoiceSchema = z.object({
   studentId: z.string().min(1, "Student is required"),
-  amount: z.number().min(1, "Amount must be greater than 0"),
   month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
-  description: z
-    .string()
-    .max(200, "Description must be less than 200 characters")
-    .optional(),
-  lessonsIncluded: z.number().min(0).default(0),
+  dueDate: z.date(),
+  lessons: z.array(z.object({
+    lessonId: z.string(),
+    description: z.string(),
+    rate: z.number().min(0),
+    duration: z.number().min(1), // minutes
+  })),
 });
 
-export const paymentFiltersSchema = z.object({
+export const updateInvoiceSchema = z.object({
+  id: z.string().min(1, "Invoice ID is required"),
+  status: z.nativeEnum(InvoiceStatus).optional(),
+  paymentMethod: z.string().optional(),
+  paymentNotes: z.string().optional(),
+  paidAt: z.date().optional(),
+});
+
+export const invoiceFiltersSchema = z.object({
   teacherId: z.string().optional(),
   studentId: z.string().optional(),
-  status: z.nativeEnum(PaymentStatus).optional(),
+  status: z.nativeEnum(InvoiceStatus).optional(),
   month: z.string().optional(),
-  amountRange: z
+  dateRange: z
     .object({
-      min: z.number().optional(),
-      max: z.number().optional(),
+      from: z.date().optional(),
+      to: z.date().optional(),
     })
     .optional(),
 });
@@ -367,5 +380,6 @@ export type CreateLibraryItemData = z.infer<typeof createLibraryItemSchema>;
 export type CreateRecommendationData = z.infer<
   typeof createRecommendationSchema
 >;
-export type CreatePaymentData = z.infer<typeof createPaymentSchema>;
+export type CreateInvoiceData = z.infer<typeof createInvoiceSchema>;
+export type UpdateInvoiceData = z.infer<typeof updateInvoiceSchema>;
 export type PaginationParams = z.infer<typeof paginationSchema>;

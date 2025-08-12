@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Guitar lesson management platform that integrates with Calendly for scheduling. Teachers use Calendly for booking, then manually log completed lessons in our app to track student progress and handle payments.
+Guitar lesson management platform that integrates with Calendly for scheduling. Teachers use Calendly for booking, then manually log completed lessons in our app to track student progress. The app generates invoices and tracks payments, with teachers collecting payments via Venmo/PayPal/Zelle and marking them as paid.
 
 ## Tech Stack
 
@@ -13,7 +13,7 @@ Guitar lesson management platform that integrates with Calendly for scheduling. 
 - **Authentication**: NextAuth.js v4.24.11 with Prisma Adapter
 - **Rich Text Editor**: Tiptap with React integration
 - **File Storage**: Vercel Blob 1.1.1
-- **Payments**: Stripe 18.4.0
+- **Invoicing**: Simple invoice generation and payment tracking (no external payment processor)
 - **Scheduling**: Calendly integration (external)
 - **Validation**: Zod 4.0.15
 - **Styling Utils**: clsx + tailwind-merge
@@ -129,10 +129,14 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   id: string
   userId: string
   calendlyUrl?: string        // Key integration point
-  stripeAccountId?: string    // For Connect payments
   bio?: string
   hourlyRate?: number         // In cents
   isActive: boolean
+  
+  // Payment methods for invoice generation
+  venmoHandle?: string        // @username
+  paypalEmail?: string        // email@example.com
+  zelleEmail?: string         // email@example.com or phone number
   
   // Profile settings
   timezone?: string           // Default: "America/New_York"
@@ -258,10 +262,7 @@ NEXTAUTH_URL="http://localhost:3000"
 # File Storage (when implementing uploads)
 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_xxxxxxxxxxxxxxxxxxxx"  # ⚠️ NEEDS REAL VALUE
 
-# Payments (when implementing Stripe)
-STRIPE_SECRET_KEY="your_stripe_secret_key_here"              # ⚠️ NEEDS REAL VALUE
-STRIPE_PUBLISHABLE_KEY="your_stripe_publishable_key_here"    # ⚠️ NEEDS REAL VALUE
-STRIPE_WEBHOOK_SECRET="your_stripe_webhook_secret_here"      # ⚠️ NEEDS REAL VALUE
+# No payment processor needed - using simple invoice generation
 
 # Optional integrations
 CALENDLY_ACCESS_TOKEN="your-calendly-api-token"             # Optional for API access
@@ -274,7 +275,8 @@ CALENDLY_ACCESS_TOKEN="your-calendly-api-token"             # Optional for API a
 - **File Structure**: `.env` for core app, `.env.local` for additional services
 - **Development Ready**: Auth and database fully functional
 - **Admin User**: Seeded for development and testing (see below)
-- **Future Services**: Stripe and Vercel Blob tokens needed when implementing those features
+- **Future Services**: Vercel Blob token needed when implementing file storage features
+- **Invoicing**: No payment processor setup required - teachers collect payments directly
 
 ## Development Test Users
 
@@ -313,28 +315,56 @@ openssl rand -base64 32
 # Then update NEXTAUTH_SECRET in .env file
 ```
 
-### Payment Model
+### Invoice Model
 
 ```typescript
 {
   id: string
   teacherId: string
   studentId: string
-  amount: number                    // cents
-  month: string                     // "2024-01" format
-  stripePaymentIntentId: string
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED' | 'CANCELLED'
   
-  // Payment metadata
-  currency: string                  // default: "usd"
-  description?: string
-  lessonsIncluded: number          // Number of lessons this payment covers
+  // Invoice details
+  invoiceNumber: string             // "INV-2025-001" format
+  month: string                     // "2025-01" format
+  dueDate: DateTime
+  status: 'PENDING' | 'SENT' | 'VIEWED' | 'PAID' | 'OVERDUE' | 'CANCELLED'
+  
+  // Totals (calculated from items)
+  subtotal: number                  // cents
+  total: number                     // cents
+  
+  // Payment tracking
+  paidAt?: DateTime
+  paymentMethod?: string            // "Venmo", "PayPal", "Zelle", "Cash", "Check"
+  paymentNotes?: string             // Reference number, etc.
+  
+  items: InvoiceItem[]              // Individual lesson charges
 }
 
-// Payment calculation:
-// Monthly cost = (Number of lessons scheduled in month) × (Teacher's hourly rate)
-// Students pay for scheduled lessons, regardless of attendance
+### InvoiceItem Model
+
+```typescript
+{
+  id: string
+  invoiceId: string
+  
+  // Item details
+  description: string               // "Guitar Lesson - Jan 15, 2025"
+  quantity: number                  // Default: 1
+  rate: number                      // cents (teacher's hourly rate)
+  amount: number                    // cents (quantity × rate)
+  lessonDate?: DateTime
+  lessonId?: string                 // Optional reference to actual lesson
+}
 ```
+
+**Invoice Workflow:**
+1. Teacher completes lessons and marks them in the app
+2. App generates monthly invoices with lesson items
+3. Invoice includes teacher's payment methods (Venmo, PayPal, Zelle)
+4. Teacher sends invoice to student/parent via email
+5. Student pays directly using preferred method
+6. Teacher marks invoice as paid in the app
 
 ### Current Lesson Workflow
 
@@ -415,7 +445,6 @@ Always use Zod schemas from `lib/validations.ts`:
     "prisma": "^6.13.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "stripe": "^18.4.0",
     "tailwind-merge": "^3.3.1",
     "zod": "^4.0.15"
   },
@@ -549,9 +578,28 @@ import { z } from "zod";
    - `/api/settings` - Profile updates
    - Full validation with Zod schemas
 
+### Invoice & Payment System ✅
+8. **Simple Invoice Generation** ✅
+   - Generate monthly invoices based on completed lessons
+   - Include teacher payment methods (Venmo, PayPal, Zelle)
+   - Calculate totals from hourly rate × lesson duration
+   - Professional invoice formatting and numbering
+
+9. **Payment Tracking Dashboard** ✅
+   - Track invoice status (Pending, Sent, Paid, Overdue)
+   - Monthly earnings summaries
+   - Student payment history
+   - Mark payments as received with method and notes
+
+10. **Teacher Payment Methods** ✅
+   - Add Venmo handle, PayPal email, Zelle info in settings
+   - Automatically include payment options on invoices
+   - No complex payment processor setup required
+   - Teachers collect payments directly from students
+
 ## Remaining Features (Future)
 
-1. **Payment Integration** (Stripe Connect for teachers)
+1. **Advanced Invoice Features** (PDF generation, email automation)
 2. **Advanced Scheduling** (Better Calendly integration)
 3. **Student Progress Tracking** (Visual charts, milestones)
 4. **Communication Tools** (In-app messaging)

@@ -50,6 +50,9 @@ export async function PUT(request: NextRequest) {
           calendlyUrl: validatedData.calendlyUrl,
           timezone: validatedData.timezone,
           phoneNumber: validatedData.phoneNumber,
+          venmoHandle: validatedData.venmoHandle,
+          paypalEmail: validatedData.paypalEmail,
+          zelleEmail: validatedData.zelleEmail,
         },
       });
     });

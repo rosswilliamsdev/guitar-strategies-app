@@ -1,5 +1,5 @@
 import NextAuth from "next-auth";
-import { Role } from "@prisma/client";
+import { Role, TeacherProfile, StudentProfile } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
@@ -8,6 +8,8 @@ declare module "next-auth" {
       email: string;
       name: string;
       role: Role;
+      teacherProfile?: TeacherProfile | null;
+      studentProfile?: StudentProfile | null;
     };
   }
 
