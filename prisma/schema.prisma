@@ -210,7 +210,6 @@ model LibraryItem {
   category    LibraryCategory @default(SHEET_MUSIC)
   
   // Metadata
-  difficulty  SkillLevel? // Difficulty level if applicable
   tags        String?     // JSON array of tags
   downloadCount Int      @default(0)
   
@@ -309,7 +308,6 @@ model Curriculum {
   teacherId   String
   title       String
   description String?  @db.Text
-  level       SkillLevel
   isActive    Boolean  @default(true)
   isPublished Boolean  @default(false)
   
@@ -322,7 +320,6 @@ model Curriculum {
   studentProgress StudentCurriculumProgress[]
   
   @@index([teacherId])
-  @@index([level])
   @@index([isPublished])
 }
 
@@ -511,13 +508,6 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   CANCELLED
-}
-
-enum SkillLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  PROFESSIONAL
 }
 
 enum LibraryCategory {

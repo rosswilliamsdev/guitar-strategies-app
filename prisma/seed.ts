@@ -147,7 +147,6 @@ async function main() {
     console.log(`│ 🔑 Password: admin123                   │`);
     console.log(`│ 🎓 Role: ${studentUser.role.padEnd(28)} │`);
     if (studentUser.studentProfile) {
-      console.log(`│ 🎸 Level: ${studentUser.studentProfile.skill_level.padEnd(24)} │`);
       console.log(`│ 👨‍🏫 Teacher: ${teacherName.padEnd(23)} │`);
     }
     console.log('└─────────────────────────────────────────┘');

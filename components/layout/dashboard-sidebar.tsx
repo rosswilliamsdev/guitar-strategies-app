@@ -20,7 +20,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Lessons", href: "/lessons" },
+  { label: "Lessons", href: "/lessons", roles: ["TEACHER", "STUDENT"] },
   { label: "Checklists", href: "/curriculums", roles: ["TEACHER", "STUDENT"] },
   { label: "My Checklists", href: "/student-checklists", roles: ["STUDENT"] },
   { label: "Students", href: "/students", roles: ["TEACHER"] },
@@ -33,6 +33,9 @@ const navItems: NavItem[] = [
   { label: "Schedule", href: "/schedule", roles: ["TEACHER"] },
   { label: "Invoices", href: "/invoices", roles: ["TEACHER"] },
   { label: "Payments", href: "/payments", roles: ["TEACHER"] },
+  { label: "Manage Teachers", href: "/admin/teachers", roles: ["ADMIN"] },
+  { label: "Manage Students", href: "/admin/students", roles: ["ADMIN"] },
+  { label: "All Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
   { label: "Settings", href: "/settings" },
 ];
 

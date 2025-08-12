@@ -14,7 +14,6 @@ import type {
   RecommendationCategory,
   InvoiceStatus,
   PaymentStatus,
-  SkillLevel,
   LibraryCategory,
 } from "@prisma/client";
 
@@ -27,7 +26,6 @@ export type {
   RecommendationCategory,
   InvoiceStatus,
   PaymentStatus,
-  SkillLevel,
   LibraryCategory,
 };
 
@@ -149,7 +147,6 @@ export interface CreateLibraryItemData {
   title: string;
   description?: string;
   category: LibraryCategory;
-  difficulty?: SkillLevel;
   tags?: string[];
   isPublic?: boolean;
 }
@@ -228,7 +225,6 @@ export interface StudentDashboardData {
   nextLesson?: LessonWithDetails;
   recentLessons: LessonWithDetails[];
   progressSummary: {
-    skillLevel: SkillLevel;
     joinedDate: Date;
     totalPracticeTime: number;
     completedAssignments: number;
@@ -242,7 +238,6 @@ export interface LessonStats {
   averageRating: number;
   skillProgression: Array<{
     date: Date;
-    skillLevel: SkillLevel;
     notes: string;
   }>;
   practiceFrequency: Array<{
@@ -271,7 +266,6 @@ export interface RegisterFormData {
   calendlyUrl?: string;
   // Student-specific fields
   teacherId?: string;
-  skillLevel?: SkillLevel;
   goals?: string;
   phoneNumber?: string;
   parentEmail?: string;
@@ -283,7 +277,6 @@ export interface ProfileUpdateData {
   bio?: string;
   hourlyRate?: number;
   calendlyUrl?: string;
-  skillLevel?: SkillLevel;
   goals?: string;
   phoneNumber?: string;
   timezone?: string;
@@ -366,7 +359,6 @@ export interface LessonFilters {
 
 export interface LibraryFilters {
   category?: LibraryCategory;
-  difficulty?: SkillLevel;
   isPublic?: boolean;
   teacherId?: string;
   tags?: string[];
@@ -375,7 +367,6 @@ export interface LibraryFilters {
 
 export interface StudentFilters {
   teacherId?: string;
-  skillLevel?: SkillLevel;
   isActive?: boolean;
   joinedAfter?: Date;
   search?: string;

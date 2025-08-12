@@ -1,0 +1,46 @@
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { CreateStudentForm } from "@/components/admin/create-student-form";
+
+export default async function CreateStudentPage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+    redirect("/login");
+  }
+
+  // Get all active teachers for the dropdown
+  const teachers = await prisma.user.findMany({
+    where: {
+      role: "TEACHER",
+      teacherProfile: {
+        isActive: true,
+      },
+    },
+    include: {
+      teacherProfile: {
+        select: {
+          id: true,
+        },
+      },
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  return (
+    <div className="container max-w-2xl py-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">Create New Student</h1>
+        <p className="text-muted-foreground mt-1">
+          Add a new student to the system
+        </p>
+      </div>
+
+      <CreateStudentForm teachers={teachers} />
+    </div>
+  );
+}

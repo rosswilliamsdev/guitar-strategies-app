@@ -8,7 +8,6 @@ import {
   RecommendationCategory,
   InvoiceStatus,
   LibraryCategory,
-  SkillLevel,
   CurriculumCategory,
   ProgressStatus,
 } from "@prisma/client";
@@ -332,7 +331,6 @@ export const paginatedResponseSchema = z.object({
 export const createCurriculumSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().max(500).optional(),
-  level: z.nativeEnum(SkillLevel),
   isPublished: z.boolean().default(false),
 });
 
