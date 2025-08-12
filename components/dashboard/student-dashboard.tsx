@@ -20,18 +20,12 @@ interface StudentDashboardProps {
     goals?: string;
     instrument: string;
   };
-  upcomingAssignments: Array<{
-    id: string;
-    homework: string;
-    fromLesson: string;
-  }>;
 }
 
 export function StudentDashboard({ 
   studentId, 
   recentLessons = [],
-  studentProfile,
-  upcomingAssignments = [] 
+  studentProfile
 }: StudentDashboardProps) {
   const safeStudentProfile = studentProfile || {
     teacherName: 'Unknown Teacher',
@@ -155,57 +149,6 @@ export function StudentDashboard({
         </Card>
       </div>
 
-      {/* Learning Progress & Assignments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Learning Profile */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Your Learning Profile</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Instrument</span>
-              <span className="font-semibold capitalize">{safeStudentProfile.instrument}</span>
-            </div>
-            <div className="mt-4 pt-4 border-t border-border">
-              <Link href="/settings">
-                <Button variant="secondary" size="sm" className="w-full">
-                  Update Profile
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </Card>
-
-        {/* Current Assignments */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Current Assignments</h3>
-          <div className="space-y-3">
-            {upcomingAssignments.length > 0 ? (
-              upcomingAssignments.slice(0, 3).map((assignment, index) => (
-                <div key={assignment.id} className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm font-medium text-foreground">
-                    Assignment #{index + 1}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {assignment.homework}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    From lesson: {assignment.fromLesson}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground text-sm">
-                  No current assignments
-                </p>
-                <p className="text-muted-foreground text-xs mt-1">
-                  Complete lessons to get practice assignments
-                </p>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
 
       {/* Learning Goals */}
       {safeStudentProfile.goals && (

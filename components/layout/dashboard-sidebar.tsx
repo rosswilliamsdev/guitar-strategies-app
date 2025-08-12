@@ -21,6 +21,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Lessons", href: "/lessons" },
+  { label: "Checklists", href: "/curriculums", roles: ["TEACHER", "STUDENT"] },
   { label: "Students", href: "/students", roles: ["TEACHER"] },
   { label: "Library", href: "/library", roles: ["TEACHER"] },
   {
@@ -72,7 +73,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       <div className="absolute bottom-0 w-64 p-4 border-t border-border">
         <div className="space-y-3">
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
             className="w-full justify-start text-muted-foreground hover:text-foreground"
             onClick={() =>

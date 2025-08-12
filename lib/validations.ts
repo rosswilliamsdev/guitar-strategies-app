@@ -8,6 +8,9 @@ import {
   RecommendationCategory,
   InvoiceStatus,
   LibraryCategory,
+  SkillLevel,
+  CurriculumCategory,
+  ProgressStatus,
 } from "@prisma/client";
 
 // ========================================
@@ -324,6 +327,66 @@ export const paginatedResponseSchema = z.object({
 });
 
 // ========================================
+// Curriculum Schemas
+// ========================================
+export const createCurriculumSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100),
+  description: z.string().max(500).optional(),
+  level: z.nativeEnum(SkillLevel),
+  isPublished: z.boolean().default(false),
+});
+
+export const updateCurriculumSchema = createCurriculumSchema.partial().extend({
+  id: z.string().min(1, "Curriculum ID is required"),
+});
+
+export const createCurriculumSectionSchema = z.object({
+  curriculumId: z.string().min(1, "Curriculum ID is required"),
+  title: z.string().min(1, "Title is required").max(100),
+  description: z.string().max(500).optional(),
+  category: z.nativeEnum(CurriculumCategory),
+  sortOrder: z.number().min(0).default(0),
+});
+
+export const updateCurriculumSectionSchema = createCurriculumSectionSchema
+  .partial()
+  .extend({
+    id: z.string().min(1, "Section ID is required"),
+  });
+
+export const createCurriculumItemSchema = z.object({
+  sectionId: z.string().min(1, "Section ID is required"),
+  title: z.string().min(1, "Title is required").max(200),
+  description: z.string().max(1000).optional(),
+  sortOrder: z.number().min(0).default(0),
+  difficulty: z.number().min(1).max(10).optional(),
+  estimatedMinutes: z.number().min(1).max(300).optional(),
+  resourceUrl: z.string().url().optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export const updateCurriculumItemSchema = createCurriculumItemSchema
+  .partial()
+  .extend({
+    id: z.string().min(1, "Item ID is required"),
+  });
+
+export const updateProgressSchema = z.object({
+  curriculumId: z.string().min(1, "Curriculum ID is required"),
+  itemId: z.string().min(1, "Item ID is required"),
+  status: z.nativeEnum(ProgressStatus),
+  studentNotes: z.string().max(500).optional(),
+});
+
+export const teacherProgressUpdateSchema = z.object({
+  studentId: z.string().min(1, "Student ID is required"),
+  curriculumId: z.string().min(1, "Curriculum ID is required"),
+  itemId: z.string().min(1, "Item ID is required"),
+  status: z.nativeEnum(ProgressStatus),
+  teacherNotes: z.string().max(500).optional(),
+});
+
+// ========================================
 // Utility Validation Functions
 // ========================================
 export function validateEmail(email: string): boolean {
@@ -383,3 +446,8 @@ export type CreateRecommendationData = z.infer<
 export type CreateInvoiceData = z.infer<typeof createInvoiceSchema>;
 export type UpdateInvoiceData = z.infer<typeof updateInvoiceSchema>;
 export type PaginationParams = z.infer<typeof paginationSchema>;
+export type CreateCurriculumData = z.infer<typeof createCurriculumSchema>;
+export type UpdateCurriculumData = z.infer<typeof updateCurriculumSchema>;
+export type CreateCurriculumSectionData = z.infer<typeof createCurriculumSectionSchema>;
+export type CreateCurriculumItemData = z.infer<typeof createCurriculumItemSchema>;
+export type UpdateProgressData = z.infer<typeof updateProgressSchema>;

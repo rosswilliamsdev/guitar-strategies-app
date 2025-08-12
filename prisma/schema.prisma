@@ -96,6 +96,7 @@ model TeacherProfile {
   recommendations Recommendation[]
   libraryItems    LibraryItem[]
   invoices        Invoice[]
+  curriculums     Curriculum[]
 
   @@index([userId])
   @@index([isActive])
@@ -123,6 +124,7 @@ model StudentProfile {
   teacher  TeacherProfile @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: Cascade)
   lessons  Lesson[]
   invoices Invoice[]
+  studentProgress StudentCurriculumProgress[]
 
   @@index([userId])
   @@index([teacherId])
@@ -300,6 +302,120 @@ model InvoiceItem {
   @@index([lessonId])
 }
 
+// Curriculum models
+model Curriculum {
+  id          String   @id @default(cuid())
+  teacherId   String
+  title       String
+  description String?  @db.Text
+  level       SkillLevel
+  isActive    Boolean  @default(true)
+  isPublished Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  sections    CurriculumSection[]
+  studentProgress StudentCurriculumProgress[]
+  
+  @@index([teacherId])
+  @@index([level])
+  @@index([isPublished])
+}
+
+model CurriculumSection {
+  id           String   @id @default(cuid())
+  curriculumId String
+  title        String
+  description  String?  @db.Text
+  category     CurriculumCategory
+  sortOrder    Int      @default(0)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  items        CurriculumItem[]
+  
+  @@index([curriculumId])
+  @@index([sortOrder])
+}
+
+model CurriculumItem {
+  id          String   @id @default(cuid())
+  sectionId   String
+  title       String
+  description String?  @db.Text
+  sortOrder   Int      @default(0)
+  
+  // Optional metadata
+  difficulty  Int?     // 1-10 scale within the curriculum level
+  estimatedMinutes Int? // Estimated time to complete
+  resourceUrl String?  // Link to sheet music, video, etc.
+  notes       String?  @db.Text // Teacher notes about this item
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  section     CurriculumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  progress    StudentItemProgress[]
+  
+  @@index([sectionId])
+  @@index([sortOrder])
+}
+
+model StudentCurriculumProgress {
+  id           String   @id @default(cuid())
+  studentId    String
+  curriculumId String
+  startedAt    DateTime @default(now())
+  completedAt  DateTime?
+  
+  // Progress tracking
+  totalItems      Int @default(0)
+  completedItems  Int @default(0)
+  progressPercent Float @default(0)
+  
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  itemProgress StudentItemProgress[]
+  
+  @@unique([studentId, curriculumId])
+  @@index([studentId])
+  @@index([curriculumId])
+}
+
+model StudentItemProgress {
+  id                 String   @id @default(cuid())
+  curriculumProgressId String
+  itemId             String
+  
+  status             ProgressStatus @default(NOT_STARTED)
+  startedAt          DateTime?
+  completedAt        DateTime?
+  teacherNotes       String?  @db.Text
+  studentNotes       String?  @db.Text
+  
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  // Relations
+  curriculumProgress StudentCurriculumProgress @relation(fields: [curriculumProgressId], references: [id], onDelete: Cascade)
+  item               CurriculumItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  
+  @@unique([curriculumProgressId, itemId])
+  @@index([curriculumProgressId])
+  @@index([itemId])
+  @@index([status])
+}
+
 // System models for admin functionality
 model SystemSettings {
   id    String @id @default("system")
@@ -373,4 +489,29 @@ enum LinkType {
   VIMEO
   SPOTIFY
   OTHER
+}
+
+enum CurriculumCategory {
+  CHORDS
+  SCALES
+  ARPEGGIOS
+  THEORY
+  RHYTHM
+  LEAD_GUITAR
+  FINGERSTYLE
+  SONGS
+  RIFFS
+  SOLOS
+  TECHNIQUE
+  SIGHT_READING
+  EAR_TRAINING
+  IMPROVISATION
+  OTHER
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  NEEDS_REVIEW
 }
