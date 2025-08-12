@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Lessons", href: "/lessons" },
   { label: "Checklists", href: "/curriculums", roles: ["TEACHER", "STUDENT"] },
+  { label: "My Checklists", href: "/student-checklists", roles: ["STUDENT"] },
   { label: "Students", href: "/students", roles: ["TEACHER"] },
   { label: "Library", href: "/library", roles: ["TEACHER"] },
   {

@@ -182,22 +182,22 @@ export function MainDashboard({ user }: DashboardProps) {
       default:
         return [
           {
-            title: "Continue Learning",
-            description: "Resume your current lesson path",
+            title: "My Checklists",
+            description: "Track your personal practice goals",
+            href: "/student-checklists",
+            buttonText: "View Checklists",
+          },
+          {
+            title: "Teacher Checklists",
+            description: "View checklists from your teacher",
+            href: "/curriculums",
+            buttonText: "View Teacher Lists",
+          },
+          {
+            title: "Recent Lessons",
+            description: "Review your recent lesson notes",
             href: "/lessons",
-            buttonText: "Start Learning",
-          },
-          {
-            title: "Practice Session",
-            description: "Log a new practice session",
-            href: "/practice",
-            buttonText: "Start Practice",
-          },
-          {
-            title: "View Progress",
-            description: "See your learning achievements",
-            href: "/progress",
-            buttonText: "View Progress",
+            buttonText: "View Lessons",
           },
         ];
     }

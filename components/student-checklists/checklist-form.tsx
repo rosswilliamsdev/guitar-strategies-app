@@ -21,7 +21,8 @@ interface ChecklistFormProps {
   };
 }
 
-export function CurriculumForm({ checklist }: ChecklistFormProps) {
+
+export function ChecklistForm({ checklist }: ChecklistFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,7 +33,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const addItem = () => {
-    const firstLine = newItemTitle.split("\n")[0].trim();
+    const firstLine = newItemTitle.split('\n')[0].trim();
     if (!firstLine) {
       setErrors({ newItem: "Item title is required" });
       return;
@@ -44,9 +45,9 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
         title: firstLine,
       },
     ]);
-
+    
     // Remove the first line from the textarea
-    const remainingLines = newItemTitle.split("\n").slice(1).join("\n");
+    const remainingLines = newItemTitle.split('\n').slice(1).join('\n');
     setNewItemTitle(remainingLines);
     setErrors({});
   };
@@ -58,10 +59,10 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
     }
 
     const newItemsToAdd = newItemTitle
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-      .map((title) => ({
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(title => ({
         title,
       }));
 
@@ -103,18 +104,14 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
     try {
       // Create or update the checklist
       const url = checklist
-        ? `/api/curriculums/${checklist.id}`
-        : "/api/curriculums";
+        ? `/api/student-checklists/${checklist.id}`
+        : "/api/student-checklists";
       const method = checklist ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: formData.title,
-          level: "BEGINNER", // Default level
-          isPublished: true, // Automatically published for students
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
@@ -126,35 +123,19 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
 
       // If this is a new checklist and we have items, add them
       if (!checklist && items.length > 0) {
-        // Create a default section first
-        const sectionResponse = await fetch("/api/curriculums/sections", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            curriculumId: savedChecklist.id,
-            title: "Checklist Items",
-            category: "OTHER",
-          }),
-        });
-
-        if (sectionResponse.ok) {
-          const createdSection = await sectionResponse.json();
-
-          // Add all items to this section
-          for (const item of items) {
-            await fetch("/api/curriculums/items", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                sectionId: createdSection.id,
-                title: item.title,
-              }),
-            });
-          }
+        for (const [index, item] of items.entries()) {
+          await fetch("/api/student-checklists/items", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              checklistId: savedChecklist.id,
+              title: item.title,
+            }),
+          });
         }
       }
 
-      router.push(`/curriculums/${savedChecklist.id}`);
+      router.push(`/student-checklists/${savedChecklist.id}`);
     } catch (error) {
       console.error("Error saving checklist:", error);
       setErrors({
@@ -173,7 +154,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           <h2 className="text-xl font-semibold">
             {checklist ? "Edit Checklist" : "Create New Checklist"}
           </h2>
-          <Link href="/curriculums">
+          <Link href="/student-checklists">
             <Button variant="secondary" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Checklists
@@ -204,6 +185,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
               <p className="text-sm text-red-500 mt-1">{errors.title}</p>
             )}
           </div>
+
         </div>
 
         {/* Items Section (only for new checklists) */}
@@ -227,37 +209,31 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
                   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
                     addBulkItems();
-                  } else if (
-                    e.key === "Enter" &&
-                    !e.shiftKey &&
-                    newItemTitle.trim().indexOf("\n") === -1
-                  ) {
+                  } else if (e.key === "Enter" && !e.shiftKey && newItemTitle.trim().indexOf('\n') === -1) {
                     e.preventDefault();
                     addItem();
                   }
                 }}
                 rows={3}
-                className={`resize-none ${
-                  errors.newItem ? "border-red-500" : ""
-                }`}
+                className={`resize-none ${errors.newItem ? "border-red-500" : ""}`}
               />
               <div className="flex justify-between items-center">
                 {errors.newItem && (
                   <p className="text-sm text-red-500">{errors.newItem}</p>
                 )}
                 <div className="flex gap-2 ml-auto">
-                  <Button
-                    type="button"
-                    variant="secondary"
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
                     size="sm"
                     onClick={addItem}
                     disabled={!newItemTitle.trim()}
                   >
                     Add Single Item
                   </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
                     size="sm"
                     onClick={addBulkItems}
                     disabled={!newItemTitle.trim()}
@@ -303,7 +279,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Link href="/curriculums">
+          <Link href="/student-checklists">
             <Button variant="secondary" type="button">
               Cancel
             </Button>

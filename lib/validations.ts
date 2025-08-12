@@ -387,6 +387,44 @@ export const teacherProgressUpdateSchema = z.object({
 });
 
 // ========================================
+// Student Checklist Schemas
+// ========================================
+export const createStudentChecklistSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100),
+});
+
+export const updateStudentChecklistSchema = createStudentChecklistSchema
+  .partial()
+  .extend({
+    id: z.string().min(1, "Checklist ID is required"),
+    isActive: z.boolean().optional(),
+    isArchived: z.boolean().optional(),
+  });
+
+export const createStudentChecklistItemSchema = z.object({
+  checklistId: z.string().min(1, "Checklist ID is required"),
+  title: z.string().min(1, "Title is required").max(200),
+  description: z.string().max(1000).optional(),
+  dueDate: z.date().optional(),
+  notes: z.string().max(2000).optional(),
+  resourceUrl: z.string().url().optional(),
+  estimatedMinutes: z.number().min(1).max(300).optional(),
+});
+
+export const updateStudentChecklistItemSchema = createStudentChecklistItemSchema
+  .partial()
+  .extend({
+    id: z.string().min(1, "Item ID is required"),
+    isCompleted: z.boolean().optional(),
+    completedAt: z.date().optional(),
+  });
+
+export const toggleChecklistItemSchema = z.object({
+  itemId: z.string().min(1, "Item ID is required"),
+  isCompleted: z.boolean(),
+});
+
+// ========================================
 // Utility Validation Functions
 // ========================================
 export function validateEmail(email: string): boolean {

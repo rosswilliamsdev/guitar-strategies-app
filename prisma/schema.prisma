@@ -125,6 +125,7 @@ model StudentProfile {
   lessons  Lesson[]
   invoices Invoice[]
   studentProgress StudentCurriculumProgress[]
+  studentChecklists StudentChecklist[]
 
   @@index([userId])
   @@index([teacherId])
@@ -416,6 +417,53 @@ model StudentItemProgress {
   @@index([status])
 }
 
+// Student Personal Checklist models
+model StudentChecklist {
+  id          String   @id @default(cuid())
+  studentId   String
+  title       String
+  
+  // Checklist metadata
+  isActive    Boolean  @default(true)
+  isArchived  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items       StudentChecklistItem[]
+  
+  @@index([studentId])
+  @@index([isActive])
+}
+
+model StudentChecklistItem {
+  id          String   @id @default(cuid())
+  checklistId String
+  title       String
+  description String?  @db.Text
+  
+  // Item tracking
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  dueDate     DateTime?
+  
+  // Optional metadata
+  notes       String?  @db.Text
+  resourceUrl String?  // Link to sheet music, video, etc.
+  estimatedMinutes Int? // Estimated time to complete
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  checklist   StudentChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  
+  @@index([checklistId])
+  @@index([isCompleted])
+}
+
 // System models for admin functionality
 model SystemSettings {
   id    String @id @default("system")
@@ -515,3 +563,4 @@ enum ProgressStatus {
   COMPLETED
   NEEDS_REVIEW
 }
+

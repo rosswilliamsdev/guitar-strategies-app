@@ -40,7 +40,6 @@ interface LibraryItem {
 
 interface LibraryListProps {
   items: LibraryItem[];
-  teacherId: string;
 }
 
 const categoryConfig = {
@@ -93,13 +92,6 @@ const difficultyColors = {
   PROFESSIONAL: "bg-red-50 text-red-700 border-red-200",
 };
 
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
 
 async function handleDownload(item: LibraryItem) {
   try {
@@ -116,7 +108,7 @@ async function handleDownload(item: LibraryItem) {
   }
 }
 
-export function LibraryList({ items, teacherId }: LibraryListProps) {
+export function LibraryList({ items }: LibraryListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
@@ -209,74 +201,54 @@ export function LibraryList({ items, teacherId }: LibraryListProps) {
             </a>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
             {filteredItems.map((item) => {
               const categoryInfo = categoryConfig[item.category as keyof typeof categoryConfig];
               const IconComponent = categoryInfo.icon;
               
               return (
-                <Card key={item.id} className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div className="p-2 bg-muted rounded-lg">
-                        <IconComponent className="h-6 w-6 text-muted-foreground" />
+                <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1.5 bg-muted rounded">
+                      <IconComponent className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-sm text-foreground truncate">
+                            {item.title}
+                          </h3>
+                          {item.description && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <Button
+                          size="sm"
+                          onClick={() => handleDownload(item)}
+                          className="flex-shrink-0"
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
                       </div>
                       
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="text-lg font-semibold text-foreground">
-                              {item.title}
-                            </h3>
-                            {item.description && (
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {item.description}
-                              </p>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 ml-4">
-                            <Button
-                              size="sm"
-                              onClick={() => handleDownload(item)}
-                              className="flex items-center space-x-2"
-                            >
-                              <Download className="h-4 w-4" />
-                              <span>Download</span>
-                            </Button>
-                          </div>
-                        </div>
+                      <div className="flex flex-wrap items-center gap-1 mt-2">
+                        <Badge 
+                          className={`text-xs ${categoryInfo.color}`}
+                        >
+                          {categoryInfo.label}
+                        </Badge>
                         
-                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                        {item.difficulty && (
                           <Badge 
-                            className={categoryInfo.color}
+                            className={`text-xs ${difficultyColors[item.difficulty as keyof typeof difficultyColors]}`}
                           >
-                            {categoryInfo.label}
+                            {item.difficulty.toLowerCase()}
                           </Badge>
-                          
-                          {item.difficulty && (
-                            <Badge 
-                              className={difficultyColors[item.difficulty as keyof typeof difficultyColors]}
-                            >
-                              {item.difficulty.toLowerCase()}
-                            </Badge>
-                          )}
-                          
-                          {item.tags.map(tag => (
-                            <Badge key={tag} className="text-xs bg-background border text-foreground">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        
-                        <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
-                          <div className="flex items-center space-x-4">
-                            <span>{item.fileName}</span>
-                            <span>{formatFileSize(item.fileSize)}</span>
-                            <span>{item.downloadCount} downloads</span>
-                          </div>
-                          <span>Uploaded {item.createdAt}</span>
-                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
