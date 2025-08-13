@@ -22,8 +22,8 @@ const features = [
     icon: '💳'
   },
   {
-    title: 'Schedule Integration',
-    description: 'Connect with Calendly for seamless lesson scheduling and booking.',
+    title: 'Built-in Scheduling',
+    description: 'Integrated lesson scheduling with availability management and booking system.',
     icon: '📅'
   },
   {

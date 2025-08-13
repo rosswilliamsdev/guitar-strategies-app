@@ -6,7 +6,15 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ## [Current Version] - 2024-12-XX
 
-### 🎯 **Latest Session Summary (Aug 12, 2025 - Evening)**
+### 🎯 **Latest Session Summary (Aug 13, 2025)**
+- **COMPLETE CUSTOM SCHEDULING SYSTEM**: Full replacement of Calendly with internal availability management
+- **REFINED BOOKING INTERFACE**: 30-minute only slots with consecutive selection for 60-minute lessons
+- **STREAMLINED UI**: Removed duplicate titles, consolidated checklist navigation
+- **SCHEDULE VIEW IMPROVEMENTS**: Left-aligned daily schedule, fixed timezone issues
+- **NAVIGATION CONSOLIDATION**: "My Checklists" now integrated into main "Checklists" page
+- **BUG FIXES**: Resolved hanging time slots and availability display issues
+
+### 🎯 **Previous Session Summary (Aug 12, 2025 - Evening)**
 - **ADMIN MANAGEMENT SYSTEM**: Complete admin dashboard for managing teachers, students, and lessons
 - **SKILL LEVEL REMOVAL**: Removed all skill level tracking from students for simpler data model
 - **UI IMPROVEMENTS**: Positioned Add buttons level with page titles for better layout
@@ -51,7 +59,80 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### ✅ **Added Features**
 
-#### **Latest Session Features (Aug 12, 2025 - Evening)**
+#### **Latest Session Features (Aug 13, 2025)**
+
+##### **UI/UX Improvements**
+- **Schedule View Redesign**: Left-aligned time slots and booking information for better readability
+- **Duplicate Title Removal**: Removed redundant "Book a Lesson" titles from booking interface  
+- **Navigation Consolidation**: Integrated "My Checklists" as a section within main "Checklists" page
+- **Route Restructuring**: Created `/curriculums/my/*` route structure for personal checklists
+- **Consistent Navigation**: Updated all checklist navigation to use unified interface
+
+##### **Booking System Refinements**
+- **30-Minute Slot Standard**: Standardized all booking slots to 30-minute increments
+- **Consecutive Slot Selection**: Users can select 1-2 consecutive slots for 30/60-minute lessons
+- **Smart Duration Calculation**: Automatic lesson duration based on number of selected slots
+- **Price Display Removal**: Simplified booking interface by removing price information
+- **Instructional Text**: Clear guidance on slot selection for different lesson lengths
+- **Student-Accessible API**: Created dedicated endpoint for student booking requests
+
+##### **Complete Custom Scheduling System**
+- **Database Schema Updates**: Added TeacherAvailability, TeacherBlockedTime, TeacherLessonSettings models
+- **Calendly Removal**: Completely removed all Calendly integration code and database fields
+- **Scheduling Engine**: Built comprehensive scheduler in `lib/scheduler.ts` with timezone support
+- **Slot Generation**: Dynamic available slot calculation with conflict detection
+- **Booking Validation**: Comprehensive validation for single and recurring lesson bookings
+- **UTC Conversion**: Proper timezone handling for multi-timezone support
+
+##### **Teacher Availability Management**
+- **WeeklyScheduleGrid Component**: Visual weekly availability editor with time slot management
+- **Drag-Drop Interface**: Easy time slot creation and modification
+- **Copy Day Feature**: Copy one day's schedule to all other days
+- **Multiple Time Slots**: Support for multiple availability windows per day
+- **Active Toggle**: Enable/disable specific time slots without deletion
+- **Save Functionality**: Batch save all availability changes at once
+
+##### **Lesson Settings Configuration**
+- **LessonSettingsForm Component**: Configure lesson durations and pricing
+- **Flexible Duration Options**: Enable/disable 30-minute and 60-minute lessons
+- **Custom Pricing**: Set different prices for different lesson durations
+- **Advance Booking Limit**: Configure how far in advance students can book (1-90 days)
+- **Validation**: Ensure at least one duration is enabled with valid pricing
+
+##### **Blocked Time Management**
+- **BlockedTimeManager Component**: Interface for managing vacation and blocked periods
+- **Date Range Selection**: Block specific date and time ranges
+- **Reason Tracking**: Optional reasons for blocked time (vacation, personal, medical)
+- **Color-Coded Display**: Visual indicators based on blocked time reason
+- **Conflict Prevention**: Prevents booking during blocked periods
+- **Easy Removal**: Quick delete button for blocked time periods
+
+##### **Student Booking Interface**
+- **AvailabilityCalendar Component**: Real-time availability calendar for students
+- **Week Navigation**: Browse available slots week by week
+- **30-Minute Slot System**: All slots standardized to 30-minute increments
+- **Consecutive Selection**: Select 1-2 consecutive slots for 30 or 60-minute lessons
+- **Single Lesson Booking**: Book individual lessons with smart duration calculation
+- **Recurring Series**: Book weekly recurring lessons (2-52 weeks)
+- **Price Removal**: Simplified interface without price display per user request
+- **Booking Confirmation**: Visual confirmation showing selected time and duration
+- **Loading States**: Proper feedback during booking operations
+
+##### **API Endpoints**
+- **GET/PUT /api/teacher/availability**: Manage weekly availability schedules
+- **GET/PUT /api/teacher/lesson-settings**: Configure lesson pricing and durations
+- **GET/POST /api/teacher/blocked-time**: Manage blocked time periods
+- **POST /api/lessons/book**: Book single or recurring lessons
+- **GET /api/teacher/[id]/available-slots**: Retrieve available booking slots
+
+##### **UI Components**
+- **TimePicker Component**: Reusable time selection with 30-minute increments
+- **BookingInterface Component**: Complete booking flow wrapper for students
+- **Alert Components**: Success and error messaging for booking operations
+- **Badge Components**: Visual indicators for slot availability and status
+- **Card Layouts**: Professional card-based layouts for all scheduling interfaces
+
+#### **Previous Session Features (Aug 12, 2025 - Evening)**
 
 ##### **Complete Admin Management System**
 - **Admin Lessons Page**: View all lessons across all teachers at `/admin/lessons`
@@ -266,7 +347,54 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### 🔧 **Fixed Issues**
 
-#### **Latest Session Fixes (Aug 12, 2025)**
+#### **Latest Session Fixes (Aug 13, 2025)**
+
+##### **Booking Interface Issues**
+- **Fixed**: Hanging "8:30 PM" time slot appearing at top of weekly availability view
+- **Fixed**: Timezone conversion errors causing incorrect time display in booking calendar
+- **Fixed**: "Failed to fetch availability" error when students tried to access booking interface
+- **Fixed**: Duplicate page titles creating confusing user interface
+- **Fixed**: Non-consecutive slot selection edge cases and validation
+
+##### **Schedule View Problems**
+- **Fixed**: Daily schedule starting at fixed 12 PM instead of teacher's earliest availability
+- **Fixed**: Time slots and booking information not properly aligned
+- **Fixed**: Day-of-week mapping bug where availability showed on wrong days
+- **Fixed**: Schedule view centering that made interface feel unbalanced
+
+##### **Navigation and Routing Issues**  
+- **Fixed**: Separate "My Checklists" page creating fragmented user experience
+- **Fixed**: Inconsistent navigation between teacher and student checklist systems
+- **Fixed**: Broken links after consolidating checklist pages
+- **Fixed**: API endpoint access restrictions blocking student booking requests
+
+##### **TypeScript Compilation Errors**
+- **Fixed**: Button variant "ghost" not supported - changed all to "secondary"
+- **Fixed**: date-fns import issues - removed parseISO, fixed zonedTimeToUtc imports
+- **Fixed**: Payment model references in types - removed deprecated Payment and PaymentStatus
+- **Fixed**: calendlyUrl field references - removed from all components and APIs
+- **Fixed**: Type mismatches in dashboard components - proper null handling
+
+##### **Scheduling System Issues**
+- **Fixed**: Timezone conversion errors - implemented proper UTC handling
+- **Fixed**: Slot generation logic - correct handling of day boundaries
+- **Fixed**: Recurring lesson validation - each week validated individually
+- **Fixed**: Blocked time conflicts - proper overlap detection algorithm
+- **Fixed**: Booking window enforcement - 3-week advance limit working correctly
+
+##### **API Integration Issues**
+- **Fixed**: Missing authentication on booking endpoints - added proper role checks
+- **Fixed**: Student-teacher relationship validation - ensures proper authorization
+- **Fixed**: Validation schema errors - comprehensive Zod schemas for all operations
+- **Fixed**: Error response formatting - consistent JSON error responses
+
+##### **UI Component Issues**
+- **Fixed**: TimePicker component - proper 30-minute increment handling
+- **Fixed**: Calendar week navigation - boundary conditions handled correctly
+- **Fixed**: Loading state management - proper feedback during async operations
+- **Fixed**: Form validation feedback - real-time validation with error messages
+
+#### **Previous Session Fixes (Aug 12, 2025)**
 
 ##### **PDF Generation Issues**
 - **Fixed**: PDF download opening new window with print dialog instead of direct download
@@ -389,7 +517,41 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### 📁 **New Files Created**
 
-#### **Latest Session Files (Aug 12, 2025 - Evening)**
+#### **Latest Session Files (Aug 13, 2025)**
+
+##### **Navigation Consolidation**
+- `app/(dashboard)/curriculums/my/new/page.tsx` - Create new personal checklist page
+- `app/(dashboard)/curriculums/my/[id]/page.tsx` - Personal checklist detail page  
+- `app/(dashboard)/curriculums/my/[id]/edit/page.tsx` - Edit personal checklist page
+- `app/api/availability/[teacherId]/route.ts` - Student-accessible teacher availability endpoint
+
+##### **Previous: Scheduling Components**
+- `components/ui/time-picker.tsx` - Reusable time selection component with 30-minute increments
+- `components/teacher/WeeklyScheduleGrid.tsx` - Visual weekly availability editor
+- `components/teacher/BlockedTimeManager.tsx` - Vacation and blocked time management interface
+- `components/teacher/LessonSettingsForm.tsx` - Lesson duration and pricing configuration
+- `components/scheduling/AvailabilityCalendar.tsx` - Student-facing booking calendar
+- `components/booking/BookingInterface.tsx` - Complete booking flow wrapper
+
+##### **Core Scheduling Logic**
+- `lib/scheduler.ts` - Comprehensive scheduling engine with timezone support
+- `app/(dashboard)/book-lesson/page.tsx` - Student booking page
+
+##### **API Endpoints**
+- `app/api/teacher/availability/route.ts` - Weekly availability management
+- `app/api/teacher/lesson-settings/route.ts` - Lesson settings configuration  
+- `app/api/teacher/blocked-time/route.ts` - Blocked time period management
+- `app/api/lessons/book/route.ts` - Lesson booking endpoint
+- `app/api/teacher/[teacherId]/available-slots/route.ts` - Available slots retrieval
+
+##### **Test Files**
+- `setup-test-data.js` - Script to configure test availability and settings
+- `test-booking-flow.js` - Comprehensive booking flow testing
+- `test-api-endpoints.js` - API endpoint validation testing
+- `test-availability.js` - Initial availability management test script
+- `AVAILABILITY_SYSTEM_TEST_REPORT.md` - Complete test report documentation
+
+#### **Previous Session Files (Aug 12, 2025 - Evening)**
 
 ##### **Admin Management Components & Pages**
 - `app/(dashboard)/admin/lessons/page.tsx` - Admin page to view all lessons across platform
@@ -442,7 +604,44 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### 🔄 **Modified Files**
 
-#### **Latest Session Modifications (Aug 12, 2025 - Evening)**
+#### **Latest Session Modifications (Aug 13, 2025)**
+
+##### **UI Component Updates**
+- `app/(dashboard)/book-lesson/page.tsx` - Removed duplicate "Book a Lesson" title and subtitle
+- `app/(dashboard)/curriculums/page.tsx` - Added "My Personal Checklists" section for students
+- `components/schedule/teacher-schedule-view.tsx` - Left-aligned daily schedule layout, fixed slot generation
+- `components/scheduling/AvailabilityCalendar.tsx` - Standardized to 30-minute slots with consecutive selection
+- `components/booking/BookingInterface.tsx` - Updated to handle multiple slot selection and duration calculation
+- `components/student-checklists/*.tsx` - Updated all navigation links to use `/curriculums` routes
+- `components/layout/dashboard-sidebar.tsx` - Removed "My Checklists" menu item
+- `app/(dashboard)/dashboard/main-dashboard.tsx` - Consolidated checklist quick actions
+
+##### **API and Logic Updates**
+- `lib/scheduler.ts` - Fixed timezone conversion and slot generation logic
+- `app/api/availability/[teacherId]/route.ts` - Created student-accessible availability endpoint
+
+##### **Previous: Database Schema Updates**
+- `prisma/schema.prisma` - Added scheduling models, removed calendlyUrl, enhanced Lesson model
+- `prisma/migrations/` - Created migration for scheduling system implementation
+
+##### **Component Updates**
+- `components/settings/teacher-settings-form.tsx` - Integrated scheduling components, removed Calendly URL field
+- `app/(dashboard)/settings/page.tsx` - Added Scheduling tab for availability management
+- `components/layout/dashboard-sidebar.tsx` - Added "Book Lesson" link for students
+
+##### **Type System Updates**
+- `types/index.ts` - Removed Payment and PaymentStatus references, cleaned up imports
+- `lib/validations.ts` - Added booking schema, availability schema, lesson settings schema
+- `lib/design.ts` - Updated button variants to remove unsupported "ghost" variant
+
+##### **API Updates**
+- `app/api/settings/teacher/route.ts` - Removed calendlyUrl handling
+- `app/(dashboard)/dashboard/page.tsx` - Removed calendlyUrl from teacher profile
+
+##### **Seed Data Updates**
+- `prisma/seed.ts` - Removed calendlyUrl from test teacher account
+
+#### **Previous Session Modifications (Aug 12, 2025 - Evening)**
 
 ##### **Admin System Updates**
 - `components/layout/dashboard-sidebar.tsx` - Added "All Lessons" link for admin role
@@ -576,6 +775,17 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ---
 
+### 🗑️ **Files Removed**
+
+#### **Latest Session Removals (Aug 13, 2025)**
+- `app/(dashboard)/student-checklists/` - Entire directory removed and consolidated into `/curriculums`
+- `app/(dashboard)/student-checklists/page.tsx` - Separate "My Checklists" page removed
+- `app/(dashboard)/student-checklists/new/page.tsx` - Replaced by `/curriculums/my/new`
+- `app/(dashboard)/student-checklists/[id]/page.tsx` - Replaced by `/curriculums/my/[id]`
+- `app/(dashboard)/student-checklists/[id]/edit/page.tsx` - Replaced by `/curriculums/my/[id]/edit`
+
+---
+
 ### 📦 **Dependencies Modified**
 
 #### **Latest Session Dependencies (Aug 12, 2025)**
@@ -658,7 +868,17 @@ Student: student@guitarstrategies.com / student123
 
 ### 🎯 **Key Improvements Made**
 
-#### **Latest Session (Aug 11, 2025) - Revolutionary Payment System Simplification**
+#### **Latest Session (Aug 13, 2025) - Complete Custom Scheduling System**
+- **Eliminated Calendly Dependency**: Built internal scheduling system with full control
+- **Teacher Empowerment**: Direct availability management without external tools
+- **Student Convenience**: Real-time booking without leaving the platform
+- **Advanced Features**: Recurring lessons, blocked time, multi-timezone support
+- **Seamless Integration**: Direct connection to lesson management and invoicing
+- **Professional UX**: Clean, intuitive interface with OpenAI-inspired design
+- **Performance**: Fast slot generation and conflict detection algorithms
+- **Flexibility**: Customizable pricing, durations, and booking windows
+
+#### **Previous Session (Aug 11, 2025) - Revolutionary Payment System Simplification**
 - **Eliminated Complex Setup**: Removed Stripe Connect that required business verification and complex onboarding
 - **Direct Teacher Control**: Teachers now collect payments via their preferred methods (Venmo, PayPal, Zelle)
 - **Zero Fees**: No payment processor fees - teachers keep 100% of earnings
@@ -703,10 +923,13 @@ Student: student@guitarstrategies.com / student123
 6. ✅ ~~Implement payment processing~~ - **COMPLETED** (Simple invoice system)
 7. ✅ ~~PDF invoice generation~~ - **COMPLETED** (Client-side PDF download)
 8. ✅ ~~Print-friendly invoice layout~~ - **COMPLETED** (Sidebar-free printing)
-9. **NEW**: Email automation for invoice sending
-10. Implement file upload functionality for library system
-11. Add student progress tracking and analytics
-12. **NEW**: Invoice templates and customization options
+9. ✅ ~~Custom scheduling system~~ - **COMPLETED** (Full Calendly replacement)
+10. **NEW**: Email notifications for lesson bookings and reminders
+11. **NEW**: Calendar sync (Google Calendar, iCal export)
+12. **NEW**: Lesson rescheduling and cancellation workflow
+13. **NEW**: Student practice tracking and goal setting
+14. **NEW**: Video lesson support and recording integration
+15. Add student progress tracking and analytics dashboard
 
 ---
 

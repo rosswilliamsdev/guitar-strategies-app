@@ -47,7 +47,6 @@ export async function PUT(request: NextRequest) {
         data: {
           bio: validatedData.bio,
           hourlyRate: validatedData.hourlyRate ? Math.round(validatedData.hourlyRate * 100) : null, // Convert to cents
-          calendlyUrl: validatedData.calendlyUrl,
           timezone: validatedData.timezone,
           phoneNumber: validatedData.phoneNumber,
           venmoHandle: validatedData.venmoHandle,

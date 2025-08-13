@@ -71,8 +71,7 @@ async function main() {
               bio: 'Experienced guitar instructor with 10+ years of teaching experience. Specializes in acoustic, electric, and classical guitar styles.',
               hourlyRate: 6000, // $60.00 in cents
               isActive: true,
-              timezone: 'America/New_York',
-              calendlyUrl: 'https://calendly.com/johnsmith-guitar'
+              timezone: 'America/New_York'
             }
           }
         },

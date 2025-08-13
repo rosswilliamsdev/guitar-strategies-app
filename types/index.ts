@@ -8,12 +8,10 @@ import type {
   Recommendation as PrismaRecommendation,
   Invoice as PrismaInvoice,
   InvoiceItem as PrismaInvoiceItem,
-  Payment as PrismaPayment,
   Role,
   LessonStatus,
   RecommendationCategory,
   InvoiceStatus,
-  PaymentStatus,
   LibraryCategory,
 } from "@prisma/client";
 
@@ -25,7 +23,6 @@ export type {
   LessonStatus,
   RecommendationCategory,
   InvoiceStatus,
-  PaymentStatus,
   LibraryCategory,
 };
 
@@ -54,7 +51,6 @@ export type StudentProfile = PrismaStudentProfile & {
   lessons?: Lesson[];
   _count?: {
     lessons: number;
-    payments: number;
   };
 };
 
@@ -174,33 +170,7 @@ export interface CreateRecommendationData {
   priority?: number;
 }
 
-// ========================================
-// Payment Types
-// ========================================
-export type Payment = PrismaPayment & {
-  teacher?: TeacherProfile;
-  student?: StudentProfile;
-};
-
-export interface CreatePaymentData {
-  studentId: string;
-  amount: number;
-  month: string;
-  description?: string;
-  lessonsIncluded?: number;
-}
-
-export interface PaymentSummary {
-  totalAmount: number;
-  completedPayments: number;
-  pendingPayments: number;
-  monthlyBreakdown: Array<{
-    month: string;
-    amount: number;
-    status: PaymentStatus;
-    lessonsCount: number;
-  }>;
-}
+// Payment types removed - using simple invoice system instead
 
 // ========================================
 // Dashboard & Analytics Types
@@ -229,7 +199,7 @@ export interface StudentDashboardData {
     totalPracticeTime: number;
     completedAssignments: number;
   };
-  upcomingPayments: Payment[];
+  upcomingPayments: any[];
 }
 
 export interface LessonStats {
@@ -263,7 +233,6 @@ export interface RegisterFormData {
   // Teacher-specific fields
   bio?: string;
   hourlyRate?: number;
-  calendlyUrl?: string;
   // Student-specific fields
   teacherId?: string;
   goals?: string;
@@ -276,7 +245,6 @@ export interface ProfileUpdateData {
   email?: string;
   bio?: string;
   hourlyRate?: number;
-  calendlyUrl?: string;
   goals?: string;
   phoneNumber?: string;
   timezone?: string;
@@ -372,16 +340,7 @@ export interface StudentFilters {
   search?: string;
 }
 
-export interface PaymentFilters {
-  teacherId?: string;
-  studentId?: string;
-  status?: PaymentStatus;
-  month?: string;
-  amountRange?: {
-    min?: number;
-    max?: number;
-  };
-}
+// PaymentFilters removed - using invoice system instead
 
 // ========================================
 // Utility Types
@@ -438,34 +397,23 @@ export interface FormState<T = any> extends LoadingState {
 }
 
 // ========================================
-// Calendly Integration Types
+// Scheduling Types
 // ========================================
-export interface CalendlyEvent {
+export interface TimeSlot {
   id: string;
-  name: string;
-  start_time: string;
-  end_time: string;
-  event_type: string;
-  location?: {
-    type: string;
-    location?: string;
-  };
-  invitees: Array<{
-    email: string;
-    name: string;
-  }>;
+  startTime: Date;
+  endTime: Date;
+  duration: number; // in minutes
+  price: number; // in cents
+  isAvailable: boolean;
+  isRecurring?: boolean;
+  timezone: string;
 }
 
-export interface CalendlySettings {
-  url: string;
-  eventType: string;
-  duration: number;
-  timezone: string;
-  prefillData?: {
-    email?: string;
-    name?: string;
-    notes?: string;
-  };
+export interface RecurringBooking {
+  frequency: 'WEEKLY' | 'BIWEEKLY';
+  endDate?: Date;
+  maxOccurrences?: number;
 }
 
 // ========================================

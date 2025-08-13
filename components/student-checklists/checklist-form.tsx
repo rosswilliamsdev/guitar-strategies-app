@@ -135,7 +135,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
         }
       }
 
-      router.push(`/student-checklists/${savedChecklist.id}`);
+      router.push(`/curriculums/my/${savedChecklist.id}`);
     } catch (error) {
       console.error("Error saving checklist:", error);
       setErrors({
@@ -154,7 +154,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
           <h2 className="text-xl font-semibold">
             {checklist ? "Edit Checklist" : "Create New Checklist"}
           </h2>
-          <Link href="/student-checklists">
+          <Link href="/curriculums">
             <Button variant="secondary" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Checklists
@@ -279,7 +279,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Link href="/student-checklists">
+          <Link href="/curriculums">
             <Button variant="secondary" type="button">
               Cancel
             </Button>

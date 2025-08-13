@@ -81,7 +81,6 @@ async function getTeacherData(userId: string) {
       teacherProfile: {
         bio: teacherProfile.bio,
         hourlyRate: teacherProfile.hourlyRate,
-        calendlyUrl: teacherProfile.calendlyUrl,
       },
     };
   } catch (error) {

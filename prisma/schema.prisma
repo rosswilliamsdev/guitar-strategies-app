@@ -71,7 +71,6 @@ model User {
 model TeacherProfile {
   id              String  @id @default(cuid())
   userId          String  @unique
-  calendlyUrl     String? // Teacher's Calendly booking link
   bio             String? @db.Text
   hourlyRate      Int?    // stored in cents
   isActive        Boolean @default(true)
@@ -82,7 +81,7 @@ model TeacherProfile {
   zelleEmail      String? // email@example.com or phone number
   
   // Profile settings
-  timezone        String? @default("America/New_York")
+  timezone        String  @default("America/New_York") // Teacher's timezone (no longer optional)
   phoneNumber     String?
   profileImageUrl String?
   
@@ -97,6 +96,9 @@ model TeacherProfile {
   libraryItems    LibraryItem[]
   invoices        Invoice[]
   curriculums     Curriculum[]
+  availability    TeacherAvailability[]
+  blockedTimes    TeacherBlockedTime[]
+  lessonSettings  TeacherLessonSettings?
 
   @@index([userId])
   @@index([isActive])
@@ -137,12 +139,17 @@ model Lesson {
   teacherId       String
   studentId       String
   date            DateTime
-  duration        Int        // minutes
+  duration        Int        // 30 or 60 minutes
   notes           String?    @db.Text
   homework        String?    @db.Text // assignments for next lesson
   progress        String?    @db.Text // skill progression notes
-  calendlyEventId String?    // optional link to Calendly event
-  status          LessonStatus @default(COMPLETED)
+  status          LessonStatus @default(SCHEDULED)
+  
+  // Scheduling fields
+  timezone        String     @default("America/New_York") // Student's timezone for display
+  price           Int        @default(0) // Price paid for this lesson (cents)
+  isRecurring     Boolean    @default(false)
+  recurringId     String?    // Links recurring lessons together
   
   // Lesson details
   focusAreas      String?    @db.Text // JSON array of focus areas
@@ -165,6 +172,7 @@ model Lesson {
   @@index([studentId, date])
   @@index([status])
   @@index([date])
+  @@index([recurringId])
 }
 
 model LessonAttachment {
@@ -461,6 +469,58 @@ model StudentChecklistItem {
   @@index([isCompleted])
 }
 
+// Teacher Scheduling Models
+model TeacherLessonSettings {
+  id                 String @id @default(cuid())
+  teacherId          String @unique
+  allows30Min        Boolean @default(true)
+  allows60Min        Boolean @default(true)
+  price30Min         Int     // cents
+  price60Min         Int     // cents
+  advanceBookingDays Int     @default(21) // 3 weeks
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  @@index([teacherId])
+}
+
+model TeacherAvailability {
+  id        String  @id @default(cuid())
+  teacherId String
+  dayOfWeek Int     // 0-6 (Sunday-Saturday)
+  startTime String  // "09:00" in teacher's timezone
+  endTime   String  // "17:00" in teacher's timezone
+  isActive  Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  @@unique([teacherId, dayOfWeek, startTime, endTime])
+  @@index([teacherId])
+  @@index([dayOfWeek])
+}
+
+model TeacherBlockedTime {
+  id        String   @id @default(cuid())
+  teacherId String
+  startTime DateTime // UTC
+  endTime   DateTime // UTC
+  reason    String?  // "vacation", "personal", etc.
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  
+  @@index([teacherId])
+  @@index([startTime, endTime])
+}
+
 // System models for admin functionality
 model SystemSettings {
   id    String @id @default("system")
@@ -486,10 +546,11 @@ enum Role {
 }
 
 enum LessonStatus {
-  SCHEDULED   // Future lessons (from Calendly)
-  COMPLETED   // Logged by teacher post-lesson
-  CANCELLED   // Cancelled/no-show
-  MISSED      // Student didn't attend
+  SCHEDULED   // Future lesson
+  COMPLETED   // Teacher logged completion
+  CANCELLED   // Cancelled by student or teacher
+  NO_SHOW     // Student didn't attend
+  MISSED      // Student didn't attend but not marked no-show
 }
 
 enum RecommendationCategory {

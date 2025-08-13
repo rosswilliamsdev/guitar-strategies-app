@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/design";
 import { User } from "next-auth";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
@@ -20,9 +20,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
+  { label: "Book Lesson", href: "/book-lesson", roles: ["STUDENT"] },
   { label: "Lessons", href: "/lessons", roles: ["TEACHER", "STUDENT"] },
   { label: "Checklists", href: "/curriculums", roles: ["TEACHER", "STUDENT"] },
-  { label: "My Checklists", href: "/student-checklists", roles: ["STUDENT"] },
   { label: "Students", href: "/students", roles: ["TEACHER"] },
   { label: "Library", href: "/library", roles: ["TEACHER"] },
   {

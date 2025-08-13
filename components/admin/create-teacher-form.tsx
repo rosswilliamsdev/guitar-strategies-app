@@ -19,7 +19,6 @@ export function CreateTeacherForm() {
     password: "",
     bio: "",
     hourlyRate: "",
-    calendlyUrl: "",
     venmoHandle: "",
     paypalEmail: "",
     zelleEmail: "",
@@ -55,7 +54,6 @@ export function CreateTeacherForm() {
           password: formData.password,
           bio: formData.bio.trim() || undefined,
           hourlyRate: formData.hourlyRate ? parseInt(formData.hourlyRate) * 100 : undefined, // Convert to cents
-          calendlyUrl: formData.calendlyUrl.trim() || undefined,
           venmoHandle: formData.venmoHandle.trim() || undefined,
           paypalEmail: formData.paypalEmail.trim() || undefined,
           zelleEmail: formData.zelleEmail.trim() || undefined,
@@ -176,16 +174,6 @@ export function CreateTeacherForm() {
               <p className="text-xs text-muted-foreground mt-1">Amount in dollars per hour</p>
             </div>
 
-            <div>
-              <Label htmlFor="calendlyUrl">Calendly URL (Optional)</Label>
-              <Input
-                id="calendlyUrl"
-                type="url"
-                value={formData.calendlyUrl}
-                onChange={(e) => setFormData({ ...formData, calendlyUrl: e.target.value })}
-                placeholder="https://calendly.com/username"
-              />
-            </div>
           </div>
         </div>
 

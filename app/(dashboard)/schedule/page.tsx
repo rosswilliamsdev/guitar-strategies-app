@@ -2,10 +2,8 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { CalendlyEmbed } from "@/components/scheduling/calendly-embed";
-import { TeacherScheduleDashboard } from "@/components/scheduling/teacher-schedule-dashboard";
-import { Card } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { TeacherScheduleView } from "@/components/schedule/teacher-schedule-view";
+import { startOfWeek, endOfWeek, addWeeks } from "date-fns";
 
 export default async function SchedulePage() {
   const session = await getServerSession(authOptions);
@@ -14,82 +12,93 @@ export default async function SchedulePage() {
     redirect("/login");
   }
 
-  if (session.user.role === "TEACHER") {
-    // Teacher view - show their scheduling management
-    const teacherProfile = await prisma.teacherProfile.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        students: {
-          where: { isActive: true },
-          include: { user: true },
-        },
-      },
-    });
-
-    if (!teacherProfile) {
-      redirect("/dashboard");
-    }
-
-    return (
-      <TeacherScheduleDashboard 
-        teacherProfile={{
-          id: teacherProfile.id,
-          calendlyUrl: teacherProfile.calendlyUrl || undefined,
-          students: teacherProfile.students.map(student => ({
-            id: student.id,
-            user: {
-              id: student.user.id,
-              name: student.user.name,
-              email: student.user.email,
-            }
-          }))
-        }} 
-      />
-    );
-  }
-
   if (session.user.role === "STUDENT") {
-    // Student view - show teacher's scheduling
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        teacher: {
-          include: { user: true },
-        },
-      },
-    });
-
-    if (!studentProfile || !studentProfile.teacher) {
-      return (
-        <div className="space-y-6">
-          <h1 className="text-3xl font-semibold text-foreground">
-            Schedule Lessons
-          </h1>
-          <Card className="p-8 text-center">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              No Teacher Assigned
-            </h3>
-            <p className="text-muted-foreground">
-              You haven&apos;t been assigned to a teacher yet. Please contact
-              support.
-            </p>
-          </Card>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-6">
-        <CalendlyEmbed
-          calendlyUrl={studentProfile.teacher.calendlyUrl || ""}
-          teacherName={studentProfile.teacher.user.name}
-          height={700}
-        />
-      </div>
-    );
+    redirect("/book-lesson");
   }
 
-  // Admin fallback
-  redirect("/dashboard");
+  if (session.user.role === "ADMIN") {
+    redirect("/admin/lessons");
+  }
+
+  // Get teacher profile
+  const teacher = await prisma.teacherProfile.findUnique({
+    where: { userId: session.user.id },
+    include: {
+      user: true,
+    },
+  });
+
+  if (!teacher) {
+    redirect("/dashboard");
+  }
+
+  // Get current week's lessons
+  const startDate = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday
+  const endDate = endOfWeek(addWeeks(startDate, 2)); // Next 3 weeks
+
+  const upcomingLessons = await prisma.lesson.findMany({
+    where: {
+      teacherId: teacher.id,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+      status: {
+        in: ["SCHEDULED", "COMPLETED"],
+      },
+    },
+    include: {
+      student: {
+        include: {
+          user: true,
+        },
+      },
+    },
+    orderBy: {
+      date: "asc",
+    },
+  });
+
+  // Get teacher availability for the next 3 weeks
+  const availability = await prisma.teacherAvailability.findMany({
+    where: {
+      teacherId: teacher.id,
+    },
+  });
+
+  // Get blocked time slots
+  const blockedTimes = await prisma.teacherBlockedTime.findMany({
+    where: {
+      teacherId: teacher.id,
+      startTime: {
+        gte: startDate,
+      },
+    },
+  });
+
+  // Get lesson settings
+  const lessonSettings = await prisma.teacherLessonSettings.findUnique({
+    where: {
+      teacherId: teacher.id,
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold text-foreground">Schedule</h1>
+        <p className="text-muted-foreground mt-2">
+          View and manage your upcoming lessons and availability
+        </p>
+      </div>
+
+      <TeacherScheduleView
+        teacherId={teacher.id}
+        upcomingLessons={upcomingLessons}
+        availability={availability}
+        blockedTimes={blockedTimes}
+        lessonSettings={lessonSettings}
+      />
+    </div>
+  );
 }

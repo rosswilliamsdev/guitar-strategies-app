@@ -26,7 +26,6 @@ interface TeacherDashboardProps {
   teacherProfile?: {
     bio?: string;
     hourlyRate?: number;
-    calendlyUrl?: string;
   };
 }
 

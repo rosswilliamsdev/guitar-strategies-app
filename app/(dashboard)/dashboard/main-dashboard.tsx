@@ -182,16 +182,10 @@ export function MainDashboard({ user }: DashboardProps) {
       default:
         return [
           {
-            title: "My Checklists",
-            description: "Track your personal practice goals",
-            href: "/student-checklists",
-            buttonText: "View Checklists",
-          },
-          {
-            title: "Teacher Checklists",
-            description: "View checklists from your teacher",
+            title: "Checklists",
+            description: "Track your progress and personal practice goals",
             href: "/curriculums",
-            buttonText: "View Teacher Lists",
+            buttonText: "View Checklists",
           },
           {
             title: "Recent Lessons",

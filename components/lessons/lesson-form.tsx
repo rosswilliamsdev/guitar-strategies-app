@@ -586,7 +586,7 @@ export function LessonForm({
                     <div className="flex space-x-2">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         onClick={() => window.open(link, "_blank")}
                       >
@@ -594,7 +594,7 @@ export function LessonForm({
                       </Button>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         onClick={() => removeLink(index)}
                       >
@@ -655,7 +655,7 @@ export function LessonForm({
                     <div className="flex space-x-2">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         onClick={() =>
                           window.open(attachment.fileUrl, "_blank")
@@ -665,7 +665,7 @@ export function LessonForm({
                       </Button>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="secondary"
                         size="sm"
                         onClick={() => removeExistingAttachment(attachment.id)}
                       >
@@ -699,7 +699,7 @@ export function LessonForm({
                     </div>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="secondary"
                       size="sm"
                       onClick={() => removeFile(index)}
                     >

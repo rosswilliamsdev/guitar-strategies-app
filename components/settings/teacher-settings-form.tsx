@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Save, Key, User, DollarSign, Calendar, Clock, ExternalLink, CheckCircle } from "lucide-react";
-import { teacherProfileSchema, passwordChangeSchema } from "@/lib/validations";
-import { validateCalendlyUrl, getCalendlyExamples } from "@/lib/calendly";
-import { getTimezoneGroups, getCurrentTimezone, getTimezoneDisplayName } from "@/lib/timezones";
+import { AlertCircle, Save, Key, User, DollarSign, Calendar, Clock, Settings2, CalendarDays } from "lucide-react";
+import { teacherProfileSchema, passwordChangeSchema, timezoneSchema } from "@/lib/validations";
+import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
+import { BlockedTimeManager } from "@/components/teacher/BlockedTimeManager";
+import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
+
+// Common US timezones
+const TIMEZONE_OPTIONS = [
+  { value: "America/New_York", label: "Eastern Time (ET)" },
+  { value: "America/Chicago", label: "Central Time (CT)" },
+  { value: "America/Denver", label: "Mountain Time (MT)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
+  { value: "America/Anchorage", label: "Alaska Time (AKT)" },
+  { value: "Pacific/Honolulu", label: "Hawaii Time (HST)" },
+  { value: "America/Phoenix", label: "Arizona Time (MST)" },
+  { value: "UTC", label: "UTC" },
+];
 
 interface TeacherSettingsFormProps {
   user: {
@@ -25,7 +38,6 @@ interface TeacherSettingsFormProps {
     id: string;
     bio?: string;
     hourlyRate?: number;
-    calendlyUrl?: string;
     timezone?: string;
     phoneNumber?: string;
     venmoHandle?: string;
@@ -39,15 +51,14 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'availability' | 'lesson-settings' | 'blocked-time' | 'password'>('profile');
 
   // Profile form state
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [bio, setBio] = useState(teacherProfile.bio || "");
   const [hourlyRate, setHourlyRate] = useState(teacherProfile.hourlyRate ? (teacherProfile.hourlyRate / 100).toString() : "");
-  const [calendlyUrl, setCalendlyUrl] = useState(teacherProfile.calendlyUrl || "");
-  const [timezone, setTimezone] = useState(teacherProfile.timezone || getCurrentTimezone());
+  const [timezone, setTimezone] = useState(teacherProfile.timezone || "America/New_York");
   const [phoneNumber, setPhoneNumber] = useState(teacherProfile.phoneNumber || "");
   
   // Payment method fields
@@ -60,12 +71,156 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Calendly validation state
-  const [calendlyValidation, setCalendlyValidation] = useState<{
-    isValid: boolean;
-    error?: string;
-    cleanUrl?: string;
-  }>({ isValid: true });
+  // Scheduling data state
+  const [availability, setAvailability] = useState<any[]>([]);
+  const [lessonSettings, setLessonSettings] = useState({
+    allows30Min: true,
+    allows60Min: true,
+    price30Min: 3000,
+    price60Min: 6000,
+    advanceBookingDays: 21,
+  });
+  const [blockedTimes, setBlockedTimes] = useState<any[]>([]);
+  const [schedulingLoading, setSchedulingLoading] = useState(false);
+
+  // Load scheduling data when component mounts
+  useEffect(() => {
+    loadSchedulingData();
+  }, []);
+
+  const loadSchedulingData = async () => {
+    setSchedulingLoading(true);
+    try {
+      // Load availability
+      const availabilityResponse = await fetch('/api/teacher/availability');
+      if (availabilityResponse.ok) {
+        const availabilityData = await availabilityResponse.json();
+        setAvailability(availabilityData.availability || []);
+      }
+
+      // Load lesson settings
+      const settingsResponse = await fetch('/api/teacher/lesson-settings');
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+        setLessonSettings(settingsData.settings);
+      }
+
+      // Load blocked times
+      const blockedResponse = await fetch('/api/teacher/blocked-time');
+      if (blockedResponse.ok) {
+        const blockedData = await blockedResponse.json();
+        setBlockedTimes(blockedData.blockedTimes || []);
+      }
+    } catch (error) {
+      console.error('Error loading scheduling data:', error);
+    } finally {
+      setSchedulingLoading(false);
+    }
+  };
+
+  const handleSaveAvailability = async (newAvailability: any[]) => {
+    try {
+      setSchedulingLoading(true);
+      const response = await fetch('/api/teacher/availability', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ availability: newAvailability }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save availability');
+      }
+
+      const data = await response.json();
+      setAvailability(data.availability);
+      setSuccess('Availability saved successfully!');
+      setError('');
+    } catch (error: any) {
+      setError(error.message || 'Failed to save availability');
+      setSuccess('');
+    } finally {
+      setSchedulingLoading(false);
+    }
+  };
+
+  const handleSaveLessonSettings = async (newSettings: any) => {
+    try {
+      setSchedulingLoading(true);
+      const response = await fetch('/api/teacher/lesson-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save lesson settings');
+      }
+
+      const data = await response.json();
+      setLessonSettings(data.settings);
+      setSuccess('Lesson settings saved successfully!');
+      setError('');
+    } catch (error: any) {
+      setError(error.message || 'Failed to save lesson settings');
+      setSuccess('');
+    } finally {
+      setSchedulingLoading(false);
+    }
+  };
+
+  const handleAddBlockedTime = async (blockedTime: any) => {
+    try {
+      setSchedulingLoading(true);
+      const response = await fetch('/api/teacher/blocked-time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blockedTime),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add blocked time');
+      }
+
+      // Reload blocked times
+      await loadSchedulingData();
+      setSuccess('Blocked time added successfully!');
+      setError('');
+    } catch (error: any) {
+      setError(error.message || 'Failed to add blocked time');
+      setSuccess('');
+      throw error; // Re-throw so the component can handle it
+    } finally {
+      setSchedulingLoading(false);
+    }
+  };
+
+  const handleRemoveBlockedTime = async (id: string) => {
+    try {
+      setSchedulingLoading(true);
+      const response = await fetch(`/api/teacher/blocked-time/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to remove blocked time');
+      }
+
+      // Reload blocked times
+      await loadSchedulingData();
+      setSuccess('Blocked time removed successfully!');
+      setError('');
+    } catch (error: any) {
+      setError(error.message || 'Failed to remove blocked time');
+      setSuccess('');
+      throw error; // Re-throw so the component can handle it
+    } finally {
+      setSchedulingLoading(false);
+    }
+  };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,8 +235,7 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
         email,
         bio: bio || undefined,
         hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
-        calendlyUrl: calendlyUrl || undefined,
-        timezone: timezone || undefined,
+        timezone,
         phoneNumber: phoneNumber || undefined,
         venmoHandle: venmoHandle || undefined,
         paypalEmail: paypalEmail || undefined,
@@ -166,28 +320,61 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   return (
     <div className="space-y-8">
       {/* Tabs */}
-      <div className="flex space-x-1 bg-muted p-1 rounded-lg">
+      <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg">
         <button
           onClick={() => setActiveTab('profile')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'profile'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <User className="h-4 w-4" />
-          <span>Profile Information</span>
+          <span className="hidden sm:inline">Profile</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('availability')}
+          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'availability'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <CalendarDays className="h-4 w-4" />
+          <span className="hidden sm:inline">Availability</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('lesson-settings')}
+          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'lesson-settings'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Settings2 className="h-4 w-4" />
+          <span className="hidden sm:inline">Lessons</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('blocked-time')}
+          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'blocked-time'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Calendar className="h-4 w-4" />
+          <span className="hidden sm:inline">Blocked Time</span>
         </button>
         <button
           onClick={() => setActiveTab('password')}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'password'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <Key className="h-4 w-4" />
-          <span>Change Password</span>
+          <span className="hidden sm:inline">Password</span>
         </button>
       </div>
 
@@ -290,121 +477,26 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
                 </p>
               </div>
               <div>
-                <Label htmlFor="timezone">Timezone</Label>
+                <Label htmlFor="timezone">Timezone *</Label>
                 <div className="mt-2">
-                  <Select value={timezone} onValueChange={setTimezone}>
+                  <Select value={timezone} onValueChange={setTimezone} required>
                     <SelectTrigger className="w-full">
                       <div className="flex items-center space-x-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
-                        <SelectValue placeholder="Select timezone">
-                          {getTimezoneDisplayName(timezone)}
-                        </SelectValue>
+                        <SelectValue placeholder="Select your timezone" />
                       </div>
                     </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {Object.entries(getTimezoneGroups()).map(([group, timezones]) => (
-                        <div key={group}>
-                          <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
-                            {group}
-                          </div>
-                          {timezones.map((tz) => (
-                            <SelectItem key={tz.value} value={tz.value} className="pl-6">
-                              {tz.label}
-                            </SelectItem>
-                          ))}
-                        </div>
+                    <SelectContent>
+                      {TIMEZONE_OPTIONS.map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Your timezone affects lesson scheduling and calendar display
-                </p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Calendly Integration */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="calendlyUrl">Calendly URL</Label>
-                {calendlyUrl && calendlyValidation.isValid && (
-                  <div className="flex items-center space-x-1 text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-xs">Valid</span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-3">
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    id="calendlyUrl"
-                    type="url"
-                    value={calendlyUrl}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setCalendlyUrl(value);
-                      
-                      // Validate on change
-                      const validation = validateCalendlyUrl(value);
-                      setCalendlyValidation(validation);
-                      
-                      // If valid and has a clean URL, update to clean version
-                      if (validation.isValid && validation.cleanUrl && validation.cleanUrl !== value) {
-                        setTimeout(() => setCalendlyUrl(validation.cleanUrl!), 500);
-                      }
-                    }}
-                    placeholder="https://calendly.com/yourname"
-                    className={`pl-10 pr-12 ${
-                      calendlyValidation.error 
-                        ? 'border-red-300 focus:border-red-300 focus:ring-red-200' 
-                        : calendlyUrl && calendlyValidation.isValid
-                        ? 'border-green-300 focus:border-green-300 focus:ring-green-200'
-                        : ''
-                    }`}
-                  />
-                  {calendlyUrl && calendlyValidation.isValid && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(calendlyUrl, '_blank')}
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-
-                {calendlyValidation.error && (
-                  <div className="flex items-start space-x-2 text-red-600 text-sm">
-                    <AlertCircle className="h-4 w-4 mt-0.5" />
-                    <span>{calendlyValidation.error}</span>
-                  </div>
-                )}
-
-                {!calendlyUrl && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 className="font-medium text-blue-900 mb-2">Calendly Integration</h4>
-                    <p className="text-sm text-blue-800 mb-3">
-                      Connect your Calendly account to let students book lessons directly.
-                    </p>
-                    <div className="text-sm text-blue-700">
-                      <p className="font-medium mb-1">Example formats:</p>
-                      <ul className="space-y-1 ml-4">
-                        {getCalendlyExamples().map((example, i) => (
-                          <li key={i} className="font-mono text-xs">• {example}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">
-                  Students will use this link to book lessons with you directly through Calendly
+                  Your timezone is important for accurate lesson scheduling
                 </p>
               </div>
             </div>
@@ -548,6 +640,41 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
               {isLoading ? "Updating..." : "Update Password"}
             </Button>
           </form>
+        </Card>
+      )}
+
+      {/* Availability Tab */}
+      {activeTab === 'availability' && (
+        <Card className="p-6">
+          <WeeklyScheduleGrid
+            availability={availability}
+            onSave={handleSaveAvailability}
+            loading={schedulingLoading}
+          />
+        </Card>
+      )}
+
+      {/* Lesson Settings Tab */}
+      {activeTab === 'lesson-settings' && (
+        <Card className="p-6">
+          <LessonSettingsForm
+            settings={lessonSettings}
+            onSave={handleSaveLessonSettings}
+            loading={schedulingLoading}
+          />
+        </Card>
+      )}
+
+      {/* Blocked Time Tab */}
+      {activeTab === 'blocked-time' && (
+        <Card className="p-6">
+          <BlockedTimeManager
+            blockedTimes={blockedTimes}
+            onAdd={handleAddBlockedTime}
+            onRemove={handleRemoveBlockedTime}
+            timezone={timezone}
+            loading={schedulingLoading}
+          />
         </Card>
       )}
     </div>

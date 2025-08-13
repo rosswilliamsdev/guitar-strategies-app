@@ -209,7 +209,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
                 </div>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => setSelectedFile(null)}
                 >

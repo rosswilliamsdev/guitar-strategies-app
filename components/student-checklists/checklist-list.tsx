@@ -86,7 +86,7 @@ export function StudentChecklistList() {
           <p className="text-muted-foreground max-w-md mx-auto">
             Create your first personal checklist to track your practice routine, repertoire, techniques, and learning progress.
           </p>
-          <Link href="/student-checklists/new">
+          <Link href="/curriculums/my/new">
             <Button variant="primary" className="mt-4">
               <Plus className="h-4 w-4 mr-2" />
               Create Your First Checklist
@@ -113,7 +113,7 @@ export function StudentChecklistList() {
             </Button>
           )}
         </div>
-        <Link href="/student-checklists/new">
+        <Link href="/curriculums/my/new">
           <Button variant="primary">
             <Plus className="h-4 w-4 mr-2" />
             New Checklist
@@ -189,7 +189,7 @@ export function StudentChecklistList() {
                   )}
                 </div>
 
-                <Link href={`/student-checklists/${checklist.id}`}>
+                <Link href={`/curriculums/my/${checklist.id}`}>
                   <Button variant="secondary" size="sm">
                     View Details
                     <ChevronRight className="h-4 w-4 ml-1" />

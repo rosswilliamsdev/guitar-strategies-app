@@ -217,7 +217,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       });
 
       if (response.ok) {
-        router.push("/student-checklists");
+        router.push("/curriculums");
       }
     } catch (error) {
       console.error("Error deleting checklist:", error);
@@ -237,7 +237,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       <Card className="p-6">
         <div className="text-center">
           <p className="text-muted-foreground">Checklist not found.</p>
-          <Link href="/student-checklists">
+          <Link href="/curriculums">
             <Button variant="primary" className="mt-4">
               Back to Checklists
             </Button>
@@ -258,7 +258,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Link href="/student-checklists">
+              <Link href="/curriculums">
                 <Button variant="secondary" size="sm">
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -289,7 +289,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                 </>
               )}
             </Button>
-            <Link href={`/student-checklists/${checklistId}/edit`}>
+            <Link href={`/curriculums/my/${checklistId}/edit`}>
               <Button variant="secondary" size="sm">
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit

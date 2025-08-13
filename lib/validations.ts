@@ -36,7 +36,7 @@ export const registerSchema = z
     // Teacher-specific fields
     bio: z.string().optional(),
     hourlyRate: z.number().min(10).max(500).optional(),
-    calendlyUrl: z.string().url("Please enter a valid Calendly URL").optional(),
+    timezone: z.string().default("America/New_York"),
     // Student-specific fields
     teacherId: z.string().optional(),
     goals: z.string().optional(),
@@ -68,6 +68,19 @@ export const passwordChangeSchema = z
 // ========================================
 // Profile Schemas
 // ========================================
+// Define timezoneSchema early as it's used by other schemas
+export const timezoneSchema = z.string().refine(
+  (tz) => {
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: tz });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  { message: "Invalid timezone" }
+);
+
 export const teacherProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
@@ -77,8 +90,7 @@ export const teacherProfileSchema = z.object({
     .min(10, "Hourly rate must be at least $10")
     .max(500, "Hourly rate must be less than $500")
     .optional(),
-  calendlyUrl: z.string().url("Please enter a valid Calendly URL").optional(),
-  timezone: z.string().optional(),
+  timezone: timezoneSchema,
   phoneNumber: z.string().optional(),
   // Payment method fields for invoice generation
   venmoHandle: z.string().optional(),
@@ -284,24 +296,88 @@ export const searchSchema = z.object({
 });
 
 // ========================================
-// Calendly Integration Schemas
+// Teacher Scheduling Schemas
 // ========================================
-export const calendlySettingsSchema = z.object({
-  url: z
-    .string()
-    .min(1, "Calendly URL is required")
-    .refine((val) => {
-      try {
-        const url = new URL(val);
-        return url.hostname.includes("calendly.com");
-      } catch {
-        return false;
-      }
-    }, "Please enter a valid Calendly URL"),
-  eventType: z.string().min(1, "Event type is required"),
-  duration: z.number().min(15).max(180),
-  timezone: z.string().min(1, "Timezone is required"),
+export const availabilitySchema = z.object({
+  dayOfWeek: z.number().min(0).max(6), // 0-6 (Sunday-Saturday)
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+  isActive: z.boolean().default(true),
 });
+
+export const weeklyAvailabilitySchema = z.array(availabilitySchema).refine(
+  (slots) => {
+    // Check for overlapping slots on the same day
+    for (let i = 0; i < slots.length; i++) {
+      for (let j = i + 1; j < slots.length; j++) {
+        if (slots[i].dayOfWeek === slots[j].dayOfWeek) {
+          const start1 = timeToMinutes(slots[i].startTime);
+          const end1 = timeToMinutes(slots[i].endTime);
+          const start2 = timeToMinutes(slots[j].startTime);
+          const end2 = timeToMinutes(slots[j].endTime);
+          
+          if ((start1 < end2 && end1 > start2)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  },
+  { message: "Availability slots cannot overlap on the same day" }
+);
+
+export const blockedTimeSchema = z.object({
+  startTime: z.date(),
+  endTime: z.date(),
+  reason: z.string().max(200).optional(),
+  timezone: z.string(),
+}).refine(
+  (data) => data.endTime > data.startTime,
+  { message: "End time must be after start time", path: ["endTime"] }
+);
+
+export const lessonSettingsSchema = z.object({
+  allows30Min: z.boolean(),
+  allows60Min: z.boolean(),
+  price30Min: z.number().min(0),
+  price60Min: z.number().min(0),
+  advanceBookingDays: z.number().min(1).max(90),
+}).refine(
+  (data) => data.allows30Min || data.allows60Min,
+  { message: "At least one lesson duration must be enabled" }
+);
+
+export const bookingSchema = z.object({
+  teacherId: z.string().min(1, "Teacher is required"),
+  studentId: z.string().min(1, "Student is required"),
+  date: z.date(),
+  duration: z.literal(30).or(z.literal(60)),
+  timezone: z.string(),
+  isRecurring: z.boolean().default(false),
+  recurringWeeks: z.number().min(2).max(52).optional(),
+});
+
+export const cancellationSchema = z.object({
+  lessonId: z.string().min(1, "Lesson ID is required"),
+  reason: z.string().max(500).optional(),
+});
+
+// Export timezoneSchema (already defined earlier in the file)
+
+export const timeSlotSchema = z.object({
+  start: z.date(),
+  end: z.date(),
+  duration: z.literal(30).or(z.literal(60)),
+  price: z.number().min(0),
+  available: z.boolean(),
+});
+
+// Helper function for time validation
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
 
 // ========================================
 // API Response Schemas
@@ -436,17 +512,6 @@ export function validatePassword(password: string): boolean {
   return passwordRegex.test(password);
 }
 
-export function validateCalendlyUrl(url: string): boolean {
-  try {
-    const urlObj = new URL(url);
-    return (
-      urlObj.hostname === "calendly.com" ||
-      urlObj.hostname.endsWith(".calendly.com")
-    );
-  } catch {
-    return false;
-  }
-}
 
 export function validateMonthFormat(month: string): boolean {
   const monthRegex = /^\d{4}-\d{2}$/;

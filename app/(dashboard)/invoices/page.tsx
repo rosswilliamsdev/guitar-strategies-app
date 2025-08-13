@@ -188,7 +188,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
               <Search className="h-3 w-3 mr-1" />
               Search
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button variant="secondary" size="sm">
               Clear
             </Button>
           </div>

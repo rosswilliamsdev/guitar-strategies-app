@@ -227,7 +227,7 @@ export function LessonDetails({
                     </p>
                   </div>
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     onClick={() => window.open(link.url, "_blank")}
                   >
@@ -279,7 +279,7 @@ export function LessonDetails({
                   </div>
                 </div>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => window.open(attachment.fileUrl, "_blank")}
                 >

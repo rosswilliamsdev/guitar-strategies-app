@@ -26,7 +26,6 @@ export interface Teacher {
     id: string;
     bio: string | null;
     hourlyRate: number | null;
-    calendlyUrl: string | null;
     isActive: boolean;
     venmoHandle: string | null;
     paypalEmail: string | null;
