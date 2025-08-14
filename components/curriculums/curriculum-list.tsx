@@ -78,7 +78,6 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
     }
   };
 
-
   const getProgressColor = (percent: number) => {
     if (percent === 100) return "bg-green-500";
     if (percent >= 75) return "bg-turquoise-500";
@@ -135,9 +134,8 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {curriculums.map((curriculum) => {
           // For students, calculate their own progress
-          const studentProgress = userRole === "STUDENT" 
-            ? curriculum.studentProgress[0] 
-            : null;
+          const studentProgress =
+            userRole === "STUDENT" ? curriculum.studentProgress[0] : null;
 
           const totalItems = curriculum.sections.reduce(
             (sum, section) => sum + section.items.length,
@@ -148,73 +146,87 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
             <Link key={curriculum.id} href={`/curriculums/${curriculum.id}`}>
               <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="space-y-3">
-                {/* Header */}
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {curriculum.title}
-                    </h3>
-                    {curriculum.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {curriculum.description}
-                      </p>
-                    )}
+                  {/* Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {curriculum.title}
+                      </h3>
+                      {curriculum.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {curriculum.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Stats */}
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <CheckCircle className="h-4 w-4" />
-                    <span>{totalItems} items</span>
-                  </div>
-                  {userRole === "TEACHER" && curriculum.studentProgress.length > 0 && (
+                  {/* Stats */}
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>{curriculum.studentProgress.length} students</span>
+                      <CheckCircle className="h-4 w-4" />
+                      <span>{totalItems} items</span>
                     </div>
-                  )}
-                </div>
-
-                {/* Student Progress Bar */}
-                {userRole === "STUDENT" && studentProgress && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">
-                        {studentProgress.completedItems} / {studentProgress.totalItems} completed
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all ${getProgressColor(
-                          studentProgress.progressPercent
-                        )}`}
-                        style={{ width: `${studentProgress.progressPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Teacher: Student Progress Summary */}
-                {userRole === "TEACHER" && curriculum.studentProgress.length > 0 && (
-                  <div className="border-t pt-4">
-                    <p className="text-xs text-muted-foreground mb-2">Recent Student Progress</p>
-                    <div className="space-y-1">
-                      {curriculum.studentProgress.slice(0, 3).map((progress) => (
-                        <div key={progress.id} className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground truncate">
-                            {progress.student?.user.name || "Unknown Student"}
-                          </span>
-                          <span className="font-medium">
-                            {Math.round(progress.progressPercent)}%
+                    {userRole === "TEACHER" &&
+                      curriculum.studentProgress.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          <span>
+                            {curriculum.studentProgress.length} students
                           </span>
                         </div>
-                      ))}
-                    </div>
+                      )}
                   </div>
-                )}
 
+                  {/* Student Progress Bar */}
+                  {userRole === "STUDENT" && studentProgress && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Progress</span>
+                        <span className="font-medium">
+                          {studentProgress.completedItems} /{" "}
+                          {studentProgress.totalItems} completed
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all ${getProgressColor(
+                            studentProgress.progressPercent
+                          )}`}
+                          style={{
+                            width: `${studentProgress.progressPercent}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Teacher: Student Progress Summary */}
+                  {userRole === "TEACHER" &&
+                    curriculum.studentProgress.length > 0 && (
+                      <div className="border-t pt-4">
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Recent Student Progress
+                        </p>
+                        <div className="space-y-1">
+                          {curriculum.studentProgress
+                            .slice(0, 3)
+                            .map((progress) => (
+                              <div
+                                key={progress.id}
+                                className="flex items-center justify-between text-sm"
+                              >
+                                <span className="text-muted-foreground truncate">
+                                  {progress.student?.user.name ||
+                                    "Unknown Student"}
+                                </span>
+                                <span className="font-medium">
+                                  {Math.round(progress.progressPercent)}%
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
               </Card>
             </Link>

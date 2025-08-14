@@ -36,10 +36,10 @@ export function StudentDashboard({
 
   const quickActions = [
     {
-      href: `/teacher/${safeStudentProfile.teacherEmail.replace('@guitarstrategies.com', '')}`,
-      text: "Book Lesson",
+      href: "/scheduling",
+      text: "Scheduling",
       variant: "primary" as const,
-      description: "Schedule with your teacher",
+      description: "Manage your lesson schedule",
     },
     {
       href: "/lessons",
@@ -48,16 +48,16 @@ export function StudentDashboard({
       description: "See your lesson history",
     },
     {
-      href: "/library",
-      text: "Study Materials",
+      href: "/curriculums",
+      text: "Checklists",
       variant: "secondary" as const, 
-      description: "Access shared resources",
+      description: "Track your progress",
     },
     {
-      href: "/progress",
-      text: "Track Progress",
+      href: "/recommendations",
+      text: "Recommendations",
       variant: "secondary" as const,
-      description: "View your improvement",
+      description: "View teacher recommendations",
     },
   ];
 

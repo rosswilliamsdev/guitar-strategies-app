@@ -10,6 +10,9 @@ import {
   LibraryCategory,
   CurriculumCategory,
   ProgressStatus,
+  SlotStatus,
+  SubscriptionStatus,
+  BillingStatus,
 } from "@prisma/client";
 
 // ========================================
@@ -552,3 +555,99 @@ export type UpdateCurriculumData = z.infer<typeof updateCurriculumSchema>;
 export type CreateCurriculumSectionData = z.infer<typeof createCurriculumSectionSchema>;
 export type CreateCurriculumItemData = z.infer<typeof createCurriculumItemSchema>;
 export type UpdateProgressData = z.infer<typeof updateProgressSchema>;
+
+// ========================================
+// Recurring Monthly Slot Schemas
+// ========================================
+export const createSlotBookingSchema = z.object({
+  teacherId: z.string().min(1, "Teacher is required"),
+  dayOfWeek: z.number().min(0).max(6, "Day of week must be 0-6 (Sunday-Saturday)"),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+  duration: z.literal(30).or(z.literal(60)),
+  startMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  endMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format").optional(),
+});
+
+export const updateSlotSchema = z.object({
+  slotId: z.string().min(1, "Slot ID is required"),
+  status: z.nativeEnum(SlotStatus).optional(),
+  monthlyRate: z.number().min(0).optional(),
+});
+
+export const cancelSlotSchema = z.object({
+  slotId: z.string().min(1, "Slot ID is required"),
+  cancelDate: z.date(),
+  reason: z.string().max(500).optional(),
+  refundAmount: z.number().min(0).optional(),
+});
+
+export const slotSubscriptionSchema = z.object({
+  slotId: z.string().min(1, "Slot ID is required"),
+  startMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  endMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format").optional(),
+  monthlyRate: z.number().min(0),
+  status: z.nativeEnum(SubscriptionStatus).default('ACTIVE'),
+});
+
+export const updateSubscriptionSchema = z.object({
+  subscriptionId: z.string().min(1, "Subscription ID is required"),
+  status: z.nativeEnum(SubscriptionStatus).optional(),
+  endMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format").optional(),
+});
+
+export const monthlyBillingSchema = z.object({
+  subscriptionId: z.string().min(1, "Subscription ID is required"),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  expectedLessons: z.number().min(0),
+  actualLessons: z.number().min(0).default(0),
+  ratePerLesson: z.number().min(0),
+  totalAmount: z.number().min(0),
+  status: z.nativeEnum(BillingStatus).default('PENDING'),
+});
+
+export const updateBillingSchema = z.object({
+  billingId: z.string().min(1, "Billing ID is required"),
+  actualLessons: z.number().min(0).optional(),
+  status: z.nativeEnum(BillingStatus).optional(),
+  paymentMethod: z.string().max(50).optional(),
+  paidAt: z.date().optional(),
+});
+
+export const slotAvailabilitySchema = z.object({
+  teacherId: z.string().min(1, "Teacher ID is required"),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+});
+
+export const monthlySlotSummarySchema = z.object({
+  teacherId: z.string().min(1, "Teacher ID is required"),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+});
+
+// Validation for monthly billing calculation
+export const billingCalculationSchema = z.object({
+  slotId: z.string().min(1, "Slot ID is required"),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+}).refine(async (data) => {
+  // Custom validation to ensure the month is not in the past
+  const [year, monthNum] = data.month.split("-").map(Number);
+  const monthDate = new Date(year, monthNum - 1, 1);
+  const currentMonth = new Date();
+  currentMonth.setDate(1);
+  currentMonth.setHours(0, 0, 0, 0);
+  
+  return monthDate >= currentMonth;
+}, {
+  message: "Cannot calculate billing for past months",
+  path: ["month"]
+});
+
+// Export additional type definitions for recurring slots
+export type CreateSlotBookingData = z.infer<typeof createSlotBookingSchema>;
+export type UpdateSlotData = z.infer<typeof updateSlotSchema>;
+export type CancelSlotData = z.infer<typeof cancelSlotSchema>;
+export type SlotSubscriptionData = z.infer<typeof slotSubscriptionSchema>;
+export type UpdateSubscriptionData = z.infer<typeof updateSubscriptionSchema>;
+export type MonthlyBillingData = z.infer<typeof monthlyBillingSchema>;
+export type UpdateBillingData = z.infer<typeof updateBillingSchema>;
+export type SlotAvailabilityParams = z.infer<typeof slotAvailabilitySchema>;
+export type MonthlySlotSummaryParams = z.infer<typeof monthlySlotSummarySchema>;

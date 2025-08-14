@@ -4,6 +4,15 @@
 
 Guitar lesson management platform that integrates with Calendly for scheduling. Teachers use Calendly for booking, then manually log completed lessons in our app to track student progress. The app generates invoices and tracks payments, with teachers collecting payments via Venmo/PayPal/Zelle and marking them as paid.
 
+### Core Philosophy: Booking Time, Not Lessons
+
+**Important**: Students are booking and paying for the teacher's TIME, not lessons. This means:
+- Use "Book a Time" or "Book Time" instead of "Book a Lesson"
+- Students pay for reserved time slots whether they attend or cancel
+- The teacher's time has value regardless of student attendance
+- Language should reflect time reservation: "Reserve your time", "Book additional time", etc.
+- This applies to both individual bookings and recurring weekly slots
+
 ## Tech Stack
 
 - **Framework**: Next.js 15.4.6 with App Router

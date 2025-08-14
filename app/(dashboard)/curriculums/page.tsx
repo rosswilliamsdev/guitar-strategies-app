@@ -26,20 +26,7 @@ export default async function CurriculumsPage() {
         </div>
       </div>
 
-      {/* Teacher Checklists Section */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">
-            {session.user.role === "TEACHER" ? "Student Checklists" : "Teacher Checklists"}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {session.user.role === "TEACHER" 
-              ? "Learning checklists you've created for your students"
-              : "Learning checklists created by your teacher"}
-          </p>
-        </div>
-        <CurriculumList userRole={session.user.role} />
-      </div>
+      <CurriculumList userRole={session.user.role} />
 
       {/* Student Personal Checklists Section - Only show for students */}
       {session.user.role === "STUDENT" && (

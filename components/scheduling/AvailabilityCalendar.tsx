@@ -116,7 +116,7 @@ export function AvailabilityCalendar({
       await loadAvailableSlots()
       setSelectedSlots([])
     } catch (error: any) {
-      setError(error.message || 'Failed to book lesson')
+      setError(error.message || 'Failed to book time')
     }
   }
 
@@ -202,9 +202,8 @@ export function AvailabilityCalendar({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Book a Lesson</h2>
           <p className="text-muted-foreground">
-            Select one 30-minute slot, or two consecutive slots for a 60-minute lesson
+            Select one 30-minute slot, or two consecutive slots for a 60-minute session
           </p>
         </div>
         
@@ -220,7 +219,7 @@ export function AvailabilityCalendar({
                     : "hover:bg-background/50"
                 )}
               >
-                Single Lesson
+                Single Session
               </button>
               <button
                 onClick={() => setBookingMode('recurring')}
@@ -440,7 +439,7 @@ export function AvailabilityCalendar({
                 className="bg-primary hover:bg-turquoise-600"
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                {loading ? 'Booking...' : 'Book Lesson'}
+                {loading ? 'Booking...' : 'Book Time'}
               </Button>
             </div>
           </div>

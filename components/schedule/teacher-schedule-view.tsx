@@ -421,47 +421,65 @@ export function TeacherScheduleView({
         {viewMode === "day" ? (
           /* Daily view */
           <div className="max-w-2xl">
-            {/* Time slots for the day */}
-            <div className="space-y-3">
-              {(() => {
-                // Convert JavaScript day (0=Sunday, 1=Monday, ...) to our Monday-first system (0=Monday, 1=Tuesday, ...)
-                const currentDayIndex =
-                  currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
-                const dayAvailability = getAvailabilityForDay(currentDayIndex);
-                const dayLessons = getLessonsForDay(currentDate);
-                const dayBlockedTimes = getBlockedTimesForDay(currentDate);
+            {(() => {
+              // Convert JavaScript day (0=Sunday, 1=Monday, ...) to our Monday-first system (0=Monday, 1=Tuesday, ...)
+              const currentDayIndex =
+                currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
+              const dayAvailability = getAvailabilityForDay(currentDayIndex);
+              const dayLessons = getLessonsForDay(currentDate);
+              const dayBlockedTimes = getBlockedTimesForDay(currentDate);
 
-                // Generate time slots only for this specific day's availability
-                const dayTimeSlots = generateTimeSlots(dayAvailability);
-
-                return dayTimeSlots.map((timeSlot) => {
-                  const slotStatus = getSlotStatus(
-                    currentDate,
-                    timeSlot,
-                    dayAvailability,
-                    dayLessons,
-                    dayBlockedTimes
-                  );
-
-                  return (
-                    <div
-                      key={timeSlot}
-                      className="flex items-center justify-start gap-4"
-                    >
-                      {/* Time label */}
-                      <div className="w-24 text-sm font-medium text-muted-foreground text-left">
-                        {timeSlot}
-                      </div>
-
-                      {/* Slot content */}
-                      <div className="flex items-center">
-                        {renderSlotContent(slotStatus)}
-                      </div>
+              // Check if there are any lessons booked for this day
+              if (dayLessons.length === 0) {
+                return (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center space-y-3">
+                      <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
+                      <h3 className="text-lg font-medium text-foreground">
+                        No lessons scheduled
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        You don't have any lessons booked for {format(currentDate, "EEEE, MMMM d")}
+                      </p>
                     </div>
-                  );
-                });
-              })()}
-            </div>
+                  </div>
+                );
+              }
+
+              // Generate time slots only for this specific day's availability
+              const dayTimeSlots = generateTimeSlots(dayAvailability);
+
+              return (
+                <div className="space-y-3">
+                  {dayTimeSlots.map((timeSlot) => {
+                    const slotStatus = getSlotStatus(
+                      currentDate,
+                      timeSlot,
+                      dayAvailability,
+                      dayLessons,
+                      dayBlockedTimes
+                    );
+
+                    return (
+                      <div
+                        key={timeSlot}
+                        className="flex items-center justify-start gap-4"
+                      >
+                        {/* Time label */}
+                        <div className="w-24 text-sm font-medium text-muted-foreground text-left">
+                          {timeSlot}
+                        </div>
+
+                        {/* Slot content */}
+                        <div className="flex items-center">
+                          {renderSlotContent(slotStatus)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         ) : (
           /* Weekly view */
@@ -509,42 +527,92 @@ export function TeacherScheduleView({
                 })}
               </div>
 
-              {/* Time slots grid */}
+              {/* Time slots grid or no lessons message */}
               <div className="grid grid-cols-8 gap-px bg-border">
-                {generateTimeSlots(availability).map((timeSlot) => (
-                  <React.Fragment key={timeSlot}>
-                    {/* Time column */}
-                    <div className="bg-background p-2 text-center border-r">
-                      <span className="text-xs text-muted-foreground">
-                        {timeSlot}
-                      </span>
-                    </div>
-
-                    {/* Day columns */}
-                    {weekDays.map((day, dayIndex) => {
-                      const dayAvailability = getAvailabilityForDay(dayIndex);
-                      const dayLessons = getLessonsForDay(day);
-                      const dayBlockedTimes = getBlockedTimesForDay(day);
-
-                      const slotStatus = getSlotStatus(
-                        day,
-                        timeSlot,
-                        dayAvailability,
-                        dayLessons,
-                        dayBlockedTimes
-                      );
-
-                      return (
-                        <div
-                          key={`${day.toISOString()}-${timeSlot}`}
-                          className="bg-background min-h-[40px] p-1"
-                        >
-                          {renderSlotContent(slotStatus)}
+                {(() => {
+                  // Check if any day in the week has lessons
+                  const daysWithLessons = weekDays.map((day) => ({
+                    day,
+                    hasLessons: getLessonsForDay(day).length > 0
+                  }));
+                  
+                  const anyDayHasLessons = daysWithLessons.some(d => d.hasLessons);
+                  
+                  if (!anyDayHasLessons) {
+                    return (
+                      <div className="col-span-8 bg-background p-12">
+                        <div className="text-center space-y-3">
+                          <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
+                          <h3 className="text-lg font-medium text-foreground">
+                            No lessons scheduled this week
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            You don't have any lessons booked for {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")}
+                          </p>
                         </div>
-                      );
-                    })}
-                  </React.Fragment>
-                ))}
+                      </div>
+                    );
+                  }
+
+                  return generateTimeSlots(availability).map((timeSlot) => (
+                    <React.Fragment key={timeSlot}>
+                      {/* Time column */}
+                      <div className="bg-background p-2 text-center border-r">
+                        <span className="text-xs text-muted-foreground">
+                          {timeSlot}
+                        </span>
+                      </div>
+
+                      {/* Day columns */}
+                      {weekDays.map((day, dayIndex) => {
+                        const dayAvailability = getAvailabilityForDay(dayIndex);
+                        const dayLessons = getLessonsForDay(day);
+                        const dayBlockedTimes = getBlockedTimesForDay(day);
+                        
+                        // If this day has no lessons, show a simplified view
+                        if (dayLessons.length === 0) {
+                          // Only show the first time slot for days with no lessons
+                          if (timeSlot === generateTimeSlots(availability)[0]) {
+                            return (
+                              <div
+                                key={`${day.toISOString()}-${timeSlot}`}
+                                className="bg-background min-h-[40px] p-1 flex items-center justify-center"
+                              >
+                                <span className="text-xs text-muted-foreground">No lessons</span>
+                              </div>
+                            );
+                          } else {
+                            return (
+                              <div
+                                key={`${day.toISOString()}-${timeSlot}`}
+                                className="bg-background min-h-[40px] p-1"
+                              >
+                                {/* Empty cell for subsequent time slots */}
+                              </div>
+                            );
+                          }
+                        }
+
+                        const slotStatus = getSlotStatus(
+                          day,
+                          timeSlot,
+                          dayAvailability,
+                          dayLessons,
+                          dayBlockedTimes
+                        );
+
+                        return (
+                          <div
+                            key={`${day.toISOString()}-${timeSlot}`}
+                            className="bg-background min-h-[40px] p-1"
+                          >
+                            {renderSlotContent(slotStatus)}
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  ));
+                })()}
               </div>
             </div>
           </div>

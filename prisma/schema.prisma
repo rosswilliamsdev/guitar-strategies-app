@@ -99,6 +99,8 @@ model TeacherProfile {
   availability    TeacherAvailability[]
   blockedTimes    TeacherBlockedTime[]
   lessonSettings  TeacherLessonSettings?
+  recurringSlots  RecurringSlot[] @relation("TeacherSlots")
+  monthlyBilling  MonthlyBilling[] @relation("TeacherBilling")
 
   @@index([userId])
   @@index([isActive])
@@ -128,6 +130,9 @@ model StudentProfile {
   invoices Invoice[]
   studentProgress StudentCurriculumProgress[]
   studentChecklists StudentChecklist[]
+  recurringSlots RecurringSlot[] @relation("StudentSlots")
+  slotSubscriptions SlotSubscription[] @relation("StudentSubscriptions")
+  monthlyBilling MonthlyBilling[] @relation("StudentBilling")
 
   @@index([userId])
   @@index([teacherId])
@@ -150,6 +155,7 @@ model Lesson {
   price           Int        @default(0) // Price paid for this lesson (cents)
   isRecurring     Boolean    @default(false)
   recurringId     String?    // Links recurring lessons together
+  recurringSlotId String?    // Links to the recurring slot this lesson belongs to
   
   // Lesson details
   focusAreas      String?    @db.Text // JSON array of focus areas
@@ -167,12 +173,14 @@ model Lesson {
   attachments LessonAttachment[]
   links LessonLink[]
   invoiceItems InvoiceItem[]
+  recurringSlot RecurringSlot? @relation("SlotLessons", fields: [recurringSlotId], references: [id])
 
   @@index([teacherId, date])
   @@index([studentId, date])
   @@index([status])
   @@index([date])
   @@index([recurringId])
+  @@index([recurringSlotId])
 }
 
 model LessonAttachment {
@@ -521,6 +529,107 @@ model TeacherBlockedTime {
   @@index([startTime, endTime])
 }
 
+// Recurring Monthly Slot System Models
+model RecurringSlot {
+  id          String   @id @default(cuid())
+  teacherId   String
+  studentId   String
+  
+  // Slot timing
+  dayOfWeek   Int      // 0-6 (Sunday-Saturday)
+  startTime   String   // "09:00" in teacher's timezone
+  duration    Int      // 30 or 60 minutes
+  
+  // Slot status and lifecycle
+  status      SlotStatus @default(ACTIVE)
+  bookedAt    DateTime @default(now())
+  cancelledAt DateTime?
+  
+  // Pricing
+  monthlyRate Int      // cents - rate per month for this slot
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  teacher     TeacherProfile @relation("TeacherSlots", fields: [teacherId], references: [id], onDelete: Cascade)
+  student     StudentProfile @relation("StudentSlots", fields: [studentId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]       @relation("SlotLessons")
+  subscriptions SlotSubscription[]
+  
+  @@unique([teacherId, dayOfWeek, startTime, duration, status]) // Prevent double-booking
+  @@index([teacherId, status])
+  @@index([studentId, status])
+  @@index([dayOfWeek])
+}
+
+model SlotSubscription {
+  id            String   @id @default(cuid())
+  slotId        String
+  studentId     String
+  
+  // Subscription period
+  startMonth    String   // "2025-01" format
+  endMonth      String?  // null = ongoing, "2025-12" = specific end
+  
+  // Billing details
+  monthlyRate   Int      // cents - locked rate for this subscription
+  status        SubscriptionStatus @default(ACTIVE)
+  
+  // Payment tracking
+  lastBilledMonth String? // "2025-01" - last month that was billed
+  nextBillDate    DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  slot          RecurringSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  student       StudentProfile @relation("StudentSubscriptions", fields: [studentId], references: [id], onDelete: Cascade)
+  billingRecords MonthlyBilling[]
+  
+  @@unique([slotId, studentId, startMonth]) // One subscription per slot per student per start month
+  @@index([status])
+  @@index([nextBillDate])
+  @@index([studentId])
+}
+
+model MonthlyBilling {
+  id               String   @id @default(cuid())
+  subscriptionId   String
+  studentId        String
+  teacherId        String
+  
+  // Billing period
+  month            String   // "2025-01" format
+  
+  // Lesson count and pricing
+  expectedLessons  Int      // How many lessons should occur this month
+  actualLessons    Int      @default(0) // How many actually happened
+  ratePerLesson    Int      // cents - calculated from monthly rate
+  totalAmount      Int      // cents - expectedLessons * ratePerLesson
+  
+  // Billing status
+  status           BillingStatus @default(PENDING)
+  billedAt         DateTime?
+  paidAt           DateTime?
+  paymentMethod    String?  // "Venmo", "PayPal", "Zelle", etc.
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  subscription     SlotSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  student          StudentProfile @relation("StudentBilling", fields: [studentId], references: [id])
+  teacher          TeacherProfile @relation("TeacherBilling", fields: [teacherId], references: [id])
+  
+  @@unique([subscriptionId, month]) // One billing record per subscription per month
+  @@index([month])
+  @@index([status])
+  @@index([studentId, month])
+  @@index([teacherId, month])
+}
+
 // System models for admin functionality
 model SystemSettings {
   id    String @id @default("system")
@@ -613,5 +722,27 @@ enum ProgressStatus {
   IN_PROGRESS
   COMPLETED
   NEEDS_REVIEW
+}
+
+enum SlotStatus {
+  ACTIVE      // Slot is currently active and generating lessons
+  CANCELLED   // Student cancelled their recurring slot
+  SUSPENDED   // Temporarily paused (vacation, etc.)
+  EXPIRED     // Slot ended naturally
+}
+
+enum SubscriptionStatus {
+  ACTIVE      // Subscription is active and billing
+  PAUSED      // Temporarily paused
+  CANCELLED   // Cancelled by student
+  EXPIRED     // Subscription period ended
+}
+
+enum BillingStatus {
+  PENDING     // Not yet billed
+  BILLED      // Invoice sent to student
+  PAID        // Student has paid
+  OVERDUE     // Payment past due
+  CANCELLED   // Billing cancelled
 }
 

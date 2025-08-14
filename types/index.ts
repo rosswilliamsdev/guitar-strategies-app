@@ -8,11 +8,17 @@ import type {
   Recommendation as PrismaRecommendation,
   Invoice as PrismaInvoice,
   InvoiceItem as PrismaInvoiceItem,
+  RecurringSlot as PrismaRecurringSlot,
+  SlotSubscription as PrismaSlotSubscription,
+  MonthlyBilling as PrismaMonthlyBilling,
   Role,
   LessonStatus,
   RecommendationCategory,
   InvoiceStatus,
   LibraryCategory,
+  SlotStatus,
+  SubscriptionStatus,
+  BillingStatus,
 } from "@prisma/client";
 
 // ========================================
@@ -24,6 +30,9 @@ export type {
   RecommendationCategory,
   InvoiceStatus,
   LibraryCategory,
+  SlotStatus,
+  SubscriptionStatus,
+  BillingStatus,
 };
 
 // ========================================
@@ -414,6 +423,88 @@ export interface RecurringBooking {
   frequency: 'WEEKLY' | 'BIWEEKLY';
   endDate?: Date;
   maxOccurrences?: number;
+}
+
+// ========================================
+// Recurring Monthly Slot Types
+// ========================================
+export type RecurringSlot = PrismaRecurringSlot & {
+  teacher?: TeacherProfile;
+  student?: StudentProfile;
+  subscriptions?: SlotSubscription[];
+  lessons?: Lesson[];
+};
+
+export type SlotSubscription = PrismaSlotSubscription & {
+  slot?: RecurringSlot;
+  student?: StudentProfile;
+  billingRecords?: MonthlyBilling[];
+};
+
+export type MonthlyBilling = PrismaMonthlyBilling & {
+  subscription?: SlotSubscription;
+  student?: StudentProfile;
+  teacher?: TeacherProfile;
+};
+
+export interface SlotAvailability {
+  dayOfWeek: number; // 0-6 (Sunday-Saturday)
+  startTime: string; // "09:00"
+  duration: 30 | 60; // minutes
+  monthlyRate: number; // cents
+  isAvailable: boolean;
+  conflictReason?: string;
+}
+
+export interface CreateSlotBookingData {
+  teacherId: string;
+  dayOfWeek: number;
+  startTime: string;
+  duration: 30 | 60;
+  startMonth: string; // "2025-01"
+  endMonth?: string; // "2025-12" or null for ongoing
+}
+
+export interface SlotBookingResponse {
+  success: boolean;
+  slot?: RecurringSlot;
+  subscription?: SlotSubscription;
+  error?: string;
+  conflictingSlots?: RecurringSlot[];
+}
+
+export interface MonthlySlotSummary {
+  month: string; // "2025-01"
+  slots: Array<{
+    slotId: string;
+    dayOfWeek: number;
+    startTime: string;
+    duration: number;
+    studentName: string;
+    expectedLessons: number;
+    actualLessons: number;
+    monthlyRate: number;
+    status: SubscriptionStatus;
+    billingStatus: BillingStatus;
+  }>;
+  totalRevenue: number; // cents
+  totalExpectedLessons: number;
+  totalActualLessons: number;
+}
+
+export interface SlotCancellationData {
+  slotId: string;
+  cancelDate: Date;
+  reason?: string;
+  refundAmount?: number; // cents
+}
+
+export interface MonthlyBillingCalculation {
+  month: string;
+  daysInMonth: number;
+  occurrences: number; // how many times this slot occurs in the month
+  ratePerLesson: number; // monthlyRate / occurrences
+  totalAmount: number; // cents
 }
 
 // ========================================

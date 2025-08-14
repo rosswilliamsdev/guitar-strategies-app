@@ -20,7 +20,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Book Lesson", href: "/book-lesson", roles: ["STUDENT"] },
+  { label: "Scheduling", href: "/scheduling", roles: ["STUDENT"] },
   { label: "Lessons", href: "/lessons", roles: ["TEACHER", "STUDENT"] },
   { label: "Checklists", href: "/curriculums", roles: ["TEACHER", "STUDENT"] },
   { label: "Students", href: "/students", roles: ["TEACHER"] },

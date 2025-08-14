@@ -229,6 +229,7 @@ export function TeacherDashboard({
           <StatCard key={index} {...stat} />
         ))}
       </div>
+
     </div>
   );
 }

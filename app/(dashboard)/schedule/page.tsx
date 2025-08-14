@@ -13,7 +13,7 @@ export default async function SchedulePage() {
   }
 
   if (session.user.role === "STUDENT") {
-    redirect("/book-lesson");
+    redirect("/scheduling");
   }
 
   if (session.user.role === "ADMIN") {
