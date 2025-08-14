@@ -36,9 +36,10 @@ interface AvailabilityCalendarProps {
   teacherId: string
   studentTimezone?: string
   onBookSlot?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>
-  onBookRecurring?: (slots: TimeSlot[], duration: 30 | 60, weeks: number) => Promise<void>
+  onBookRecurring?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>
   loading?: boolean
   readonly?: boolean
+  onSelectionChange?: (hasSelection: boolean, selectedSlots: TimeSlot[], bookingMode: 'single' | 'recurring') => void
 }
 
 export function AvailabilityCalendar({
@@ -47,20 +48,28 @@ export function AvailabilityCalendar({
   onBookSlot,
   onBookRecurring,
   loading = false,
-  readonly = false
+  readonly = false,
+  onSelectionChange
 }: AvailabilityCalendarProps) {
   const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date()))
   const [slots, setSlots] = useState<TimeSlot[]>([])
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [error, setError] = useState<string>("")
   const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([])
-  const [recurringWeeks, setRecurringWeeks] = useState(4)
   const [bookingMode, setBookingMode] = useState<'single' | 'recurring'>('single')
 
   // Load available slots when week changes
   useEffect(() => {
     loadAvailableSlots()
   }, [currentWeek, teacherId])
+
+  // Notify parent of selection changes
+  useEffect(() => {
+    if (onSelectionChange) {
+      const hasSelection = selectedSlots.length > 0
+      onSelectionChange(hasSelection, selectedSlots, bookingMode)
+    }
+  }, [selectedSlots, bookingMode, onSelectionChange])
 
   const loadAvailableSlots = async () => {
     setSlotsLoading(true)
@@ -109,7 +118,7 @@ export function AvailabilityCalendar({
       if (bookingMode === 'single') {
         await onBookSlot(selectedSlots, duration)
       } else if (onBookRecurring) {
-        await onBookRecurring(selectedSlots, duration, recurringWeeks)
+        await onBookRecurring(selectedSlots, duration)
       }
       
       // Reload slots after booking
@@ -230,7 +239,7 @@ export function AvailabilityCalendar({
                     : "hover:bg-background/50"
                 )}
               >
-                Weekly Series
+                Weekly Lessons
               </button>
             </div>
           )}
@@ -243,6 +252,7 @@ export function AvailabilityCalendar({
           >
             <RefreshCw className={cn("h-4 w-4", slotsLoading && "animate-spin")} />
           </Button>
+
         </div>
       </div>
 
@@ -288,25 +298,11 @@ export function AvailabilityCalendar({
       {/* Recurring Options */}
       {bookingMode === 'recurring' && !readonly && (
         <Card className="p-4 bg-blue-50 border-blue-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium text-blue-900">Weekly Recurring Lessons</h3>
-              <p className="text-sm text-blue-700">
-                Book the same time slot for multiple weeks
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-blue-700">Weeks:</label>
-              <select
-                value={recurringWeeks}
-                onChange={(e) => setRecurringWeeks(Number(e.target.value))}
-                className="px-2 py-1 rounded border border-blue-300 bg-white text-sm"
-              >
-                {[2, 3, 4, 6, 8, 12].map(weeks => (
-                  <option key={weeks} value={weeks}>{weeks} weeks</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <h3 className="font-medium text-blue-900">Weekly Lesson Schedule</h3>
+            <p className="text-sm text-blue-700">
+              This will become your regular weekly lesson time, continuing indefinitely until you cancel or change it
+            </p>
           </div>
         </Card>
       )}
@@ -400,13 +396,30 @@ export function AvailabilityCalendar({
         })}
       </div>
 
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 border rounded bg-background"></div>
+          <span>Available</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 border rounded bg-primary/10 border-primary"></div>
+          <span>Selected</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 border rounded bg-muted"></div>
+          <span>Unavailable</span>
+        </div>
+      </div>
+
       {/* Booking Confirmation */}
       {selectedSlots.length > 0 && !readonly && (
         <Card className="p-4 border-primary bg-primary/5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-medium">
-                {bookingMode === 'single' ? 'Confirm Booking' : `Confirm ${recurringWeeks}-Week Series`}
+                {bookingMode === 'single' ? 'Confirm Booking' : 'Confirm Weekly Lesson Time'}
               </h3>
               <div className="text-sm text-muted-foreground">
                 {selectedSlots.length === 1 ? (
@@ -421,7 +434,7 @@ export function AvailabilityCalendar({
                   </>
                 )}
                 {bookingMode === 'recurring' && (
-                  <span> × {recurringWeeks} weeks</span>
+                  <span> - every week</span>
                 )}
               </div>
             </div>
@@ -445,22 +458,6 @@ export function AvailabilityCalendar({
           </div>
         </Card>
       )}
-
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 border rounded bg-background"></div>
-          <span>Available</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 border rounded bg-primary/10 border-primary"></div>
-          <span>Selected</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 border rounded bg-muted"></div>
-          <span>Unavailable</span>
-        </div>
-      </div>
     </div>
   )
 }

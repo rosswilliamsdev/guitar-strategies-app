@@ -140,18 +140,66 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== 'TEACHER') {
-      return new NextResponse('Unauthorized', { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // TODO: Delete lesson with access control
-    // await db.lesson.delete({
-    //   where: { id: params.id },
-    // });
+    // Build access control conditions based on user role
+    let whereCondition: any = { id: params.id };
+    
+    if (session.user.role === 'TEACHER') {
+      // Teachers can cancel lessons they are teaching
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id }
+      });
+      
+      if (!teacherProfile) {
+        return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+      }
+      
+      whereCondition.teacherId = teacherProfile.id;
+    } else if (session.user.role === 'STUDENT') {
+      // Students can cancel their own lessons
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id }
+      });
+      
+      if (!studentProfile) {
+        return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
+      }
+      
+      whereCondition.studentId = studentProfile.id;
+    } else {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
 
-    return new NextResponse(null, { status: 204 });
+    // Find the lesson to verify access and check if it can be cancelled
+    const lesson = await prisma.lesson.findFirst({
+      where: whereCondition
+    });
+
+    if (!lesson) {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+    }
+
+    // Check if lesson is in the future and can be cancelled
+    if (lesson.date <= new Date()) {
+      return NextResponse.json({ error: 'Cannot cancel lessons that have already started' }, { status: 400 });
+    }
+
+    if (lesson.status !== 'SCHEDULED') {
+      return NextResponse.json({ error: 'Can only cancel scheduled lessons' }, { status: 400 });
+    }
+
+    // Update lesson status to CANCELLED instead of deleting
+    await prisma.lesson.update({
+      where: { id: params.id },
+      data: { status: 'CANCELLED' }
+    });
+
+    return NextResponse.json({ message: 'Lesson cancelled successfully' });
   } catch (error) {
-    console.error('Error deleting lesson:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Error cancelling lesson:', error);
+    return NextResponse.json({ error: 'Failed to cancel lesson' }, { status: 500 });
   }
 }

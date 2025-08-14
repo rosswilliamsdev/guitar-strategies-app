@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { AvailabilityCalendar } from "@/components/scheduling/AvailabilityCalendar"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle } from "lucide-react"
+import toast from "react-hot-toast"
 
 interface TimeSlot {
   start: Date
@@ -18,12 +19,14 @@ interface BookingInterfaceProps {
   teacherId: string
   teacherName: string
   studentTimezone?: string
+  onSelectionChange?: (hasSelection: boolean, selectedSlots: any[], bookingMode: 'single' | 'recurring') => void
 }
 
 export function BookingInterface({
   teacherId,
   teacherName,
-  studentTimezone = "America/New_York"
+  studentTimezone = "America/New_York",
+  onSelectionChange
 }: BookingInterfaceProps) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState<string>("")
@@ -45,7 +48,7 @@ export function BookingInterface({
           teacherId,
           date: slots[0].start, // Use the first slot's start time
           duration,
-          timezone: studentTimezone,
+          timezone: studentTimezone || "America/Chicago",
           isRecurring: false,
         }),
       })
@@ -57,6 +60,7 @@ export function BookingInterface({
       }
 
       setSuccess(data.message || 'Lesson booked successfully!')
+      toast.success(`Successfully booked ${duration}-minute lesson`)
       
       // Redirect to lessons page after a short delay
       setTimeout(() => {
@@ -65,12 +69,13 @@ export function BookingInterface({
 
     } catch (error: any) {
       setError(error.message || 'Failed to book lesson')
+      toast.error(error.message || 'Failed to book lesson')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleBookRecurring = async (slots: TimeSlot[], duration: 30 | 60, weeks: number) => {
+  const handleBookRecurring = async (slots: TimeSlot[], duration: 30 | 60) => {
     setLoading(true)
     setError("")
     setSuccess("")
@@ -85,19 +90,19 @@ export function BookingInterface({
           teacherId,
           date: slots[0].start, // Use the first slot's start time
           duration,
-          timezone: studentTimezone,
+          timezone: studentTimezone || "America/Chicago",
           isRecurring: true,
-          recurringWeeks: weeks,
         }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to book recurring lessons')
+        throw new Error(data.error || 'Failed to book weekly lesson time')
       }
 
-      setSuccess(data.message || `Successfully booked ${weeks} recurring lessons!`)
+      setSuccess(data.message || 'Successfully booked your weekly lesson time!')
+      toast.success(`Successfully booked recurring weekly time slot for ${duration} minutes`)
       
       // Redirect to lessons page after a short delay
       setTimeout(() => {
@@ -105,7 +110,8 @@ export function BookingInterface({
       }, 3000)
 
     } catch (error: any) {
-      setError(error.message || 'Failed to book recurring lessons')
+      setError(error.message || 'Failed to book weekly lesson time')
+      toast.error(error.message || 'Failed to book weekly lesson time')
     } finally {
       setLoading(false)
     }
@@ -140,6 +146,7 @@ export function BookingInterface({
         onBookSlot={handleBookSlot}
         onBookRecurring={handleBookRecurring}
         loading={loading}
+        onSelectionChange={onSelectionChange}
       />
     </div>
   )

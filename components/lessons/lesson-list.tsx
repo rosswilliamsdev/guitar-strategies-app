@@ -20,6 +20,7 @@ import {
   FileText,
   Search,
   CalendarDays,
+  X,
 } from "lucide-react";
 
 // Utility function to strip HTML tags and return plain text
@@ -65,6 +66,7 @@ export function LessonList({ userRole }: LessonListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
+  const [cancellingLessons, setCancellingLessons] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -85,6 +87,38 @@ export function LessonList({ userRole }: LessonListProps) {
 
     fetchLessons();
   }, []);
+
+  const handleCancelLesson = async (lessonId: string) => {
+    if (!confirm('Are you sure you want to cancel this lesson?')) {
+      return;
+    }
+
+    setCancellingLessons(prev => new Set(prev).add(lessonId));
+
+    try {
+      const response = await fetch(`/api/lessons/${lessonId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to cancel lesson');
+      }
+
+      // Remove the cancelled lesson from the local state
+      setLessons(prev => prev.filter(lesson => lesson.id !== lessonId));
+      
+    } catch (error: any) {
+      console.error('Error cancelling lesson:', error);
+      setError(error.message || 'Failed to cancel lesson');
+    } finally {
+      setCancellingLessons(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(lessonId);
+        return newSet;
+      });
+    }
+  };
 
   // Get unique students for filter dropdown (teachers only)
   const students = useMemo(() => {
@@ -301,32 +335,54 @@ export function LessonList({ userRole }: LessonListProps) {
                 className="p-3 hover:shadow-md transition-shadow"
               >
                 <div className="space-y-1">
-                  {/* Header with date, duration, and student/teacher name in one row */}
+                  {/* Header with date, time, duration, and status */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       <span>{format(new Date(lesson.date), "MMM d")}</span>
                       <span>•</span>
                       <Clock className="h-3 w-3" />
+                      <span>{format(new Date(lesson.date), "h:mm a")}</span>
+                      <span>•</span>
                       <span>{lesson.duration}min</span>
+                      {lesson.status === 'CANCELLED' && (
+                        <>
+                          <span>•</span>
+                          <span className="text-red-600 font-medium">CANCELLED</span>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Student/Teacher name and View button in one row */}
+                  {/* Student/Teacher name and buttons */}
                   <div className="flex items-center justify-between space-x-2">
                     <span className="font-medium text-sm text-foreground truncate flex-1">
                       {userRole === "TEACHER"
                         ? lesson.student.user.name
                         : lesson.teacher.user.name}
                     </span>
-                    <Link href={`/lessons/${lesson.id}`}>
-                      <Button
-                        size="sm"
-                        className="bg-primary hover:bg-turquoise-600 text-white text-xs px-2 py-1 h-6"
-                      >
-                        View
-                      </Button>
-                    </Link>
+                    <div className="flex items-center space-x-1">
+                      {/* Cancel button - only show for future lessons and scheduled status */}
+                      {lesson.status === 'SCHEDULED' && new Date(lesson.date) > new Date() && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCancelLesson(lesson.id)}
+                          disabled={cancellingLessons.has(lesson.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 h-6"
+                        >
+                          {cancellingLessons.has(lesson.id) ? '...' : 'Cancel'}
+                        </Button>
+                      )}
+                      <Link href={`/lessons/${lesson.id}`}>
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-turquoise-600 text-white text-xs px-2 py-1 h-6"
+                        >
+                          View
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
 
                   {/* Notes preview */}

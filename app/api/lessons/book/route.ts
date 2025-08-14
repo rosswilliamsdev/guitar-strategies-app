@@ -16,7 +16,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      console.error('Failed to parse JSON body:', error);
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      );
+    }
+    
+    console.log('Received booking data:', body);
     
     // Validate input
     const validatedData = bookingSchema.parse(body);
@@ -53,19 +64,38 @@ export async function POST(request: NextRequest) {
 
     let result;
 
-    if (validatedData.isRecurring && validatedData.recurringWeeks) {
-      // Book recurring lessons
-      result = await bookRecurringLessons({
-        ...bookingData,
-        recurringWeeks: validatedData.recurringWeeks
-      });
-      
-      return NextResponse.json({
-        success: true,
-        message: `Successfully booked ${result.length} recurring lessons`,
-        lessons: result,
-        type: 'recurring'
-      });
+    if (validatedData.isRecurring) {
+      // For indefinite recurring lessons, create a recurring slot instead of multiple lessons
+      // This will be the student's regular weekly lesson time
+      if (validatedData.recurringWeeks) {
+        // Legacy support: Book specific number of weeks
+        result = await bookRecurringLessons({
+          ...bookingData,
+          recurringWeeks: validatedData.recurringWeeks
+        });
+        
+        return NextResponse.json({
+          success: true,
+          message: `Successfully booked ${result.length} recurring lessons`,
+          lessons: result,
+          type: 'recurring'
+        });
+      } else {
+        // New indefinite recurring: Create a recurring slot
+        // For now, we'll create the first lesson and mark it as recurring
+        // TODO: Implement proper recurring slot system
+        result = await bookSingleLesson({
+          ...bookingData,
+          isRecurring: true
+        });
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Successfully booked your weekly lesson time!',
+          lesson: result,
+          type: 'recurring_slot'
+        });
+      }
     } else {
       // Book single lesson
       result = await bookSingleLesson(bookingData);

@@ -353,12 +353,11 @@ export const lessonSettingsSchema = z.object({
 
 export const bookingSchema = z.object({
   teacherId: z.string().min(1, "Teacher is required"),
-  studentId: z.string().min(1, "Student is required"),
-  date: z.date(),
+  date: z.string().datetime().transform((str) => new Date(str)),
   duration: z.literal(30).or(z.literal(60)),
   timezone: z.string(),
   isRecurring: z.boolean().default(false),
-  recurringWeeks: z.number().min(2).max(52).optional(),
+  recurringWeeks: z.number().min(2).max(52).optional(), // Optional for backwards compatibility
 });
 
 export const cancellationSchema = z.object({

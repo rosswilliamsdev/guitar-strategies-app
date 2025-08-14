@@ -308,7 +308,7 @@ export async function bookSingleLesson(data: BookingData) {
       timezone: data.timezone,
       price,
       status: 'SCHEDULED',
-      isRecurring: false
+      isRecurring: data.isRecurring || false
     }
   })
 

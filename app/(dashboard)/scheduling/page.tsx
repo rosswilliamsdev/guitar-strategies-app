@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { BookingInterface } from '@/components/booking/BookingInterface';
+import { BookingSection } from '@/components/scheduling/BookingSection';
 import { WeeklyLessonDisplay } from '@/components/scheduling/WeeklyLessonDisplay';
 
 export const metadata = {
@@ -39,6 +39,15 @@ async function getStudentData(userId: string) {
                   }
                 }
               }
+            },
+            lessons: {
+              where: { 
+                isRecurring: true,
+                status: 'SCHEDULED',
+                date: { gte: new Date() } // Only future recurring lessons
+              },
+              orderBy: { date: 'asc' },
+              take: 1
             }
           }
         }
@@ -80,6 +89,7 @@ export default async function SchedulingPage() {
 
   const teacher = userData.studentProfile.teacher;
   const recurringSlots = userData.studentProfile.recurringSlots || [];
+  const recurringLessons = userData.studentProfile.lessons || [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -97,27 +107,16 @@ export default async function SchedulingPage() {
         <WeeklyLessonDisplay 
           recurringSlots={recurringSlots}
           teacherName={teacher.user.name}
+          recurringLessons={recurringLessons}
         />
 
         {/* Individual Lesson Booking */}
-        <div className="space-y-4">
-          <div className="border-t pt-8">
-            <h2 className="text-xl font-semibold mb-2">
-              {recurringSlots.length > 0 ? 'Book Additional Time' : 'Book a Time'}
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              {recurringSlots.length > 0 
-                ? 'Schedule additional time outside your regular weekly slot'
-                : 'Reserve your time with your teacher'}
-            </p>
-            
-            <BookingInterface
-              teacherId={teacher.id}
-              teacherName={teacher.user.name}
-              studentTimezone={userData.studentProfile.goals || "America/New_York"}
-            />
-          </div>
-        </div>
+        <BookingSection
+          teacherId={teacher.id}
+          teacherName={teacher.user.name}
+          hasRecurringSlots={recurringSlots.length > 0 || recurringLessons.length > 0}
+          studentTimezone={userData.studentProfile.goals || "America/New_York"}
+        />
       </div>
     </div>
   );

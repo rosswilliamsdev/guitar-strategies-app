@@ -23,11 +23,18 @@ interface SlotWithDetails extends RecurringSlot {
 interface WeeklyLessonDisplayProps {
   recurringSlots: SlotWithDetails[]
   teacherName: string
+  recurringLessons?: Array<{
+    id: string
+    date: Date
+    duration: number
+    isRecurring: boolean
+  }>
 }
 
 export function WeeklyLessonDisplay({ 
   recurringSlots, 
-  teacherName 
+  teacherName,
+  recurringLessons = []
 }: WeeklyLessonDisplayProps) {
   const formatPrice = (cents: number) => {
     return `$${(cents / 100).toFixed(0)}`
@@ -39,7 +46,10 @@ export function WeeklyLessonDisplay({
     return activeSubscription.billingRecords[0]
   }
 
-  if (recurringSlots.length === 0) {
+  // Check if there are any recurring lessons (either slots or regular recurring lessons)
+  const hasRecurringTime = recurringSlots.length > 0 || recurringLessons.length > 0
+
+  if (!hasRecurringTime) {
     return (
       <Card className="p-6 bg-blue-50 border-blue-200">
         <div className="space-y-2">
@@ -64,6 +74,7 @@ export function WeeklyLessonDisplay({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Render recurring slots */}
         {recurringSlots.map((slot) => {
           const recentBilling = getRecentBilling(slot)
           
@@ -131,6 +142,54 @@ export function WeeklyLessonDisplay({
                     </div>
                   </div>
                 )}
+              </div>
+            </Card>
+          )
+        })}
+        
+        {/* Render regular recurring lessons */}
+        {recurringLessons.map((lesson) => {
+          const lessonDate = new Date(lesson.date)
+          const dayName = lessonDate.toLocaleDateString('en-US', { weekday: 'long' })
+          const timeString = lessonDate.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+          })
+          
+          return (
+            <Card key={lesson.id} className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+              <div className="space-y-4">
+                {/* Main lesson info */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-5 w-5 text-primary" />
+                      <span className="font-semibold text-lg">
+                        {dayName}s
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>{timeString} ({lesson.duration} min)</span>
+                    </div>
+                  </div>
+                  
+                  <Badge className="bg-green-100 text-green-800 border-green-300">
+                    Active
+                  </Badge>
+                </div>
+
+                {/* Teacher info */}
+                <div className="pt-2 border-t border-primary/20">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{teacherName}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Weekly recurring lesson time
+                  </div>
+                </div>
               </div>
             </Card>
           )
