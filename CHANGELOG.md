@@ -7,11 +7,14 @@ This changelog tracks all major changes, features, and fixes made during develop
 ## [Current Version] - 2024-12-XX
 
 ### 🎯 **Latest Session Summary (Aug 14, 2025)**
-- **LESSON CANCELLATION**: Implemented full lesson cancellation functionality with status updates
-- **UI IMPROVEMENTS**: Cancelled lessons now removed from view instead of showing crossed-out status
-- **TOAST NOTIFICATIONS**: Added success/error toast notifications when booking lessons
-- **TODO SYSTEM**: Created todo.md file for tracking future email notification implementation
-- **BOOKING FEEDBACK**: Enhanced user feedback with toast messages for successful bookings
+- **CANCELLED LESSON FILTERING**: Cancelled lessons now completely removed from teacher and student lesson views
+- **SCHEDULE VIEW UPDATES**: Cancelled lessons appear as red boxes with "Cancelled" label in schedule view
+- **CANCELLATION CARD**: Added "Need to cancel?" card next to weekly lesson display with current month's scheduled lessons
+- **RECURRING BOOKING FIX**: Fixed critical bug where weekly lessons only created single lesson instead of 12-week recurring series
+- **CALENDAR UX IMPROVEMENTS**: Weekly lessons mode now shows custom day abbreviations (Sun, Mon, Tues, Weds, Thurs, Fri, Sat)
+- **LAYOUT REFINEMENTS**: Removed "Active" badge from weekly lesson cards and fixed card sizing in two-column layout
+- **MAKEUP CREDIT SYSTEM**: Added comprehensive makeup credit system to todo.md for future implementation
+- **API ENHANCEMENTS**: Extended lessons API with status and future filters for better lesson management
 
 ### 🎯 **Previous Session Summary (Aug 13, 2025 - Evening)**
 - **COMPONENT CLEANUP**: Removed unused TeacherRecurringSlots component from teacher dashboard

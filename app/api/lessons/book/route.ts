@@ -81,18 +81,17 @@ export async function POST(request: NextRequest) {
           type: 'recurring'
         });
       } else {
-        // New indefinite recurring: Create a recurring slot
-        // For now, we'll create the first lesson and mark it as recurring
-        // TODO: Implement proper recurring slot system
-        result = await bookSingleLesson({
+        // New indefinite recurring: Create lessons for the next 12 weeks
+        // This gives students a reasonable window to see and cancel upcoming lessons
+        result = await bookRecurringLessons({
           ...bookingData,
-          isRecurring: true
+          recurringWeeks: 12
         });
         
         return NextResponse.json({
           success: true,
-          message: 'Successfully booked your weekly lesson time!',
-          lesson: result,
+          message: 'Successfully booked your weekly lesson time for the next 12 weeks!',
+          lessons: result,
           type: 'recurring_slot'
         });
       }

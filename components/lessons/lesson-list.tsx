@@ -136,6 +136,16 @@ export function LessonList({ userRole }: LessonListProps) {
   // Filter lessons based on search term, student, and date
   const filteredLessons = useMemo(() => {
     return lessons.filter((lesson) => {
+      // Exclude cancelled lessons
+      if (lesson.status === 'CANCELLED') {
+        return false;
+      }
+
+      // For students, only show completed lessons
+      if (userRole === 'STUDENT' && lesson.status !== 'COMPLETED') {
+        return false;
+      }
+
       // Search filter - searches in notes, homework, progress, focusAreas, songsPracticed, nextSteps
       const searchableContent = [
         lesson.notes || "",
@@ -201,7 +211,7 @@ export function LessonList({ userRole }: LessonListProps) {
 
       return matchesSearch && matchesStudent && matchesDate;
     });
-  }, [lessons, searchTerm, selectedStudent, dateFilter]);
+  }, [lessons, searchTerm, selectedStudent, dateFilter, userRole]);
 
   if (loading) {
     return (
@@ -232,7 +242,7 @@ export function LessonList({ userRole }: LessonListProps) {
         <p className="text-gray-600 mb-4">
           {userRole === "TEACHER"
             ? "Start by creating your first lesson with a student."
-            : "Your teacher will create lessons here after each session."}
+            : "No completed lessons yet. Your teacher will log lessons here after each session."}
         </p>
         {userRole === "TEACHER" && (
           <Link href="/lessons/new">
@@ -335,7 +345,7 @@ export function LessonList({ userRole }: LessonListProps) {
                 className="p-3 hover:shadow-md transition-shadow"
               >
                 <div className="space-y-1">
-                  {/* Header with date, time, duration, and status */}
+                  {/* Header with date, time, and duration */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
@@ -345,12 +355,6 @@ export function LessonList({ userRole }: LessonListProps) {
                       <span>{format(new Date(lesson.date), "h:mm a")}</span>
                       <span>•</span>
                       <span>{lesson.duration}min</span>
-                      {lesson.status === 'CANCELLED' && (
-                        <>
-                          <span>•</span>
-                          <span className="text-red-600 font-medium">CANCELLED</span>
-                        </>
-                      )}
                     </div>
                   </div>
 

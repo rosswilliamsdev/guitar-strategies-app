@@ -15,8 +15,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get('studentId');
     const teacherId = searchParams.get('teacherId');
+    const status = searchParams.get('status');
+    const future = searchParams.get('future');
 
     let whereClause: any = {};
+
+    // Add status filter
+    if (status) {
+      whereClause.status = status;
+    }
+
+    // Add future filter
+    if (future === 'true') {
+      whereClause.date = { gte: new Date() };
+    }
 
     if (session.user.role === 'TEACHER') {
       // Get teacher's profile to find lessons
@@ -61,7 +73,7 @@ export async function GET(request: NextRequest) {
         links: true,
       },
       orderBy: {
-        date: 'desc',
+        date: future === 'true' ? 'asc' : 'desc',
       },
     });
 

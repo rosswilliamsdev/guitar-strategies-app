@@ -56,15 +56,18 @@ async function getTeacherData(userId: string) {
       ? ratingsWithValues.reduce((sum, rating) => sum + rating, 0) / ratingsWithValues.length
       : null;
 
-    // Recent lessons
-    const recentLessons = teacherProfile.lessons.slice(0, 5).map(lesson => ({
-      id: lesson.id,
-      studentName: lesson.student.user.name,
-      date: lesson.date.toLocaleDateString(),
-      duration: lesson.duration,
-      status: lesson.status,
-      notes: lesson.notes,
-    }));
+    // Recent lessons (excluding cancelled)
+    const recentLessons = teacherProfile.lessons
+      .filter(lesson => lesson.status !== 'CANCELLED')
+      .slice(0, 5)
+      .map(lesson => ({
+        id: lesson.id,
+        studentName: lesson.student.user.name,
+        date: lesson.date.toLocaleDateString(),
+        duration: lesson.duration,
+        status: lesson.status,
+        notes: lesson.notes,
+      }));
 
     return {
       teacherId: teacherProfile.id,
@@ -133,15 +136,18 @@ async function getStudentData(userId: string) {
       ? ratingsWithValues.reduce((sum, rating) => sum + rating, 0) / ratingsWithValues.length
       : null;
 
-    // Recent lessons
-    const recentLessons = studentProfile.lessons.slice(0, 5).map(lesson => ({
-      id: lesson.id,
-      date: lesson.date.toLocaleDateString(),
-      duration: lesson.duration,
-      status: lesson.status,
-      notes: lesson.notes,
-      homework: lesson.homework,
-    }));
+    // Recent lessons (excluding cancelled)
+    const recentLessons = studentProfile.lessons
+      .filter(lesson => lesson.status !== 'CANCELLED')
+      .slice(0, 5)
+      .map(lesson => ({
+        id: lesson.id,
+        date: lesson.date.toLocaleDateString(),
+        duration: lesson.duration,
+        status: lesson.status,
+        notes: lesson.notes,
+        homework: lesson.homework,
+      }));
 
     // Upcoming assignments (from recent lessons with homework)
     const upcomingAssignments = studentProfile.lessons

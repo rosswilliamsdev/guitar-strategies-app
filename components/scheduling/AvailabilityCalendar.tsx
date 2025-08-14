@@ -333,19 +333,41 @@ export function AvailabilityCalendar({
             >
               {/* Day Header */}
               <div className="text-center p-2 border rounded-lg bg-muted/50">
-                <div className="text-sm font-medium">
-                  {format(date, 'EEE')}
-                </div>
-                <div className={cn(
-                  "text-lg font-semibold",
-                  isToday(date) && "text-primary"
-                )}>
-                  {format(date, 'd')}
-                </div>
-                {isToday(date) && (
-                  <Badge variant="secondary" className="text-xs mt-1">
-                    Today
-                  </Badge>
+                {bookingMode === 'recurring' ? (
+                  // Weekly lessons mode: show custom day abbreviations
+                  <div className="text-lg font-semibold">
+                    {(() => {
+                      const dayName = format(date, 'EEEE');
+                      switch (dayName) {
+                        case 'Sunday': return 'Sun';
+                        case 'Monday': return 'Mon';
+                        case 'Tuesday': return 'Tues';
+                        case 'Wednesday': return 'Weds';
+                        case 'Thursday': return 'Thurs';
+                        case 'Friday': return 'Fri';
+                        case 'Saturday': return 'Sat';
+                        default: return dayName;
+                      }
+                    })()}
+                  </div>
+                ) : (
+                  // Single session mode: show day abbreviation and date
+                  <>
+                    <div className="text-sm font-medium">
+                      {format(date, 'EEE')}
+                    </div>
+                    <div className={cn(
+                      "text-lg font-semibold",
+                      isToday(date) && "text-primary"
+                    )}>
+                      {format(date, 'd')}
+                    </div>
+                    {isToday(date) && (
+                      <Badge variant="secondary" className="text-xs mt-1">
+                        Today
+                      </Badge>
+                    )}
+                  </>
                 )}
               </div>
 

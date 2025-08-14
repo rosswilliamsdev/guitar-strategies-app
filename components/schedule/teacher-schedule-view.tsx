@@ -285,12 +285,23 @@ const renderSlotContent = (status: SlotStatus): React.ReactNode => {
       );
 
     case "booked":
+      // Check if the lesson is cancelled
+      if (status.lesson.status === 'CANCELLED') {
+        return (
+          <div className="w-40 h-8 bg-red-100 border border-red-300 rounded px-2 flex items-center justify-center space-x-2">
+            <p className="text-xs font-medium text-red-900">
+              Cancelled
+            </p>
+            <p className="text-xs text-red-700 truncate">
+              {status.lesson.student.user.name}
+            </p>
+          </div>
+        );
+      }
+      
       return (
         <Link href="/lessons/new">
-          <div className="w-40 h-8 bg-blue-100 border border-blue-300 rounded px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-between">
-            <p className="text-xs font-medium text-blue-900 truncate">
-              {format(new Date(status.lesson.date), "h:mm a")}
-            </p>
+          <div className="w-40 h-8 bg-blue-100 border border-blue-300 rounded px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-center">
             <p className="text-xs font-medium text-blue-900 truncate">
               {status.lesson.student.user.name}
             </p>

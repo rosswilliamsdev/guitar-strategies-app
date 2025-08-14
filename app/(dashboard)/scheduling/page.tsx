@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { BookingSection } from '@/components/scheduling/BookingSection';
 import { WeeklyLessonDisplay } from '@/components/scheduling/WeeklyLessonDisplay';
+import { LessonCancellationCard } from '@/components/scheduling/LessonCancellationCard';
 
 export const metadata = {
   title: 'Scheduling - Guitar Strategies',
@@ -103,12 +104,17 @@ export default async function SchedulingPage() {
           </p>
         </div>
 
-        {/* Weekly Lesson Time Display */}
-        <WeeklyLessonDisplay 
-          recurringSlots={recurringSlots}
-          teacherName={teacher.user.name}
-          recurringLessons={recurringLessons}
-        />
+        {/* Weekly Lesson Time Display and Cancellation */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <WeeklyLessonDisplay 
+            recurringSlots={recurringSlots}
+            teacherName={teacher.user.name}
+            recurringLessons={recurringLessons}
+          />
+          <LessonCancellationCard 
+            studentId={userData.studentProfile.id}
+          />
+        </div>
 
         {/* Individual Lesson Booking */}
         <BookingSection

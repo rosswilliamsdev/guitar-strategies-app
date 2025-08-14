@@ -73,7 +73,7 @@ export function WeeklyLessonDisplay({
         <h2 className="text-xl font-semibold">Your Weekly Lesson Time</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-4">
         {/* Render recurring slots */}
         {recurringSlots.map((slot) => {
           const recentBilling = getRecentBilling(slot)
@@ -82,23 +82,17 @@ export function WeeklyLessonDisplay({
             <Card key={slot.id} className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
               <div className="space-y-4">
                 {/* Main slot info */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-lg">
-                        {getDayName(slot.dayOfWeek)}s
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{formatSlotTime(slot.startTime, slot.duration)}</span>
-                    </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-primary" />
+                    <span className="font-semibold text-lg">
+                      {getDayName(slot.dayOfWeek)}s
+                    </span>
                   </div>
-                  
-                  <Badge className="bg-green-100 text-green-800 border-green-300">
-                    Active
-                  </Badge>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{formatSlotTime(slot.startTime, slot.duration)}</span>
+                  </div>
                 </div>
 
                 {/* Teacher and billing info */}
@@ -175,9 +169,6 @@ export function WeeklyLessonDisplay({
                     </div>
                   </div>
                   
-                  <Badge className="bg-green-100 text-green-800 border-green-300">
-                    Active
-                  </Badge>
                 </div>
 
                 {/* Teacher info */}
