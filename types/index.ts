@@ -1,3 +1,20 @@
+/**
+ * @fileoverview Type definitions for Guitar Strategies application.
+ * 
+ * This file contains all TypeScript type definitions used throughout the application,
+ * extending Prisma-generated types with additional properties and creating custom
+ * interfaces for forms, API responses, and component props.
+ * 
+ * Key type categories:
+ * - User and profile types (extended from Prisma)
+ * - Lesson management types
+ * - Invoice and payment types
+ * - Library and recommendation types
+ * - Scheduling and booking types
+ * - Form and API response types
+ * - UI component types
+ */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   User as PrismaUser,
@@ -38,11 +55,20 @@ export type {
 // ========================================
 // Extended User Types
 // ========================================
+
+/**
+ * Extended User type that includes optional teacher and student profiles.
+ * Extends the base Prisma User model with relationship data.
+ */
 export type User = PrismaUser & {
   teacherProfile?: TeacherProfile;
   studentProfile?: StudentProfile;
 };
 
+/**
+ * Extended TeacherProfile type with related entities and count aggregations.
+ * Used for teacher dashboard and profile management.
+ */
 export type TeacherProfile = PrismaTeacherProfile & {
   user?: PrismaUser;
   students?: StudentProfile[];
@@ -54,6 +80,10 @@ export type TeacherProfile = PrismaTeacherProfile & {
   };
 };
 
+/**
+ * Extended StudentProfile type with related entities and count aggregations.
+ * Used for student dashboard and progress tracking.
+ */
 export type StudentProfile = PrismaStudentProfile & {
   user?: PrismaUser;
   teacher?: TeacherProfile;

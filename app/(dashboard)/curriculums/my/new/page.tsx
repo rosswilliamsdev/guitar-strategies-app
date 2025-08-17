@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { StudentChecklistForm } from "@/components/student-checklists/checklist-form";
+import { ChecklistForm } from "@/components/student-checklists/checklist-form";
 
 export const metadata = {
   title: "New Personal Checklist | Guitar Strategies",
@@ -28,7 +28,7 @@ export default async function NewPersonalChecklistPage() {
         </p>
       </div>
 
-      <StudentChecklistForm />
+      <ChecklistForm />
     </div>
   );
 }

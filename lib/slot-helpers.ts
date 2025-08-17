@@ -1,4 +1,4 @@
-import { addWeeks, startOfMonth, endOfMonth, eachDayOfInterval, format } from 'date-fns';
+import { addWeeks, startOfMonth, endOfMonth, format, addDays } from 'date-fns';
 
 /**
  * Calculate how many times a weekly recurring slot occurs in a given month
@@ -8,13 +8,16 @@ export function calculateMonthlyOccurrences(dayOfWeek: number, month: string): n
   const monthStart = startOfMonth(new Date(year, monthNum - 1));
   const monthEnd = endOfMonth(new Date(year, monthNum - 1));
   
-  const daysInMonth = eachDayOfInterval({
-    start: monthStart,
-    end: monthEnd
-  });
+  // Generate days in month manually
+  const daysInMonth: Date[] = [];
+  let currentDay = new Date(monthStart);
+  while (currentDay <= monthEnd) {
+    daysInMonth.push(new Date(currentDay));
+    currentDay = addDays(currentDay, 1);
+  }
   
   // Count how many times the specific day of week occurs
-  return daysInMonth.filter(date => date.getDay() === dayOfWeek).length;
+  return daysInMonth.filter((date: Date) => date.getDay() === dayOfWeek).length;
 }
 
 /**
@@ -180,13 +183,16 @@ export function calculateRefundAmount(
   const monthStart = startOfMonth(new Date(year, monthNum - 1));
   const monthEnd = endOfMonth(new Date(year, monthNum - 1));
   
-  const allDays = eachDayOfInterval({
-    start: monthStart,
-    end: monthEnd
-  });
+  // Generate all days in month manually
+  const allDays: Date[] = [];
+  let currentDay = new Date(monthStart);
+  while (currentDay <= monthEnd) {
+    allDays.push(new Date(currentDay));
+    currentDay = addDays(currentDay, 1);
+  }
 
-  const totalLessons = allDays.filter(date => date.getDay() === dayOfWeek).length;
-  const remainingLessons = allDays.filter(date => 
+  const totalLessons = allDays.filter((date: Date) => date.getDay() === dayOfWeek).length;
+  const remainingLessons = allDays.filter((date: Date) => 
     date.getDay() === dayOfWeek && date >= cancelDate
   ).length;
 

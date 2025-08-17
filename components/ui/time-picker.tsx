@@ -122,10 +122,8 @@ export function TimePicker({
       
       <div className="relative">
         {/* Main Input Display */}
-        <button
-          type="button"
+        <div
           onClick={() => !disabled && setIsOpen(!isOpen)}
-          disabled={disabled}
           className={cn(
             "w-full px-3 py-2 text-left",
             "border rounded-md",
@@ -134,8 +132,20 @@ export function TimePicker({
             "transition-colors",
             disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-muted cursor-pointer",
             error ? "border-red-500" : "border-input",
-            "focus:outline-none focus:ring-2 focus:ring-primary"
+            "focus:outline-none focus:ring-2 focus:ring-primary",
+            "select-none"
           )}
+          tabIndex={disabled ? -1 : 0}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-disabled={disabled}
+          onKeyDown={(e) => {
+            if (!disabled && (e.key === "Enter" || e.key === " ")) {
+              e.preventDefault()
+              setIsOpen(!isOpen)
+            }
+          }}
         >
           <span className={cn(
             "flex items-center gap-2",
@@ -156,6 +166,7 @@ export function TimePicker({
                     incrementHours()
                   }}
                   className="p-0.5 hover:bg-muted rounded"
+                  aria-label="Increment hours"
                 >
                   <ChevronUp className="h-3 w-3" />
                 </button>
@@ -166,6 +177,7 @@ export function TimePicker({
                     decrementHours()
                   }}
                   className="p-0.5 hover:bg-muted rounded"
+                  aria-label="Decrement hours"
                 >
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -181,6 +193,7 @@ export function TimePicker({
                     incrementMinutes()
                   }}
                   className="p-0.5 hover:bg-muted rounded"
+                  aria-label="Increment minutes"
                 >
                   <ChevronUp className="h-3 w-3" />
                 </button>
@@ -191,13 +204,14 @@ export function TimePicker({
                     decrementMinutes()
                   }}
                   className="p-0.5 hover:bg-muted rounded"
+                  aria-label="Decrement minutes"
                 >
                   <ChevronDown className="h-3 w-3" />
                 </button>
               </div>
             </div>
           )}
-        </button>
+        </div>
 
         {/* Dropdown List */}
         {isOpen && (

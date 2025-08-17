@@ -1,15 +1,19 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { 
   Calendar as CalendarIcon, 
   Clock,
   DollarSign,
-  User
+  User,
+  X
 } from "lucide-react"
 import { RecurringSlot, SlotSubscription, MonthlyBilling } from "@/types"
 import { getDayName, formatSlotTime } from "@/lib/slot-helpers"
+import { useRouter } from "next/navigation"
 
 interface SlotWithDetails extends RecurringSlot {
   teacher: {
@@ -36,6 +40,9 @@ export function WeeklyLessonDisplay({
   teacherName,
   recurringLessons = []
 }: WeeklyLessonDisplayProps) {
+  const [isCancelling, setIsCancelling] = useState(false)
+  const router = useRouter()
+  
   const formatPrice = (cents: number) => {
     return `$${(cents / 100).toFixed(0)}`
   }
@@ -44,6 +51,32 @@ export function WeeklyLessonDisplay({
     const activeSubscription = slot.subscriptions.find(sub => sub.status === 'ACTIVE')
     if (!activeSubscription || activeSubscription.billingRecords.length === 0) return null
     return activeSubscription.billingRecords[0]
+  }
+
+  const handleCancelRecurring = async () => {
+    if (!confirm('Are you sure you want to cancel your weekly lesson time? This will cancel all future recurring lessons.')) {
+      return
+    }
+
+    setIsCancelling(true)
+    try {
+      const response = await fetch('/api/lessons/cancel-all-recurring', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to cancel recurring lessons')
+      }
+
+      // Refresh the page to show updated data
+      router.refresh()
+    } catch (error) {
+      console.error('Error cancelling recurring lessons:', error)
+      alert('Failed to cancel recurring lessons. Please try again.')
+    } finally {
+      setIsCancelling(false)
+    }
   }
 
   // Check if there are any recurring lessons (either slots or regular recurring lessons)
@@ -71,6 +104,21 @@ export function WeeklyLessonDisplay({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Your Weekly Lesson Time</h2>
+        <Button
+          onClick={handleCancelRecurring}
+          disabled={isCancelling}
+          className="bg-red-600 hover:bg-red-700 text-white"
+          size="sm"
+        >
+          {isCancelling ? (
+            "Cancelling..."
+          ) : (
+            <>
+              <X className="h-4 w-4 mr-1" />
+              Cancel Recurring
+            </>
+          )}
+        </Button>
       </div>
 
       <div className="space-y-4">

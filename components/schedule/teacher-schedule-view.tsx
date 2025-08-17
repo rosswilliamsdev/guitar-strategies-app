@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { BookStudentModal } from "./book-student-modal";
 import {
   Calendar,
   Clock,
@@ -12,6 +13,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Plus,
 } from "lucide-react";
 import {
   format,
@@ -21,9 +23,7 @@ import {
   subWeeks,
   addDays,
   subDays,
-  eachDayOfInterval,
   isSameDay,
-  parseISO,
 } from "date-fns";
 
 interface UpcomingLesson {
@@ -66,12 +66,22 @@ interface LessonSettings {
   advanceBookingDays: number;
 }
 
+interface Student {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 interface TeacherScheduleViewProps {
   teacherId: string;
   upcomingLessons: UpcomingLesson[];
   availability: TeacherAvailability[];
   blockedTimes: BlockedTime[];
   lessonSettings: LessonSettings | null;
+  students: Student[];
 }
 
 const DAYS_OF_WEEK = [
@@ -268,7 +278,7 @@ const getSlotStatus = (
 };
 
 // Render content for a time slot based on its status
-const renderSlotContent = (status: SlotStatus): React.ReactNode => {
+const renderSlotContent = (status: SlotStatus, day: Date, timeSlot: string, onClick?: () => void): React.ReactNode => {
   switch (status.type) {
     case "not-available":
       return (
@@ -279,9 +289,14 @@ const renderSlotContent = (status: SlotStatus): React.ReactNode => {
 
     case "open":
       return (
-        <div className="w-20 h-8 bg-green-50 border border-green-200 rounded flex items-center justify-center">
+        <button
+          onClick={onClick}
+          className="w-20 h-8 bg-green-50 border border-green-200 rounded flex items-center justify-center hover:bg-green-100 transition-colors cursor-pointer group"
+          title="Click to book a student"
+        >
+          <Plus className="h-3 w-3 text-green-700 mr-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           <span className="text-xs text-green-700 font-medium">Open</span>
-        </div>
+        </button>
       );
 
     case "booked":
@@ -332,9 +347,54 @@ export function TeacherScheduleView({
   availability,
   blockedTimes,
   lessonSettings,
+  students,
 }: TeacherScheduleViewProps) {
   const [viewMode, setViewMode] = useState<"day" | "week">("day");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [bookingModal, setBookingModal] = useState<{
+    isOpen: boolean;
+    date: Date | null;
+    time: string | null;
+  }>({
+    isOpen: false,
+    date: null,
+    time: null,
+  });
+
+  const handleBookStudent = async (studentId: string, type: "single" | "recurring", weeks?: number) => {
+    if (!bookingModal.date || !bookingModal.time) return;
+
+    // Convert time string to proper format
+    const [time, period] = bookingModal.time.split(" ");
+    const [hours, minutes] = time.split(":").map(Number);
+    let hour24 = hours;
+    if (period === "PM" && hours !== 12) hour24 += 12;
+    if (period === "AM" && hours === 12) hour24 = 0;
+
+    const lessonDate = new Date(bookingModal.date);
+    lessonDate.setHours(hour24, minutes, 0, 0);
+
+    const response = await fetch("/api/lessons/book-for-student", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        teacherId,
+        studentId,
+        date: lessonDate.toISOString(),
+        duration: 30, // Default to 30 minutes
+        type,
+        weeks: type === "recurring" ? weeks : undefined,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to book lesson");
+    }
+
+    // Refresh the page to show the new booking
+    window.location.reload();
+  };
 
   // Day view navigation
   const goToPreviousDay = () => setCurrentDate(subDays(currentDate, 1));
@@ -345,7 +405,14 @@ export function TeacherScheduleView({
   const currentWeek = currentDate;
   const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const endDate = endOfWeek(currentWeek, { weekStartsOn: 1 });
-  const weekDays = eachDayOfInterval({ start: startDate, end: endDate });
+  
+  // Generate array of days for the week
+  const weekDays: Date[] = [];
+  let currentDay = new Date(startDate);
+  while (currentDay <= endDate) {
+    weekDays.push(new Date(currentDay));
+    currentDay = addDays(currentDay, 1);
+  }
 
   const goToPreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1));
   const goToNextWeek = () => setCurrentDate(addWeeks(currentDate, 1));
@@ -440,25 +507,33 @@ export function TeacherScheduleView({
               const dayLessons = getLessonsForDay(currentDate);
               const dayBlockedTimes = getBlockedTimesForDay(currentDate);
 
-              // Check if there are any lessons booked for this day
-              if (dayLessons.length === 0) {
+              // Generate time slots for this specific day's availability
+              const dayTimeSlots = dayAvailability.length > 0 
+                ? generateTimeSlots(dayAvailability)
+                : [];
+
+              // Check if there are any lessons booked for this day or if teacher has availability set
+              if (dayLessons.length === 0 && dayTimeSlots.length === 0) {
                 return (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center space-y-3">
                       <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
                       <h3 className="text-lg font-medium text-foreground">
-                        No lessons scheduled
+                        No availability set
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        You don't have any lessons booked for {format(currentDate, "EEEE, MMMM d")}
+                        You haven't set your availability for {format(currentDate, "EEEE")}s
                       </p>
+                      <Link href="/settings">
+                        <Button variant="primary" size="sm" className="mt-2">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Set Availability
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 );
               }
-
-              // Generate time slots only for this specific day's availability
-              const dayTimeSlots = generateTimeSlots(dayAvailability);
 
               return (
                 <div className="space-y-3">
@@ -483,7 +558,12 @@ export function TeacherScheduleView({
 
                         {/* Slot content */}
                         <div className="flex items-center">
-                          {renderSlotContent(slotStatus)}
+                          {renderSlotContent(
+                            slotStatus,
+                            currentDate,
+                            timeSlot,
+                            () => setBookingModal({ isOpen: true, date: currentDate, time: timeSlot })
+                          )}
                         </div>
                       </div>
                     );
@@ -503,7 +583,7 @@ export function TeacherScheduleView({
                     Time
                   </span>
                 </div>
-                {weekDays.map((day, dayIndex) => {
+                {weekDays.map((day: Date, dayIndex: number) => {
                   const isToday = isSameDay(day, new Date());
                   const dayAvailability = getAvailabilityForDay(dayIndex);
                   const isAvailable = dayAvailability.length > 0;
@@ -541,25 +621,26 @@ export function TeacherScheduleView({
               {/* Time slots grid or no lessons message */}
               <div className="grid grid-cols-8 gap-px bg-border">
                 {(() => {
-                  // Check if any day in the week has lessons
-                  const daysWithLessons = weekDays.map((day) => ({
-                    day,
-                    hasLessons: getLessonsForDay(day).length > 0
-                  }));
+                  // Check if teacher has any availability set
+                  const hasAvailability = availability.some(slot => slot.isActive);
                   
-                  const anyDayHasLessons = daysWithLessons.some(d => d.hasLessons);
-                  
-                  if (!anyDayHasLessons) {
+                  if (!hasAvailability) {
                     return (
                       <div className="col-span-8 bg-background p-12">
                         <div className="text-center space-y-3">
                           <Calendar className="h-12 w-12 text-muted-foreground mx-auto" />
                           <h3 className="text-lg font-medium text-foreground">
-                            No lessons scheduled this week
+                            No availability set
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            You don't have any lessons booked for {format(startDate, "MMM d")} - {format(endDate, "MMM d, yyyy")}
+                            You haven't set your weekly availability yet
                           </p>
+                          <Link href="/settings">
+                            <Button variant="primary" size="sm" className="mt-2">
+                              <Settings className="h-4 w-4 mr-2" />
+                              Set Availability
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                     );
@@ -575,35 +656,11 @@ export function TeacherScheduleView({
                       </div>
 
                       {/* Day columns */}
-                      {weekDays.map((day, dayIndex) => {
+                      {weekDays.map((day: Date, dayIndex: number) => {
                         const dayAvailability = getAvailabilityForDay(dayIndex);
                         const dayLessons = getLessonsForDay(day);
                         const dayBlockedTimes = getBlockedTimesForDay(day);
                         
-                        // If this day has no lessons, show a simplified view
-                        if (dayLessons.length === 0) {
-                          // Only show the first time slot for days with no lessons
-                          if (timeSlot === generateTimeSlots(availability)[0]) {
-                            return (
-                              <div
-                                key={`${day.toISOString()}-${timeSlot}`}
-                                className="bg-background min-h-[40px] p-1 flex items-center justify-center"
-                              >
-                                <span className="text-xs text-muted-foreground">No lessons</span>
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div
-                                key={`${day.toISOString()}-${timeSlot}`}
-                                className="bg-background min-h-[40px] p-1"
-                              >
-                                {/* Empty cell for subsequent time slots */}
-                              </div>
-                            );
-                          }
-                        }
-
                         const slotStatus = getSlotStatus(
                           day,
                           timeSlot,
@@ -617,7 +674,12 @@ export function TeacherScheduleView({
                             key={`${day.toISOString()}-${timeSlot}`}
                             className="bg-background min-h-[40px] p-1"
                           >
-                            {renderSlotContent(slotStatus)}
+                            {renderSlotContent(
+                              slotStatus,
+                              day,
+                              timeSlot,
+                              () => setBookingModal({ isOpen: true, date: day, time: timeSlot })
+                            )}
                           </div>
                         );
                       })}
@@ -629,6 +691,18 @@ export function TeacherScheduleView({
           </div>
         )}
       </Card>
+
+      {/* Booking Modal */}
+      {bookingModal.date && bookingModal.time && (
+        <BookStudentModal
+          isOpen={bookingModal.isOpen}
+          onClose={() => setBookingModal({ isOpen: false, date: null, time: null })}
+          date={bookingModal.date}
+          time={bookingModal.time}
+          students={students}
+          onBook={handleBookStudent}
+        />
+      )}
     </div>
   );
 }

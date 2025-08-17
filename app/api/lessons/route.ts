@@ -1,9 +1,41 @@
+/**
+ * @fileoverview API routes for lesson management.
+ * 
+ * Handles CRUD operations for guitar lessons including:
+ * - GET: Retrieve lessons with filtering and role-based access
+ * - POST: Create new lessons (teachers only)
+ * 
+ * Security:
+ * - Session-based authentication required
+ * - Role-based authorization (teachers can create/view their lessons, students can view their own)
+ * - Teacher-student relationship verification
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { createLessonSchema } from '@/lib/validations';
 
+/**
+ * GET /api/lessons
+ * 
+ * Retrieves lessons based on user role and query parameters.
+ * 
+ * Query Parameters:
+ * - studentId: Filter lessons for specific student (teachers only)
+ * - teacherId: Filter lessons for specific teacher (admin only)
+ * - status: Filter by lesson status (SCHEDULED, COMPLETED, CANCELLED, MISSED)
+ * - future: If 'true', only return future lessons
+ * 
+ * Authorization:
+ * - TEACHER: Can view all their lessons, optionally filtered by student
+ * - STUDENT: Can only view their own lessons
+ * - ADMIN: Has full access (implementation pending)
+ * 
+ * @param request - Next.js request object with query parameters
+ * @returns JSON response with lessons array or error
+ */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,18 +52,18 @@ export async function GET(request: NextRequest) {
 
     let whereClause: any = {};
 
-    // Add status filter
+    // Add status filter if provided
     if (status) {
       whereClause.status = status;
     }
 
-    // Add future filter
+    // Add future filter - only lessons after current date
     if (future === 'true') {
       whereClause.date = { gte: new Date() };
     }
 
     if (session.user.role === 'TEACHER') {
-      // Get teacher's profile to find lessons
+      // Get teacher's profile to find associated lessons
       const teacherProfile = await prisma.teacherProfile.findUnique({
         where: { userId: session.user.id }
       });
@@ -42,11 +74,12 @@ export async function GET(request: NextRequest) {
       
       whereClause.teacherId = teacherProfile.id;
       
+      // Optional student filter for teachers
       if (studentId) {
         whereClause.studentId = studentId;
       }
     } else if (session.user.role === 'STUDENT') {
-      // Get student's profile to find lessons
+      // Get student's profile to find their lessons
       const studentProfile = await prisma.studentProfile.findUnique({
         where: { userId: session.user.id }
       });
@@ -60,6 +93,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // Fetch lessons with related teacher and student data
     const lessons = await prisma.lesson.findMany({
       where: whereClause,
       include: {
@@ -84,6 +118,31 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * POST /api/lessons
+ * 
+ * Creates a new lesson record. Only accessible to teachers.
+ * 
+ * Request Body:
+ * - studentId: ID of the student (required)
+ * - date: Lesson date (required)
+ * - duration: Lesson duration in minutes (optional, defaults to 30)
+ * - notes: Rich text lesson notes (optional)
+ * - homework: Homework assignments (optional)
+ * - progress: Student progress notes (optional)
+ * - focusAreas: Array of focus areas (optional)
+ * - songsPracticed: Array of songs practiced (optional)
+ * - nextSteps: Next steps for student (optional)
+ * - status: Lesson status (optional, defaults to 'COMPLETED')
+ * 
+ * Validation:
+ * - Uses Zod schema validation for request body
+ * - Verifies teacher-student relationship
+ * - Ensures student belongs to the requesting teacher
+ * 
+ * @param request - Next.js request object with lesson data
+ * @returns JSON response with created lesson or error
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -104,7 +163,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
-    // Verify student belongs to this teacher
+    // Verify student belongs to this teacher (security check)
     const studentProfile = await prisma.studentProfile.findUnique({
       where: { 
         id: validatedData.studentId,
@@ -116,6 +175,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Student not found or not assigned to you' }, { status: 404 });
     }
 
+    // Create lesson with validated data
     const lesson = await prisma.lesson.create({
       data: {
         teacherId: teacherProfile.id,
@@ -144,6 +204,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating lesson:', error);
     
+    // Handle validation errors from Zod
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }

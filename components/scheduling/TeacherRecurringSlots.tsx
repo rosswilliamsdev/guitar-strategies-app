@@ -11,15 +11,30 @@ import {
   Users,
   TrendingUp,
   Eye,
+  X,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/design";
-import { RecurringSlot, SlotStatus, BillingStatus } from "@/types";
+import { SlotStatus, BillingStatus } from "@/types";
 import { getDayName, formatSlotTime } from "@/lib/slot-helpers";
 
-interface SlotWithDetails extends RecurringSlot {
+interface SlotWithDetails {
+  id: string;
+  teacherId: string;
+  studentId: string;
+  dayOfWeek: number;
+  startTime: string;
+  duration: number;
+  monthlyRate: number;
+  status: SlotStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  cancelledAt?: Date | null;
   student: {
     id: string;
     user: { name: string };
@@ -51,6 +66,12 @@ export function TeacherRecurringSlots({
     null
   );
   const [showDetails, setShowDetails] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [slotToCancel, setSlotToCancel] = useState<SlotWithDetails | null>(
+    null
+  );
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     loadRecurringSlots();
@@ -76,6 +97,48 @@ export function TeacherRecurringSlots({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelSlot = async () => {
+    if (!slotToCancel) return;
+
+    setCancelling(true);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/slots/${slotToCancel.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          cancelDate: new Date(),
+          reason: cancelReason || "Teacher cancelled recurring slot",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to cancel slot");
+      }
+
+      // Refresh the slots list
+      await loadRecurringSlots();
+
+      // Reset state
+      setShowCancelDialog(false);
+      setSlotToCancel(null);
+      setCancelReason("");
+    } catch (error: any) {
+      setError(error.message || "Failed to cancel slot");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const openCancelDialog = (slot: SlotWithDetails) => {
+    setSlotToCancel(slot);
+    setShowCancelDialog(true);
   };
 
   const formatPrice = (cents: number) => {
@@ -316,18 +379,32 @@ export function TeacherRecurringSlots({
                             )}
                           </div>
 
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedSlot(slot);
-                              setShowDetails(true);
-                            }}
-                            className="gap-2"
-                          >
-                            <Eye className="h-4 w-4" />
-                            Details
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedSlot(slot);
+                                setShowDetails(true);
+                              }}
+                              className="gap-2"
+                            >
+                              <Eye className="h-4 w-4" />
+                              Details
+                            </Button>
+
+                            {slot.status === "ACTIVE" && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => openCancelDialog(slot)}
+                                className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <X className="h-4 w-4" />
+                                Cancel
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -437,6 +514,91 @@ export function TeacherRecurringSlots({
             </div>
           </div>
         </Card>
+      )}
+
+      {/* Cancel Slot Confirmation Dialog */}
+      {showCancelDialog && slotToCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="w-full max-w-md mx-4 bg-white shadow-xl">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 rounded-full">
+                  <Trash2 className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-red-900">
+                    Cancel Recurring Slot
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3 bg-red-50 border border-red-200 rounded">
+                  <div className="text-sm font-medium text-red-900">
+                    {slotToCancel.student.user.name}
+                  </div>
+                  <div className="text-sm text-red-700">
+                    {getDayName(slotToCancel.dayOfWeek)}s at{" "}
+                    {formatSlotTime(
+                      slotToCancel.startTime,
+                      slotToCancel.duration
+                    )}
+                  </div>
+                  <div className="text-xs text-red-600 mt-1">
+                    This will cancel all future lessons and free up the time
+                    slot
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cancel-reason">Reason (optional)</Label>
+                  <Input
+                    id="cancel-reason"
+                    placeholder="e.g., Student dropped out, schedule change..."
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    maxLength={500}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowCancelDialog(false);
+                    setSlotToCancel(null);
+                    setCancelReason("");
+                  }}
+                  disabled={cancelling}
+                  className="flex-1"
+                >
+                  Keep Slot
+                </Button>
+                <Button
+                  onClick={handleCancelSlot}
+                  disabled={cancelling}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {cancelling ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                      Cancelling...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Cancel Slot
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   );

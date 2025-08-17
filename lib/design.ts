@@ -1,15 +1,44 @@
-// ========================================
-// FILE: lib/design.ts (Design System Utilities)
-// ========================================
+/**
+ * @fileoverview Design system utilities and styling functions.
+ * 
+ * Provides consistent styling utilities following the OpenAI-inspired design system:
+ * - CSS class merging with Tailwind precedence
+ * - Role-based color schemes (unified turquoise accent)
+ * - Button variant generators
+ * - Status badge styling
+ * - Date, currency, and duration formatting
+ * 
+ * All utilities follow the established design tokens and maintain
+ * visual consistency across the application.
+ */
+
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { Role } from "@prisma/client";
 
+/**
+ * Utility function to merge CSS classes with Tailwind conflict resolution.
+ * 
+ * @param inputs - Array of class values (strings, conditionals, arrays)
+ * @returns Merged class string with proper Tailwind precedence
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Role-based color utilities
+/**
+ * Get role-based color classes.
+ * 
+ * Note: This function maintains legacy role-specific colors for backwards
+ * compatibility, but the current design system uses unified turquoise accent
+ * for all roles following OpenAI design principles.
+ * 
+ * @param role - User role (STUDENT, TEACHER, ADMIN)
+ * @param variant - Color variant (primary, hover, light)
+ * @returns CSS class name for the role and variant
+ * 
+ * @deprecated Consider using unified turquoise accent instead
+ */
 export function getRoleColor(
   role: Role,
   variant: "primary" | "hover" | "light" = "primary"
@@ -35,7 +64,24 @@ export function getRoleColor(
   return colors[role][variant];
 }
 
-// Button variant utilities
+/**
+ * Generate button classes based on variant and optional role.
+ * 
+ * Provides consistent button styling following the design system:
+ * - Primary: Turquoise background (main CTA)
+ * - Secondary: Neutral background with border
+ * - Role: Unified turquoise accent for all roles
+ * 
+ * @param variant - Button style variant
+ * @param role - Optional user role (for role variant)
+ * @returns Complete CSS class string for the button
+ * 
+ * @example
+ * ```tsx
+ * <button className={getButtonVariant('primary')}>Save</button>
+ * <button className={getButtonVariant('role', 'TEACHER')}>Teacher Action</button>
+ * ```
+ */
 export function getButtonVariant(
   variant: "primary" | "secondary" | "role",
   role?: Role
@@ -62,7 +108,25 @@ export function getButtonVariant(
   }
 }
 
-// Status badge utilities
+/**
+ * Generate status badge classes based on status value.
+ * 
+ * Provides consistent status indicators with semantic colors:
+ * - Green: Completed, success states
+ * - Blue: Scheduled, active states  
+ * - Red: Cancelled, failed states
+ * - Yellow: Pending, warning states
+ * - Neutral: Unknown or default states
+ * 
+ * @param status - Status string (case-insensitive)
+ * @returns Complete CSS class string for the status badge
+ * 
+ * @example
+ * ```tsx
+ * <span className={getStatusBadge('completed')}>Completed</span>
+ * <span className={getStatusBadge('PENDING')}>Pending</span>
+ * ```
+ */
 export function getStatusBadge(status: string) {
   const baseClasses =
     "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
@@ -85,7 +149,19 @@ export function getStatusBadge(status: string) {
   }
 }
 
-// Format utilities
+/**
+ * Format amount as currency, converting from cents to dollars.
+ * 
+ * @param amount - Amount in cents
+ * @param currency - Currency code (default: "USD")
+ * @returns Formatted currency string (e.g., "$45.00")
+ * 
+ * @example
+ * ```tsx
+ * formatCurrency(4500) // "$45.00"
+ * formatCurrency(12345) // "$123.45"
+ * ```
+ */
 export function formatCurrency(amount: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -93,6 +169,20 @@ export function formatCurrency(amount: number, currency = "USD") {
   }).format(amount / 100); // Convert from cents
 }
 
+/**
+ * Format date with multiple format options.
+ * 
+ * @param date - Date object or ISO string
+ * @param format - Format type (short, long, time)
+ * @returns Formatted date string
+ * 
+ * @example
+ * ```tsx
+ * formatDate(new Date(), 'short') // "Jan 15, 2025"
+ * formatDate(new Date(), 'long')  // "Monday, January 15, 2025"
+ * formatDate(new Date(), 'time')  // "2:30 PM"
+ * ```
+ */
 export function formatDate(
   date: Date | string,
   format: "short" | "long" | "time" = "short"
@@ -123,6 +213,19 @@ export function formatDate(
   }
 }
 
+/**
+ * Format duration in minutes to human-readable string.
+ * 
+ * @param minutes - Duration in minutes
+ * @returns Formatted duration string
+ * 
+ * @example
+ * ```tsx
+ * formatDuration(30)  // "30m"
+ * formatDuration(90)  // "1h 30m"
+ * formatDuration(120) // "2h 0m"
+ * ```
+ */
 export function formatDuration(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { StudentChecklistDetail } from "@/components/student-checklists/checklist-detail";
+import { ChecklistDetail } from "@/components/student-checklists/checklist-detail";
 
 export const metadata = {
   title: "Personal Checklist | Guitar Strategies",
@@ -27,7 +27,7 @@ export default async function PersonalChecklistDetailPage({ params }: PageProps)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <StudentChecklistDetail checklistId={params.id} />
+      <ChecklistDetail checklistId={params.id} />
     </div>
   );
 }

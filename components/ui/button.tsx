@@ -1,20 +1,62 @@
-// ========================================
-// FILE: components/ui/button.tsx
-// ========================================
+/**
+ * @fileoverview Reusable Button component with variants and role-based styling.
+ * 
+ * A flexible button component that supports different variants, sizes, and
+ * role-based styling. Includes loading states and accessibility features.
+ */
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { getButtonVariant } from "@/lib/design";
 import type { Role } from "@prisma/client";
 
+/**
+ * Props for the Button component.
+ * Extends standard HTML button attributes with custom styling options.
+ */
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Visual variant of the button */
   variant?: "primary" | "secondary" | "role";
+  /** Size of the button */
   size?: "sm" | "md" | "lg";
+  /** User role for role-based styling (when variant="role") */
   role?: Role;
+  /** Whether the button is in a loading state */
   loading?: boolean;
+  /** Button content */
   children: React.ReactNode;
 }
 
+/**
+ * Button component with variant styling and loading states.
+ * 
+ * Features:
+ * - Multiple visual variants (primary, secondary, role-based)
+ * - Three sizes (sm, md, lg)
+ * - Loading state with spinner
+ * - Automatic disabled state when loading
+ * - Role-based styling for user-specific actions
+ * - Full accessibility support
+ * 
+ * @example
+ * ```tsx
+ * // Primary button
+ * <Button variant="primary" onClick={handleClick}>
+ *   Save Changes
+ * </Button>
+ * 
+ * // Loading button
+ * <Button loading={isSubmitting}>
+ *   Submit Form
+ * </Button>
+ * 
+ * // Role-specific styling
+ * <Button variant="role" role="TEACHER">
+ *   Teacher Action
+ * </Button>
+ * ```
+ */
 export function Button({
   variant = "primary",
   size = "md",
@@ -25,6 +67,7 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
+  // Size-specific styling classes
   const sizeClasses = {
     sm: "px-3 py-1.5 text-sm font-medium",
     md: "px-4 py-2 text-sm font-medium", 

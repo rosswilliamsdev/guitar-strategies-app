@@ -1,5 +1,15 @@
 # Guitar Strategies App - Todo List
 
+## Recently Completed ✅
+
+- [x] Teacher-initiated booking system (Aug 17, 2025)
+  - [x] Teachers can assign students to open time slots from schedule page
+  - [x] Support for single and recurring lesson bookings
+  - [x] Modal interface for student selection and booking type
+  - [x] API endpoint for teacher-initiated bookings
+  - [x] Fixed nested button HTML validation issues in TimePicker
+  - [x] Show open time slots even when no lessons scheduled
+
 ## Email Notification System
 
 - [ ] Create an email notification system
@@ -49,3 +59,27 @@
     - [ ] Credits cannot be refunded for cash
     - [ ] Maximum credit accumulation limit (e.g., 3 credits per student)
     - [ ] Handle edge cases (teacher cancellations vs student cancellations)
+
+## Schedule Management Enhancements
+
+- [ ] Drag-and-drop lesson rescheduling
+  - [ ] Allow teachers to drag lessons to different time slots
+  - [ ] Check availability before allowing drop
+  - [ ] Send notification to student about reschedule
+  - [ ] Option to reschedule entire recurring series
+
+- [ ] Bulk actions for lessons
+  - [ ] Select multiple lessons for cancellation
+  - [ ] Bulk mark as completed
+  - [ ] Bulk move to different time slot
+  
+- [ ] Student swap functionality
+  - [ ] Allow teachers to swap two students' lesson times
+  - [ ] Notify both students of the swap
+  
+## TypeScript and Code Quality
+
+- [ ] Fix remaining TypeScript type mismatches
+  - [ ] Update component prop types to handle null vs undefined properly
+  - [ ] Fix enum type conversions (LessonStatus, etc.)
+  - [ ] Resolve teacher/student profile type inconsistencies

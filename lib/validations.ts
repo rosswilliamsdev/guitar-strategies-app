@@ -1,6 +1,21 @@
-// ========================================
-// FILE: lib/validations.ts (Zod Schemas)
-// ========================================
+/**
+ * @fileoverview Zod validation schemas for form and API validation.
+ * 
+ * This file contains comprehensive validation schemas using Zod for:
+ * - Authentication and registration forms
+ * - User profile updates
+ * - Lesson creation and management
+ * - Library item management
+ * - Recommendations system
+ * - Invoice and billing
+ * - Scheduling and availability
+ * - Curriculum and progress tracking
+ * - File uploads and API responses
+ * 
+ * All schemas include appropriate error messages and data transformation
+ * where needed. Validation functions are exported for common use cases.
+ */
+
 import { z } from "zod";
 import {
   Role,
@@ -16,13 +31,23 @@ import {
 } from "@prisma/client";
 
 // ========================================
-// Auth Schemas
+// Authentication Schemas
 // ========================================
+
+/**
+ * Schema for user login form validation.
+ * Validates email format and ensures password is provided.
+ */
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
+/**
+ * Schema for user registration form validation.
+ * Includes role-specific fields and password confirmation validation.
+ * Supports teacher-specific fields (bio, hourly rate) and student-specific fields.
+ */
 export const registerSchema = z
   .object({
     name: z.string().min(2, "Name must be at least 2 characters"),

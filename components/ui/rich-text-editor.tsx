@@ -1,3 +1,20 @@
+/**
+ * @fileoverview Rich text editor component using Tiptap.
+ * 
+ * A WYSIWYG rich text editor with formatting toolbar for lesson notes,
+ * homework assignments, and other text content. Built with Tiptap and
+ * integrated with the application's design system.
+ * 
+ * Features:
+ * - Bold, italic text formatting
+ * - Bullet and numbered lists
+ * - Blockquotes
+ * - Undo/redo functionality
+ * - Placeholder text support
+ * - Responsive design
+ * - Accessibility support
+ */
+
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -17,13 +34,41 @@ import {
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
+/**
+ * Props for the RichTextEditor component.
+ */
 interface RichTextEditorProps {
+  /** Initial HTML content for the editor */
   content: string;
+  /** Callback fired when content changes, receives HTML string */
   onChange: (content: string) => void;
+  /** Placeholder text shown when editor is empty */
   placeholder?: string;
+  /** Additional CSS classes for the editor */
   className?: string;
 }
 
+/**
+ * Rich text editor component with formatting toolbar.
+ * 
+ * Provides a complete WYSIWYG editing experience with:
+ * - Formatting options (bold, italic, lists, quotes)
+ * - Undo/redo functionality
+ * - Live content updates
+ * - Consistent styling with design system
+ * - Focus management and accessibility
+ * 
+ * @example
+ * ```tsx
+ * const [content, setContent] = useState('<p>Initial content</p>');
+ * 
+ * <RichTextEditor
+ *   content={content}
+ *   onChange={setContent}
+ *   placeholder="Write your lesson notes..."
+ * />
+ * ```
+ */
 export function RichTextEditor({
   content,
   onChange,
@@ -91,6 +136,7 @@ export function RichTextEditor({
           <Italic className="h-4 w-4" />
         </Button>
 
+        {/* Separator */}
         <div className="w-px h-6 bg-border mx-1" />
 
         <Button
@@ -129,6 +175,7 @@ export function RichTextEditor({
           <Quote className="h-4 w-4" />
         </Button>
 
+        {/* Separator */}
         <div className="w-px h-6 bg-border mx-1" />
 
         <Button

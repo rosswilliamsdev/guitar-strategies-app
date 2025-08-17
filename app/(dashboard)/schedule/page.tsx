@@ -83,6 +83,28 @@ export default async function SchedulePage() {
     },
   });
 
+  // Get teacher's students
+  const students = await prisma.studentProfile.findMany({
+    where: {
+      teacherId: teacher.id,
+      isActive: true,
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    orderBy: {
+      user: {
+        name: "asc",
+      },
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -98,6 +120,7 @@ export default async function SchedulePage() {
         availability={availability}
         blockedTimes={blockedTimes}
         lessonSettings={lessonSettings}
+        students={students}
       />
     </div>
   );
