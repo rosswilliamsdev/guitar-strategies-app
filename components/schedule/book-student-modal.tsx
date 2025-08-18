@@ -25,7 +25,7 @@ interface BookStudentModalProps {
   date: Date;
   time: string;
   students: Student[];
-  onBook: (studentId: string, type: "single" | "recurring", weeks?: number) => Promise<void>;
+  onBook: (studentId: string, type: "single" | "recurring") => Promise<void>;
 }
 
 export function BookStudentModal({
@@ -38,7 +38,6 @@ export function BookStudentModal({
 }: BookStudentModalProps) {
   const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [bookingType, setBookingType] = useState<"single" | "recurring">("single");
-  const [recurringWeeks, setRecurringWeeks] = useState<string>("12");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -56,13 +55,11 @@ export function BookStudentModal({
     setError("");
 
     try {
-      const weeks = bookingType === "recurring" ? parseInt(recurringWeeks) : undefined;
-      await onBook(selectedStudent, bookingType, weeks);
+      await onBook(selectedStudent, bookingType);
       onClose();
       // Reset form
       setSelectedStudent("");
       setBookingType("single");
-      setRecurringWeeks("12");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to book lesson");
     } finally {
@@ -148,41 +145,6 @@ export function BookStudentModal({
             </RadioGroup>
           </div>
 
-          {bookingType === "recurring" && (
-            <div>
-              <Label htmlFor="weeks">Number of Weeks</Label>
-              <Select.Root value={recurringWeeks} onValueChange={setRecurringWeeks}>
-                <Select.Trigger className="w-full px-3 py-2 border rounded-md bg-background flex items-center justify-between">
-                  <Select.Value />
-                  <ChevronDown className="h-4 w-4" />
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Content className="bg-background border rounded-md shadow-lg z-50">
-                    <Select.Viewport className="p-1">
-                      <Select.Item value="4" className="px-3 py-2 hover:bg-muted cursor-pointer rounded">
-                        <Select.ItemText>4 weeks</Select.ItemText>
-                      </Select.Item>
-                      <Select.Item value="8" className="px-3 py-2 hover:bg-muted cursor-pointer rounded">
-                        <Select.ItemText>8 weeks</Select.ItemText>
-                      </Select.Item>
-                      <Select.Item value="12" className="px-3 py-2 hover:bg-muted cursor-pointer rounded">
-                        <Select.ItemText>12 weeks</Select.ItemText>
-                      </Select.Item>
-                      <Select.Item value="16" className="px-3 py-2 hover:bg-muted cursor-pointer rounded">
-                        <Select.ItemText>16 weeks</Select.ItemText>
-                      </Select.Item>
-                      <Select.Item value="24" className="px-3 py-2 hover:bg-muted cursor-pointer rounded">
-                        <Select.ItemText>24 weeks</Select.ItemText>
-                      </Select.Item>
-                      <Select.Item value="52" className="px-3 py-2 hover:bg-muted cursor-pointer rounded">
-                        <Select.ItemText>52 weeks (1 year)</Select.ItemText>
-                      </Select.Item>
-                    </Select.Viewport>
-                  </Select.Content>
-                </Select.Portal>
-              </Select.Root>
-            </div>
-          )}
 
           {error && (
             <div className="text-sm text-red-500 bg-red-50 p-2 rounded">

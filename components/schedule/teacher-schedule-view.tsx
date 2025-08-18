@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookStudentModal } from "./book-student-modal";
+import { LessonManagementModal } from "./lesson-management-modal";
 import {
   Calendar,
   Clock,
@@ -278,7 +279,13 @@ const getSlotStatus = (
 };
 
 // Render content for a time slot based on its status
-const renderSlotContent = (status: SlotStatus, day: Date, timeSlot: string, onClick?: () => void): React.ReactNode => {
+const renderSlotContent = (
+  status: SlotStatus, 
+  day: Date, 
+  timeSlot: string, 
+  onOpenSlotClick?: () => void,
+  onLessonClick?: (lesson: UpcomingLesson) => void
+): React.ReactNode => {
   switch (status.type) {
     case "not-available":
       return (
@@ -290,7 +297,7 @@ const renderSlotContent = (status: SlotStatus, day: Date, timeSlot: string, onCl
     case "open":
       return (
         <button
-          onClick={onClick}
+          onClick={onOpenSlotClick}
           className="w-20 h-8 bg-green-50 border border-green-200 rounded flex items-center justify-center hover:bg-green-100 transition-colors cursor-pointer group"
           title="Click to book a student"
         >
@@ -303,25 +310,31 @@ const renderSlotContent = (status: SlotStatus, day: Date, timeSlot: string, onCl
       // Check if the lesson is cancelled
       if (status.lesson.status === 'CANCELLED') {
         return (
-          <div className="w-40 h-8 bg-red-100 border border-red-300 rounded px-2 flex items-center justify-center space-x-2">
+          <button
+            onClick={() => onLessonClick?.(status.lesson)}
+            className="w-40 h-8 bg-red-100 border border-red-300 rounded px-2 hover:bg-red-200 transition-colors cursor-pointer flex items-center justify-center space-x-2"
+            title="Click to manage cancelled lesson"
+          >
             <p className="text-xs font-medium text-red-900">
               Cancelled
             </p>
             <p className="text-xs text-red-700 truncate">
               {status.lesson.student.user.name}
             </p>
-          </div>
+          </button>
         );
       }
       
       return (
-        <Link href="/lessons/new">
-          <div className="w-40 h-8 bg-blue-100 border border-blue-300 rounded px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-center">
-            <p className="text-xs font-medium text-blue-900 truncate">
-              {status.lesson.student.user.name}
-            </p>
-          </div>
-        </Link>
+        <button
+          onClick={() => onLessonClick?.(status.lesson)}
+          className="w-40 h-8 bg-blue-100 border border-blue-300 rounded px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-center"
+          title="Click to manage lesson"
+        >
+          <p className="text-xs font-medium text-blue-900 truncate">
+            {status.lesson.student.user.name}
+          </p>
+        </button>
       );
 
     case "blocked":
@@ -361,7 +374,15 @@ export function TeacherScheduleView({
     time: null,
   });
 
-  const handleBookStudent = async (studentId: string, type: "single" | "recurring", weeks?: number) => {
+  const [lessonModal, setLessonModal] = useState<{
+    isOpen: boolean;
+    lesson: UpcomingLesson | null;
+  }>({
+    isOpen: false,
+    lesson: null,
+  });
+
+  const handleBookStudent = async (studentId: string, type: "single" | "recurring") => {
     if (!bookingModal.date || !bookingModal.time) return;
 
     // Convert time string to proper format
@@ -383,7 +404,7 @@ export function TeacherScheduleView({
         date: lessonDate.toISOString(),
         duration: 30, // Default to 30 minutes
         type,
-        weeks: type === "recurring" ? weeks : undefined,
+        indefinite: type === "recurring", // True for indefinite recurring lessons
       }),
     });
 
@@ -393,6 +414,11 @@ export function TeacherScheduleView({
     }
 
     // Refresh the page to show the new booking
+    window.location.reload();
+  };
+
+  const handleLessonUpdate = () => {
+    // Refresh the page to show the updated lesson
     window.location.reload();
   };
 
@@ -562,7 +588,8 @@ export function TeacherScheduleView({
                             slotStatus,
                             currentDate,
                             timeSlot,
-                            () => setBookingModal({ isOpen: true, date: currentDate, time: timeSlot })
+                            () => setBookingModal({ isOpen: true, date: currentDate, time: timeSlot }),
+                            (lesson) => setLessonModal({ isOpen: true, lesson })
                           )}
                         </div>
                       </div>
@@ -678,7 +705,8 @@ export function TeacherScheduleView({
                               slotStatus,
                               day,
                               timeSlot,
-                              () => setBookingModal({ isOpen: true, date: day, time: timeSlot })
+                              () => setBookingModal({ isOpen: true, date: day, time: timeSlot }),
+                              (lesson) => setLessonModal({ isOpen: true, lesson })
                             )}
                           </div>
                         );
@@ -701,6 +729,16 @@ export function TeacherScheduleView({
           time={bookingModal.time}
           students={students}
           onBook={handleBookStudent}
+        />
+      )}
+
+      {/* Lesson Management Modal */}
+      {lessonModal.lesson && (
+        <LessonManagementModal
+          isOpen={lessonModal.isOpen}
+          onClose={() => setLessonModal({ isOpen: false, lesson: null })}
+          lesson={lessonModal.lesson}
+          onUpdate={handleLessonUpdate}
         />
       )}
     </div>

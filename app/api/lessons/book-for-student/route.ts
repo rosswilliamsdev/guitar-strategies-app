@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { addWeeks } from "date-fns";
 
 const bookForStudentSchema = z.object({
   teacherId: z.string(),
@@ -11,7 +10,7 @@ const bookForStudentSchema = z.object({
   date: z.string().datetime(),
   duration: z.number().min(30).max(120),
   type: z.enum(["single", "recurring"]),
-  weeks: z.number().min(2).max(52).optional(),
+  indefinite: z.boolean().optional(), // For truly indefinite recurring lessons
 });
 
 export async function POST(request: NextRequest) {
@@ -105,55 +104,61 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(lesson);
     } else {
-      // Create recurring lessons
-      const weeks = validatedData.weeks || 12;
-      const lessons = [];
+      // Create indefinite recurring slot
+      const lessonDate = new Date(validatedData.date);
+      const dayOfWeek = lessonDate.getDay();
+      const hours = lessonDate.getHours();
+      const minutes = lessonDate.getMinutes();
+      const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 
-      for (let i = 0; i < weeks; i++) {
-        const lessonDate = addWeeks(new Date(validatedData.date), i);
-        
-        // Check for conflicts for each week
-        const weekEndTime = new Date(lessonDate);
-        weekEndTime.setMinutes(weekEndTime.getMinutes() + validatedData.duration);
+      // Check for existing recurring slot conflicts
+      const existingSlot = await prisma.recurringSlot.findFirst({
+        where: {
+          teacherId: validatedData.teacherId,
+          dayOfWeek,
+          startTime: timeString,
+          duration: validatedData.duration,
+          status: "ACTIVE",
+        },
+      });
 
-        const weekConflict = await prisma.lesson.findFirst({
-          where: {
-            teacherId: validatedData.teacherId,
-            date: {
-              gte: lessonDate,
-              lt: weekEndTime,
-            },
-            status: {
-              in: ["SCHEDULED"],
-            },
-          },
-        });
-
-        if (!weekConflict) {
-          lessons.push({
-            teacherId: validatedData.teacherId,
-            studentId: validatedData.studentId,
-            date: lessonDate,
-            duration: validatedData.duration,
-            status: "SCHEDULED" as const,
-          });
-        }
-      }
-
-      if (lessons.length === 0) {
+      if (existingSlot) {
         return NextResponse.json(
-          { message: "All time slots in the series have conflicts" },
+          { message: "You already have a recurring slot at this time" },
           { status: 400 }
         );
       }
 
-      const createdLessons = await prisma.lesson.createMany({
-        data: lessons,
+      // Create recurring slot
+      const recurringSlot = await prisma.recurringSlot.create({
+        data: {
+          teacherId: validatedData.teacherId,
+          studentId: validatedData.studentId,
+          dayOfWeek,
+          startTime: timeString,
+          duration: validatedData.duration,
+          monthlyRate: 0, // Set based on teacher's rate
+          status: "ACTIVE",
+        },
+      });
+
+      // Create the first lesson for this week
+      const firstLesson = await prisma.lesson.create({
+        data: {
+          teacherId: validatedData.teacherId,
+          studentId: validatedData.studentId,
+          date: lessonDate,
+          duration: validatedData.duration,
+          status: "SCHEDULED",
+          isRecurring: true,
+          recurringSlotId: recurringSlot.id,
+        },
       });
 
       return NextResponse.json({
-        message: `Successfully scheduled ${lessons.length} lessons`,
-        count: createdLessons.count,
+        message: "Created indefinite recurring lesson",
+        recurringSlot,
+        firstLesson,
       });
     }
   } catch (error) {

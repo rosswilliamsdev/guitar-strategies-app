@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { TeacherScheduleView } from "@/components/schedule/teacher-schedule-view";
 import { startOfWeek, endOfWeek, addWeeks } from "date-fns";
+import { getLessonsWithRecurring } from "@/lib/recurring-lessons";
 
 export default async function SchedulePage() {
   const session = await getServerSession(authOptions);
@@ -32,34 +33,17 @@ export default async function SchedulePage() {
     redirect("/dashboard");
   }
 
-  // Get current week's lessons
+  // Get current week's lessons including auto-generated recurring lessons
   const startDate = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday
-  const endDate = endOfWeek(addWeeks(startDate, 2)); // Next 3 weeks
+  const endDate = endOfWeek(addWeeks(startDate, 11)); // Next 12 weeks
 
-  const upcomingLessons = await prisma.lesson.findMany({
-    where: {
-      teacherId: teacher.id,
-      date: {
-        gte: startDate,
-        lte: endDate,
-      },
-      status: {
-        in: ["SCHEDULED", "COMPLETED"],
-      },
-    },
-    include: {
-      student: {
-        include: {
-          user: true,
-        },
-      },
-    },
-    orderBy: {
-      date: "asc",
-    },
-  });
+  const upcomingLessons = await getLessonsWithRecurring(
+    teacher.id,
+    startDate,
+    endDate
+  );
 
-  // Get teacher availability for the next 3 weeks
+  // Get teacher availability for the next 12 weeks
   const availability = await prisma.teacherAvailability.findMany({
     where: {
       teacherId: teacher.id,
