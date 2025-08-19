@@ -182,7 +182,12 @@ export async function DELETE(
     const slotId = params.id;
     const body = await request.json();
     
-    const validation = cancelSlotSchema.safeParse({ ...body, slotId });
+    // Parse the date string to a Date object
+    const validation = cancelSlotSchema.safeParse({ 
+      ...body, 
+      slotId,
+      cancelDate: body.cancelDate ? new Date(body.cancelDate) : undefined
+    });
 
     if (!validation.success) {
       return NextResponse.json(
@@ -216,7 +221,10 @@ export async function DELETE(
       );
     }
 
-    // Students can cancel their own slots, teachers and admins can cancel any
+    // Check permissions:
+    // - Students can cancel their own slots
+    // - Teachers can cancel slots for their students
+    // - Admins can cancel any slot
     const userRole = session.user.role;
     const isStudent = userRole === 'STUDENT' && slot.studentId === session.user.studentProfile?.id;
     const isTeacher = userRole === 'TEACHER' && slot.teacherId === session.user.teacherProfile?.id;
@@ -224,7 +232,7 @@ export async function DELETE(
 
     if (!isStudent && !isTeacher && !isAdmin) {
       return NextResponse.json(
-        { success: false, error: "Access denied" },
+        { success: false, error: "Access denied - you can only cancel your own slots or slots for your students" },
         { status: 403 }
       );
     }

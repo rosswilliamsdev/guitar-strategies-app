@@ -176,7 +176,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          cancelDate: new Date(),
+          cancelDate: new Date().toISOString(),
           reason: 'Cancelled from student profile',
         }),
       });

@@ -6,7 +6,16 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ## [Current Version] - 2024-12-XX
 
-### 🎯 **Latest Session Summary (Aug 18, 2025)**
+### 🎯 **Latest Session Summary (Aug 19, 2025)**
+- **INVOICE PHILOSOPHY CHANGE**: Invoices now generate for all scheduled lessons, not just completed ones
+- **MONTH FILTERING**: Fixed and improved month filtering on both invoices page and invoice creation form
+- **LESSON-BASED INVOICES PAGE**: Transformed invoices page to show individual scheduled lessons filtered by month
+- **API DATE RANGE SUPPORT**: Added dateFrom/dateTo parameters to lessons API for proper month filtering
+- **TIMEZONE FIX**: Fixed month selection bug where previous month's lessons were displayed due to timezone issues
+- **SLOT CANCELLATION FIX**: Fixed recurring slot cancellation permissions for teachers
+- **CONTROLLED INPUT WARNING**: Resolved React warning by creating proper interactive invoice filters
+
+### 🎯 **Previous Session Summary (Aug 18, 2025)**
 - **LESSON MANAGEMENT MODAL**: Teachers can now click on booked lessons to open management modal with notes and cancellation options
 - **SUCCESS NOTIFICATIONS**: Added toast notifications for lesson cancellation and notes saving with consistent user feedback
 - **BUSINESS RULES ENFORCEMENT**: Lessons can only be cancelled if scheduled and more than 2 hours away with clear error messaging
@@ -97,7 +106,34 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### ✅ **Added Features**
 
-#### **Latest Session Features (Aug 13, 2025)**
+#### **Latest Session Features (Aug 19, 2025)**
+
+##### **Invoice System Improvements**
+- **Philosophy Change**: Updated invoice generation to bill for all scheduled lessons rather than completed ones
+- **Individual Lesson View**: Transformed invoices page from showing invoice summaries to individual scheduled lessons
+- **Enhanced Month Filtering**: Both main invoices page and invoice creation form now properly filter lessons by selected month
+- **Real-time Lesson Display**: Shows lesson date/time, student, calculated price, and duration for each scheduled lesson
+- **Streamlined Interface**: Removed status filtering since all displayed lessons are scheduled
+
+##### **API Enhancements**  
+- **Date Range Support**: Added `dateFrom` and `dateTo` query parameters to `/api/lessons` endpoint
+- **Proper Month Boundaries**: API now correctly filters lessons within specified date ranges
+- **Smart Date Merging**: Date filters properly combine with existing filters like `future` without conflicts
+- **Updated Documentation**: Enhanced API documentation to reflect new date range parameters
+
+##### **Interactive Invoice Filters**
+- **Client Component**: Created dedicated `InvoiceFilters` component with proper state management
+- **Real-time Search**: Filter by student and month with immediate URL updates
+- **Clear Functionality**: Reset all filters with single button click
+- **Responsive Design**: Three-column grid layout adapting to screen size
+
+##### **Bug Fixes & Technical Improvements**
+- **Timezone Fix**: Fixed month selection displaying previous month's lessons due to UTC/local time conversion
+- **Slot Cancellation**: Resolved teacher permission issues when canceling student recurring slots
+- **Controlled Input Warning**: Fixed React warning about missing onChange handlers
+- **Date Serialization**: Proper handling of Date objects in API calls and responses
+
+#### **Previous Session Features (Aug 13, 2025)**
 
 ##### **UI/UX Improvements**
 - **Schedule View Redesign**: Left-aligned time slots and booking information for better readability
@@ -385,7 +421,27 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### 🔧 **Fixed Issues**
 
-#### **Latest Session Fixes (Aug 13, 2025)**
+#### **Latest Session Fixes (Aug 19, 2025)**
+
+##### **Invoice System Fixes**
+- **Month Selection Bug**: Fixed issue where selecting a month in invoice creation showed previous month's lessons
+- **API Date Filtering**: Resolved missing `dateFrom`/`dateTo` parameter handling in lessons API endpoint
+- **Timezone Conversion**: Fixed UTC/local time conversion issues causing incorrect month boundaries
+- **Lesson Status Logic**: Updated from completed lessons to scheduled lessons throughout invoice system
+
+##### **User Interface Fixes**
+- **React Warning**: Fixed "controlled input without onChange" warning in invoices page filters
+- **Empty State Messages**: Updated messages to reflect new scheduled lesson focus
+- **Navigation Consistency**: Ensured all month filtering works consistently across pages
+- **Button Interactions**: All filter buttons now properly update URL parameters and refresh data
+
+##### **Permission and API Fixes**
+- **Slot Cancellation**: Fixed teacher permissions to cancel student recurring time slots
+- **Date Serialization**: Proper conversion of Date objects to ISO strings for API calls
+- **Form State Management**: Resolved issues with form inputs maintaining proper controlled state
+- **Error Handling**: Enhanced error messages and validation for date range operations
+
+#### **Previous Session Fixes (Aug 13, 2025)**
 
 ##### **Booking Interface Issues**
 - **Fixed**: Hanging "8:30 PM" time slot appearing at top of weekly availability view
@@ -555,7 +611,12 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### 📁 **New Files Created**
 
-#### **Latest Session Files (Aug 18, 2025)**
+#### **Latest Session Files (Aug 19, 2025)**
+
+##### **Invoice System Components**
+- `components/invoices/invoice-filters.tsx` - Interactive client component for filtering lessons by student and month with real-time search
+
+#### **Previous Session Files (Aug 18, 2025)**
 
 ##### **Lesson Management Components**
 - `components/schedule/lesson-management-modal.tsx` - Modal for managing booked lessons (notes, cancellation)
@@ -657,7 +718,15 @@ This changelog tracks all major changes, features, and fixes made during develop
 
 ### 🔄 **Modified Files**
 
-#### **Latest Session Modifications (Aug 18, 2025)**
+#### **Latest Session Modifications (Aug 19, 2025)**
+
+##### **Invoice System Overhaul**
+- `app/(dashboard)/invoices/page.tsx` - Complete transformation from invoice summaries to individual lesson display with month filtering
+- `components/invoices/invoice-form.tsx` - Fixed month selection timezone bug and updated to fetch scheduled lessons
+- `app/api/lessons/route.ts` - Added dateFrom/dateTo parameter support for proper date range filtering
+- `CLAUDE.md` - Updated invoice workflow documentation to reflect scheduled lesson billing philosophy
+
+#### **Previous Session Modifications (Aug 18, 2025)**
 
 ##### **Lesson Management and Recurring System Updates**
 - `components/schedule/teacher-schedule-view.tsx` - Added lesson management modal integration, click handlers for booked lessons

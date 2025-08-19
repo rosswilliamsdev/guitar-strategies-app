@@ -27,6 +27,8 @@ import { createLessonSchema } from '@/lib/validations';
  * - teacherId: Filter lessons for specific teacher (admin only)
  * - status: Filter by lesson status (SCHEDULED, COMPLETED, CANCELLED, MISSED)
  * - future: If 'true', only return future lessons
+ * - dateFrom: Filter lessons from this date (ISO string)
+ * - dateTo: Filter lessons up to this date (ISO string)
  * 
  * Authorization:
  * - TEACHER: Can view all their lessons, optionally filtered by student
@@ -49,6 +51,8 @@ export async function GET(request: NextRequest) {
     const teacherId = searchParams.get('teacherId');
     const status = searchParams.get('status');
     const future = searchParams.get('future');
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
 
     let whereClause: any = {};
 
@@ -60,6 +64,15 @@ export async function GET(request: NextRequest) {
     // Add future filter - only lessons after current date
     if (future === 'true') {
       whereClause.date = { gte: new Date() };
+    }
+
+    // Add date range filter if provided
+    if (dateFrom || dateTo) {
+      whereClause.date = {
+        ...(whereClause.date || {}),
+        ...(dateFrom && { gte: new Date(dateFrom) }),
+        ...(dateTo && { lte: new Date(dateTo) })
+      };
     }
 
     if (session.user.role === 'TEACHER') {

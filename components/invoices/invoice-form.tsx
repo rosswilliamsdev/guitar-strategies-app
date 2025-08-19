@@ -116,15 +116,18 @@ export function InvoiceForm({
   const loadLessonsForMonth = async () => {
     setLoadingLessons(true);
     try {
-      const startDate = startOfMonth(new Date(selectedMonth + "-01"));
+      // Parse the selected month (YYYY-MM format) properly to avoid timezone issues
+      const [year, month] = selectedMonth.split('-');
+      const startDate = startOfMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
       const endDate = endOfMonth(startDate);
 
       const response = await fetch(
-        `/api/lessons?studentId=${selectedStudentId}&dateFrom=${startDate.toISOString()}&dateTo=${endDate.toISOString()}&status=COMPLETED`
+        `/api/lessons?studentId=${selectedStudentId}&dateFrom=${startDate.toISOString()}&dateTo=${endDate.toISOString()}&status=SCHEDULED`
       );
 
       if (response.ok) {
-        const lessons: Lesson[] = await response.json();
+        const data = await response.json();
+        const lessons: Lesson[] = Array.isArray(data.lessons) ? data.lessons : [];
         const lessonItems = lessons.map((lesson) => ({
           id: lesson.id,
           date: new Date(lesson.date),
@@ -415,7 +418,7 @@ export function InvoiceForm({
                 </div>
               ) : (
                 <div className="text-center py-6 text-muted-foreground">
-                  No completed lessons found for this month.
+                  No scheduled lessons found for this month.
                 </div>
               )}
             </div>

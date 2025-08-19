@@ -368,8 +368,8 @@ openssl rand -base64 32
 ```
 
 **Invoice Workflow:**
-1. Teacher completes lessons and marks them in the app
-2. App generates monthly invoices with lesson items
+1. Teacher schedules lessons for students (recurring weekly slots)
+2. App generates monthly invoices with all scheduled lesson items
 3. Invoice includes teacher's payment methods (Venmo, PayPal, Zelle)
 4. Teacher sends invoice to student/parent via email
 5. Student pays directly using preferred method
@@ -612,7 +612,7 @@ import { z } from "zod";
 
 ### Invoice & Payment System ✅
 8. **Simple Invoice Generation** ✅
-   - Generate monthly invoices based on completed lessons
+   - Generate monthly invoices based on scheduled lessons
    - Include teacher payment methods (Venmo, PayPal, Zelle)
    - Calculate totals from hourly rate × lesson duration
    - Professional invoice formatting and numbering
