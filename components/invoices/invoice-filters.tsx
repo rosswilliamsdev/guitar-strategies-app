@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter } from 'lucide-react';
-import type { StudentProfile } from '@/types';
+import type { StudentProfile, InvoiceStatus } from '@/types';
 
 interface InvoiceFiltersProps {
   students: Array<StudentProfile & { user: { id: string; name: string | null } }>;
@@ -19,6 +19,7 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
   
   const [selectedStudent, setSelectedStudent] = useState(searchParams.get('student') || 'all');
   const [selectedMonth, setSelectedMonth] = useState(searchParams.get('month') || '');
+  const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || 'all');
 
   const handleSearch = () => {
     const params = new URLSearchParams();
@@ -29,6 +30,9 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
     if (selectedMonth) {
       params.append('month', selectedMonth);
     }
+    if (selectedStatus && selectedStatus !== 'all') {
+      params.append('status', selectedStatus);
+    }
     
     const queryString = params.toString();
     router.push(`/invoices${queryString ? `?${queryString}` : ''}`);
@@ -37,6 +41,7 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
   const handleClear = () => {
     setSelectedStudent('all');
     setSelectedMonth('');
+    setSelectedStatus('all');
     router.push('/invoices');
   };
 
@@ -47,7 +52,7 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
         <h3 className="text-sm font-medium">Filters</h3>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <Select value={selectedStudent} onValueChange={setSelectedStudent}>
             <SelectTrigger>
@@ -60,6 +65,23 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
                   {student.user.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="SENT">Sent</SelectItem>
+              <SelectItem value="VIEWED">Viewed</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
+              <SelectItem value="OVERDUE">Overdue</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>

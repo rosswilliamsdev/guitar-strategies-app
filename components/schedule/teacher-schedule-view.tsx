@@ -289,7 +289,7 @@ const renderSlotContent = (
   switch (status.type) {
     case "not-available":
       return (
-        <div className="w-20 h-8 bg-gray-50 rounded flex items-center justify-center">
+        <div className="w-full h-8 bg-gray-50 rounded flex items-center justify-center mx-1">
           <span className="text-xs text-gray-400">—</span>
         </div>
       );
@@ -298,7 +298,7 @@ const renderSlotContent = (
       return (
         <button
           onClick={onOpenSlotClick}
-          className="w-20 h-8 bg-green-50 border border-green-200 rounded flex items-center justify-center hover:bg-green-100 transition-colors cursor-pointer group"
+          className="w-full h-8 bg-green-50 border border-green-200 rounded flex items-center justify-center hover:bg-green-100 transition-colors cursor-pointer group mx-1"
           title="Click to book a student"
         >
           <Plus className="h-3 w-3 text-green-700 mr-1 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -312,13 +312,10 @@ const renderSlotContent = (
         return (
           <button
             onClick={() => onLessonClick?.(status.lesson)}
-            className="w-40 h-8 bg-red-100 border border-red-300 rounded px-2 hover:bg-red-200 transition-colors cursor-pointer flex items-center justify-center space-x-2"
+            className="w-full h-8 bg-red-100 border border-red-300 rounded px-2 hover:bg-red-200 transition-colors cursor-pointer flex items-center justify-center mx-1"
             title="Click to manage cancelled lesson"
           >
-            <p className="text-xs font-medium text-red-900">
-              Cancelled
-            </p>
-            <p className="text-xs text-red-700 truncate">
+            <p className="text-xs font-medium text-red-900 truncate">
               {status.lesson.student.user.name}
             </p>
           </button>
@@ -328,7 +325,7 @@ const renderSlotContent = (
       return (
         <button
           onClick={() => onLessonClick?.(status.lesson)}
-          className="w-40 h-8 bg-blue-100 border border-blue-300 rounded px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-center"
+          className="w-full h-8 bg-blue-100 border border-blue-300 rounded px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-center mx-1"
           title="Click to manage lesson"
         >
           <p className="text-xs font-medium text-blue-900 truncate">
@@ -339,7 +336,7 @@ const renderSlotContent = (
 
     case "blocked":
       return (
-        <div className="w-20 h-8 bg-red-50 border border-red-200 rounded flex items-center justify-center">
+        <div className="w-full h-8 bg-red-50 border border-red-200 rounded flex items-center justify-center mx-1">
           <span
             className="text-xs text-red-700"
             title={status.reason || "Blocked"}
@@ -583,7 +580,7 @@ export function TeacherScheduleView({
                         </div>
 
                         {/* Slot content */}
-                        <div className="flex items-center">
+                        <div className="flex items-center flex-1">
                           {renderSlotContent(
                             slotStatus,
                             currentDate,
@@ -699,7 +696,7 @@ export function TeacherScheduleView({
                         return (
                           <div
                             key={`${day.toISOString()}-${timeSlot}`}
-                            className="bg-background min-h-[40px] p-1"
+                            className="bg-background min-h-[40px] p-1 flex items-center"
                           >
                             {renderSlotContent(
                               slotStatus,

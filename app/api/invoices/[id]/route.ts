@@ -155,10 +155,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // Only allow deletion of pending invoices
-    if (existingInvoice.status !== 'PENDING') {
-      return NextResponse.json({ error: 'Cannot delete non-pending invoices' }, { status: 400 });
-    }
+    // Allow deletion of any invoice that belongs to the teacher
+    // No status restriction - teachers can delete any of their invoices
 
     await prisma.invoice.delete({
       where: { id: params.id },
