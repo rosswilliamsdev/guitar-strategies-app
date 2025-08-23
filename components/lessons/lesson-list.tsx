@@ -21,7 +21,17 @@ import {
   Search,
   CalendarDays,
   X,
+  AlertCircle,
+  ArrowUpDown,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
@@ -65,8 +75,12 @@ export function LessonList({ userRole }: LessonListProps) {
   const [error, setError] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<string>("all");
-  const [dateFilter, setDateFilter] = useState<string>("all");
+  // Default to 'thisMonth' for teachers, 'all' for students
+  const [dateFilter, setDateFilter] = useState<string>(userRole === "TEACHER" ? "thisMonth" : "all");
+  const [sortOrder, setSortOrder] = useState<"latest" | "earliest">("latest");
   const [cancellingLessons, setCancellingLessons] = useState<Set<string>>(new Set());
+  const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -76,7 +90,11 @@ export function LessonList({ userRole }: LessonListProps) {
           throw new Error("Failed to fetch lessons");
         }
         const data = await response.json();
-        setLessons(data.lessons || []);
+        // Sort lessons by date in descending order (most recent first)
+        const sortedLessons = (data.lessons || []).sort((a: Lesson, b: Lesson) => {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+        setLessons(sortedLessons);
       } catch (error) {
         setError("Failed to load lessons");
         console.error("Error fetching lessons:", error);
@@ -89,10 +107,7 @@ export function LessonList({ userRole }: LessonListProps) {
   }, []);
 
   const handleCancelLesson = async (lessonId: string) => {
-    if (!confirm('Are you sure you want to cancel this lesson?')) {
-      return;
-    }
-
+    setConfirmCancelLesson(null);
     setCancellingLessons(prev => new Set(prev).add(lessonId));
 
     try {
@@ -110,7 +125,7 @@ export function LessonList({ userRole }: LessonListProps) {
       
     } catch (error: any) {
       console.error('Error cancelling lesson:', error);
-      setError(error.message || 'Failed to cancel lesson');
+      setErrorMessage(error.message || 'Failed to cancel lesson');
     } finally {
       setCancellingLessons(prev => {
         const newSet = new Set(prev);
@@ -135,7 +150,7 @@ export function LessonList({ userRole }: LessonListProps) {
 
   // Filter lessons based on search term, student, and date
   const filteredLessons = useMemo(() => {
-    return lessons.filter((lesson) => {
+    const filtered = lessons.filter((lesson) => {
       // Exclude cancelled lessons
       if (lesson.status === 'CANCELLED') {
         return false;
@@ -211,7 +226,14 @@ export function LessonList({ userRole }: LessonListProps) {
 
       return matchesSearch && matchesStudent && matchesDate;
     });
-  }, [lessons, searchTerm, selectedStudent, dateFilter, userRole]);
+    
+    // Sort filtered lessons by date based on sortOrder
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === "latest" ? dateB - dateA : dateA - dateB;
+    });
+  }, [lessons, searchTerm, selectedStudent, dateFilter, userRole, sortOrder]);
 
   if (loading) {
     return (
@@ -315,6 +337,19 @@ export function LessonList({ userRole }: LessonListProps) {
             {filteredLessons.length === 1 ? "Lesson" : "Lessons"}
             {searchTerm && ` matching "${searchTerm}"`}
           </h2>
+          <Select 
+            value={sortOrder} 
+            onValueChange={(value) => setSortOrder(value as "latest" | "earliest")}
+          >
+            <SelectTrigger className="w-40">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">Latest First</SelectItem>
+              <SelectItem value="earliest">Earliest First</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {filteredLessons.length === 0 ? (
@@ -371,7 +406,7 @@ export function LessonList({ userRole }: LessonListProps) {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleCancelLesson(lesson.id)}
+                          onClick={() => setConfirmCancelLesson(lesson.id)}
                           disabled={cancellingLessons.has(lesson.id)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 h-6"
                         >
@@ -403,6 +438,49 @@ export function LessonList({ userRole }: LessonListProps) {
           </div>
         )}
       </div>
+
+      {/* Cancel Lesson Confirmation Dialog */}
+      <Dialog open={!!confirmCancelLesson} onOpenChange={() => setConfirmCancelLesson(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Lesson</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this lesson? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setConfirmCancelLesson(null)}>
+              Keep Lesson
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => confirmCancelLesson && handleCancelLesson(confirmCancelLesson)}
+            >
+              Cancel Lesson
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={!!errorMessage} onOpenChange={() => setErrorMessage(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Error
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setErrorMessage(null)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

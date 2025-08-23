@@ -17,8 +17,17 @@ import {
   Clock,
   ChevronRight,
   X,
-  CalendarClock
+  CalendarClock,
+  AlertCircle
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface StudentData {
   student: {
@@ -95,6 +104,9 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
   const [error, setError] = useState<string | null>(null);
   const [cancellingSlot, setCancellingSlot] = useState<string | null>(null);
   const [cancellingLesson, setCancellingLesson] = useState<string | null>(null);
+  const [confirmCancelSlot, setConfirmCancelSlot] = useState<string | null>(null);
+  const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/students/${studentId}`)
@@ -164,10 +176,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
   };
 
   const handleCancelSlot = async (slotId: string) => {
-    if (!confirm('Are you sure you want to cancel this weekly time slot? This will free up the time for other students.')) {
-      return;
-    }
-
+    setConfirmCancelSlot(null);
     setCancellingSlot(slotId);
     try {
       const response = await fetch(`/api/slots/${slotId}`, {
@@ -193,17 +202,14 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
       }
     } catch (error) {
       console.error('Error cancelling slot:', error);
-      alert('Failed to cancel the time slot. Please try again.');
+      setErrorMessage('Failed to cancel the time slot. Please try again.');
     } finally {
       setCancellingSlot(null);
     }
   };
 
   const handleCancelLesson = async (lessonId: string) => {
-    if (!confirm('Are you sure you want to cancel this lesson? This action cannot be undone.')) {
-      return;
-    }
-
+    setConfirmCancelLesson(null);
     setCancellingLesson(lessonId);
     try {
       const response = await fetch(`/api/lessons/${lessonId}/cancel`, {
@@ -229,7 +235,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
       }
     } catch (error: any) {
       console.error('Error cancelling lesson:', error);
-      alert(`Failed to cancel the lesson: ${error.message}`);
+      setErrorMessage(`Failed to cancel the lesson: ${error.message}`);
     } finally {
       setCancellingLesson(null);
     }
@@ -338,7 +344,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => handleCancelSlot(slot.id)}
+                      onClick={() => setConfirmCancelSlot(slot.id)}
                       disabled={cancellingSlot === slot.id}
                       className="mt-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
@@ -439,7 +445,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => handleCancelLesson(lesson.id)}
+                      onClick={() => setConfirmCancelLesson(lesson.id)}
                       disabled={cancellingLesson === lesson.id}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
@@ -540,6 +546,72 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
           </div>
         )}
       </Card>
+
+      {/* Cancel Slot Confirmation Dialog */}
+      <Dialog open={!!confirmCancelSlot} onOpenChange={() => setConfirmCancelSlot(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Weekly Time Slot</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this weekly time slot? This will free up the time for other students.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setConfirmCancelSlot(null)}>
+              Keep Slot
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white" 
+              onClick={() => confirmCancelSlot && handleCancelSlot(confirmCancelSlot)}
+            >
+              Cancel Slot
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Lesson Confirmation Dialog */}
+      <Dialog open={!!confirmCancelLesson} onOpenChange={() => setConfirmCancelLesson(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Lesson</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this lesson? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setConfirmCancelLesson(null)}>
+              Keep Lesson
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white" 
+              onClick={() => confirmCancelLesson && handleCancelLesson(confirmCancelLesson)}
+            >
+              Cancel Lesson
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={!!errorMessage} onOpenChange={() => setErrorMessage(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Error
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setErrorMessage(null)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

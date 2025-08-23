@@ -24,8 +24,17 @@ import {
   Filter,
   Edit,
   Trash2,
+  AlertCircle,
 } from "lucide-react";
 import { PriorityBadge } from "@/components/ui/priority-badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Recommendation {
   id: string;
@@ -94,30 +103,6 @@ const priorityConfig = {
   },
 };
 
-async function handleDelete(id: string) {
-  if (
-    !confirm(
-      "Are you sure you want to delete this recommendation? This action cannot be undone."
-    )
-  ) {
-    return;
-  }
-
-  try {
-    const response = await fetch(`/api/recommendations/${id}`, {
-      method: "DELETE",
-    });
-
-    if (response.ok) {
-      window.location.reload(); // Simple refresh for now
-    } else {
-      console.error("Failed to delete recommendation");
-    }
-  } catch (error) {
-    console.error("Error deleting recommendation:", error);
-  }
-}
-
 export function RecommendationsList({
   items,
   teacherId,
@@ -125,6 +110,31 @@ export function RecommendationsList({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleDelete = async (id: string) => {
+    setConfirmDeleteId(null);
+    setIsDeleting(true);
+    
+    try {
+      const response = await fetch(`/api/recommendations/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        window.location.reload(); // Simple refresh for now
+      } else {
+        throw new Error("Failed to delete recommendation");
+      }
+    } catch (error) {
+      console.error("Error deleting recommendation:", error);
+      setErrorMessage("Failed to delete the recommendation. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -281,7 +291,8 @@ export function RecommendationsList({
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => handleDelete(item.id)}
+                              onClick={() => setConfirmDeleteId(item.id)}
+                              disabled={isDeleting}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -323,6 +334,54 @@ export function RecommendationsList({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Recommendation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this recommendation? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="secondary" 
+              onClick={() => setConfirmDeleteId(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={!!errorMessage} onOpenChange={() => setErrorMessage(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Error
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setErrorMessage(null)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

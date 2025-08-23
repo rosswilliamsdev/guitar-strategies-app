@@ -9,11 +9,20 @@ import {
   Clock,
   DollarSign,
   User,
-  X
+  X,
+  AlertCircle
 } from "lucide-react"
 import { RecurringSlot, SlotSubscription, MonthlyBilling } from "@/types"
 import { getDayName, formatSlotTime } from "@/lib/slot-helpers"
 import { useRouter } from "next/navigation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface SlotWithDetails extends RecurringSlot {
   teacher: {
@@ -41,6 +50,8 @@ export function WeeklyLessonDisplay({
   recurringLessons = []
 }: WeeklyLessonDisplayProps) {
   const [isCancelling, setIsCancelling] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const router = useRouter()
   
   const formatPrice = (cents: number) => {
@@ -54,10 +65,7 @@ export function WeeklyLessonDisplay({
   }
 
   const handleCancelRecurring = async () => {
-    if (!confirm('Are you sure you want to cancel your weekly lesson time? This will cancel all future recurring lessons.')) {
-      return
-    }
-
+    setShowCancelDialog(false)
     setIsCancelling(true)
     try {
       const response = await fetch('/api/lessons/cancel-all-recurring', {
@@ -73,7 +81,7 @@ export function WeeklyLessonDisplay({
       router.refresh()
     } catch (error) {
       console.error('Error cancelling recurring lessons:', error)
-      alert('Failed to cancel recurring lessons. Please try again.')
+      setErrorMessage('Failed to cancel recurring lessons. Please try again.')
     } finally {
       setIsCancelling(false)
     }
@@ -105,7 +113,7 @@ export function WeeklyLessonDisplay({
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Your Weekly Lesson Time</h2>
         <Button
-          onClick={handleCancelRecurring}
+          onClick={() => setShowCancelDialog(true)}
           disabled={isCancelling}
           className="bg-red-600 hover:bg-red-700 text-white"
           size="sm"
@@ -239,6 +247,49 @@ export function WeeklyLessonDisplay({
       <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
         💡 <strong>Tip:</strong> Your weekly time slot is reserved every week. You can book additional lessons below for extra practice or makeup sessions.
       </div>
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Weekly Lesson Time</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel your weekly lesson time? This will cancel all future recurring lessons.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setShowCancelDialog(false)}>
+              Keep Lessons
+            </Button>
+            <Button 
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleCancelRecurring}
+            >
+              Cancel Recurring
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={!!errorMessage} onOpenChange={() => setErrorMessage(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Error
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setErrorMessage(null)}>
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
