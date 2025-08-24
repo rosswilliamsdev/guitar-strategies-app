@@ -74,14 +74,16 @@ export function WeeklyLessonDisplay({
       })
 
       if (!response.ok) {
-        throw new Error('Failed to cancel recurring lessons')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Cancel recurring lessons error response:', errorData)
+        throw new Error(errorData.error || 'Failed to cancel recurring lessons')
       }
 
       // Refresh the page to show updated data
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling recurring lessons:', error)
-      setErrorMessage('Failed to cancel recurring lessons. Please try again.')
+      setErrorMessage(error.message || 'Failed to cancel recurring lessons. Please try again.')
     } finally {
       setIsCancelling(false)
     }
@@ -108,144 +110,132 @@ export function WeeklyLessonDisplay({
     )
   }
 
+  // Use the first recurring slot if available, otherwise use first recurring lesson
+  const activeSlot = recurringSlots[0]
+  const activeLesson = recurringLessons[0]
+  
+  let displayInfo = null
+  
+  if (activeSlot) {
+    const recentBilling = getRecentBilling(activeSlot)
+    displayInfo = {
+      dayName: getDayName(activeSlot.dayOfWeek),
+      time: formatSlotTime(activeSlot.startTime, activeSlot.duration),
+      duration: activeSlot.duration,
+      monthlyRate: activeSlot.monthlyRate,
+      recentBilling
+    }
+  } else if (activeLesson) {
+    const lessonDate = new Date(activeLesson.date)
+    displayInfo = {
+      dayName: lessonDate.toLocaleDateString('en-US', { weekday: 'long' }),
+      time: lessonDate.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: true 
+      }),
+      duration: activeLesson.duration,
+      monthlyRate: null,
+      recentBilling: null
+    }
+  }
+
+  if (!displayInfo) return null
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Your Weekly Lesson Time</h2>
-        <Button
-          onClick={() => setShowCancelDialog(true)}
-          disabled={isCancelling}
-          className="bg-red-600 hover:bg-red-700 text-white"
-          size="sm"
-        >
-          {isCancelling ? (
-            "Cancelling..."
-          ) : (
-            <>
-              <X className="h-4 w-4 mr-1" />
-              Cancel Recurring
-            </>
-          )}
-        </Button>
-      </div>
-
+    <>
       <div className="space-y-4">
-        {/* Render recurring slots */}
-        {recurringSlots.map((slot) => {
-          const recentBilling = getRecentBilling(slot)
-          
-          return (
-            <Card key={slot.id} className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-              <div className="space-y-4">
-                {/* Main slot info */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-5 w-5 text-primary" />
-                    <span className="font-semibold text-lg">
-                      {getDayName(slot.dayOfWeek)}s
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span>{formatSlotTime(slot.startTime, slot.duration)}</span>
-                  </div>
-                </div>
+        <h2 className="text-xl font-semibold">Your Weekly Lesson Time</h2>
 
-                {/* Teacher and billing info */}
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-primary/20">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{teacherName}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {slot.duration} minute lessons
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        {formatPrice(slot.monthlyRate)}/month
-                      </span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Varies by calendar
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent billing info */}
-                {recentBilling && (
-                  <div className="pt-2 border-t border-primary/20">
-                    <div className="text-xs text-muted-foreground">
-                      Last billing: {recentBilling.month} • 
-                      {recentBilling.actualLessons} of {recentBilling.expectedLessons} lessons • 
-                      <span className={`ml-1 font-medium ${
-                        recentBilling.status === 'PAID' ? 'text-green-600' : 
-                        recentBilling.status === 'OVERDUE' ? 'text-red-600' : 
-                        'text-blue-600'
-                      }`}>
-                        {recentBilling.status.toLowerCase()}
-                      </span>
-                    </div>
-                  </div>
+        <Card className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+          <div className="space-y-4">
+            {/* Main slot info */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5 text-primary" />
+                <span className="font-semibold text-lg">
+                  {displayInfo.dayName}s
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{displayInfo.time}</span>
+                {displayInfo.duration && (
+                  <span className="text-sm">({displayInfo.duration} min)</span>
                 )}
               </div>
-            </Card>
-          )
-        })}
-        
-        {/* Render regular recurring lessons */}
-        {recurringLessons.map((lesson) => {
-          const lessonDate = new Date(lesson.date)
-          const dayName = lessonDate.toLocaleDateString('en-US', { weekday: 'long' })
-          const timeString = lessonDate.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-          })
-          
-          return (
-            <Card key={lesson.id} className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-              <div className="space-y-4">
-                {/* Main lesson info */}
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-lg">
-                        {dayName}s
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{timeString} ({lesson.duration} min)</span>
-                    </div>
-                  </div>
-                  
-                </div>
+            </div>
 
-                {/* Teacher info */}
-                <div className="pt-2 border-t border-primary/20">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">{teacherName}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Weekly recurring lesson time
-                  </div>
+            {/* Pricing and teacher info */}
+            <div className="grid grid-cols-2 gap-4 pt-2 border-t border-primary/20">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">{teacherName}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {displayInfo.duration} minute lessons
                 </div>
               </div>
-            </Card>
-          )
-        })}
-      </div>
+              
+              {displayInfo.monthlyRate && (
+                <div className="text-right">
+                  <div className="flex items-center justify-end gap-2 mb-1">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">
+                      {formatPrice(displayInfo.monthlyRate)}/month
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Varies by calendar
+                  </div>
+                </div>
+              )}
+            </div>
 
-      {/* Quick tip */}
-      <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-        💡 <strong>Tip:</strong> Your weekly time slot is reserved every week. You can book additional lessons below for extra practice or makeup sessions.
+            {/* Recent billing info */}
+            {displayInfo.recentBilling && (
+              <div className="pt-2 border-t border-primary/20">
+                <div className="text-xs text-muted-foreground">
+                  Last billing: {displayInfo.recentBilling.month} • 
+                  {displayInfo.recentBilling.actualLessons} of {displayInfo.recentBilling.expectedLessons} lessons • 
+                  <span className={`ml-1 font-medium ${
+                    displayInfo.recentBilling.status === 'PAID' ? 'text-green-600' : 
+                    displayInfo.recentBilling.status === 'OVERDUE' ? 'text-red-600' : 
+                    'text-blue-600'
+                  }`}>
+                    {displayInfo.recentBilling.status.toLowerCase()}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Cancel button inside card */}
+            <div className="pt-3 border-t border-primary/20">
+              <Button
+                onClick={() => setShowCancelDialog(true)}
+                disabled={isCancelling}
+                variant="outline"
+                className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                size="sm"
+              >
+                {isCancelling ? (
+                  "Cancelling..."
+                ) : (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel Weekly Time
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Quick tip */}
+        <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+          💡 <strong>Tip:</strong> Your weekly time slot is reserved every week. You can book additional lessons below for extra practice or makeup sessions.
+        </div>
       </div>
 
       {/* Cancel Confirmation Dialog */}
@@ -290,6 +280,6 @@ export function WeeklyLessonDisplay({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }

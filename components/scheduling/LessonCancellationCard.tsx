@@ -4,11 +4,17 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
-  Calendar as CalendarIcon, 
-  Clock,
-  AlertTriangle,
-  X
+  AlertCircle,
+  AlertTriangle
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 
@@ -32,6 +38,8 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
+  const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUpcomingLessons();
@@ -48,12 +56,14 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
       const monthStart = startOfMonth(now);
       const monthEnd = endOfMonth(now);
       
-      // Filter to current month and only show lessons that can be cancelled (SCHEDULED status)
+      // Filter to current month and only show lessons that can be cancelled 
+      // (SCHEDULED status and in the future)
       const currentMonthLessons = (data.lessons || []).filter((lesson: any) => {
         const lessonDate = new Date(lesson.date);
         return lessonDate >= monthStart && 
                lessonDate <= monthEnd && 
-               lesson.status === 'SCHEDULED';
+               lesson.status === 'SCHEDULED' &&
+               lessonDate > now; // Only show future lessons that can be cancelled
       });
       
       setUpcomingLessons(currentMonthLessons);
@@ -66,11 +76,19 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
   };
 
   const handleCancelLesson = async (lessonId: string) => {
-    if (!confirm('Are you sure you want to cancel this lesson?')) {
+    setCancellingId(lessonId);
+    setConfirmCancelLesson(null); // Close the confirmation dialog
+    
+    // Double-check the lesson is still in the future
+    const lesson = upcomingLessons.find(l => l.id === lessonId);
+    if (lesson && new Date(lesson.date) <= new Date()) {
+      setErrorMessage('This lesson has already started and cannot be cancelled.');
+      setCancellingId(null);
+      // Refresh the list to remove past lessons
+      fetchUpcomingLessons();
       return;
     }
-
-    setCancellingId(lessonId);
+    
     try {
       const response = await fetch(`/api/lessons/${lessonId}`, {
         method: 'DELETE',
@@ -89,7 +107,7 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
       
     } catch (error: any) {
       console.error('Cancellation error:', error);
-      setError(`Failed to cancel lesson: ${error.message}`);
+      setErrorMessage(error.message || 'Failed to cancel lesson. Please try again.');
     } finally {
       setCancellingId(null);
     }

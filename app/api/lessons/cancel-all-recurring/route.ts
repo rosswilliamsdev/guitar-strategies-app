@@ -7,9 +7,12 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
+    console.log('Cancel all recurring - Session:', session?.user?.email, session?.user?.role)
+    
     if (!session || session.user.role !== 'STUDENT') {
+      console.error('Unauthorized access attempt:', session?.user?.email, session?.user?.role)
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - must be logged in as a student' },
         { status: 401 }
       )
     }
@@ -27,35 +30,39 @@ export async function POST(req: NextRequest) {
     }
 
     // Cancel all recurring slots for this student
-    await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Cancel any recurring slots
-      await tx.recurringSlot.updateMany({
-        where: {
-          studentId: studentProfile.id,
-          status: 'ACTIVE'
-        },
-        data: {
-          status: 'CANCELLED'
-        }
-      })
-
-      // Cancel any active slot subscriptions
-      await tx.slotSubscription.updateMany({
+      const slotsResult = await tx.recurringSlot.updateMany({
         where: {
           studentId: studentProfile.id,
           status: 'ACTIVE'
         },
         data: {
           status: 'CANCELLED',
-          endDate: new Date()
+          cancelledAt: new Date()
         }
       })
+      console.log('Cancelled recurring slots:', slotsResult.count)
+
+      // Cancel any active slot subscriptions
+      const currentMonth = new Date().toISOString().slice(0, 7) // Format: "2025-01"
+      const subscriptionsResult = await tx.slotSubscription.updateMany({
+        where: {
+          studentId: studentProfile.id,
+          status: 'ACTIVE'
+        },
+        data: {
+          status: 'CANCELLED',
+          endMonth: currentMonth
+        }
+      })
+      console.log('Cancelled slot subscriptions:', subscriptionsResult.count)
 
       // Cancel all future recurring lessons
       const today = new Date()
       today.setHours(0, 0, 0, 0)
 
-      await tx.lesson.updateMany({
+      const lessonsResult = await tx.lesson.updateMany({
         where: {
           studentId: studentProfile.id,
           isRecurring: true,
@@ -66,7 +73,16 @@ export async function POST(req: NextRequest) {
           status: 'CANCELLED'
         }
       })
+      console.log('Cancelled future recurring lessons:', lessonsResult.count)
+      
+      return {
+        slots: slotsResult.count,
+        subscriptions: subscriptionsResult.count,
+        lessons: lessonsResult.count
+      }
     })
+    
+    console.log('Transaction completed successfully:', result)
 
     return NextResponse.json({ success: true })
   } catch (error) {

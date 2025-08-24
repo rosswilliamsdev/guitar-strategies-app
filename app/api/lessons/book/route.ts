@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { bookingSchema } from '@/lib/validations';
-import { bookSingleLesson, bookRecurringLessons } from '@/lib/scheduler';
+import { bookSingleLesson, bookRecurringLessons, bookRecurringSlot } from '@/lib/scheduler';
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,36 +65,17 @@ export async function POST(request: NextRequest) {
     let result;
 
     if (validatedData.isRecurring) {
-      // For indefinite recurring lessons, create a recurring slot instead of multiple lessons
-      // This will be the student's regular weekly lesson time
-      if (validatedData.recurringWeeks) {
-        // Legacy support: Book specific number of weeks
-        result = await bookRecurringLessons({
-          ...bookingData,
-          recurringWeeks: validatedData.recurringWeeks
-        });
-        
-        return NextResponse.json({
-          success: true,
-          message: `Successfully booked ${result.length} recurring lessons`,
-          lessons: result,
-          type: 'recurring'
-        });
-      } else {
-        // New indefinite recurring: Create lessons for the next 12 weeks
-        // This gives students a reasonable window to see and cancel upcoming lessons
-        result = await bookRecurringLessons({
-          ...bookingData,
-          recurringWeeks: 12
-        });
-        
-        return NextResponse.json({
-          success: true,
-          message: 'Successfully booked your weekly lesson time for the next 12 weeks!',
-          lessons: result,
-          type: 'recurring_slot'
-        });
-      }
+      // Use the new RecurringSlot system for truly indefinite recurring lessons
+      // This creates a recurring slot and initial lessons for the next 4 weeks
+      result = await bookRecurringSlot(bookingData);
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Successfully booked your weekly lesson time!',
+        slot: result.slot,
+        lessons: result.lessons,
+        type: 'recurring_slot'
+      });
     } else {
       // Book single lesson
       result = await bookSingleLesson(bookingData);
@@ -109,6 +90,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error booking lesson:', error);
+    console.error('Error stack:', error.stack);
     
     if (error.name === 'ZodError') {
       return NextResponse.json(
@@ -118,17 +100,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle business logic errors from scheduler
-    if (error.message.includes('not available') || 
+    if (error.message && (
+        error.message.includes('not available') || 
         error.message.includes('Cannot book') ||
-        error.message.includes('not authorized')) {
+        error.message.includes('not authorized'))) {
       return NextResponse.json(
         { error: error.message },
         { status: 400 }
       );
     }
 
+    // Return the actual error message for debugging
     return NextResponse.json(
-      { error: 'Failed to book lesson' },
+      { error: error.message || 'Failed to book lesson' },
       { status: 500 }
     );
   }
