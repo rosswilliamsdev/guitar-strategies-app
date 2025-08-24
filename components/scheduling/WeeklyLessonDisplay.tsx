@@ -58,6 +58,24 @@ export function WeeklyLessonDisplay({
     return `$${(cents / 100).toFixed(0)}`
   }
 
+  // Calculate how many times this day occurs in the current month
+  const calculateCurrentMonthOccurrences = (dayOfWeek: number) => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth() + 1 // getMonth() returns 0-11
+    const startOfMonth = new Date(year, month - 1, 1)
+    const endOfMonth = new Date(year, month, 0)
+    let count = 0
+    
+    for (let date = new Date(startOfMonth); date <= endOfMonth; date.setDate(date.getDate() + 1)) {
+      if (date.getDay() === dayOfWeek) {
+        count++
+      }
+    }
+    
+    return count
+  }
+
   const getRecentBilling = (slot: SlotWithDetails) => {
     const activeSubscription = slot.subscriptions.find(sub => sub.status === 'ACTIVE')
     if (!activeSubscription || activeSubscription.billingRecords.length === 0) return null
@@ -118,11 +136,16 @@ export function WeeklyLessonDisplay({
   
   if (activeSlot) {
     const recentBilling = getRecentBilling(activeSlot)
+    const currentMonthOccurrences = calculateCurrentMonthOccurrences(activeSlot.dayOfWeek)
+    // Calculate accurate monthly rate for current month using stored per-lesson price
+    const actualMonthlyRate = activeSlot.perLessonPrice * currentMonthOccurrences
+    
     displayInfo = {
       dayName: getDayName(activeSlot.dayOfWeek),
       time: formatSlotTime(activeSlot.startTime, activeSlot.duration),
       duration: activeSlot.duration,
-      monthlyRate: activeSlot.monthlyRate,
+      monthlyRate: actualMonthlyRate,
+      occurrences: currentMonthOccurrences,
       recentBilling
     }
   } else if (activeLesson) {
@@ -187,7 +210,7 @@ export function WeeklyLessonDisplay({
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Varies by calendar
+                    {displayInfo.occurrences} lessons this month
                   </div>
                 </div>
               )}

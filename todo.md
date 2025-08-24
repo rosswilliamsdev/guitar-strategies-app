@@ -1,5 +1,26 @@
 # Guitar Strategies App - Todo List
 
+## Priority Issues for Next Session 🚨
+
+### High Priority Technical Debt
+- [ ] **Remove Debug Logging**: Clean up extensive `console.log` statements added for debugging
+- [ ] **Fix Unused Imports**: Remove `bookRecurringLessons` import from booking route (no longer used)
+- [ ] **Schema Field Consistency**: Fix mismatch between `allows30Min/allows60Min` in schema vs `allow30Min/allow60Min` in validation logic
+
+### Critical UX Issues  
+- [ ] **Unify Recurring Lesson Systems**: Decide between RecurringSlot model vs individual recurring lessons - currently have both
+- [ ] **Monthly Rate Billing Logic**: Address confusion between fixed "4 lessons/month" vs actual monthly occurrences (4-5 lessons)
+
+### User Experience Gaps
+- [ ] **Automatic Lesson Generation**: RecurringSlots only create 4 weeks initially - need automatic generation as time progresses
+- [ ] **Booking Success Feedback**: Add clear confirmation of what was created after booking recurring lessons  
+- [ ] **Timezone Consistency**: Fix remaining inconsistencies in timezone handling across booking/display
+
+### Polish & Features
+- [ ] **Better Loading States**: Add proper loading indicators during booking process
+- [ ] **Email Notifications**: Add notifications when lessons are booked/cancelled
+- [ ] **Calendar Integration**: Allow students to add lessons to personal calendars
+
 ## Recently Completed ✅
 
 - [x] Teacher-initiated booking system (Aug 17, 2025)

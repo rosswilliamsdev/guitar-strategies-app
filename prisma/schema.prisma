@@ -546,7 +546,7 @@ model RecurringSlot {
   cancelledAt DateTime?
   
   // Pricing
-  monthlyRate Int      // cents - rate per month for this slot
+  perLessonPrice Int   // cents - price per individual lesson
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

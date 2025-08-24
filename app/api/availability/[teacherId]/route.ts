@@ -59,6 +59,7 @@ export async function GET(
       timezone
     );
 
+
     return NextResponse.json({ slots });
 
   } catch (error: any) {

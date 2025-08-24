@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { bookingSchema } from '@/lib/validations';
-import { bookSingleLesson, bookRecurringLessons, bookRecurringSlot } from '@/lib/scheduler';
+import { bookSingleLesson, bookRecurringSlot } from '@/lib/scheduler';
 
 export async function POST(request: NextRequest) {
   try {

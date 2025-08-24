@@ -481,7 +481,7 @@ export interface SlotAvailability {
   dayOfWeek: number; // 0-6 (Sunday-Saturday)
   startTime: string; // "09:00"
   duration: 30 | 60; // minutes
-  monthlyRate: number; // cents
+  perLessonPrice: number; // cents
   isAvailable: boolean;
   conflictReason?: string;
 }
@@ -513,7 +513,7 @@ export interface MonthlySlotSummary {
     studentName: string;
     expectedLessons: number;
     actualLessons: number;
-    monthlyRate: number;
+    perLessonPrice: number;
     status: SubscriptionStatus;
     billingStatus: BillingStatus;
   }>;
@@ -533,8 +533,8 @@ export interface MonthlyBillingCalculation {
   month: string;
   daysInMonth: number;
   occurrences: number; // how many times this slot occurs in the month
-  ratePerLesson: number; // monthlyRate / occurrences
-  totalAmount: number; // cents
+  ratePerLesson: number; // stored per-lesson price
+  totalAmount: number; // ratePerLesson * occurrences
 }
 
 // ========================================

@@ -10,11 +10,7 @@ import {
   addMinutes,
   startOfWeek,
   setHours,
-  setMinutes,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  getDay
+  setMinutes
 } from 'date-fns'
 import { 
   toZonedTime,
@@ -29,14 +25,38 @@ interface TimeSlot {
   available: boolean
 }
 
-// Helper function to calculate how many times a specific day of week occurs in a month
-function getOccurrencesInMonth(dayOfWeek: number, month: Date): number {
-  const monthStart = startOfMonth(month)
-  const monthEnd = endOfMonth(month)
-  const allDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+// Calculate actual lesson occurrences for a specific month
+export function calculateMonthlyOccurrences(dayOfWeek: number, year: number, month: number): number {
+  const startOfMonth = new Date(year, month - 1, 1) // month is 1-indexed
+  const endOfMonth = new Date(year, month, 0) // Last day of the month
+  let count = 0
   
-  return allDays.filter(day => getDay(day) === dayOfWeek).length
+  for (let date = new Date(startOfMonth); date <= endOfMonth; date.setDate(date.getDate() + 1)) {
+    if (date.getDay() === dayOfWeek) {
+      count++
+    }
+  }
+  
+  return count
 }
+
+// Calculate monthly rate for a recurring slot in a specific month
+export async function calculateSlotMonthlyRate(slotId: string, year: number, month: number): Promise<number> {
+  const slot = await prisma.recurringSlot.findUnique({
+    where: { id: slotId }
+  })
+
+  if (!slot) {
+    throw new Error('Slot not found')
+  }
+
+  // Calculate actual occurrences for this month
+  const occurrences = calculateMonthlyOccurrences(slot.dayOfWeek, year, month)
+  
+  // Use the stored per-lesson price
+  return slot.perLessonPrice * occurrences
+}
+
 
 interface BookingData {
   teacherId: string
@@ -88,6 +108,7 @@ export async function getAvailableSlots(
     }
   })
 
+
   if (!teacher || !teacher.lessonSettings) {
     return []
   }
@@ -110,6 +131,7 @@ export async function getAvailableSlots(
     const dayAvailability = teacher.availability.filter(
       a => a.dayOfWeek === dayOfWeek
     )
+    
 
     for (const availability of dayAvailability) {
       // Parse time strings and create slot times in teacher's timezone
@@ -332,81 +354,13 @@ export async function bookSingleLesson(data: BookingData) {
   return lesson
 }
 
-export async function bookRecurringLessons(
-  data: BookingData & { recurringWeeks: number }
-) {
-  if (!data.recurringWeeks || data.recurringWeeks < 2) {
-    throw new Error('Recurring lessons require at least 2 weeks')
-  }
-
-  const lessons = []
-  const recurringId = `recurring-${Date.now()}`
-
-  // Book the same time slot for each week
-  for (let week = 0; week < data.recurringWeeks; week++) {
-    const lessonDate = addWeeks(data.date, week)
-    
-    const lessonData = {
-      ...data,
-      date: lessonDate,
-      isRecurring: true
-    }
-
-    // Validate each lesson individually
-    const validation = await validateBooking(lessonData)
-    if (!validation.success) {
-      // If any lesson can't be booked, rollback all
-      if (lessons.length > 0) {
-        await prisma.lesson.deleteMany({
-          where: { recurringId }
-        })
-      }
-      throw new Error(`Week ${week + 1}: ${validation.error}`)
-    }
-
-    const teacher = await prisma.teacherProfile.findUnique({
-      where: { id: data.teacherId },
-      include: { lessonSettings: true }
-    })
-
-    if (!teacher?.lessonSettings) {
-      throw new Error('Teacher settings not found')
-    }
-
-    const price = data.duration === 30 
-      ? teacher.lessonSettings.price30Min 
-      : teacher.lessonSettings.price60Min
-
-    const lesson = await prisma.lesson.create({
-      data: {
-        teacherId: data.teacherId,
-        studentId: data.studentId,
-        date: lessonDate,
-        duration: data.duration,
-        timezone: data.timezone,
-        price,
-        status: 'SCHEDULED',
-        isRecurring: true,
-        recurringId
-      }
-    })
-
-    lessons.push(lesson)
-  }
-
-  return lessons
-}
-
 // Book a recurring slot that continues indefinitely
 export async function bookRecurringSlot(
   data: BookingData
 ) {
-  console.log('bookRecurringSlot called with:', data)
-  
   // Validate the first occurrence
   const validation = await validateBooking({ ...data, isRecurring: true })
   if (!validation.success) {
-    console.error('Validation failed:', validation.error)
     throw new Error(validation.error)
   }
 
@@ -427,29 +381,13 @@ export async function bookRecurringSlot(
   // Extract day of week and time from the date
   const dayOfWeek = data.date.getDay()
   
-  // Calculate monthly rate using average occurrences per month
-  // Most months have 4.33 occurrences of each day (52 weeks / 12 months)
-  // For simplicity and consistency, we'll use 4 times per month as the standard
-  // Teachers can adjust their per-lesson pricing if needed
-  const standardOccurrencesPerMonth = 4
-  const monthlyRate = price * standardOccurrencesPerMonth
-  
-  console.log(`Using standard ${standardOccurrencesPerMonth} occurrences per month, monthly rate: $${monthlyRate/100}`)
+  // Store the per-lesson price - monthly rates will be calculated dynamically
+  const perLessonPrice = price
   const hours = data.date.getHours()
   const minutes = data.date.getMinutes()
   const startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 
   // Create the recurring slot
-  console.log('Creating recurring slot with:', {
-    teacherId: data.teacherId,
-    studentId: data.studentId,
-    dayOfWeek,
-    startTime,
-    duration: data.duration,
-    monthlyRate,
-    status: 'ACTIVE'
-  })
-  
   const recurringSlot = await prisma.recurringSlot.create({
     data: {
       teacherId: data.teacherId,
@@ -457,52 +395,36 @@ export async function bookRecurringSlot(
       dayOfWeek,
       startTime,
       duration: data.duration,
-      monthlyRate,
+      perLessonPrice, // Store per-lesson price, calculate monthly rates dynamically
       status: 'ACTIVE'
     }
   })
-  
-  console.log('Recurring slot created:', recurringSlot.id)
 
   // Create initial lessons for the next 4 weeks
   const lessons = []
   const recurringId = `slot-${recurringSlot.id}`
   
-  console.log('Creating initial lessons...')
-  
   for (let week = 0; week < 4; week++) {
     const lessonDate = addWeeks(data.date, week)
     
-    console.log(`Creating lesson for week ${week}:`, {
-      date: lessonDate,
-      recurringSlotId: recurringSlot.id
+    const lesson = await prisma.lesson.create({
+      data: {
+        teacherId: data.teacherId,
+        studentId: data.studentId,
+        date: lessonDate,
+        duration: data.duration,
+        timezone: data.timezone,
+        price,
+        status: 'SCHEDULED',
+        isRecurring: true,
+        recurringId,
+        recurringSlotId: recurringSlot.id
+      }
     })
     
-    try {
-      const lesson = await prisma.lesson.create({
-        data: {
-          teacherId: data.teacherId,
-          studentId: data.studentId,
-          date: lessonDate,
-          duration: data.duration,
-          timezone: data.timezone,
-          price,
-          status: 'SCHEDULED',
-          isRecurring: true,
-          recurringId,
-          recurringSlotId: recurringSlot.id
-        }
-      })
-      
-      console.log(`Lesson created for week ${week}:`, lesson.id)
-      lessons.push(lesson)
-    } catch (lessonError) {
-      console.error(`Failed to create lesson for week ${week}:`, lessonError)
-      throw lessonError
-    }
+    lessons.push(lesson)
   }
 
-  console.log(`Successfully created ${lessons.length} initial lessons`)
   return { slot: recurringSlot, lessons }
 }
 
