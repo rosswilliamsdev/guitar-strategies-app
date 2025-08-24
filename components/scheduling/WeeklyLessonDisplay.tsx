@@ -88,7 +88,8 @@ export function WeeklyLessonDisplay({
     try {
       const response = await fetch('/api/lessons/cancel-all-recurring', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
       })
 
       if (!response.ok) {
@@ -99,9 +100,10 @@ export function WeeklyLessonDisplay({
 
       // Refresh the page to show updated data
       router.refresh()
-    } catch (error: any) {
-      console.error('Error cancelling recurring lessons:', error)
-      setErrorMessage(error.message || 'Failed to cancel recurring lessons. Please try again.')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to cancel recurring lessons'
+      console.error('Error cancelling recurring lessons:', errorMessage)
+      setErrorMessage(errorMessage || 'Failed to cancel recurring lessons. Please try again.')
     } finally {
       setIsCancelling(false)
     }

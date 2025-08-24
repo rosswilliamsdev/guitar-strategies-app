@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { AvailabilityCalendar } from "@/components/scheduling/AvailabilityCalendar"
+import { BookingSuccessModal } from "@/components/booking/BookingSuccessModal"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle } from "lucide-react"
 import toast from "react-hot-toast"
@@ -31,6 +32,8 @@ export function BookingInterface({
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState<string>("")
   const [error, setError] = useState<string>("")
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [bookingResult, setBookingResult] = useState<any>(null)
   const router = useRouter()
 
   const handleBookSlot = async (slots: TimeSlot[], duration: 30 | 60) => {
@@ -59,13 +62,14 @@ export function BookingInterface({
         throw new Error(data.error || 'Failed to book lesson')
       }
 
+      // Store the booking result and show the success modal
+      setBookingResult({
+        type: 'single',
+        lesson: data.lesson,
+        teacherName
+      })
+      setShowSuccessModal(true)
       setSuccess(data.message || 'Lesson booked successfully!')
-      toast.success(`Successfully booked ${duration}-minute lesson`)
-      
-      // Redirect to lessons page after a short delay
-      setTimeout(() => {
-        router.push('/lessons')
-      }, 2000)
 
     } catch (error: any) {
       setError(error.message || 'Failed to book lesson')
@@ -101,13 +105,15 @@ export function BookingInterface({
         throw new Error(data.error || 'Failed to book weekly lesson time')
       }
 
+      // Store the booking result and show the success modal
+      setBookingResult({
+        type: 'recurring',
+        recurringSlot: data.slot,
+        lessons: data.lessons,
+        teacherName
+      })
+      setShowSuccessModal(true)
       setSuccess(data.message || 'Successfully booked your weekly lesson time!')
-      toast.success(`Successfully booked recurring weekly time slot for ${duration} minutes`)
-      
-      // Redirect to lessons page after a short delay
-      setTimeout(() => {
-        router.push('/lessons')
-      }, 3000)
 
     } catch (error: any) {
       setError(error.message || 'Failed to book weekly lesson time')
@@ -148,6 +154,22 @@ export function BookingInterface({
         loading={loading}
         onSelectionChange={onSelectionChange}
       />
+
+      {/* Success Modal */}
+      {bookingResult && (
+        <BookingSuccessModal
+          open={showSuccessModal}
+          onClose={() => {
+            setShowSuccessModal(false)
+            setBookingResult(null)
+          }}
+          bookingType={bookingResult.type}
+          teacherName={bookingResult.teacherName}
+          lesson={bookingResult.lesson}
+          recurringSlot={bookingResult.recurringSlot}
+          lessons={bookingResult.lessons}
+        />
+      )}
     </div>
   )
 }

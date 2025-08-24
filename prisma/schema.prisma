@@ -746,3 +746,16 @@ enum BillingStatus {
   CANCELLED   // Billing cancelled
 }
 
+// Background job logging for monitoring automatic lesson generation
+model BackgroundJobLog {
+  id                String   @id @default(cuid())
+  jobName           String   // e.g., "generate-future-lessons"
+  executedAt        DateTime @default(now())
+  success           Boolean
+  lessonsGenerated  Int      @default(0)
+  teachersProcessed Int      @default(0)
+  errors            String?  @db.Text // Concatenated error messages
+  
+  @@index([jobName, executedAt])
+}
+

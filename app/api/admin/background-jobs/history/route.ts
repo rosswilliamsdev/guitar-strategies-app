@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { getJobHistory, validateSystemHealth } from "@/lib/background-jobs";
+
+/**
+ * GET /api/admin/background-jobs/history
+ * Get background job execution history and system health
+ * Admin-only endpoint for monitoring
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Unauthorized - Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get("limit") || "20");
+
+    // Get job history and system health in parallel
+    const [jobHistory, systemHealth] = await Promise.all([
+      getJobHistory(limit),
+      validateSystemHealth(),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        jobHistory,
+        systemHealth,
+        summary: {
+          totalJobs: jobHistory.length,
+          recentSuccess: jobHistory.length > 0 ? jobHistory[0].success : null,
+          lastRun: jobHistory.length > 0 ? jobHistory[0].executedAt : null,
+          healthIssues: systemHealth.issues.length,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching job history:", error);
+    return NextResponse.json(
+      { 
+        error: "Failed to fetch job history",
+        message: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    );
+  }
+}

@@ -1,45 +1,137 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { 
-  format, 
-  addDays, 
-  addWeeks, 
-  startOfWeek, 
-  isSameDay, 
-  isToday, 
-  isBefore
-} from "date-fns"
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon, 
+import { useState, useEffect, useCallback } from "react";
+import {
+  format,
+  addDays,
+  addWeeks,
+  startOfWeek,
+  isSameDay,
+  isToday,
+  isBefore,
+} from "date-fns";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
   Clock,
   RefreshCw,
   AlertCircle,
-  CheckCircle
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/design"
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/design";
 
 interface TimeSlot {
-  start: Date
-  end: Date
-  duration: 30
-  price: number
-  available: boolean
+  start: Date;
+  end: Date;
+  duration: 30;
+  price: number;
+  available: boolean;
 }
 
 interface AvailabilityCalendarProps {
-  teacherId: string
-  studentTimezone?: string
-  onBookSlot?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>
-  onBookRecurring?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>
-  loading?: boolean
-  readonly?: boolean
-  onSelectionChange?: (hasSelection: boolean, selectedSlots: TimeSlot[], bookingMode: 'single' | 'recurring') => void
+  teacherId: string;
+  studentTimezone?: string;
+  onBookSlot?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>;
+  onBookRecurring?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>;
+  loading?: boolean;
+  readonly?: boolean;
+  onSelectionChange?: (
+    hasSelection: boolean,
+    selectedSlots: TimeSlot[],
+    bookingMode: "single" | "recurring"
+  ) => void;
+}
+
+interface BookingConfirmationCardProps {
+  bookingMode: "single" | "recurring";
+  selectedSlots: TimeSlot[];
+  loading: boolean;
+  onClear: () => void;
+  onBook: () => void;
+}
+
+function BookingConfirmationCard({
+  bookingMode,
+  selectedSlots,
+  loading,
+  onClear,
+  onBook,
+}: BookingConfirmationCardProps) {
+  const hasSelection = selectedSlots.length > 0;
+  
+  return (
+    <Card className={cn(
+      "p-4 transition-colors duration-200",
+      hasSelection 
+        ? "border-primary bg-primary/5" 
+        : "border-border bg-muted/30"
+    )}>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className={cn(
+            "font-medium transition-colors duration-200",
+            hasSelection ? "text-foreground" : "text-muted-foreground"
+          )}>
+            {bookingMode === "single"
+              ? "Confirm Booking"
+              : "Confirm Weekly Lesson Time"}
+          </h3>
+          <div className={cn(
+            "text-sm transition-colors duration-200",
+            hasSelection ? "text-muted-foreground" : "text-muted-foreground/60"
+          )}>
+            {hasSelection ? (
+              selectedSlots.length === 1 ? (
+                <>
+                  {format(selectedSlots[0].start, "EEEE, MMMM d")} at{" "}
+                  {format(selectedSlots[0].start, "h:mm a")}
+                  (30 minutes)
+                  {bookingMode === "recurring" && <span> - every week</span>}
+                </>
+              ) : (
+                <>
+                  {format(selectedSlots[0].start, "EEEE, MMMM d")} from{" "}
+                  {format(selectedSlots[0].start, "h:mm a")} to{" "}
+                  {format(selectedSlots[1].end, "h:mm a")}
+                  (60 minutes)
+                  {bookingMode === "recurring" && <span> - every week</span>}
+                </>
+              )
+            ) : (
+              "Select time slots from the calendar below"
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onClear}
+            disabled={!hasSelection}
+          >
+            Clear
+          </Button>
+          <Button
+            onClick={onBook}
+            disabled={loading || !hasSelection}
+            className={cn(
+              "transition-all duration-200",
+              hasSelection
+                ? "bg-primary hover:bg-turquoise-600"
+                : "bg-muted-foreground/20 hover:bg-muted-foreground/20 cursor-not-allowed"
+            )}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            {loading ? "Booking..." : "Book Time"}
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 export function AvailabilityCalendar({
@@ -49,162 +141,174 @@ export function AvailabilityCalendar({
   onBookRecurring,
   loading = false,
   readonly = false,
-  onSelectionChange
+  onSelectionChange,
 }: AvailabilityCalendarProps) {
-  const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date()))
-  const [slots, setSlots] = useState<TimeSlot[]>([])
-  const [slotsLoading, setSlotsLoading] = useState(false)
-  const [error, setError] = useState<string>("")
-  const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([])
-  const [bookingMode, setBookingMode] = useState<'single' | 'recurring'>('single')
+  const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date()));
+  const [slots, setSlots] = useState<TimeSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
+  const [bookingMode, setBookingMode] = useState<"single" | "recurring">(
+    "single"
+  );
 
-  // Load available slots when week changes
+  const loadAvailableSlots = useCallback(async () => {
+    setSlotsLoading(true);
+    setError("");
+
+    try {
+      const startDate = currentWeek;
+      const endDate = addDays(currentWeek, 6); // 7 days in the week
+
+      const response = await fetch(
+        `/api/availability/${teacherId}?` +
+          `startDate=${startDate.toISOString()}&` +
+          `endDate=${endDate.toISOString()}&` +
+          `timezone=${studentTimezone}`
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to load available slots");
+      }
+
+      const data = await response.json();
+
+      // Parse dates from ISO strings
+      const parsedSlots = data.slots.map((slot: { start: string; end: string; duration: 30; price: number; available: boolean }) => ({
+        ...slot,
+        start: new Date(slot.start),
+        end: new Date(slot.end),
+      }));
+
+      setSlots(parsedSlots);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to load available slots";
+      setError(errorMessage);
+      setSlots([]);
+    } finally {
+      setSlotsLoading(false);
+    }
+  }, [currentWeek, teacherId, studentTimezone]);
+
+  // Load available slots when dependencies change
   useEffect(() => {
-    loadAvailableSlots()
-  }, [currentWeek, teacherId])
+    loadAvailableSlots();
+  }, [loadAvailableSlots]);
 
   // Notify parent of selection changes
   useEffect(() => {
     if (onSelectionChange) {
-      const hasSelection = selectedSlots.length > 0
-      onSelectionChange(hasSelection, selectedSlots, bookingMode)
+      const hasSelection = selectedSlots.length > 0;
+      onSelectionChange(hasSelection, selectedSlots, bookingMode);
     }
-  }, [selectedSlots, bookingMode, onSelectionChange])
-
-  const loadAvailableSlots = async () => {
-    setSlotsLoading(true)
-    setError("")
-    
-    try {
-      const startDate = currentWeek
-      const endDate = addDays(currentWeek, 6) // 7 days in the week
-      
-      const response = await fetch(
-        `/api/availability/${teacherId}?` +
-        `startDate=${startDate.toISOString()}&` +
-        `endDate=${endDate.toISOString()}&` +
-        `timezone=${studentTimezone}`
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to load available slots')
-      }
-
-      const data = await response.json()
-      
-      // Parse dates from ISO strings
-      const parsedSlots = data.slots.map((slot: any) => ({
-        ...slot,
-        start: new Date(slot.start),
-        end: new Date(slot.end)
-      }))
-      
-      setSlots(parsedSlots)
-    } catch (error: any) {
-      setError(error.message || 'Failed to load available slots')
-      setSlots([])
-    } finally {
-      setSlotsLoading(false)
-    }
-  }
+  }, [selectedSlots, bookingMode, onSelectionChange]);
 
   const handleBookSlots = async () => {
-    if (!onBookSlot || readonly || selectedSlots.length === 0) return
-    
+    if (!onBookSlot || readonly || selectedSlots.length === 0) return;
+
     try {
-      const duration = selectedSlots.length === 1 ? 30 : 60
-      
-      if (bookingMode === 'single') {
-        await onBookSlot(selectedSlots, duration)
+      const duration = selectedSlots.length === 1 ? 30 : 60;
+
+      if (bookingMode === "single") {
+        await onBookSlot(selectedSlots, duration);
       } else if (onBookRecurring) {
-        await onBookRecurring(selectedSlots, duration)
+        await onBookRecurring(selectedSlots, duration);
       }
-      
+
       // Reload slots after booking
-      await loadAvailableSlots()
-      setSelectedSlots([])
-    } catch (error: any) {
-      setError(error.message || 'Failed to book time')
+      await loadAvailableSlots();
+      setSelectedSlots([]);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to book time";
+      setError(errorMessage);
     }
-  }
+  };
 
   const handleSlotClick = (slot: TimeSlot) => {
-    if (readonly || !slot.available) return
+    if (readonly || !slot.available) return;
 
-    const isSelected = selectedSlots.some(s => s.start.getTime() === slot.start.getTime())
-    
+    const isSelected = selectedSlots.some(
+      (s) => s.start.getTime() === slot.start.getTime()
+    );
+
     if (isSelected) {
       // Deselect slot
-      setSelectedSlots(prev => prev.filter(s => s.start.getTime() !== slot.start.getTime()))
+      setSelectedSlots((prev) =>
+        prev.filter((s) => s.start.getTime() !== slot.start.getTime())
+      );
     } else {
       // Select slot
       if (selectedSlots.length === 0) {
         // First slot selection
-        setSelectedSlots([slot])
+        setSelectedSlots([slot]);
       } else if (selectedSlots.length === 1) {
         // Second slot selection - must be consecutive
-        const firstSlot = selectedSlots[0]
-        const timeDiff = Math.abs(slot.start.getTime() - firstSlot.start.getTime())
-        const thirtyMinutes = 30 * 60 * 1000
-        
+        const firstSlot = selectedSlots[0];
+        const timeDiff = Math.abs(
+          slot.start.getTime() - firstSlot.start.getTime()
+        );
+        const thirtyMinutes = 30 * 60 * 1000;
+
         if (timeDiff === thirtyMinutes) {
           // Consecutive slot, add it
-          const sortedSlots = [firstSlot, slot].sort((a, b) => a.start.getTime() - b.start.getTime())
-          setSelectedSlots(sortedSlots)
+          const sortedSlots = [firstSlot, slot].sort(
+            (a, b) => a.start.getTime() - b.start.getTime()
+          );
+          setSelectedSlots(sortedSlots);
         } else {
           // Non-consecutive, replace with new selection
-          setSelectedSlots([slot])
+          setSelectedSlots([slot]);
         }
       } else {
         // Already have 2 slots, replace with new selection
-        setSelectedSlots([slot])
+        setSelectedSlots([slot]);
       }
     }
-  }
+  };
 
   const goToPreviousWeek = () => {
-    const newWeek = addWeeks(currentWeek, -1)
+    const newWeek = addWeeks(currentWeek, -1);
     // Don't allow going to past weeks
     if (!isBefore(newWeek, startOfWeek(new Date()))) {
-      setCurrentWeek(newWeek)
+      setCurrentWeek(newWeek);
     }
-  }
+  };
 
   const goToNextWeek = () => {
-    const newWeek = addWeeks(currentWeek, 1)
+    const newWeek = addWeeks(currentWeek, 1);
     // Limit to 3 weeks in advance
-    const maxWeek = addWeeks(new Date(), 3)
+    const maxWeek = addWeeks(new Date(), 3);
     if (!isBefore(maxWeek, newWeek)) {
-      setCurrentWeek(newWeek)
+      setCurrentWeek(newWeek);
     }
-  }
+  };
 
   const goToCurrentWeek = () => {
-    setCurrentWeek(startOfWeek(new Date()))
-  }
+    setCurrentWeek(startOfWeek(new Date()));
+  };
 
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(0)}`
-  }
 
   const getDaysOfWeek = () => {
-    const days = []
+    const days = [];
     for (let i = 0; i < 7; i++) {
-      days.push(addDays(currentWeek, i))
+      days.push(addDays(currentWeek, i));
     }
-    return days
-  }
+    return days;
+  };
 
   const getSlotsForDay = (date: Date) => {
     return slots
-      .filter(slot => isSameDay(slot.start, date) && slot.available && slot.duration === 30)
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-  }
+      .filter(
+        (slot) =>
+          isSameDay(slot.start, date) && slot.available && slot.duration === 30
+      )
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+  };
 
-  const isCurrentWeek = isSameDay(currentWeek, startOfWeek(new Date()))
-  const canGoBack = !isSameDay(currentWeek, startOfWeek(new Date()))
-  const canGoForward = isBefore(currentWeek, addWeeks(new Date(), 2))
+  const isCurrentWeek = isSameDay(currentWeek, startOfWeek(new Date()));
+  const canGoBack = !isSameDay(currentWeek, startOfWeek(new Date()));
+  const canGoForward = isBefore(currentWeek, addWeeks(new Date(), 2));
 
   return (
     <div className="space-y-6">
@@ -212,30 +316,31 @@ export function AvailabilityCalendar({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-muted-foreground">
-            Select one 30-minute slot, or two consecutive slots for a 60-minute session
+            Select one 30-minute slot, or two consecutive slots for a 60-minute
+            session
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {!readonly && (
             <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
               <button
-                onClick={() => setBookingMode('single')}
+                onClick={() => setBookingMode("single")}
                 className={cn(
                   "px-3 py-1 text-sm rounded transition-colors",
-                  bookingMode === 'single' 
-                    ? "bg-background shadow-sm" 
+                  bookingMode === "single"
+                    ? "bg-background shadow-sm"
                     : "hover:bg-background/50"
                 )}
               >
                 Single Session
               </button>
               <button
-                onClick={() => setBookingMode('recurring')}
+                onClick={() => setBookingMode("recurring")}
                 className={cn(
                   "px-3 py-1 text-sm rounded transition-colors",
-                  bookingMode === 'recurring' 
-                    ? "bg-background shadow-sm" 
+                  bookingMode === "recurring"
+                    ? "bg-background shadow-sm"
                     : "hover:bg-background/50"
                 )}
               >
@@ -243,16 +348,17 @@ export function AvailabilityCalendar({
               </button>
             </div>
           )}
-          
+
           <Button
             variant="secondary"
             size="sm"
             onClick={loadAvailableSlots}
             disabled={slotsLoading}
           >
-            <RefreshCw className={cn("h-4 w-4", slotsLoading && "animate-spin")} />
+            <RefreshCw
+              className={cn("h-4 w-4", slotsLoading && "animate-spin")}
+            />
           </Button>
-
         </div>
       </div>
 
@@ -271,14 +377,11 @@ export function AvailabilityCalendar({
         <div className="flex items-center gap-2">
           <CalendarIcon className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">
-            {format(currentWeek, 'MMM d')} - {format(addDays(currentWeek, 6), 'MMM d, yyyy')}
+            {format(currentWeek, "MMM d")} -{" "}
+            {format(addDays(currentWeek, 6), "MMM d, yyyy")}
           </span>
           {!isCurrentWeek && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={goToCurrentWeek}
-            >
+            <Button variant="secondary" size="sm" onClick={goToCurrentWeek}>
               Today
             </Button>
           )}
@@ -296,12 +399,14 @@ export function AvailabilityCalendar({
       </div>
 
       {/* Recurring Options */}
-      {bookingMode === 'recurring' && !readonly && (
+      {bookingMode === "recurring" && !readonly && (
         <Card className="p-4 bg-blue-50 border-blue-200">
           <div>
-            <h3 className="font-medium text-blue-900">Weekly Lesson Schedule</h3>
+            <h3 className="font-medium text-blue-900">
+              Weekly Lesson Schedule
+            </h3>
             <p className="text-sm text-blue-700">
-              This will become your regular weekly lesson time, continuing indefinitely until you cancel or change it
+              This will become your regular weekly lesson time.
             </p>
           </div>
         </Card>
@@ -317,36 +422,57 @@ export function AvailabilityCalendar({
         </div>
       )}
 
+      {/* Top Booking Confirmation */}
+      {!readonly && (
+        <BookingConfirmationCard
+          bookingMode={bookingMode}
+          selectedSlots={selectedSlots}
+          loading={loading}
+          onClear={() => setSelectedSlots([])}
+          onBook={handleBookSlots}
+        />
+      )}
+
       {/* Calendar Grid */}
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         {getDaysOfWeek().map((date, index) => {
-          const daySlots = getSlotsForDay(date)
-          const isPast = isBefore(date, new Date()) && !isToday(date)
-          
+          const daySlots = getSlotsForDay(date);
+          const isPast = isBefore(date, new Date()) && !isToday(date);
+
           return (
             <div
               key={index}
-              className={cn(
-                "space-y-2",
-                isPast && "opacity-50"
-              )}
+              className={cn("space-y-2", isPast && "opacity-50")}
             >
               {/* Day Header */}
-              <div className="text-center p-2 border rounded-lg bg-muted/50">
-                {bookingMode === 'recurring' ? (
+              <div
+                className={cn(
+                  "text-center p-2 border rounded-lg bg-muted/50",
+                  isToday(date) && "border-primary"
+                )}
+              >
+                {bookingMode === "recurring" ? (
                   // Weekly lessons mode: show custom day abbreviations
                   <div className="text-lg font-semibold">
                     {(() => {
-                      const dayName = format(date, 'EEEE');
+                      const dayName = format(date, "EEEE");
                       switch (dayName) {
-                        case 'Sunday': return 'Sun';
-                        case 'Monday': return 'Mon';
-                        case 'Tuesday': return 'Tues';
-                        case 'Wednesday': return 'Weds';
-                        case 'Thursday': return 'Thurs';
-                        case 'Friday': return 'Fri';
-                        case 'Saturday': return 'Sat';
-                        default: return dayName;
+                        case "Sunday":
+                          return "Sun";
+                        case "Monday":
+                          return "Mon";
+                        case "Tuesday":
+                          return "Tues";
+                        case "Wednesday":
+                          return "Weds";
+                        case "Thursday":
+                          return "Thurs";
+                        case "Friday":
+                          return "Fri";
+                        case "Saturday":
+                          return "Sat";
+                        default:
+                          return dayName;
                       }
                     })()}
                   </div>
@@ -354,19 +480,16 @@ export function AvailabilityCalendar({
                   // Single session mode: show day abbreviation and date
                   <>
                     <div className="text-sm font-medium">
-                      {format(date, 'EEE')}
+                      {format(date, "EEE")}
                     </div>
-                    <div className={cn(
-                      "text-lg font-semibold",
-                      isToday(date) && "text-primary"
-                    )}>
-                      {format(date, 'd')}
+                    <div
+                      className={cn(
+                        "text-lg font-semibold",
+                        isToday(date) && "text-primary"
+                      )}
+                    >
+                      {format(date, "d")}
                     </div>
-                    {isToday(date) && (
-                      <Badge variant="secondary" className="text-xs mt-1">
-                        Today
-                      </Badge>
-                    )}
                   </>
                 )}
               </div>
@@ -384,7 +507,9 @@ export function AvailabilityCalendar({
                   </div>
                 ) : (
                   daySlots.map((slot, slotIndex) => {
-                    const isSelected = selectedSlots.some(s => s.start.getTime() === slot.start.getTime())
+                    const isSelected = selectedSlots.some(
+                      (s) => s.start.getTime() === slot.start.getTime()
+                    );
                     return (
                       <button
                         key={slotIndex}
@@ -400,7 +525,7 @@ export function AvailabilityCalendar({
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-medium text-sm">
-                              {format(slot.start, 'h:mm a')}
+                              {format(slot.start, "h:mm a")}
                             </div>
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Clock className="h-3 w-3" />
@@ -409,15 +534,14 @@ export function AvailabilityCalendar({
                           </div>
                         </div>
                       </button>
-                    )
+                    );
                   })
                 )}
               </div>
             </div>
-          )
+          );
         })}
       </div>
-
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -435,51 +559,16 @@ export function AvailabilityCalendar({
         </div>
       </div>
 
-      {/* Booking Confirmation */}
-      {selectedSlots.length > 0 && !readonly && (
-        <Card className="p-4 border-primary bg-primary/5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-medium">
-                {bookingMode === 'single' ? 'Confirm Booking' : 'Confirm Weekly Lesson Time'}
-              </h3>
-              <div className="text-sm text-muted-foreground">
-                {selectedSlots.length === 1 ? (
-                  <>
-                    {format(selectedSlots[0].start, 'EEEE, MMMM d')} at {format(selectedSlots[0].start, 'h:mm a')} 
-                    (30 minutes)
-                  </>
-                ) : (
-                  <>
-                    {format(selectedSlots[0].start, 'EEEE, MMMM d')} from {format(selectedSlots[0].start, 'h:mm a')} to {format(selectedSlots[1].end, 'h:mm a')}
-                    (60 minutes)
-                  </>
-                )}
-                {bookingMode === 'recurring' && (
-                  <span> - every week</span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setSelectedSlots([])}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleBookSlots}
-                disabled={loading}
-                className="bg-primary hover:bg-turquoise-600"
-              >
-                <CheckCircle className="h-4 w-4 mr-2" />
-                {loading ? 'Booking...' : 'Book Time'}
-              </Button>
-            </div>
-          </div>
-        </Card>
+      {/* Bottom Booking Confirmation */}
+      {!readonly && (
+        <BookingConfirmationCard
+          bookingMode={bookingMode}
+          selectedSlots={selectedSlots}
+          loading={loading}
+          onClear={() => setSelectedSlots([])}
+          onBook={handleBookSlots}
+        />
       )}
     </div>
-  )
+  );
 }

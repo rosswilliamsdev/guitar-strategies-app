@@ -77,7 +77,8 @@ export default withAuth(
           pathname === "/register" ||
           pathname.startsWith("/_next") ||
           pathname.startsWith("/favicon.ico") ||
-          pathname.startsWith("/api/auth")
+          pathname.startsWith("/api/auth") ||
+          pathname.startsWith("/api/cron")
         ) {
           return true;
         }
