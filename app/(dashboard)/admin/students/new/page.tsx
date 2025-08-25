@@ -12,7 +12,7 @@ export default async function CreateStudentPage() {
   }
 
   // Get all active teachers for the dropdown
-  const teachers = await prisma.user.findMany({
+  const teachersRaw = await prisma.user.findMany({
     where: {
       role: "TEACHER",
       teacherProfile: {
@@ -30,6 +30,12 @@ export default async function CreateStudentPage() {
       name: "asc",
     },
   });
+
+  // Filter out teachers without teacherProfile (shouldn't happen but for type safety)
+  const teachers = teachersRaw.filter(
+    (teacher): teacher is typeof teacher & { teacherProfile: NonNullable<typeof teacher.teacherProfile> } =>
+      teacher.teacherProfile !== null
+  );
 
   return (
     <div className="container max-w-2xl py-6">

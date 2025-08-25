@@ -215,7 +215,7 @@ export async function validateSystemHealth(): Promise<{
     const orphanedSlots = await prisma.recurringSlot.findMany({
       where: {
         status: "ACTIVE",
-        student: null,
+        student: { is: null },
       },
     });
 

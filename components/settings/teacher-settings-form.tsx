@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Save, Key, User, DollarSign, Calendar, Clock, Settings2, CalendarDays } from "lucide-react";
+import { AlertCircle, Save, Key, User, Calendar, Clock, Settings2, CalendarDays } from "lucide-react";
 import { teacherProfileSchema, passwordChangeSchema, timezoneSchema } from "@/lib/validations";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { BlockedTimeManager } from "@/components/teacher/BlockedTimeManager";
@@ -57,7 +57,6 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [bio, setBio] = useState(teacherProfile.bio || "");
-  const [hourlyRate, setHourlyRate] = useState(teacherProfile.hourlyRate ? (teacherProfile.hourlyRate / 100).toString() : "");
   const [timezone, setTimezone] = useState(teacherProfile.timezone || "America/New_York");
   const [phoneNumber, setPhoneNumber] = useState(teacherProfile.phoneNumber || "");
   
@@ -65,6 +64,28 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   const [venmoHandle, setVenmoHandle] = useState(teacherProfile.venmoHandle || "");
   const [paypalEmail, setPaypalEmail] = useState(teacherProfile.paypalEmail || "");
   const [zelleEmail, setZelleEmail] = useState(teacherProfile.zelleEmail || "");
+
+  // Load current profile data
+  const loadProfileData = async () => {
+    try {
+      const response = await fetch('/api/settings/teacher', {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setName(data.name || "");
+        setEmail(data.email || "");
+        setBio(data.bio || "");
+        setTimezone(data.timezone || "America/New_York");
+        setPhoneNumber(data.phoneNumber || "");
+        setVenmoHandle(data.venmoHandle || "");
+        setPaypalEmail(data.paypalEmail || "");
+        setZelleEmail(data.zelleEmail || "");
+      }
+    } catch (error) {
+      console.error('Error loading profile data:', error);
+    }
+  };
 
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -86,6 +107,7 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   // Load scheduling data when component mounts
   useEffect(() => {
     loadSchedulingData();
+    loadProfileData();
   }, []);
 
   const loadSchedulingData = async () => {
@@ -229,17 +251,16 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
     setSuccess("");
 
     try {
-      // Validate form data
+      // Validate form data - send empty strings as-is, let the schema transform them
       const formData = {
         name,
         email,
-        bio: bio || undefined,
-        hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
+        bio: bio.trim() === "" ? null : bio,
         timezone,
-        phoneNumber: phoneNumber || undefined,
-        venmoHandle: venmoHandle || undefined,
-        paypalEmail: paypalEmail || undefined,
-        zelleEmail: zelleEmail || undefined,
+        phoneNumber: phoneNumber.trim() === "" ? null : phoneNumber,
+        venmoHandle: venmoHandle.trim() === "" ? null : venmoHandle,
+        paypalEmail: paypalEmail.trim() === "" ? null : paypalEmail,
+        zelleEmail: zelleEmail.trim() === "" ? null : zelleEmail,
       };
 
       const validatedData = teacherProfileSchema.parse(formData);
@@ -258,6 +279,8 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
       }
 
       setSuccess("Profile updated successfully!");
+      // Reload the profile data to show updated values
+      await loadProfileData();
       router.refresh();
     } catch (error) {
       if (error instanceof Error) {
@@ -456,26 +479,6 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="hourlyRate">Hourly Rate ($)</Label>
-                <div className="relative mt-2">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    id="hourlyRate"
-                    type="number"
-                    min="10"
-                    max="500"
-                    step="0.01"
-                    value={hourlyRate}
-                    onChange={(e) => setHourlyRate(e.target.value)}
-                    placeholder="60.00"
-                    className="pl-10"
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Your teaching rate per hour
-                </p>
-              </div>
               <div>
                 <Label htmlFor="timezone">Timezone *</Label>
                 <div className="mt-2">

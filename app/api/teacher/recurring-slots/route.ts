@@ -1,25 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  createSuccessResponse,
+  createAuthErrorResponse,
+  createForbiddenResponse,
+  createNotFoundResponse,
+  handleApiError
+} from "@/lib/api-responses";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return createAuthErrorResponse();
     }
 
     // Only teachers can access this endpoint
     if (session.user.role !== "TEACHER") {
-      return NextResponse.json(
-        { success: false, error: "Only teachers can access their slots" },
-        { status: 403 }
-      );
+      return createForbiddenResponse("Only teachers can access their slots");
     }
 
     // Get teacher profile
@@ -28,10 +29,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!teacherProfile) {
-      return NextResponse.json(
-        { success: false, error: "Teacher profile not found" },
-        { status: 404 }
-      );
+      return createNotFoundResponse("Teacher profile");
     }
 
     // Get all recurring slots for this teacher
@@ -75,17 +73,12 @@ export async function GET(request: NextRequest) {
       totalStudents: new Set(slots.map(slot => slot.studentId)).size
     };
 
-    return NextResponse.json({
-      success: true,
-      data: slots,
+    return createSuccessResponse({
+      slots,
       summary
     });
 
   } catch (error) {
-    console.error("Error fetching teacher's recurring slots:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

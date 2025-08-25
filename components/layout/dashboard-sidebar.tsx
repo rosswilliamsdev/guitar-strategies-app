@@ -36,6 +36,7 @@ const navItems: NavItem[] = [
   { label: "Manage Teachers", href: "/admin/teachers", roles: ["ADMIN"] },
   { label: "Manage Students", href: "/admin/students", roles: ["ADMIN"] },
   { label: "All Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
+  { label: "Teacher Validation", href: "/admin/teacher-validation", roles: ["ADMIN"] },
   { label: "Background Jobs", href: "/admin/background-jobs", roles: ["ADMIN"] },
   { label: "Settings", href: "/settings" },
 ];

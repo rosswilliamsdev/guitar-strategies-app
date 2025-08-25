@@ -1,8 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import {
+  createSuccessResponse,
+  createAuthErrorResponse,
+  createNotFoundResponse,
+  createBadRequestResponse,
+  createConflictResponse,
+  createValidationErrorResponse,
+  handleApiError
+} from "@/lib/api-responses";
 
 const bookForStudentSchema = z.object({
   teacherId: z.string(),
@@ -18,10 +27,7 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== "TEACHER") {
-      return NextResponse.json(
-        { message: "Unauthorized - Teacher access required" },
-        { status: 401 }
-      );
+      return createAuthErrorResponse("Teacher access required");
     }
 
     const body = await request.json();
@@ -36,10 +42,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!student) {
-      return NextResponse.json(
-        { message: "Student not found or not assigned to this teacher" },
-        { status: 404 }
-      );
+      return createNotFoundResponse("Student or student assignment");
     }
 
     // Check teacher's availability for the requested time
@@ -60,10 +63,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!availability) {
-      return NextResponse.json(
-        { message: "This time slot is not within your availability" },
-        { status: 400 }
-      );
+      return createBadRequestResponse("This time slot is not within your availability");
     }
 
     // Check for conflicts
@@ -84,10 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (conflict) {
-      return NextResponse.json(
-        { message: "This time slot already has a lesson scheduled" },
-        { status: 400 }
-      );
+      return createConflictResponse("This time slot already has a lesson scheduled");
     }
 
     if (validatedData.type === "single") {
@@ -102,7 +99,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return NextResponse.json(lesson);
+      return createSuccessResponse(lesson, "Single lesson created successfully");
     } else {
       // Create indefinite recurring slot
       const lessonDate = new Date(validatedData.date);
@@ -123,10 +120,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingSlot) {
-        return NextResponse.json(
-          { message: "You already have a recurring slot at this time" },
-          { status: 400 }
-        );
+        return createConflictResponse("You already have a recurring slot at this time");
       }
 
       // Create recurring slot
@@ -155,25 +149,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return NextResponse.json({
-        message: "Created indefinite recurring lesson",
-        recurringSlot,
-        firstLesson,
-      });
-    }
-  } catch (error) {
-    console.error("Error booking lesson for student:", error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: "Invalid request data", errors: error.errors },
-        { status: 400 }
+      return createSuccessResponse(
+        {
+          recurringSlot,
+          firstLesson
+        },
+        "Created indefinite recurring lesson"
       );
     }
-
-    return NextResponse.json(
-      { message: "Failed to book lesson" },
-      { status: 500 }
-    );
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return createValidationErrorResponse(error);
+    }
+    return handleApiError(error);
   }
 }

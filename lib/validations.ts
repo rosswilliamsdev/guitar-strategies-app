@@ -112,18 +112,13 @@ export const timezoneSchema = z.string().refine(
 export const teacherProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
-  hourlyRate: z
-    .number()
-    .min(10, "Hourly rate must be at least $10")
-    .max(500, "Hourly rate must be less than $500")
-    .optional(),
+  bio: z.string().max(500, "Bio must be less than 500 characters").optional().nullable(),
   timezone: timezoneSchema,
-  phoneNumber: z.string().optional(),
-  // Payment method fields for invoice generation
-  venmoHandle: z.string().optional(),
-  paypalEmail: z.string().optional().refine(val => !val || val.includes('@'), "Please enter a valid PayPal email"),
-  zelleEmail: z.string().optional(),
+  phoneNumber: z.string().optional().nullable(),
+  // Payment method fields for invoice generation - allow empty strings and convert to null
+  venmoHandle: z.string().optional().nullable().transform(val => val === "" ? null : val),
+  paypalEmail: z.string().optional().nullable().transform(val => val === "" ? null : val).refine(val => !val || val.includes('@'), "Please enter a valid PayPal email"),
+  zelleEmail: z.string().optional().nullable().transform(val => val === "" ? null : val),
 });
 
 export const studentProfileSchema = z.object({

@@ -124,7 +124,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
       // If this is a new checklist and we have items, add them
       if (!checklist && items.length > 0) {
         for (const [index, item] of items.entries()) {
-          await fetch("/api/student-checklists/items", {
+          const itemResponse = await fetch("/api/student-checklists/items", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -132,6 +132,12 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
               title: item.title,
             }),
           });
+
+          if (!itemResponse.ok) {
+            const error = await itemResponse.json();
+            console.error(`Failed to create item "${item.title}":`, error);
+            throw new Error(error.error || `Failed to create item "${item.title}"`);
+          }
         }
       }
 

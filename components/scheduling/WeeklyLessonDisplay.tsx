@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
@@ -24,7 +24,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-interface SlotWithDetails extends RecurringSlot {
+interface SlotWithDetails {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  duration: number;
   teacher: {
     user: { name: string }
   }
@@ -240,7 +244,7 @@ export function WeeklyLessonDisplay({
               <Button
                 onClick={() => setShowCancelDialog(true)}
                 disabled={isCancelling}
-                variant="outline"
+                variant="secondary"
                 className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
                 size="sm"
               >

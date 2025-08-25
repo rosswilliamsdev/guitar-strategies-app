@@ -91,18 +91,6 @@ const priorityConfig = {
 };
 
 
-function PriorityBadge({ priority }: { priority: number }) {
-  const config = priorityConfig[priority as keyof typeof priorityConfig];
-  return (
-    <Badge 
-      variant="secondary"
-      className={config.color}
-      title={config.description}
-    >
-      {config.label}
-    </Badge>
-  );
-}
 
 export function StudentRecommendationsList({ items, teacherName }: StudentRecommendationsListProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -258,7 +246,7 @@ export function StudentRecommendationsList({ items, teacherName }: StudentRecomm
                         <PriorityBadge priority={item.priority} />
                         
                         {item.price && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="secondary" className="text-xs">
                             {item.price}
                           </Badge>
                         )}
@@ -266,7 +254,7 @@ export function StudentRecommendationsList({ items, teacherName }: StudentRecomm
                       
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center space-x-4">
-                          <PriorityBadge priority={item.priority} size="sm" />
+                          <PriorityBadge priority={item.priority} />
                           <span className="text-muted-foreground">
                             {priorityConfig[item.priority as keyof typeof priorityConfig].description}
                           </span>
@@ -290,7 +278,7 @@ export function StudentRecommendationsList({ items, teacherName }: StudentRecomm
           <h3 className="font-semibold text-foreground mb-4">Priority Levels</h3>
           <div className="flex flex-wrap gap-3">
             {[5, 4, 3, 2, 1].map((level) => (
-              <PriorityBadge key={level} priority={level} size="sm" />
+              <PriorityBadge key={level} priority={level} />
             ))}
           </div>
         </Card>

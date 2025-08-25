@@ -112,7 +112,6 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: formData.title,
-          level: "BEGINNER", // Default level
           isPublished: true, // Automatically published for students
         }),
       });

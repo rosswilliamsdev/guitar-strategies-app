@@ -309,7 +309,7 @@ export function RecommendationsList({
 
                           {item.price && (
                             <Badge
-                              variant="outline"
+                              variant="secondary"
                               className={categoryInfo.color}
                             >
                               {item.price}

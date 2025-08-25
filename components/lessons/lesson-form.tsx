@@ -167,7 +167,7 @@ export function LessonForm({
 
   const removeExistingAttachment = (attachmentId: string) => {
     setExistingAttachments((prev) =>
-      prev.filter((att: any) => att.id !== attachmentId)
+      prev.filter((att) => att.id !== attachmentId)
     );
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };

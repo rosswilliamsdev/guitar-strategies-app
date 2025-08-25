@@ -23,6 +23,24 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/design";
+import { Skeleton, SkeletonCalendar } from "@/components/ui/skeleton";
+import { InlineLoading } from "@/components/ui/loading-spinner";
+
+// Helper function to format timezone names for display
+const formatTimezone = (timezone: string): string => {
+  const timezoneMap: Record<string, string> = {
+    "America/New_York": "Eastern Time (ET)",
+    "America/Chicago": "Central Time (CT)", 
+    "America/Denver": "Mountain Time (MT)",
+    "America/Los_Angeles": "Pacific Time (PT)",
+    "America/Anchorage": "Alaska Time (AKT)",
+    "Pacific/Honolulu": "Hawaii Time (HST)",
+    "America/Phoenix": "Arizona Time (MST)",
+    "UTC": "UTC",
+  };
+  
+  return timezoneMap[timezone] || timezone;
+};
 
 interface TimeSlot {
   start: Date;
@@ -52,6 +70,7 @@ interface BookingConfirmationCardProps {
   loading: boolean;
   onClear: () => void;
   onBook: () => void;
+  timezone: string;
 }
 
 function BookingConfirmationCard({
@@ -60,6 +79,7 @@ function BookingConfirmationCard({
   loading,
   onClear,
   onBook,
+  timezone,
 }: BookingConfirmationCardProps) {
   const hasSelection = selectedSlots.length > 0;
   
@@ -88,7 +108,8 @@ function BookingConfirmationCard({
               selectedSlots.length === 1 ? (
                 <>
                   {format(selectedSlots[0].start, "EEEE, MMMM d")} at{" "}
-                  {format(selectedSlots[0].start, "h:mm a")}
+                  {format(selectedSlots[0].start, "h:mm a")} {formatTimezone(timezone)}
+                  <br />
                   (30 minutes)
                   {bookingMode === "recurring" && <span> - every week</span>}
                 </>
@@ -96,7 +117,8 @@ function BookingConfirmationCard({
                 <>
                   {format(selectedSlots[0].start, "EEEE, MMMM d")} from{" "}
                   {format(selectedSlots[0].start, "h:mm a")} to{" "}
-                  {format(selectedSlots[1].end, "h:mm a")}
+                  {format(selectedSlots[1].end, "h:mm a")} {formatTimezone(timezone)}
+                  <br />
                   (60 minutes)
                   {bookingMode === "recurring" && <span> - every week</span>}
                 </>
@@ -119,14 +141,20 @@ function BookingConfirmationCard({
             onClick={onBook}
             disabled={loading || !hasSelection}
             className={cn(
-              "transition-all duration-200",
+              "transition-all duration-200 min-w-[120px]",
               hasSelection
                 ? "bg-primary hover:bg-turquoise-600"
                 : "bg-muted-foreground/20 hover:bg-muted-foreground/20 cursor-not-allowed"
             )}
           >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            {loading ? "Booking..." : "Book Time"}
+            {loading ? (
+              <InlineLoading text="Booking..." size="sm" />
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Book Time
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -319,6 +347,12 @@ export function AvailabilityCalendar({
             Select one 30-minute slot, or two consecutive slots for a 60-minute
             session
           </p>
+          <div className="flex items-center gap-2 mt-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Times shown in <span className="font-medium">{formatTimezone(studentTimezone)}</span>
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -430,118 +464,134 @@ export function AvailabilityCalendar({
           loading={loading}
           onClear={() => setSelectedSlots([])}
           onBook={handleBookSlots}
+          timezone={studentTimezone}
         />
       )}
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-        {getDaysOfWeek().map((date, index) => {
-          const daySlots = getSlotsForDay(date);
-          const isPast = isBefore(date, new Date()) && !isToday(date);
-
-          return (
-            <div
-              key={index}
-              className={cn("space-y-2", isPast && "opacity-50")}
-            >
-              {/* Day Header */}
-              <div
-                className={cn(
-                  "text-center p-2 border rounded-lg bg-muted/50",
-                  isToday(date) && "border-primary"
-                )}
-              >
-                {bookingMode === "recurring" ? (
-                  // Weekly lessons mode: show custom day abbreviations
-                  <div className="text-lg font-semibold">
-                    {(() => {
-                      const dayName = format(date, "EEEE");
-                      switch (dayName) {
-                        case "Sunday":
-                          return "Sun";
-                        case "Monday":
-                          return "Mon";
-                        case "Tuesday":
-                          return "Tues";
-                        case "Wednesday":
-                          return "Weds";
-                        case "Thursday":
-                          return "Thurs";
-                        case "Friday":
-                          return "Fri";
-                        case "Saturday":
-                          return "Sat";
-                        default:
-                          return dayName;
-                      }
-                    })()}
-                  </div>
-                ) : (
-                  // Single session mode: show day abbreviation and date
-                  <>
-                    <div className="text-sm font-medium">
-                      {format(date, "EEE")}
-                    </div>
-                    <div
-                      className={cn(
-                        "text-lg font-semibold",
-                        isToday(date) && "text-primary"
-                      )}
-                    >
-                      {format(date, "d")}
-                    </div>
-                  </>
-                )}
+      {slotsLoading ? (
+        <div className="space-y-4">
+          {/* Loading skeleton for calendar */}
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+            {Array.from({ length: 7 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                {/* Day header skeleton */}
+                <Skeleton className="h-16 w-full rounded-lg" />
+                {/* Time slots skeleton */}
+                <div className="space-y-1">
+                  {Array.from({ length: 3 }).map((_, slotIndex) => (
+                    <Skeleton key={slotIndex} className="h-14 w-full rounded" />
+                  ))}
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+          {getDaysOfWeek().map((date, index) => {
+            const daySlots = getSlotsForDay(date);
+            const isPast = isBefore(date, new Date()) && !isToday(date);
 
-              {/* Time Slots */}
-              <div className="space-y-1">
-                {slotsLoading ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    <RefreshCw className="h-4 w-4 animate-spin mx-auto mb-1" />
-                    <div className="text-xs">Loading...</div>
-                  </div>
-                ) : daySlots.length === 0 ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    <div className="text-xs">No slots available</div>
-                  </div>
-                ) : (
-                  daySlots.map((slot, slotIndex) => {
-                    const isSelected = selectedSlots.some(
-                      (s) => s.start.getTime() === slot.start.getTime()
-                    );
-                    return (
-                      <button
-                        key={slotIndex}
-                        onClick={() => handleSlotClick(slot)}
-                        disabled={isPast || loading || readonly}
+            return (
+              <div
+                key={index}
+                className={cn("space-y-2", isPast && "opacity-50")}
+              >
+                {/* Day Header */}
+                <div
+                  className={cn(
+                    "text-center p-2 border rounded-lg bg-muted/50",
+                    isToday(date) && "border-primary"
+                  )}
+                >
+                  {bookingMode === "recurring" ? (
+                    // Weekly lessons mode: show custom day abbreviations
+                    <div className="text-lg font-semibold">
+                      {(() => {
+                        const dayName = format(date, "EEEE");
+                        switch (dayName) {
+                          case "Sunday":
+                            return "Sun";
+                          case "Monday":
+                            return "Mon";
+                          case "Tuesday":
+                            return "Tues";
+                          case "Wednesday":
+                            return "Weds";
+                          case "Thursday":
+                            return "Thurs";
+                          case "Friday":
+                            return "Fri";
+                          case "Saturday":
+                            return "Sat";
+                          default:
+                            return dayName;
+                        }
+                      })()}
+                    </div>
+                  ) : (
+                    // Single session mode: show day abbreviation and date
+                    <>
+                      <div className="text-sm font-medium">
+                        {format(date, "EEE")}
+                      </div>
+                      <div
                         className={cn(
-                          "w-full p-2 text-left border rounded transition-colors",
-                          "hover:bg-primary/5 hover:border-primary",
-                          isSelected && "bg-primary/10 border-primary",
-                          isPast && "cursor-not-allowed"
+                          "text-lg font-semibold",
+                          isToday(date) && "text-primary"
                         )}
                       >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-medium text-sm">
-                              {format(slot.start, "h:mm a")}
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
-                              30min
+                        {format(date, "d")}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Time Slots */}
+                <div className="space-y-1">
+                  {daySlots.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <div className="text-xs">No slots available</div>
+                    </div>
+                  ) : (
+                    daySlots.map((slot, slotIndex) => {
+                      const isSelected = selectedSlots.some(
+                        (s) => s.start.getTime() === slot.start.getTime()
+                      );
+                      return (
+                        <button
+                          key={slotIndex}
+                          onClick={() => handleSlotClick(slot)}
+                          disabled={isPast || loading || readonly}
+                          className={cn(
+                            "w-full p-2 text-left border rounded transition-colors",
+                            "hover:bg-primary/5 hover:border-primary",
+                            isSelected && "bg-primary/10 border-primary",
+                            isPast && "cursor-not-allowed"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium text-sm">
+                                {format(slot.start, "h:mm a")}
+                              </div>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                30min
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
@@ -567,6 +617,7 @@ export function AvailabilityCalendar({
           loading={loading}
           onClear={() => setSelectedSlots([])}
           onBook={handleBookSlots}
+          timezone={studentTimezone}
         />
       )}
     </div>

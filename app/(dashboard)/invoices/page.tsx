@@ -127,7 +127,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
             <InvoiceCard 
               key={invoice.id} 
               invoice={invoice}
-              hourlyRate={session.user.teacherProfile?.hourlyRate}
+              hourlyRate={session.user.teacherProfile?.hourlyRate ?? undefined}
             />
           ))}
         </div>

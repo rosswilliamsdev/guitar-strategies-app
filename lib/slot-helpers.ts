@@ -138,10 +138,13 @@ export function generateLessonsForMonth(
   const monthStart = startOfMonth(new Date(year, monthNum - 1));
   const monthEnd = endOfMonth(new Date(year, monthNum - 1));
   
-  const daysInMonth = eachDayOfInterval({
-    start: monthStart,
-    end: monthEnd
-  });
+  // Manual day generation instead of eachDayOfInterval
+  const daysInMonth = [];
+  let currentDay = new Date(monthStart);
+  while (currentDay <= monthEnd) {
+    daysInMonth.push(new Date(currentDay));
+    currentDay = addDays(currentDay, 1);
+  }
 
   const lessons = [];
   const [hours, minutes] = startTime.split(':').map(Number);

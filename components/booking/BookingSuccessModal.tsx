@@ -27,6 +27,22 @@ import {
 } from "lucide-react";
 import { format, addWeeks } from "date-fns";
 
+// Helper function to format timezone names for display
+const formatTimezone = (timezone: string): string => {
+  const timezoneMap: Record<string, string> = {
+    "America/New_York": "Eastern Time (ET)",
+    "America/Chicago": "Central Time (CT)", 
+    "America/Denver": "Mountain Time (MT)",
+    "America/Los_Angeles": "Pacific Time (PT)",
+    "America/Anchorage": "Alaska Time (AKT)",
+    "Pacific/Honolulu": "Hawaii Time (HST)",
+    "America/Phoenix": "Arizona Time (MST)",
+    "UTC": "UTC",
+  };
+  
+  return timezoneMap[timezone] || timezone;
+};
+
 interface Lesson {
   id: string;
   date: string;
@@ -51,6 +67,7 @@ interface BookingSuccessModalProps {
   lesson?: Lesson;
   recurringSlot?: RecurringSlot;
   lessons?: Lesson[];
+  timezone?: string;
 }
 
 const dayNames = [
@@ -71,6 +88,7 @@ export function BookingSuccessModal({
   lesson,
   recurringSlot,
   lessons = [],
+  timezone = "America/New_York",
 }: BookingSuccessModalProps) {
   const router = useRouter();
 
@@ -184,7 +202,7 @@ export function BookingSuccessModal({
                         : recurringSlot &&
                           `Every ${dayNames[recurringSlot.dayOfWeek]} at ${
                             recurringSlot.startTime
-                          }`}
+                          } ${formatTimezone(timezone)}`}
                     </p>
                   </div>
                 </div>
@@ -231,7 +249,7 @@ export function BookingSuccessModal({
                             {format(new Date(lesson.date), "EEEE, MMMM d")}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {format(new Date(lesson.date), "h:mm a")} •{" "}
+                            {format(new Date(lesson.date), "h:mm a")} {formatTimezone(timezone)} •{" "}
                             {lesson.duration} minutes
                           </p>
                         </div>

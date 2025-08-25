@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { TeacherDashboard } from '@/components/dashboard/teacher-dashboard';
+import { getTeacherData } from '../page';
 
 export const metadata = {
   title: 'Teacher Dashboard',
@@ -15,6 +16,12 @@ export default async function TeacherDashboardPage() {
     redirect('/login');
   }
 
+  const teacherData = await getTeacherData(session.user.id);
+
+  if (!teacherData) {
+    redirect('/dashboard');
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -26,7 +33,7 @@ export default async function TeacherDashboardPage() {
         </p>
       </div>
 
-      <TeacherDashboard userId={session.user.id} />
+      <TeacherDashboard {...teacherData} />
     </div>
   );
 }

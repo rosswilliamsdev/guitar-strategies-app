@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import { format, startOfMonth, endOfMonth } from "date-fns";
+import { SkeletonLessonCard, Skeleton } from "@/components/ui/skeleton";
 import {
   Calendar,
   Clock,
@@ -237,9 +238,35 @@ export function LessonList({ userRole }: LessonListProps) {
 
   if (loading) {
     return (
-      <Card className="p-8 text-center">
-        <p className="text-muted-foreground">Loading lessons...</p>
-      </Card>
+      <div className="space-y-6">
+        {/* Search and Filter Controls Skeleton */}
+        <Card className="p-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="flex gap-4">
+              {userRole === "TEACHER" && (
+                <Skeleton className="h-10 w-48" />
+              )}
+              <Skeleton className="h-10 w-48" />
+            </div>
+          </div>
+        </Card>
+
+        {/* Results Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-10 w-40" />
+        </div>
+
+        {/* Lesson Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <SkeletonLessonCard key={index} />
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -405,7 +432,7 @@ export function LessonList({ userRole }: LessonListProps) {
                       {lesson.status === 'SCHEDULED' && new Date(lesson.date) > new Date() && (
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="secondary"
                           onClick={() => setConfirmCancelLesson(lesson.id)}
                           disabled={cancellingLessons.has(lesson.id)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 h-6"

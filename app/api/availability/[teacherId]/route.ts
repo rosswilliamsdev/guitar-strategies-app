@@ -1,8 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { getAvailableSlots } from '@/lib/scheduler';
+import {
+  createSuccessResponse,
+  createAuthErrorResponse,
+  createNotFoundResponse,
+  createForbiddenResponse,
+  createBadRequestResponse,
+  handleApiError
+} from '@/lib/api-responses';
 
 export async function GET(
   request: NextRequest,
@@ -12,10 +20,7 @@ export async function GET(
     const session = await getServerSession(authOptions);
     
     if (!session || session.user.role !== 'STUDENT') {
-      return NextResponse.json(
-        { error: 'Unauthorized - Students only' },
-        { status: 401 }
-      );
+      return createAuthErrorResponse('Students only');
     }
 
     const { searchParams } = new URL(request.url);
@@ -24,10 +29,7 @@ export async function GET(
     const timezone = searchParams.get('timezone') || 'America/New_York';
 
     if (!startDate || !endDate) {
-      return NextResponse.json(
-        { error: 'startDate and endDate are required' },
-        { status: 400 }
-      );
+      return createBadRequestResponse('startDate and endDate are required');
     }
 
     // Get student profile to verify they're assigned to this teacher
@@ -37,18 +39,12 @@ export async function GET(
     });
 
     if (!studentProfile) {
-      return NextResponse.json(
-        { error: 'Student profile not found' },
-        { status: 404 }
-      );
+      return createNotFoundResponse('Student profile');
     }
 
     // Verify student is assigned to this teacher
     if (studentProfile.teacherId !== params.teacherId) {
-      return NextResponse.json(
-        { error: 'Not authorized to view this teacher\'s availability' },
-        { status: 403 }
-      );
+      return createForbiddenResponse('Not authorized to view this teacher\'s availability');
     }
 
     // Get available slots
@@ -60,14 +56,9 @@ export async function GET(
     );
 
 
-    return NextResponse.json({ slots });
+    return createSuccessResponse({ slots });
 
   } catch (error: any) {
-    console.error('Error fetching availability:', error);
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch availability' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

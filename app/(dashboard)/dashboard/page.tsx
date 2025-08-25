@@ -11,7 +11,7 @@ export const metadata = {
   description: 'Your Guitar Strategies dashboard',
 };
 
-async function getTeacherData(userId: string) {
+export async function getTeacherData(userId: string) {
   try {
     // Get teacher profile
     const teacherProfile = await prisma.teacherProfile.findUnique({
@@ -65,7 +65,7 @@ async function getTeacherData(userId: string) {
         studentName: lesson.student.user.name,
         date: lesson.date.toLocaleDateString(),
         duration: lesson.duration,
-        status: lesson.status,
+        status: lesson.status as string,
         notes: lesson.notes,
       }));
 
@@ -92,7 +92,7 @@ async function getTeacherData(userId: string) {
   }
 }
 
-async function getStudentData(userId: string) {
+export async function getStudentData(userId: string) {
   try {
     console.log('Looking for student with userId:', userId);
     
@@ -144,7 +144,7 @@ async function getStudentData(userId: string) {
         id: lesson.id,
         date: lesson.date.toLocaleDateString(),
         duration: lesson.duration,
-        status: lesson.status,
+        status: lesson.status as string,
         notes: lesson.notes,
         homework: lesson.homework,
       }));

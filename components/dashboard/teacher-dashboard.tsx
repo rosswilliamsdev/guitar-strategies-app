@@ -3,6 +3,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { ProfileValidationAlert } from "@/components/teacher/profile-validation-alert";
+import { SkeletonDashboardCard, SkeletonLessonCard, Skeleton } from "@/components/ui/skeleton";
 
 interface TeacherDashboardProps {
   teacherId: string;
@@ -21,12 +23,13 @@ interface TeacherDashboardProps {
     date: string;
     duration: number;
     status: string;
-    notes?: string;
+    notes?: string | null;
   }>;
   teacherProfile?: {
-    bio?: string;
+    bio?: string | null;
     hourlyRate?: number;
   };
+  loading?: boolean;
 }
 
 interface StatCardProps {
@@ -77,6 +80,7 @@ export function TeacherDashboard({
   stats,
   recentLessons,
   teacherProfile,
+  loading = false,
 }: TeacherDashboardProps) {
   const dashboardStats = [
     {
@@ -132,8 +136,56 @@ export function TeacherDashboard({
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        {/* Welcome Section Skeleton */}
+        <div>
+          <Skeleton className="h-9 w-64 mb-2" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+
+        {/* Quick Actions & Recent Lessons Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-6">
+            <Skeleton className="h-6 w-32 mb-4" />
+            <div className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full" />
+              ))}
+            </div>
+          </Card>
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="py-2 border-b border-border last:border-b-0">
+                  <Skeleton className="h-4 w-32 mb-1" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        {/* Stats Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonDashboardCard key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
+      {/* Profile Validation Alert */}
+      <ProfileValidationAlert teacherId={teacherId} />
+
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-semibold text-foreground">

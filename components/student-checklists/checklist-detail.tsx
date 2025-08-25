@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfettiModal } from "@/components/ui/confetti-modal";
+import { fireItemConfetti, fireChecklistCompleteConfetti } from "@/lib/confetti";
 import {
   ArrowLeft,
   Plus,
@@ -20,6 +22,7 @@ import {
   Clock,
   Link as LinkIcon,
   X,
+  Trophy,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -58,6 +61,9 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
   const [checklist, setChecklist] = useState<StudentChecklist | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [showCelebrationModal, setShowCelebrationModal] = useState(false);
+  const [previousCompletedCount, setPreviousCompletedCount] = useState(0);
+  const checkboxRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const [newItem, setNewItem] = useState({
     title: "",
     dueDate: "",
@@ -69,6 +75,24 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
   useEffect(() => {
     fetchChecklist();
   }, [checklistId]);
+
+  // Track completion changes for celebrations
+  useEffect(() => {
+    if (!checklist) return;
+    
+    const currentCompletedCount = checklist.stats.completedItems;
+    const totalItems = checklist.stats.totalItems;
+    
+    // If we just completed the entire checklist
+    if (currentCompletedCount === totalItems && totalItems > 0 && previousCompletedCount < totalItems) {
+      setTimeout(() => {
+        fireChecklistCompleteConfetti();
+        setShowCelebrationModal(true);
+      }, 300); // Small delay for smoother experience
+    }
+    
+    setPreviousCompletedCount(currentCompletedCount);
+  }, [checklist, previousCompletedCount]);
 
   const fetchChecklist = async () => {
     try {
@@ -93,6 +117,11 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       });
 
       if (response.ok) {
+        // Fire confetti for item completion
+        if (isCompleted) {
+          const checkboxElement = checkboxRefs.current[itemId];
+          fireItemConfetti(checkboxElement || undefined);
+        }
         fetchChecklist();
       }
     } catch (error) {
@@ -264,6 +293,12 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                 </Button>
               </Link>
               <h1 className="text-2xl font-semibold">{checklist.title}</h1>
+              {checklist.stats.progressPercent === 100 && checklist.stats.totalItems > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-medium">
+                  <Trophy className="h-3 w-3" />
+                  <span>COMPLETED</span>
+                </div>
+              )}
               {checklist.isArchived && (
                 <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200">
                   Archived
@@ -427,6 +462,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                 <Card key={item.id} className="p-4">
                   <div className="flex items-start gap-3">
                     <Checkbox
+                      ref={(el) => (checkboxRefs.current[item.id] = el)}
                       checked={item.isCompleted}
                       onCheckedChange={(checked) =>
                         toggleItemCompletion(item.id, checked as boolean)
@@ -491,6 +527,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                 <Card key={item.id} className="p-4">
                   <div className="flex items-start gap-3">
                     <Checkbox
+                      ref={(el) => (checkboxRefs.current[item.id] = el)}
                       checked={item.isCompleted}
                       onCheckedChange={(checked) =>
                         toggleItemCompletion(item.id, checked as boolean)
@@ -526,6 +563,17 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
           </Card>
         )}
       </div>
+
+      {/* Celebration Modal */}
+      {checklist && (
+        <ConfettiModal
+          isOpen={showCelebrationModal}
+          onClose={() => setShowCelebrationModal(false)}
+          checklistTitle={checklist.title}
+          completedItems={checklist.stats.completedItems}
+          totalItems={checklist.stats.totalItems}
+        />
+      )}
     </div>
   );
 }

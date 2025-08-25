@@ -11,13 +11,13 @@ interface StudentDashboardProps {
     date: string;
     duration: number;
     status: string;
-    notes?: string;
-    homework?: string;
+    notes?: string | null;
+    homework?: string | null;
   }>;
   studentProfile: {
     teacherName: string;
     teacherEmail: string;
-    goals?: string;
+    goals?: string | null;
     instrument: string;
   };
 }

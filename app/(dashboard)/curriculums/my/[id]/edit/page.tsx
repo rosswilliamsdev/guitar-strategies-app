@@ -34,7 +34,7 @@ export default async function EditPersonalChecklistPage({ params }: PageProps) {
         </p>
       </div>
 
-      <ChecklistForm checklistId={params.id} />
+      <ChecklistForm checklist={{ id: params.id, title: "" }} />
     </div>
   );
 }

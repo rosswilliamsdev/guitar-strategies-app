@@ -42,20 +42,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the highest sortOrder for the checklist
-    const maxSortOrder = await prisma.studentChecklistItem.findFirst({
-      where: { checklistId: validatedData.checklistId },
-      orderBy: { sortOrder: "desc" },
-      select: { sortOrder: true },
-    });
-
-    const newSortOrder = (maxSortOrder?.sortOrder || 0) + 1;
-
     const item = await prisma.studentChecklistItem.create({
-      data: {
-        ...validatedData,
-        sortOrder: validatedData.sortOrder || newSortOrder,
-      },
+      data: validatedData,
     });
 
     return NextResponse.json(item, { status: 201 });

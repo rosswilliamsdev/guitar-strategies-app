@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookStudentModal } from "./book-student-modal";
 import { LessonManagementModal } from "./lesson-management-modal";
+import { Skeleton, SkeletonSchedule } from "@/components/ui/skeleton";
 import {
   Calendar,
   Clock,
@@ -26,6 +27,22 @@ import {
   subDays,
   isSameDay,
 } from "date-fns";
+
+// Helper function to format timezone names for display
+const formatTimezone = (timezone: string): string => {
+  const timezoneMap: Record<string, string> = {
+    "America/New_York": "Eastern Time (ET)",
+    "America/Chicago": "Central Time (CT)", 
+    "America/Denver": "Mountain Time (MT)",
+    "America/Los_Angeles": "Pacific Time (PT)",
+    "America/Anchorage": "Alaska Time (AKT)",
+    "Pacific/Honolulu": "Hawaii Time (HST)",
+    "America/Phoenix": "Arizona Time (MST)",
+    "UTC": "UTC",
+  };
+  
+  return timezoneMap[timezone] || timezone;
+};
 
 interface UpcomingLesson {
   id: string;
@@ -83,6 +100,8 @@ interface TeacherScheduleViewProps {
   blockedTimes: BlockedTime[];
   lessonSettings: LessonSettings | null;
   students: Student[];
+  loading?: boolean;
+  timezone?: string;
 }
 
 const DAYS_OF_WEEK = [
@@ -358,6 +377,8 @@ export function TeacherScheduleView({
   blockedTimes,
   lessonSettings,
   students,
+  loading = false,
+  timezone = "America/New_York",
 }: TeacherScheduleViewProps) {
   const [viewMode, setViewMode] = useState<"day" | "week">("day");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -472,9 +493,24 @@ export function TeacherScheduleView({
           {/* Date display (only for day view) */}
           <div className="flex-1">
             {viewMode === "day" && (
-              <h3 className="text-lg font-semibold text-foreground">
-                {format(currentDate, "EEEE, MMMM d, yyyy")}
-              </h3>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {format(currentDate, "EEEE, MMMM d, yyyy")}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  All times shown in {formatTimezone(timezone)}
+                </p>
+              </div>
+            )}
+            {viewMode === "week" && (
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  Weekly Schedule
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  All times shown in {formatTimezone(timezone)}
+                </p>
+              </div>
             )}
           </div>
 
@@ -519,7 +555,12 @@ export function TeacherScheduleView({
           </div>
         </div>
 
-        {viewMode === "day" ? (
+        {loading ? (
+          /* Loading state */
+          <div className="max-w-2xl">
+            <SkeletonSchedule days={1} slotsPerDay={8} />
+          </div>
+        ) : viewMode === "day" ? (
           /* Daily view */
           <div className="max-w-2xl">
             {(() => {

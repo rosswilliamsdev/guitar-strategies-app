@@ -18,7 +18,7 @@ interface ChecklistItem {
 interface CurriculumData {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   sections: Array<{
     id: string;
     title: string;

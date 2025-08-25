@@ -1,19 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { weeklyAvailabilitySchema } from '@/lib/validations';
 import { validateAvailability } from '@/lib/scheduler';
+import {
+  createSuccessResponse,
+  createAuthErrorResponse,
+  createNotFoundResponse,
+  createBadRequestResponse,
+  handleApiError
+} from '@/lib/api-responses';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
     if (!session || session.user.role !== 'TEACHER') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createAuthErrorResponse('Teacher access required');
     }
 
     // Get teacher profile
@@ -31,23 +35,15 @@ export async function GET() {
     });
 
     if (!teacherProfile) {
-      return NextResponse.json(
-        { error: 'Teacher profile not found' },
-        { status: 404 }
-      );
+      return createNotFoundResponse('Teacher profile');
     }
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       availability: teacherProfile.availability
     });
 
   } catch (error) {
-    console.error('Error fetching availability:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch availability' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
@@ -56,10 +52,7 @@ export async function PUT(request: NextRequest) {
     const session = await getServerSession(authOptions);
     
     if (!session || session.user.role !== 'TEACHER') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createAuthErrorResponse('Teacher access required');
     }
 
     const body = await request.json();
@@ -70,10 +63,7 @@ export async function PUT(request: NextRequest) {
     // Additional business logic validation
     const validation = await validateAvailability(session.user.id, validatedData);
     if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
+      return createBadRequestResponse(validation.error);
     }
 
     // Get teacher profile
@@ -82,10 +72,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!teacherProfile) {
-      return NextResponse.json(
-        { error: 'Teacher profile not found' },
-        { status: 404 }
-      );
+      return createNotFoundResponse('Teacher profile');
     }
 
     // Replace all availability with new data (atomic operation)
@@ -115,24 +102,11 @@ export async function PUT(request: NextRequest) {
       ]
     });
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       availability: updatedAvailability
     });
 
   } catch (error) {
-    console.error('Error updating availability:', error);
-    
-    if (error instanceof Error && error.name === 'ZodError') {
-      return NextResponse.json(
-        { error: 'Invalid availability data', details: error.message },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to update availability' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

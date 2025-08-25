@@ -1,41 +1,38 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createSlotBookingSchema } from "@/lib/validations";
 import { calculateMonthlyOccurrences, getMonthlyRate } from "@/lib/slot-helpers";
+import {
+  createSuccessResponse,
+  createAuthErrorResponse,
+  createForbiddenResponse,
+  createNotFoundResponse,
+  createBadRequestResponse,
+  createConflictResponse,
+  createValidationErrorResponse,
+  handleApiError
+} from "@/lib/api-responses";
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return createAuthErrorResponse();
     }
 
     // Only students can book slots
     if (session.user.role !== "STUDENT") {
-      return NextResponse.json(
-        { success: false, error: "Only students can book slots" },
-        { status: 403 }
-      );
+      return createForbiddenResponse("Only students can book slots");
     }
 
     const body = await request.json();
     const validation = createSlotBookingSchema.safeParse(body);
 
     if (!validation.success) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: "Invalid data",
-          details: validation.error.flatten().fieldErrors
-        },
-        { status: 400 }
-      );
+      return createValidationErrorResponse(validation.error);
     }
 
     const { teacherId, dayOfWeek, startTime, duration, startMonth, endMonth } = validation.data;
@@ -47,18 +44,12 @@ export async function POST(request: NextRequest) {
     });
 
     if (!studentProfile) {
-      return NextResponse.json(
-        { success: false, error: "Student profile not found" },
-        { status: 404 }
-      );
+      return createNotFoundResponse("Student profile");
     }
 
     // Verify student is assigned to this teacher
     if (studentProfile.teacherId !== teacherId) {
-      return NextResponse.json(
-        { success: false, error: "You are not assigned to this teacher" },
-        { status: 403 }
-      );
+      return createForbiddenResponse("You are not assigned to this teacher");
     }
 
     // Get teacher settings
@@ -76,25 +67,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (!teacher || !teacher.lessonSettings) {
-      return NextResponse.json(
-        { success: false, error: "Teacher not found or not configured" },
-        { status: 404 }
-      );
+      return createNotFoundResponse("Teacher or lesson settings");
     }
 
     // Check if teacher allows this duration
     if (duration === 30 && !teacher.lessonSettings.allows30Min) {
-      return NextResponse.json(
-        { success: false, error: "Teacher does not offer 30-minute lessons" },
-        { status: 400 }
-      );
+      return createBadRequestResponse("Teacher does not offer 30-minute lessons");
     }
 
     if (duration === 60 && !teacher.lessonSettings.allows60Min) {
-      return NextResponse.json(
-        { success: false, error: "Teacher does not offer 60-minute lessons" },
-        { status: 400 }
-      );
+      return createBadRequestResponse("Teacher does not offer 60-minute lessons");
     }
 
     // Check if teacher is available at this time
@@ -108,10 +90,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!isAvailable) {
-      return NextResponse.json(
-        { success: false, error: "Teacher is not available at this time" },
-        { status: 400 }
-      );
+      return createBadRequestResponse("Teacher is not available at this time");
     }
 
     // Check for conflicting active slots
@@ -126,10 +105,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (conflictingSlot) {
-      return NextResponse.json(
-        { success: false, error: "This time slot is already booked" },
-        { status: 409 }
-      );
+      return createConflictResponse("This time slot is already booked");
     }
 
     // Calculate monthly rate based on teacher's lesson settings
@@ -166,21 +142,16 @@ export async function POST(request: NextRequest) {
       return { slot, subscription };
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
+    return createSuccessResponse(
+      {
         slot: result.slot,
-        subscription: result.subscription,
-        message: "Recurring slot booked successfully"
-      }
-    });
+        subscription: result.subscription
+      },
+      "Recurring slot booked successfully"
+    );
 
   } catch (error) {
-    console.error("Error booking slot:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
@@ -190,20 +161,14 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return createAuthErrorResponse();
     }
 
     const { searchParams } = new URL(request.url);
     const teacherId = searchParams.get('teacherId');
 
     if (!teacherId) {
-      return NextResponse.json(
-        { success: false, error: "Teacher ID is required" },
-        { status: 400 }
-      );
+      return createBadRequestResponse("Teacher ID is required");
     }
 
     // Get teacher availability and current active slots
@@ -221,10 +186,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!teacher || !teacher.lessonSettings) {
-      return NextResponse.json(
-        { success: false, error: "Teacher not found or not configured" },
-        { status: 404 }
-      );
+      return createNotFoundResponse("Teacher or lesson settings");
     }
 
     // Generate available slots based on teacher availability
@@ -285,23 +247,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        availableSlots,
-        teacher: {
-          id: teacher.id,
-          name: teacher.user?.name,
-          timezone: teacher.timezone
-        }
+    return createSuccessResponse({
+      availableSlots,
+      teacher: {
+        id: teacher.id,
+        name: teacher.user?.name,
+        timezone: teacher.timezone
       }
     });
 
   } catch (error) {
-    console.error("Error fetching available slots:", error);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

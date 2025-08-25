@@ -2,9 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { BookingSection } from '@/components/scheduling/BookingSection';
-import { WeeklyLessonDisplay } from '@/components/scheduling/WeeklyLessonDisplay';
-import { LessonCancellationCard } from '@/components/scheduling/LessonCancellationCard';
+import { SchedulingClient } from '@/components/scheduling/SchedulingClient';
 
 export const metadata = {
   title: 'Scheduling - Guitar Strategies',
@@ -93,37 +91,13 @@ export default async function SchedulingPage() {
   const recurringLessons = userData.studentProfile.lessons || [];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">
-            Scheduling
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Manage your lesson schedule and book additional lessons
-          </p>
-        </div>
-
-        {/* Weekly Lesson Time Display and Cancellation */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <WeeklyLessonDisplay 
-            recurringSlots={recurringSlots}
-            teacherName={teacher.user.name}
-            recurringLessons={recurringLessons}
-          />
-          <LessonCancellationCard 
-            studentId={userData.studentProfile.id}
-          />
-        </div>
-
-        {/* Individual Lesson Booking */}
-        <BookingSection
-          teacherId={teacher.id}
-          teacherName={teacher.user.name}
-          hasRecurringSlots={recurringSlots.length > 0 || recurringLessons.length > 0}
-          studentTimezone={userData.studentProfile.goals || "America/New_York"}
-        />
-      </div>
-    </div>
+    <SchedulingClient
+      teacherId={teacher.id}
+      teacherName={teacher.user.name}
+      recurringSlots={recurringSlots}
+      recurringLessons={recurringLessons}
+      studentId={userData.studentProfile.id}
+      studentTimezone={userData.studentProfile.goals || "America/New_York"}
+    />
   );
 }

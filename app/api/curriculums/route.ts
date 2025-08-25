@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        orderBy: { level: "asc" },
+        orderBy: { createdAt: "desc" },
       });
     } else {
       // Admin can see all curriculums

@@ -1,9 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { getAvailableSlots } from '@/lib/scheduler';
 import { addDays } from 'date-fns';
+import {
+  createSuccessResponse,
+  createAuthErrorResponse,
+  createForbiddenResponse,
+  createBadRequestResponse,
+  handleApiError
+} from '@/lib/api-responses';
 
 export async function GET(
   request: NextRequest,
@@ -13,10 +20,7 @@ export async function GET(
     const session = await getServerSession(authOptions);
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return createAuthErrorResponse();
     }
 
     const { teacherId } = params;
@@ -37,10 +41,7 @@ export async function GET(
 
     // Validate date range
     if (endDate <= startDate) {
-      return NextResponse.json(
-        { error: 'End date must be after start date' },
-        { status: 400 }
-      );
+      return createBadRequestResponse('End date must be after start date');
     }
 
     // Check if student is authorized to view this teacher's slots
@@ -52,10 +53,7 @@ export async function GET(
       });
 
       if (!studentProfile || studentProfile.teacherId !== teacherId) {
-        return NextResponse.json(
-          { error: 'Not authorized to view this teacher\'s availability' },
-          { status: 403 }
-        );
+        return createForbiddenResponse('Not authorized to view this teacher\'s availability');
       }
     }
 
@@ -67,8 +65,7 @@ export async function GET(
       studentTimezone
     );
 
-    return NextResponse.json({
-      success: true,
+    return createSuccessResponse({
       slots,
       dateRange: {
         start: startDate.toISOString(),
@@ -78,10 +75,6 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Error fetching available slots:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch available slots' },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

@@ -96,7 +96,9 @@ export function InvoiceDashboard() {
           <div className="h-8 bg-muted rounded w-1/4 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             {[1, 2, 3, 4].map(i => (
-              <Card key={i} className="p-4 h-20 bg-muted"></Card>
+              <Card key={i} className="p-4 h-20 bg-muted">
+                <div></div>
+              </Card>
             ))}
           </div>
         </div>

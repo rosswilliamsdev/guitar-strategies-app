@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState } from "react"
 import { Clock, DollarSign, Calendar, Save, AlertTriangle } from "lucide-react"
