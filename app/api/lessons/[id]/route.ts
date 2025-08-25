@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     }
 
     // Build access control conditions based on user role
-    let whereCondition: any = { id: params.id };
+    const whereCondition: { id: string; teacherId?: string; studentId?: string } = { id: params.id };
     
     if (session.user.role === 'TEACHER') {
       // Teachers can access lessons they taught
@@ -145,7 +145,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     }
 
     // Build access control conditions based on user role
-    let whereCondition: any = { id: params.id };
+    const whereCondition: { id: string; teacherId?: string; studentId?: string } = { id: params.id };
     
     if (session.user.role === 'TEACHER') {
       // Teachers can cancel lessons they are teaching

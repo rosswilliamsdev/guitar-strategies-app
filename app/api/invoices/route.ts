@@ -23,7 +23,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '10');
 
-    const where: any = {
+    const where: {
+      teacherId?: string;
+      studentId?: string;
+      month?: string;
+      status?: string;
+    } = {
       teacherId: session.user.teacherProfile?.id,
     };
 
@@ -141,7 +146,7 @@ export async function POST(request: NextRequest) {
     const invoiceNumber = `INV-${year}-${nextNumber.toString().padStart(3, '0')}`;
 
     // Calculate totals from items
-    const subtotal = body.items.reduce((sum: number, item: any) => sum + item.amount, 0);
+    const subtotal = body.items.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0);
     const total = subtotal; // No taxes/fees for now
 
     const invoice = await prisma.invoice.create({
@@ -154,7 +159,14 @@ export async function POST(request: NextRequest) {
         subtotal,
         total,
         items: {
-          create: body.items.map((item: any) => ({
+          create: body.items.map((item: {
+            description: string;
+            quantity: number;
+            rate: number;
+            amount: number;
+            lessonDate?: string;
+            lessonId?: string;
+          }) => ({
             description: item.description,
             quantity: item.quantity,
             rate: item.rate,

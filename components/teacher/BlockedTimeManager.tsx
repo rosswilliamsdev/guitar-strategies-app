@@ -318,7 +318,7 @@ export function BlockedTimeManager({
 
       {!readonly && (
         <div className="text-sm text-muted-foreground">
-          <p>💡 Tip: Block time for vacations, holidays, or personal commitments. Students won't be able to book lessons during these periods.</p>
+          <p>💡 Tip: Block time for vacations, holidays, or personal commitments. Students won&apos;t be able to book lessons during these periods.</p>
         </div>
       )}
     </div>

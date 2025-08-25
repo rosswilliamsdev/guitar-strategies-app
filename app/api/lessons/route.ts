@@ -54,7 +54,12 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
 
-    let whereClause: any = {};
+    const whereClause: {
+      status?: string;
+      date?: { gte?: Date; lte?: Date };
+      teacherId?: string;
+      studentId?: string;
+    } = {};
 
     // Add status filter if provided
     if (status) {

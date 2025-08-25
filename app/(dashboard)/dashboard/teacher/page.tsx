@@ -29,7 +29,7 @@ export default async function TeacherDashboardPage() {
           Welcome back, {session.user.name}
         </h1>
         <p className="text-body text-brand-gray">
-          Here's what's happening with your students today.
+          Here&apos;s what&apos;s happening with your students today.
         </p>
       </div>
 

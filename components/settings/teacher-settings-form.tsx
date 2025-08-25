@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Save, Key, User, Calendar, Clock, Settings2, CalendarDays } from "lucide-react";
+import { AlertCircle, Save, Key, User, Calendar, Clock, Settings2, CalendarDays, DollarSign } from "lucide-react";
 import { teacherProfileSchema, passwordChangeSchema, timezoneSchema } from "@/lib/validations";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { BlockedTimeManager } from "@/components/teacher/BlockedTimeManager";

@@ -124,7 +124,7 @@ export function WeeklyLessonDisplay({
             Your Weekly Lesson Time
           </h2>
           <p className="text-blue-700">
-            You don't have a recurring weekly lesson slot yet.
+            You don&apos;t have a recurring weekly lesson slot yet.
           </p>
           <p className="text-sm text-blue-600">
             Contact your teacher to set up a regular weekly lesson time with {teacherName}.

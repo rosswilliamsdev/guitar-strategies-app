@@ -208,7 +208,7 @@ export function MainDashboard({ user }: DashboardProps) {
           Welcome back, {user.name}!
         </h1>
         <p className="text-muted-foreground mt-2">
-          Here's what's happening with your {user.role.toLowerCase()} account
+          Here&apos;s what&apos;s happening with your {user.role.toLowerCase()} account
           today.
         </p>
       </div>

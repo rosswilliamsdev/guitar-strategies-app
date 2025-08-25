@@ -240,7 +240,7 @@ export function WeeklyScheduleGrid({
 
       {!readonly && (
         <div className="text-sm text-muted-foreground">
-          <p>💡 Tip: Set your availability for each day of the week. You can copy one day's schedule to all other days using the copy button.</p>
+          <p>💡 Tip: Set your availability for each day of the week. You can copy one day&apos;s schedule to all other days using the copy button.</p>
         </div>
       )}
     </div>

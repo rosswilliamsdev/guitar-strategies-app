@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import { validateAllTeachers } from "@/lib/teacher-validation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RefreshButton } from "@/components/admin/refresh-button";
 import Link from "next/link";
 import { 
-  AlertCircle, 
   CheckCircle, 
   Users, 
   UserCheck, 
@@ -196,12 +196,7 @@ export default async function TeacherValidationPage() {
           </Button>
         </Link>
         
-        <Button
-          onClick={() => window.location.reload()}
-          variant="secondary"
-        >
-          Refresh Report
-        </Button>
+        <RefreshButton />
       </div>
     </div>
   );

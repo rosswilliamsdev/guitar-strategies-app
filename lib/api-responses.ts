@@ -5,19 +5,19 @@ import { ZodError } from 'zod';
 export interface ApiErrorResponse {
   success: false;
   error: string;
-  details?: any;
+  details?: Record<string, unknown> | string[] | unknown;
   timestamp?: string;
 }
 
 // Standardized success response structure
-export interface ApiSuccessResponse<T = any> {
+export interface ApiSuccessResponse<T = unknown> {
   success: true;
   data?: T;
   message?: string;
   timestamp?: string;
 }
 
-export type ApiResponse<T = any> = ApiSuccessResponse<T> | ApiErrorResponse;
+export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 /**
  * Creates a standardized success response
@@ -44,7 +44,7 @@ export function createSuccessResponse<T>(
 export function createErrorResponse(
   error: string,
   status: number = 500,
-  details?: any
+  details?: Record<string, unknown> | string[] | unknown
 ): NextResponse<ApiErrorResponse> {
   return NextResponse.json(
     {
@@ -108,7 +108,7 @@ export function createConflictResponse(message: string): NextResponse<ApiErrorRe
 /**
  * Handles generic bad request errors
  */
-export function createBadRequestResponse(message: string, details?: any): NextResponse<ApiErrorResponse> {
+export function createBadRequestResponse(message: string, details?: Record<string, unknown> | string[] | unknown): NextResponse<ApiErrorResponse> {
   return createErrorResponse(message, 400, details);
 }
 
@@ -117,12 +117,12 @@ export function createBadRequestResponse(message: string, details?: any): NextRe
  */
 export function createInternalErrorResponse(
   message: string = 'Internal server error',
-  originalError?: any
+  originalError?: unknown
 ): NextResponse<ApiErrorResponse> {
   // Log the original error for debugging but don't expose it
   if (originalError) {
     console.error('Internal server error:', originalError);
-    if (originalError.stack) {
+    if (originalError instanceof Error && originalError.stack) {
       console.error('Stack trace:', originalError.stack);
     }
   }
@@ -133,7 +133,7 @@ export function createInternalErrorResponse(
 /**
  * Centralized error handler that maps common error types to appropriate responses
  */
-export function handleApiError(error: any): NextResponse<ApiErrorResponse> {
+export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
   console.error('API Error:', error);
   
   // Zod validation errors
@@ -142,7 +142,7 @@ export function handleApiError(error: any): NextResponse<ApiErrorResponse> {
   }
   
   // Business logic errors (thrown by our application logic)
-  if (error.message) {
+  if (error instanceof Error) {
     // Check for specific business logic error patterns
     if (error.message.includes('not available') || 
         error.message.includes('already booked') ||
@@ -163,6 +163,9 @@ export function handleApiError(error: any): NextResponse<ApiErrorResponse> {
         error.message.includes('required')) {
       return createBadRequestResponse(error.message);
     }
+    
+    // Return error message for other Error instances
+    return createInternalErrorResponse(error.message, error);
   }
   
   // Default to internal server error

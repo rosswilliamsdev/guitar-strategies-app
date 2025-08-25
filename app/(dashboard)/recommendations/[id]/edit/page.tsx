@@ -74,7 +74,7 @@ export default async function EditRecommendationPage({
         <Card className="p-6">
           <h1 className="text-2xl font-semibold text-foreground mb-4">Recommendation Not Found</h1>
           <p className="text-muted-foreground">
-            The recommendation you're looking for doesn't exist.
+            The recommendation you&apos;re looking for doesn&apos;t exist.
           </p>
           <div className="mt-4">
             <Link href="/recommendations">

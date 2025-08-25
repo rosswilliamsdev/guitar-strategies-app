@@ -68,7 +68,7 @@ export function getMonthsBetween(startMonth: string, endMonth?: string): string[
   const months: string[] = [];
   const [startYear, startMonthNum] = startMonth.split('-').map(Number);
   
-  let currentDate = new Date(startYear, startMonthNum - 1, 1);
+  const currentDate = new Date(startYear, startMonthNum - 1, 1);
   let endDate: Date;
   
   if (endMonth) {

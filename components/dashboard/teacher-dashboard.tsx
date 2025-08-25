@@ -192,7 +192,7 @@ export function TeacherDashboard({
           Teacher Dashboard
         </h1>
         <p className="text-muted-foreground mt-2">
-          Welcome back! Here's your teaching overview.
+          Welcome back! Here&apos;s your teaching overview.
         </p>
       </div>
 

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Guitar lesson management platform that integrates with Calendly for scheduling. Teachers use Calendly for booking, then manually log completed lessons in our app to track student progress. The app generates invoices and tracks payments, with teachers collecting payments via Venmo/PayPal/Zelle and marking them as paid.
+Guitar lesson management platform with a complete internal scheduling system. Teachers manage their availability directly in the app, students book time slots through our booking interface, and completed lessons are logged for progress tracking. The app generates invoices and tracks payments, with teachers collecting payments via Venmo/PayPal/Zelle and marking them as paid.
 
 ### Core Philosophy: Booking Time, Not Lessons
 
@@ -23,7 +23,7 @@ Guitar lesson management platform that integrates with Calendly for scheduling. 
 - **Rich Text Editor**: Tiptap with React integration
 - **File Storage**: Vercel Blob 1.1.1
 - **Invoicing**: Simple invoice generation and payment tracking (no external payment processor)
-- **Scheduling**: Calendly integration (external)
+- **Scheduling**: Internal availability management and booking system
 - **Validation**: Zod 4.0.15
 - **Styling Utils**: clsx + tailwind-merge
 
@@ -137,7 +137,6 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 {
   id: string
   userId: string
-  calendlyUrl?: string        // Key integration point
   bio?: string
   hourlyRate?: number         // In cents
   isActive: boolean
@@ -186,7 +185,6 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   notes?: string                // Rich HTML content (up to 5000 chars)
   homework?: string             // assignments for next lesson
   progress?: string             // skill progression notes
-  calendlyEventId?: string      // optional link to Calendly event
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'MISSED'
   
   // Lesson details (optional fields)
@@ -195,6 +193,51 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   nextSteps?: string
   studentRating?: number        // 1-5 scale, student feedback
   teacherRating?: number        // 1-5 scale, teacher assessment
+}
+```
+
+### Scheduling Models
+
+```typescript
+// Teacher Availability
+{
+  id: string
+  teacherId: string
+  dayOfWeek: number            // 0 (Sunday) to 6 (Saturday)
+  startTime: string            // "HH:MM" format (e.g., "14:00")
+  endTime: string              // "HH:MM" format (e.g., "18:00")
+  isActive: boolean            // Enable/disable specific slots
+}
+
+// Teacher Lesson Settings
+{
+  id: string
+  teacherId: string
+  allow30Min: boolean          // Enable 30-minute lessons
+  allow60Min: boolean          // Enable 60-minute lessons
+  price30Min?: number          // Price in cents for 30-min lessons
+  price60Min?: number          // Price in cents for 60-min lessons
+  advanceBookingDays: number   // How far in advance students can book (1-90)
+}
+
+// Recurring Slots (for indefinite weekly lessons)
+{
+  id: string
+  teacherId: string
+  studentId: string
+  dayOfWeek: number            // 0-6 for Sunday-Saturday
+  startTime: string            // "HH:MM" format
+  duration: number             // 30 or 60 minutes
+  status: 'ACTIVE'             // Only active slots stored
+}
+
+// Teacher Blocked Time
+{
+  id: string
+  teacherId: string
+  startDate: DateTime
+  endDate: DateTime
+  reason?: string              // "Vacation", "Personal", etc.
 }
 ```
 
@@ -227,7 +270,7 @@ session.user = {
   email: string
   name: string
   role: Role
-  teacherProfile?: { id, calendlyUrl, bio, hourlyRate }
+  teacherProfile?: { id, bio, hourlyRate }
   studentProfile?: { id, teacherId, skillLevel }
 }
 ```
@@ -272,9 +315,6 @@ NEXTAUTH_URL="http://localhost:3000"
 BLOB_READ_WRITE_TOKEN="vercel_blob_rw_xxxxxxxxxxxxxxxxxxxx"  # ⚠️ NEEDS REAL VALUE
 
 # No payment processor needed - using simple invoice generation
-
-# Optional integrations
-CALENDLY_ACCESS_TOKEN="your-calendly-api-token"             # Optional for API access
 ```
 
 ## Environment Setup Notes
@@ -305,7 +345,7 @@ Teacher:
   Email: teacher@guitarstrategies.com  
   Password: teacher123
   Role: TEACHER
-  Features: Bio, hourly rate ($60/hr), Calendly URL
+  Features: Bio, hourly rate ($60/hr), availability schedule
 
 Student:
   Email: student@guitarstrategies.com
@@ -377,8 +417,14 @@ openssl rand -base64 32
 
 ### Current Lesson Workflow
 
-1. **Scheduling**: Teachers add Calendly URL in settings (`/settings`)
-2. **Booking**: Students book lessons through teacher's external Calendly
+1. **Availability Setup**: Teachers configure weekly availability in settings (`/settings`)
+   - Set available time slots for each day of the week
+   - Configure lesson durations (30 or 60 minutes) and pricing
+   - Set advance booking limits and blocked time periods
+2. **Booking**: Students book time slots directly in the app (`/book-lesson`)
+   - View real-time availability calendar
+   - Select single lessons or recurring weekly series
+   - Receive confirmation with time reservation details
 3. **Teaching**: Lesson happens in person/online
 4. **Logging**: Teacher quickly logs lesson in app (`/lessons/new`):
    - Select student from dropdown
@@ -390,9 +436,9 @@ openssl rand -base64 32
 
 ### User Flow Patterns
 
-- **Teacher Registration**: Create account → Set up Calendly URL → Invite students
+- **Teacher Registration**: Create account → Set up availability schedule → Configure lesson settings → Invite students
 - **Student Registration**: Need teacher invitation or teacher ID during signup
-- **Lesson Flow**: Student books via Calendly → Lesson happens → Teacher logs in our app
+- **Lesson Flow**: Student books time slot in app → Lesson happens → Teacher logs in our app
 - **Payment Flow**: Monthly billing based on number of lessons scheduled/completed in that month
 
 ## API Route Patterns
@@ -521,8 +567,20 @@ import { z } from "zod";
 
 ## Completed Features ✅
 
-### Latest Session Updates (Aug 13, 2025)
-11. **Refined Booking System** ✅
+### Complete Internal Scheduling System (Aug 13, 2025)
+11. **Custom Scheduling System** ✅
+   - Replaced Calendly with complete internal availability management
+   - Teachers set weekly availability schedules with drag-and-drop interface
+   - Support for multiple time slots per day with customizable hours
+   - Lesson duration configuration (30-minute and 60-minute options)
+   - Dynamic pricing per lesson duration
+   - Advance booking limits (configurable 1-90 days)
+   - Blocked time management for vacations and personal time
+   - Timezone-aware scheduling with automatic UTC conversion
+   - Real-time slot generation with conflict detection
+   - Recurring lesson support (2-52 weeks)
+
+12. **Refined Booking System** ✅
    - 30-minute slot standardization for all bookings
    - Consecutive slot selection (1-2 slots) for 30 or 60-minute lessons
    - Simplified interface without pricing display per user request
@@ -530,14 +588,14 @@ import { z } from "zod";
    - Smart duration calculation based on selected slots
    - Clear instructional text for slot selection
 
-12. **UI/UX Improvements** ✅
+13. **UI/UX Improvements** ✅
    - Left-aligned daily schedule view for better readability and cleaner appearance
    - Removed duplicate "Book a Lesson" titles from booking interface
    - Fixed hanging "8:30 PM" time slot display issue in weekly view
    - Timezone-corrected availability display (fixed day-of-week mapping)
    - Improved schedule alignment and visual organization
 
-13. **Navigation Consolidation** ✅
+14. **Navigation Consolidation** ✅
    - Integrated "My Checklists" as section within main Checklists page
    - Created unified route structure: `/curriculums/my/*` for personal checklists
    - Updated all student checklist navigation links consistently
@@ -559,7 +617,7 @@ import { z } from "zod";
 
 3. **Settings Management** ✅
    - Student Settings: Profile info, skill level, goals, parent contact
-   - Teacher Settings: Bio, hourly rate, Calendly URL, contact info
+   - Teacher Settings: Bio, hourly rate, availability schedule, lesson settings, contact info
    - Password change functionality with validation
    - Tabbed interface for better UX
 
@@ -632,7 +690,7 @@ import { z } from "zod";
 ## Remaining Features (Future)
 
 1. **Advanced Invoice Features** (PDF generation, email automation)
-2. **Advanced Scheduling** (Better Calendly integration)
+2. **Advanced Scheduling** (Calendar sync, drag-and-drop rescheduling)
 3. **Student Progress Tracking** (Visual charts, milestones)
 4. **Communication Tools** (In-app messaging)
 5. **Mobile App** (React Native or PWA)

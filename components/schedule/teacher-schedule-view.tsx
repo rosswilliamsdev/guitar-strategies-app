@@ -586,7 +586,7 @@ export function TeacherScheduleView({
                         No availability set
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        You haven't set your availability for {format(currentDate, "EEEE")}s
+                        You haven&apos;t set your availability for {format(currentDate, "EEEE")}s
                       </p>
                       <Link href="/settings">
                         <Button variant="primary" size="sm" className="mt-2">
@@ -698,7 +698,7 @@ export function TeacherScheduleView({
                             No availability set
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            You haven't set your weekly availability yet
+                            You haven&apos;t set your weekly availability yet
                           </p>
                           <Link href="/settings">
                             <Button variant="primary" size="sm" className="mt-2">

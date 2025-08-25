@@ -87,7 +87,7 @@ export function ConfettiModal({
 
           <div className="space-y-2">
             <h3 className="font-medium text-foreground">
-              "{checklistTitle}"
+              &ldquo;{checklistTitle}&rdquo;
             </h3>
             <p className="text-sm text-muted-foreground">
               {completedItems} of {totalItems} items completed
