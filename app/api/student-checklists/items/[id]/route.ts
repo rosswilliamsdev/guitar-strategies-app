@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateStudentChecklistItemSchema, toggleChecklistItemSchema } from "@/lib/validations";
+import { sendEmail, createChecklistCompletionEmail } from "@/lib/email";
 import { z } from "zod";
 
 // PUT /api/student-checklists/items/[id] - Update a checklist item
@@ -160,7 +161,20 @@ export async function PATCH(
     const item = await prisma.studentChecklistItem.findFirst({
       where: { id: params.id },
       include: {
-        checklist: true,
+        checklist: {
+          include: {
+            student: {
+              include: {
+                user: true,
+                teacher: {
+                  include: {
+                    user: true
+                  }
+                }
+              }
+            }
+          }
+        },
       },
     });
 
@@ -178,6 +192,42 @@ export async function PATCH(
         completedAt: validatedData.isCompleted ? new Date() : null,
       },
     });
+
+    // Check if the checklist is now complete and send email if needed
+    if (validatedData.isCompleted) {
+      // Get all items for this checklist to check completion status
+      const allItems = await prisma.studentChecklistItem.findMany({
+        where: { checklistId: item.checklist.id },
+      });
+
+      const totalItems = allItems.length;
+      const completedItems = allItems.filter(item => item.isCompleted).length;
+
+      // If this was the last item to complete the checklist
+      if (completedItems === totalItems && totalItems > 0) {
+        const student = item.checklist.student;
+        const teacher = student.teacher;
+
+        if (student.user.email) {
+          try {
+            const emailContent = createChecklistCompletionEmail(
+              student.user.name || 'Student',
+              item.checklist.title,
+              totalItems,
+              teacher?.user.name
+            );
+
+            await sendEmail({
+              to: student.user.email,
+              subject: `🎉 Congratulations! You completed "${item.checklist.title}"`,
+              html: emailContent
+            });
+          } catch (error) {
+            console.error('Failed to send checklist completion email:', error);
+          }
+        }
+      }
+    }
 
     return NextResponse.json(updatedItem);
   } catch (error) {

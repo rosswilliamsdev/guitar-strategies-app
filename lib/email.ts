@@ -1,0 +1,310 @@
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export interface EmailData {
+  to: string;
+  subject: string;
+  html: string;
+  from?: string;
+}
+
+export async function sendEmail(data: EmailData): Promise<boolean> {
+  try {
+    const result = await resend.emails.send({
+      from: data.from || 'Guitar Strategies <onboarding@resend.dev>',
+      to: [data.to],
+      subject: data.subject,
+      html: data.html,
+    });
+
+    if (result.error) {
+      console.error('Failed to send email:', result.error);
+      return false;
+    }
+
+    console.log('Email sent successfully:', result.data?.id);
+    return true;
+  } catch (error) {
+    console.error('Email sending error:', error);
+    return false;
+  }
+}
+
+// Email template utilities
+export function createBaseTemplate(content: string, title: string): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${title}</title>
+      <style>
+        body {
+          font-family: Inter, system-ui, sans-serif;
+          line-height: 1.6;
+          color: #0a0a0a;
+          background-color: #fafafa;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          text-align: center;
+          border-bottom: 2px solid #14b8b3;
+          padding-bottom: 20px;
+          margin-bottom: 30px;
+        }
+        .header h1 {
+          color: #14b8b3;
+          font-size: 24px;
+          margin: 0;
+        }
+        .content {
+          margin-bottom: 30px;
+        }
+        .footer {
+          text-align: center;
+          font-size: 14px;
+          color: #737373;
+          border-top: 1px solid #e5e5e5;
+          padding-top: 20px;
+        }
+        .button {
+          display: inline-block;
+          background-color: #14b8b3;
+          color: white;
+          padding: 12px 24px;
+          text-decoration: none;
+          border-radius: 6px;
+          font-weight: 500;
+          margin: 10px 0;
+        }
+        .button:hover {
+          background-color: #0d9289;
+        }
+        .info-box {
+          background-color: #f0fdfc;
+          border-left: 4px solid #14b8b3;
+          padding: 16px;
+          margin: 20px 0;
+        }
+        .warning-box {
+          background-color: #fef3cd;
+          border-left: 4px solid #f59e0b;
+          padding: 16px;
+          margin: 20px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🎸 Guitar Strategies</h1>
+        </div>
+        <div class="content">
+          ${content}
+        </div>
+        <div class="footer">
+          <p>This email was sent from your Guitar Strategies lesson management platform.</p>
+          <p>If you have any questions, please contact your teacher directly.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Lesson Cancellation Templates
+export function createLessonCancellationEmailForStudent(
+  studentName: string,
+  teacherName: string,
+  lessonDate: string,
+  lessonTime: string,
+  duration: number
+): string {
+  const content = `
+    <h2>Lesson Cancellation Notice</h2>
+    <p>Hi ${studentName},</p>
+    <p>We wanted to let you know that your guitar lesson has been cancelled:</p>
+    
+    <div class="info-box">
+      <strong>Cancelled Lesson Details:</strong><br>
+      Teacher: ${teacherName}<br>
+      Date: ${lessonDate}<br>
+      Time: ${lessonTime}<br>
+      Duration: ${duration} minutes
+    </div>
+    
+    <p>If you have any questions about this cancellation or need to reschedule, please contact ${teacherName} directly.</p>
+    
+    <p>Thank you for your understanding.</p>
+  `;
+  
+  return createBaseTemplate(content, 'Lesson Cancellation - Guitar Strategies');
+}
+
+export function createLessonCancellationEmailForTeacher(
+  teacherName: string,
+  studentName: string,
+  lessonDate: string,
+  lessonTime: string,
+  duration: number
+): string {
+  const content = `
+    <h2>Lesson Cancellation Confirmation</h2>
+    <p>Hi ${teacherName},</p>
+    <p>This confirms that the following lesson has been cancelled:</p>
+    
+    <div class="info-box">
+      <strong>Cancelled Lesson Details:</strong><br>
+      Student: ${studentName}<br>
+      Date: ${lessonDate}<br>
+      Time: ${lessonTime}<br>
+      Duration: ${duration} minutes
+    </div>
+    
+    <p>The student has been notified of this cancellation.</p>
+    
+    <p>You can view your updated schedule in the Guitar Strategies app.</p>
+  `;
+  
+  return createBaseTemplate(content, 'Lesson Cancellation Confirmation - Guitar Strategies');
+}
+
+// Checklist Completion Templates
+export function createChecklistCompletionEmail(
+  studentName: string,
+  checklistTitle: string,
+  itemCount: number,
+  teacherName?: string
+): string {
+  const content = `
+    <h2>🎉 Congratulations on Completing Your Checklist!</h2>
+    <p>Hi ${studentName},</p>
+    <p>Amazing work! You've just completed your <strong>${checklistTitle}</strong> checklist.</p>
+    
+    <div class="info-box">
+      <strong>Achievement Summary:</strong><br>
+      Checklist: ${checklistTitle}<br>
+      Items Completed: ${itemCount}<br>
+      Completion Date: ${new Date().toLocaleDateString()}
+    </div>
+    
+    <p>🏆 This is a significant milestone in your guitar journey. Every item you've checked off represents progress, practice, and dedication.</p>
+    
+    ${teacherName ? `<p>Your teacher ${teacherName} will be proud of your accomplishment!</p>` : ''}
+    
+    <p>Keep up the excellent work, and remember - every small step forward is still progress!</p>
+    
+    <p>Rock on! 🎸</p>
+  `;
+  
+  return createBaseTemplate(content, 'Checklist Completed! - Guitar Strategies');
+}
+
+// Invoice Overdue Templates
+export function createOverdueInvoiceEmail(
+  studentName: string,
+  invoiceNumber: string,
+  amount: number,
+  dueDate: string,
+  teacherName: string,
+  paymentMethods: {
+    venmoHandle?: string;
+    paypalEmail?: string;
+    zelleEmail?: string;
+  }
+): string {
+  const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  
+  let paymentInfo = '';
+  if (paymentMethods.venmoHandle) {
+    paymentInfo += `<strong>Venmo:</strong> ${paymentMethods.venmoHandle}<br>`;
+  }
+  if (paymentMethods.paypalEmail) {
+    paymentInfo += `<strong>PayPal:</strong> ${paymentMethods.paypalEmail}<br>`;
+  }
+  if (paymentMethods.zelleEmail) {
+    paymentInfo += `<strong>Zelle:</strong> ${paymentMethods.zelleEmail}<br>`;
+  }
+  
+  const content = `
+    <h2>Payment Reminder - Invoice Overdue</h2>
+    <p>Hi ${studentName},</p>
+    <p>We hope you're enjoying your guitar lessons! This is a friendly reminder that your invoice payment is now overdue.</p>
+    
+    <div class="warning-box">
+      <strong>Overdue Invoice Details:</strong><br>
+      Invoice Number: ${invoiceNumber}<br>
+      Amount Due: ${formatCurrency(amount)}<br>
+      Original Due Date: ${dueDate}<br>
+      Teacher: ${teacherName}
+    </div>
+    
+    <p>Please submit your payment as soon as possible using one of the following methods:</p>
+    
+    <div class="info-box">
+      <strong>Payment Methods:</strong><br>
+      ${paymentInfo || 'Please contact your teacher for payment instructions.'}
+    </div>
+    
+    <p>If you have any questions about this invoice or need to discuss payment arrangements, please contact ${teacherName} directly.</p>
+    
+    <p>Thank you for your prompt attention to this matter.</p>
+  `;
+  
+  return createBaseTemplate(content, `Overdue Invoice ${invoiceNumber} - Guitar Strategies`);
+}
+
+// Lesson Booking Templates
+export function createLessonBookingEmail(
+  studentName: string,
+  teacherName: string,
+  lessonDate: string,
+  lessonTime: string,
+  duration: number,
+  isRecurring: boolean = false
+): string {
+  const content = `
+    <h2>✅ Lesson Booked Successfully!</h2>
+    <p>Hi ${studentName},</p>
+    <p>Great news! Your guitar lesson${isRecurring ? ' series' : ''} has been booked successfully.</p>
+    
+    <div class="info-box">
+      <strong>Lesson Details:</strong><br>
+      Teacher: ${teacherName}<br>
+      ${isRecurring ? 'First Lesson ' : ''}Date: ${lessonDate}<br>
+      Time: ${lessonTime}<br>
+      Duration: ${duration} minutes<br>
+      ${isRecurring ? 'Type: Weekly recurring lessons' : 'Type: Single lesson'}
+    </div>
+    
+    ${isRecurring ? 
+      '<p><strong>Recurring Lesson Series:</strong> This booking creates a weekly recurring lesson that will continue until you decide to cancel. Future lessons will be automatically scheduled at the same time each week.</p>' 
+      : ''
+    }
+    
+    <div class="info-box">
+      <strong>Important Reminders:</strong><br>
+      • Please arrive 5 minutes early to your lesson<br>
+      • Bring your guitar and any materials discussed with your teacher<br>
+      • If you need to cancel, please do so at least 2 hours in advance<br>
+      ${isRecurring ? '• You can cancel individual lessons or the entire recurring series from your dashboard' : ''}
+    </div>
+    
+    <p>We're excited for your upcoming lesson${isRecurring ? 's' : ''}! If you have any questions, please contact ${teacherName} directly.</p>
+    
+    <p>Happy practicing! 🎸</p>
+  `;
+  
+  return createBaseTemplate(content, `Lesson Booked${isRecurring ? ' Series' : ''} - Guitar Strategies`);
+}

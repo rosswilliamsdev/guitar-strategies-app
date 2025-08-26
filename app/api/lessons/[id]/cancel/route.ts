@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { canCancelLesson } from '@/lib/lesson-cleanup';
+import { sendEmail, createLessonCancellationEmailForStudent, createLessonCancellationEmailForTeacher } from '@/lib/email';
 
 export async function POST(
   request: NextRequest,
@@ -23,8 +24,16 @@ export async function POST(
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
       include: {
-        teacher: true,
-        student: true
+        teacher: {
+          include: {
+            user: true
+          }
+        },
+        student: {
+          include: {
+            user: true
+          }
+        }
       }
     });
 
@@ -59,6 +68,61 @@ export async function POST(
         notes: reason ? `Cancelled: ${reason}` : 'Cancelled by teacher'
       }
     });
+
+    // Send email notifications
+    const lessonDate = lesson.date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const lessonTime = lesson.date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    // Send email to student
+    if (lesson.student.user.email) {
+      try {
+        const studentEmailContent = createLessonCancellationEmailForStudent(
+          lesson.student.user.name || 'Student',
+          lesson.teacher.user.name || 'Teacher',
+          lessonDate,
+          lessonTime,
+          lesson.duration
+        );
+        
+        await sendEmail({
+          to: lesson.student.user.email,
+          subject: `Lesson Cancelled - ${lessonDate}`,
+          html: studentEmailContent
+        });
+      } catch (error) {
+        console.error('Failed to send cancellation email to student:', error);
+      }
+    }
+
+    // Send email to teacher
+    if (lesson.teacher.user.email) {
+      try {
+        const teacherEmailContent = createLessonCancellationEmailForTeacher(
+          lesson.teacher.user.name || 'Teacher',
+          lesson.student.user.name || 'Student',
+          lessonDate,
+          lessonTime,
+          lesson.duration
+        );
+        
+        await sendEmail({
+          to: lesson.teacher.user.email,
+          subject: `Lesson Cancellation Confirmation - ${lessonDate}`,
+          html: teacherEmailContent
+        });
+      } catch (error) {
+        console.error('Failed to send cancellation email to teacher:', error);
+      }
+    }
 
     return NextResponse.json({
       success: true,

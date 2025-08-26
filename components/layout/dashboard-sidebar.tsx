@@ -38,6 +38,7 @@ const navItems: NavItem[] = [
   { label: "All Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
   { label: "Teacher Validation", href: "/admin/teacher-validation", roles: ["ADMIN"] },
   { label: "Background Jobs", href: "/admin/background-jobs", roles: ["ADMIN"] },
+  { label: "Email Test", href: "/admin/email-test", roles: ["ADMIN"] },
   { label: "Settings", href: "/settings" },
 ];
 
