@@ -104,11 +104,17 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   const [blockedTimes, setBlockedTimes] = useState<any[]>([]);
   const [schedulingLoading, setSchedulingLoading] = useState(false);
 
-  // Load scheduling data when component mounts
+  // Load profile data when component mounts
   useEffect(() => {
-    loadSchedulingData();
     loadProfileData();
   }, []);
+
+  // Load scheduling data when availability-related tabs are selected
+  useEffect(() => {
+    if (activeTab === 'availability' || activeTab === 'lesson-settings' || activeTab === 'blocked-time') {
+      loadSchedulingData();
+    }
+  }, [activeTab]);
 
   const loadSchedulingData = async () => {
     setSchedulingLoading(true);
@@ -155,7 +161,7 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
       }
 
       const data = await response.json();
-      setAvailability(data.availability);
+      setAvailability(data.availability || []);
       setSuccess('Availability saved successfully!');
       setError('');
     } catch (error: any) {
@@ -650,7 +656,8 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
       {activeTab === 'availability' && (
         <Card className="p-6">
           <WeeklyScheduleGrid
-            availability={availability}
+            key={`availability-${availability?.length || 0}`}
+            availability={availability || []}
             onSave={handleSaveAvailability}
             loading={schedulingLoading}
           />

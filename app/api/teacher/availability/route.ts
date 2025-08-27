@@ -76,19 +76,22 @@ export async function PUT(request: NextRequest) {
     }
 
     // Replace all availability with new data (atomic operation)
-    await prisma.$transaction([
+    await prisma.$transaction(async (tx) => {
       // Delete existing availability
-      prisma.teacherAvailability.deleteMany({
+      await tx.teacherAvailability.deleteMany({
         where: { teacherId: teacherProfile.id }
-      }),
-      // Create new availability
-      prisma.teacherAvailability.createMany({
-        data: validatedData.map(slot => ({
-          ...slot,
-          teacherId: teacherProfile.id
-        }))
-      })
-    ]);
+      });
+      
+      // Create new availability only if there are slots to create
+      if (validatedData.length > 0) {
+        await tx.teacherAvailability.createMany({
+          data: validatedData.map(slot => ({
+            ...slot,
+            teacherId: teacherProfile.id
+          }))
+        });
+      }
+    });
 
     // Fetch updated availability
     const updatedAvailability = await prisma.teacherAvailability.findMany({

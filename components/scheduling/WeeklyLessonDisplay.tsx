@@ -29,6 +29,7 @@ interface SlotWithDetails {
   dayOfWeek: number;
   startTime: string;
   duration: number;
+  perLessonPrice: number;
   teacher: {
     user: { name: string }
   }

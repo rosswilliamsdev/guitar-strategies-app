@@ -35,11 +35,12 @@ export function WeeklyScheduleGrid({
   loading = false,
   readonly = false,
 }: WeeklyScheduleGridProps) {
-  const [localAvailability, setLocalAvailability] = useState<AvailabilitySlot[]>(availability)
+  // Initialize with prop value - the key prop will handle remounting when needed
+  const [localAvailability, setLocalAvailability] = useState<AvailabilitySlot[]>(availability || [])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
-  const slots = readonly ? availability : localAvailability
+  const slots = readonly ? (availability || []) : localAvailability
 
   const handleAddSlot = (dayOfWeek: number) => {
     const newSlot: AvailabilitySlot = {
@@ -88,10 +89,7 @@ export function WeeklyScheduleGrid({
     for (let day = 0; day < 7; day++) {
       if (day === dayOfWeek) continue
       
-      // Remove existing slots for this day
-      const otherSlots = localAvailability.filter(slot => slot.dayOfWeek !== day)
-      
-      // Add copied slots
+      // Add copied slots for this day
       daySlots.forEach(slot => {
         newSlots.push({
           ...slot,
@@ -100,6 +98,7 @@ export function WeeklyScheduleGrid({
       })
     }
     
+    // Keep only the source day's slots and add the new copied slots
     const updated = [
       ...localAvailability.filter(slot => slot.dayOfWeek === dayOfWeek),
       ...newSlots,

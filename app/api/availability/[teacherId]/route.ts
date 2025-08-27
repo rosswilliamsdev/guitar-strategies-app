@@ -14,9 +14,10 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teacherId: string } }
+  { params }: { params: Promise<{ teacherId: string }> }
 ) {
   try {
+    const { teacherId } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session || session.user.role !== 'STUDENT') {
@@ -43,13 +44,13 @@ export async function GET(
     }
 
     // Verify student is assigned to this teacher
-    if (studentProfile.teacherId !== params.teacherId) {
+    if (studentProfile.teacherId !== teacherId) {
       return createForbiddenResponse('Not authorized to view this teacher\'s availability');
     }
 
     // Get available slots
     const slots = await getAvailableSlots(
-      params.teacherId,
+      teacherId,
       new Date(startDate),
       new Date(endDate),
       timezone

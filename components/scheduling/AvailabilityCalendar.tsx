@@ -202,8 +202,8 @@ export function AvailabilityCalendar({
 
       const data = await response.json();
 
-      // Parse dates from ISO strings
-      const parsedSlots = data.slots.map((slot: { start: string; end: string; duration: 30; price: number; available: boolean }) => ({
+      // Parse dates from ISO strings - ensure slots exists and is an array
+      const parsedSlots = (data.slots || []).map((slot: { start: string; end: string; duration: 30; price: number; available: boolean }) => ({
         ...slot,
         start: new Date(slot.start),
         end: new Date(slot.end),
