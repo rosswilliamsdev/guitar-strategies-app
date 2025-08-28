@@ -22,7 +22,6 @@ export default withAuth(
       pathname.startsWith("/students") ||
       pathname.startsWith("/invoices") ||
       pathname.startsWith("/library") ||
-      pathname.startsWith("/payments") ||
       pathname.startsWith("/new-lesson")
     ) {
       if (token?.role !== "TEACHER" && token?.role !== "ADMIN") {

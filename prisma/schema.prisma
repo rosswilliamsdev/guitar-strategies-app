@@ -265,7 +265,11 @@ model Recommendation {
 model Invoice {
   id        String        @id @default(cuid())
   teacherId String
-  studentId String
+  studentId String?       // Optional for custom invoices
+  
+  // Custom invoice fields (for non-system students)
+  customFullName String?   // Full name for custom invoices
+  customEmail    String?   // Email for custom invoices
   
   // Invoice details
   invoiceNumber String        // INV-2025-001, etc.
@@ -286,8 +290,8 @@ model Invoice {
   updatedAt DateTime @updatedAt
 
   // Relations
-  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student StudentProfile @relation(fields: [studentId], references: [id])
+  teacher TeacherProfile  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student StudentProfile? @relation(fields: [studentId], references: [id])
   items   InvoiceItem[]
 
   @@index([teacherId, month])

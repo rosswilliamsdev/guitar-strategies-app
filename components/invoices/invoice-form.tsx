@@ -76,6 +76,10 @@ export function InvoiceForm({
     format(addDays(new Date(), 14), "yyyy-MM-dd")
   );
   const [notes, setNotes] = useState("");
+  
+  // Custom invoice fields
+  const [customFullName, setCustomFullName] = useState("");
+  const [customEmail, setCustomEmail] = useState("");
 
   // Lessons and items
   const [availableLessons, setAvailableLessons] = useState<LessonForInvoice[]>(
@@ -108,7 +112,7 @@ export function InvoiceForm({
 
   // Load lessons when student or month changes
   useEffect(() => {
-    if (selectedStudentId && selectedMonth) {
+    if (selectedStudentId && selectedStudentId !== "custom" && selectedMonth) {
       loadLessonsForMonth();
     }
   }, [selectedStudentId, selectedMonth]);
@@ -255,26 +259,36 @@ export function InvoiceForm({
     try {
       // Skip Zod validation and send data directly to API
       // The API will handle its own validation
+      
+      // Prepare the request body
+      const requestBody: any = {
+        month: selectedMonth,
+        dueDate: new Date(dueDate),
+        items: items.map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          rate: item.rate,
+          amount: item.amount,
+          lessonDate: item.lessonDate,
+          lessonId: item.lessonId,
+        })),
+        notes,
+      };
+      
+      // Add either studentId or custom invoice fields
+      if (selectedStudentId === "custom") {
+        requestBody.customFullName = customFullName;
+        requestBody.customEmail = customEmail;
+      } else {
+        requestBody.studentId = selectedStudentId;
+      }
 
       const response = await fetch("/api/invoices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          studentId: selectedStudentId,
-          month: selectedMonth,
-          dueDate: new Date(dueDate),
-          items: items.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            rate: item.rate,
-            amount: item.amount,
-            lessonDate: item.lessonDate,
-            lessonId: item.lessonId,
-          })),
-          notes,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -322,7 +336,14 @@ export function InvoiceForm({
             <Label htmlFor="student">Student *</Label>
             <Select
               value={selectedStudentId}
-              onValueChange={setSelectedStudentId}
+              onValueChange={(value) => {
+                setSelectedStudentId(value);
+                // Clear custom fields when switching away from custom
+                if (value !== "custom") {
+                  setCustomFullName("");
+                  setCustomEmail("");
+                }
+              }}
             >
               <SelectTrigger className="mt-2">
                 <div className="flex items-center space-x-2">
@@ -331,6 +352,10 @@ export function InvoiceForm({
                 </div>
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="custom">
+                  <span className="font-medium">Custom Invoice (Non-System Student)</span>
+                </SelectItem>
+                <Separator className="my-1" />
                 {students.map((student) => (
                   <SelectItem key={student.id} value={student.id}>
                     {student.user.name}
@@ -355,6 +380,36 @@ export function InvoiceForm({
             </div>
           </div>
         </div>
+        
+        {/* Custom Invoice Fields */}
+        {selectedStudentId === "custom" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="fullName">Full Name *</Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={customFullName}
+                onChange={(e) => setCustomFullName(e.target.value)}
+                placeholder="Enter student's full name"
+                className="mt-2"
+                required={selectedStudentId === "custom"}
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={customEmail}
+                onChange={(e) => setCustomEmail(e.target.value)}
+                placeholder="Enter student's email address"
+                className="mt-2"
+                required={selectedStudentId === "custom"}
+              />
+            </div>
+          </div>
+        )}
 
         <div>
           <Label htmlFor="dueDate">Due Date *</Label>
@@ -372,7 +427,7 @@ export function InvoiceForm({
         </div>
 
         {/* Lesson Selection */}
-        {selectedStudentId && selectedMonth && (
+        {selectedStudentId && selectedStudentId !== "custom" && selectedMonth && (
           <>
             <Separator />
             <div>

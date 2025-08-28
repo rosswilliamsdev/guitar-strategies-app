@@ -5,10 +5,11 @@ import { prisma } from '@/lib/db';
 import { InvoiceForm } from '@/components/invoices/invoice-form';
 
 interface NewInvoicePageProps {
-  searchParams: { studentId?: string; month?: string };
+  searchParams: Promise<{ studentId?: string; month?: string }>;
 }
 
 export default async function NewInvoicePage({ searchParams }: NewInvoicePageProps) {
+  const params = await searchParams;
   const session = await getServerSession(authOptions);
 
   if (!session?.user || session.user.role !== 'TEACHER') {
@@ -66,8 +67,8 @@ export default async function NewInvoicePage({ searchParams }: NewInvoicePagePro
       <InvoiceForm 
         teacherId={session.user.teacherProfile.id}
         students={students}
-        defaultStudentId={searchParams.studentId}
-        defaultMonth={searchParams.month}
+        defaultStudentId={params.studentId}
+        defaultMonth={params.month}
       />
     </div>
   );

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, ChevronRight, Users, CheckCircle } from "lucide-react";
+import { Plus, ChevronRight, Users, CheckCircle, Trophy, Star, Crown, Music, Music2, Volume2 } from "lucide-react";
 
 interface CurriculumSection {
   id: string;
@@ -79,7 +79,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
   };
 
   const getProgressColor = (percent: number) => {
-    if (percent === 100) return "bg-green-500";
+    if (percent === 100) return "bg-gradient-to-r from-teal-400 via-cyan-400 to-slate-400 shadow-lg";
     if (percent >= 75) return "bg-turquoise-500";
     if (percent >= 50) return "bg-blue-500";
     if (percent >= 25) return "bg-yellow-500";
@@ -149,9 +149,19 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {curriculum.title}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-foreground">
+                          {curriculum.title}
+                        </h3>
+                        {userRole === "STUDENT" && studentProgress && studentProgress.progressPercent === 100 && (
+                          <span className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-teal-100 via-cyan-100 to-slate-100 text-teal-800 border border-teal-200 flex items-center gap-1 shadow-md">
+                            <Music className="h-3 w-3 text-teal-600" />
+                            <Star className="h-2 w-2 text-cyan-500" />
+                            Mastered!
+                            <Star className="h-2 w-2 text-slate-400" />
+                          </span>
+                        )}
+                      </div>
                       {curriculum.description && (
                         <p className="text-sm text-muted-foreground mt-1">
                           {curriculum.description}
@@ -182,9 +192,16 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Progress</span>
-                        <span className="font-medium">
-                          {studentProgress.completedItems} /{" "}
-                          {studentProgress.totalItems} completed
+                        <span className={`font-medium ${studentProgress.progressPercent === 100 ? 'text-teal-600' : ''}`}>
+                          {studentProgress.progressPercent === 100 ? (
+                            <span className="flex items-center gap-1">
+                              <Music className="h-4 w-4 text-teal-600" />
+                              <Star className="h-3 w-3 text-cyan-500" />
+                              {studentProgress.completedItems} / {studentProgress.totalItems} mastered!
+                            </span>
+                          ) : (
+                            `${studentProgress.completedItems} / ${studentProgress.totalItems} completed`
+                          )}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">

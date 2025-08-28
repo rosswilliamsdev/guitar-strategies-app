@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { sendEmail, createInvoiceEmail } from '@/lib/email';
+import { format } from 'date-fns';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -19,7 +22,7 @@ export async function POST(
     }
 
     const invoice = await prisma.invoice.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         teacher: {
           include: {
@@ -43,54 +46,64 @@ export async function POST(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
-    // TODO: Implement email sending functionality
-    // For now, return a success response
-    
-    /* Future email implementation could use:
-     * - Resend (recommended)
-     * - SendGrid
-     * - AWS SES
-     * - Nodemailer
-     * 
-     * Example with Resend:
-     * 
-     * import { Resend } from 'resend';
-     * 
-     * const resend = new Resend(process.env.RESEND_API_KEY);
-     * 
-     * const emailHtml = renderInvoiceEmailTemplate(invoice);
-     * 
-     * const { data, error } = await resend.emails.send({
-     *   from: 'Guitar Strategies <invoices@guitarstrategies.com>',
-     *   to: [invoice.student.user.email],
-     *   subject: `Invoice ${invoice.invoiceNumber} from ${invoice.teacher.user.name}`,
-     *   html: emailHtml,
-     *   attachments: [
-     *     {
-     *       filename: `${invoice.invoiceNumber}.pdf`,
-     *       content: pdfBuffer,
-     *     },
-     *   ],
-     * });
-     * 
-     * if (error) {
-     *   throw error;
-     * }
-     */
+    // Determine recipient email and name
+    const recipientEmail = invoice.student ? invoice.student.user.email : invoice.customEmail;
+    const recipientName = invoice.student ? invoice.student.user.name : invoice.customFullName;
 
-    // Update invoice to mark as sent
+    if (!recipientEmail || !recipientName) {
+      return NextResponse.json({ 
+        error: 'No valid recipient email found for this invoice' 
+      }, { status: 400 });
+    }
+
+    // Prepare payment methods
+    const paymentMethods = {
+      venmoHandle: invoice.teacher.venmoHandle || undefined,
+      paypalEmail: invoice.teacher.paypalEmail || undefined,
+      zelleEmail: invoice.teacher.zelleEmail || undefined,
+    };
+
+    // Format month for display
+    const monthDisplay = format(new Date(invoice.month + '-01'), 'MMMM yyyy');
+
+    // Create email content
+    const emailHtml = createInvoiceEmail(
+      recipientName,
+      invoice.invoiceNumber,
+      invoice.total,
+      format(invoice.dueDate, 'MMMM d, yyyy'),
+      invoice.teacher.user.name,
+      monthDisplay,
+      invoice.items.length,
+      paymentMethods
+    );
+
+    // Send the email
+    const emailSent = await sendEmail({
+      to: recipientEmail,
+      subject: `Invoice ${invoice.invoiceNumber} from ${invoice.teacher.user.name}`,
+      html: emailHtml,
+    });
+
+    if (!emailSent) {
+      return NextResponse.json({ 
+        error: 'Failed to send email. Please try again.' 
+      }, { status: 500 });
+    }
+
+    // Update invoice status to SENT
     await prisma.invoice.update({
-      where: { id: params.id },
+      where: { id },
       data: {
-        // Add sentAt field to schema if needed
+        status: 'SENT',
         updatedAt: new Date(),
       },
     });
 
     return NextResponse.json({ 
       success: true,
-      message: 'Email sending not implemented yet. Invoice would be sent to student.',
-      recipient: invoice.student.user.email,
+      message: `Invoice sent successfully to ${recipientEmail}`,
+      recipient: recipientEmail,
     });
 
   } catch (error) {

@@ -147,29 +147,6 @@ export type InvoiceItem = PrismaInvoiceItem & {
   lesson?: Lesson;
 };
 
-export interface InvoiceSummary {
-  month: string;
-  totalEarnings: number; // in cents
-  invoiceCount: number;
-  pendingInvoices: number;
-  paidInvoices: number;
-  overdueInvoices: number;
-  students: Array<{
-    studentId: string;
-    studentName: string;
-    amount: number;
-    lessonsCount: number;
-    status: InvoiceStatus;
-    invoiceId: string;
-    dueDate: Date;
-  }>;
-}
-
-export interface PaymentMethodInfo {
-  venmoHandle?: string;
-  paypalEmail?: string;
-  zelleEmail?: string;
-}
 
 // ========================================
 // Library Types

@@ -30,11 +30,13 @@ interface InvoiceCardProps {
     paidAt: Date | null;
     paymentMethod: string | null;
     paymentNotes: string | null;
-    student: {
+    customFullName?: string | null;
+    customEmail?: string | null;
+    student?: {
       user: {
         name: string | null;
       };
-    };
+    } | null;
     items: Array<{
       id: string;
       description: string;
@@ -125,7 +127,7 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              {invoice.student.user.name} • {format(new Date(invoice.month + '-01'), 'MMMM yyyy')}
+              {invoice.student ? invoice.student.user.name : invoice.customFullName} • {format(new Date(invoice.month + '-01'), 'MMMM yyyy')}
             </p>
             <p className="text-xs text-muted-foreground">
               Due: {format(invoice.dueDate, 'MMM d, yyyy')} • {invoice.items.length} lesson{invoice.items.length !== 1 ? 's' : ''}
@@ -191,7 +193,7 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
         onClose={() => setShowPayModal(false)}
         onConfirm={handleMarkAsPaid}
         invoiceNumber={invoice.invoiceNumber}
-        studentName={invoice.student.user.name || 'Unknown'}
+        studentName={invoice.student ? invoice.student.user.name || 'Unknown' : invoice.customFullName || 'Unknown'}
         amount={invoice.total}
       />
 
@@ -200,7 +202,7 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         invoiceNumber={invoice.invoiceNumber}
-        studentName={invoice.student.user.name || 'Unknown'}
+        studentName={invoice.student ? invoice.student.user.name || 'Unknown' : invoice.customFullName || 'Unknown'}
         isPaid={invoice.status === 'PAID'}
       />
     </>

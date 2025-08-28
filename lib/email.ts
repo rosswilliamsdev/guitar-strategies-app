@@ -308,3 +308,64 @@ export function createLessonBookingEmail(
   
   return createBaseTemplate(content, `Lesson Booked${isRecurring ? ' Series' : ''} - Guitar Strategies`);
 }
+
+// Invoice Email Template
+export function createInvoiceEmail(
+  studentName: string,
+  invoiceNumber: string,
+  amount: number,
+  dueDate: string,
+  teacherName: string,
+  month: string,
+  itemCount: number,
+  paymentMethods: {
+    venmoHandle?: string;
+    paypalEmail?: string;
+    zelleEmail?: string;
+  }
+): string {
+  const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  
+  let paymentInfo = '';
+  if (paymentMethods.venmoHandle) {
+    paymentInfo += `<strong>Venmo:</strong> ${paymentMethods.venmoHandle}<br>`;
+  }
+  if (paymentMethods.paypalEmail) {
+    paymentInfo += `<strong>PayPal:</strong> ${paymentMethods.paypalEmail}<br>`;
+  }
+  if (paymentMethods.zelleEmail) {
+    paymentInfo += `<strong>Zelle:</strong> ${paymentMethods.zelleEmail}<br>`;
+  }
+  
+  const content = `
+    <h2>📄 New Invoice from ${teacherName}</h2>
+    <p>Hi ${studentName},</p>
+    <p>You have a new invoice for your guitar lessons. Here are the details:</p>
+    
+    <div class="info-box">
+      <strong>Invoice Details:</strong><br>
+      Invoice Number: ${invoiceNumber}<br>
+      Period: ${month}<br>
+      Amount Due: ${formatCurrency(amount)}<br>
+      Due Date: ${dueDate}<br>
+      Number of Lessons: ${itemCount}
+    </div>
+    
+    <p>Please submit your payment by the due date using one of the following methods:</p>
+    
+    <div class="info-box">
+      <strong>Payment Methods:</strong><br>
+      ${paymentInfo || 'Please contact your teacher for payment instructions.'}
+    </div>
+    
+    <p>When making your payment, please include the invoice number <strong>${invoiceNumber}</strong> in your payment reference.</p>
+    
+    <p>Thank you for your continued commitment to your guitar lessons!</p>
+    
+    <p>If you have any questions about this invoice, please contact ${teacherName} directly.</p>
+    
+    <p>Keep rocking! 🎸</p>
+  `;
+  
+  return createBaseTemplate(content, `Invoice ${invoiceNumber} - Guitar Strategies`);
+}

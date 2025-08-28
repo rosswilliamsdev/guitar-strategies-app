@@ -104,22 +104,39 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
-    // Validate that the student exists and belongs to this teacher
-    const student = await prisma.studentProfile.findUnique({
-      where: { 
-        id: body.studentId,
-      },
-      include: {
-        user: true,
-      },
-    });
+    // Check if this is a custom invoice or regular invoice
+    let studentId: string | null = null;
+    let customFullName: string | null = null;
+    let customEmail: string | null = null;
+    
+    if (body.studentId) {
+      // Regular invoice - validate that the student exists and belongs to this teacher
+      const student = await prisma.studentProfile.findUnique({
+        where: { 
+          id: body.studentId,
+        },
+        include: {
+          user: true,
+        },
+      });
 
-    if (!student) {
-      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
-    }
+      if (!student) {
+        return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+      }
 
-    if (student.teacherId !== session.user.teacherProfile.id) {
-      return NextResponse.json({ error: 'Student does not belong to this teacher' }, { status: 403 });
+      if (student.teacherId !== session.user.teacherProfile.id) {
+        return NextResponse.json({ error: 'Student does not belong to this teacher' }, { status: 403 });
+      }
+      
+      studentId = body.studentId;
+    } else if (body.customFullName && body.customEmail) {
+      // Custom invoice for non-system student
+      customFullName = body.customFullName;
+      customEmail = body.customEmail;
+    } else {
+      return NextResponse.json({ 
+        error: 'Either studentId or customFullName/customEmail must be provided' 
+      }, { status: 400 });
     }
 
     
@@ -152,7 +169,9 @@ export async function POST(request: NextRequest) {
     const invoice = await prisma.invoice.create({
       data: {
         teacherId: session.user.teacherProfile.id,
-        studentId: body.studentId,
+        studentId,
+        customFullName,
+        customEmail,
         invoiceNumber,
         month: body.month,
         dueDate: new Date(body.dueDate),

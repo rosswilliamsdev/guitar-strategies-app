@@ -6,7 +6,6 @@ export const NAVIGATION = {
     { label: 'Library', href: '/library' },
     { label: 'Recommendations', href: '/recommendations' },
     { label: 'Schedule', href: '/schedule', roles: ['TEACHER'] },
-    { label: 'Payments', href: '/payments', roles: ['TEACHER'] },
     { label: 'Settings', href: '/settings' },
   ],
   auth: [

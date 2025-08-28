@@ -25,6 +25,8 @@ interface InvoiceData {
   paidAt?: string | Date;
   paymentMethod?: string;
   paymentNotes?: string;
+  customFullName?: string | null;
+  customEmail?: string | null;
   teacher: {
     user: {
       name: string;
@@ -35,13 +37,13 @@ interface InvoiceData {
     paypalEmail?: string;
     zelleEmail?: string;
   };
-  student: {
+  student?: {
     user: {
       name: string;
       email: string;
     };
     phoneNumber?: string;
-  };
+  } | null;
   items: Array<{
     id: string;
     description: string;
@@ -164,10 +166,19 @@ export function InvoiceTemplate({
   const handleSendInvoice = async () => {
     setIsLoading(true);
     try {
-      await fetch(`/api/invoices/${invoice.id}/send`, { method: "POST" });
-      // Show success notification
+      const response = await fetch(`/api/invoices/${invoice.id}/send`, { method: "POST" });
+      const result = await response.json();
+      
+      if (response.ok) {
+        alert(`Invoice sent successfully to ${result.recipient}`);
+        // Refresh the page to update invoice status
+        window.location.reload();
+      } else {
+        alert(result.error || 'Failed to send invoice');
+      }
     } catch (error) {
       console.error("Error sending invoice:", error);
+      alert('Failed to send invoice. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -259,16 +270,27 @@ export function InvoiceTemplate({
           </div>
         </div>
 
-        {/* To (Student) */}
+        {/* To (Student or Custom) */}
         <div>
           <h3 className="font-semibold text-foreground mb-3">To:</h3>
           <div className="space-y-1 text-muted-foreground">
-            <p className="font-medium text-foreground">
-              {invoice.student?.user?.name}
-            </p>
-            <p>{invoice.student?.user?.email}</p>
-            {invoice.student?.phoneNumber && (
-              <p>{invoice.student.phoneNumber}</p>
+            {invoice.student ? (
+              <>
+                <p className="font-medium text-foreground">
+                  {invoice.student.user.name}
+                </p>
+                <p>{invoice.student.user.email}</p>
+                {invoice.student.phoneNumber && (
+                  <p>{invoice.student.phoneNumber}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="font-medium text-foreground">
+                  {invoice.customFullName}
+                </p>
+                <p>{invoice.customEmail}</p>
+              </>
             )}
           </div>
         </div>

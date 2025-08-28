@@ -275,6 +275,71 @@ session.user = {
 }
 ```
 
+## Email Notification System Architecture
+
+### Overview
+The Guitar Strategies app implements a comprehensive email notification system using Resend as the service provider. The architecture prioritizes reliability, maintainability, and professional presentation.
+
+### Core Components
+
+#### 1. Email Service Library (`lib/email.ts`)
+- **Provider**: Resend API with environment-stored API key
+- **Central Function**: `sendEmail()` handles all email operations
+- **Error Handling**: Returns boolean success/failure with comprehensive error logging
+- **Configuration**: Default sender "Guitar Strategies <onboarding@resend.dev>"
+- **Reliability**: Graceful failure handling - email failures don't break main operations
+
+#### 2. Email Templates
+- **Design System**: Professional HTML templates with responsive design
+- **Styling**: Consistent turquoise accent colors (#14b8b3), OpenAI-inspired design
+- **Structure**: Base template wrapper (header, content area, footer)
+- **Responsive**: Mobile-optimized with clean typography
+
+### Email Types & Triggers
+
+#### Lesson Management
+- **Cancellation Emails**: Dual perspective (student/teacher) with lesson details
+  - Triggered: `/api/lessons/[id]/cancel` endpoint
+  - Data: Date, time, duration, participant names
+- **Booking Confirmations**: Single vs recurring lesson messaging
+  - Triggered: `/api/lessons/book` endpoint
+  - Content: Lesson details, reminders, booking-specific messaging
+
+#### Student Engagement
+- **Checklist Completion**: Achievement celebration emails
+  - Triggered: `/api/student-checklists/items/[id]` at 100% completion
+  - Content: Achievement summary, encouragement, emoji support
+
+#### Business Operations
+- **Invoice Overdue Reminders**: Payment reminder system
+  - Triggered: Manual/automated job execution
+  - Content: Invoice details, payment methods (Venmo/PayPal/Zelle), professional CTAs
+
+### Development & Testing
+
+#### Admin Interface
+- **Testing Route**: `/admin/email-test` (admin-only access)
+- **Features**: Template preview, delivery testing, configuration verification
+- **Purpose**: Debug templates without triggering real events
+
+#### Configuration
+```env
+RESEND_API_KEY=your_resend_api_key_here
+```
+
+### Production Considerations
+- **Domain Verification**: Required for custom sender addresses
+- **Error Resilience**: Email failures logged but don't break primary operations
+- **Scalability**: Centralized service pattern supports easy template additions
+
+### Reusable Pattern
+This architecture provides a template for implementing email notifications in any application:
+1. Single service abstraction (`lib/email.ts`)
+2. Template-based design system
+3. Event-driven triggers
+4. Admin testing interface
+5. Graceful error handling
+
 ## Key File Locations
 
 ### Configuration Files

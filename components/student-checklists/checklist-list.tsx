@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, ChevronRight, CheckCircle2, Clock, Archive } from "lucide-react";
+import { Plus, ChevronRight, CheckCircle2, Clock, Archive, Trophy, Star } from "lucide-react";
 
 interface ChecklistItem {
   id: string;
@@ -59,7 +59,7 @@ export function StudentChecklistList() {
 
 
   const getProgressColor = (percent: number) => {
-    if (percent === 100) return "bg-green-500";
+    if (percent === 100) return "bg-gradient-to-r from-yellow-400 via-orange-400 to-amber-500 shadow-lg";
     if (percent >= 75) return "bg-turquoise-500";
     if (percent >= 50) return "bg-blue-500";
     if (percent >= 25) return "bg-yellow-500";
@@ -138,6 +138,14 @@ export function StudentChecklistList() {
                     <h3 className="text-lg font-semibold text-foreground">
                       {checklist.title}
                     </h3>
+                    {checklist.stats.progressPercent === 100 && (
+                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1 shadow-sm">
+                        <Trophy className="h-3 w-3 text-yellow-600" />
+                        <Star className="h-2 w-2 text-yellow-500" />
+                        Complete!
+                        <Star className="h-2 w-2 text-yellow-500" />
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -148,6 +156,12 @@ export function StudentChecklistList() {
                   <CheckCircle2 className="h-4 w-4" />
                   <span>
                     {checklist.stats.completedItems} / {checklist.stats.totalItems} items
+                    {checklist.stats.progressPercent === 100 && (
+                      <span className="text-amber-600 font-medium flex items-center gap-1">
+                        <Trophy className="h-3 w-3" />
+                        completed
+                      </span>
+                    )}
                   </span>
                 </div>
                 {checklist.items.some(item => item.dueDate) && (
@@ -162,7 +176,17 @@ export function StudentChecklistList() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium">{checklist.stats.progressPercent}%</span>
+                  <span className={`font-medium ${checklist.stats.progressPercent === 100 ? 'text-amber-600' : ''}`}>
+                    {checklist.stats.progressPercent === 100 ? (
+                      <span className="flex items-center gap-1">
+                        <Trophy className="h-4 w-4 text-yellow-600" />
+                        <Star className="h-3 w-3 text-yellow-500" />
+                        {checklist.stats.progressPercent}% completed!
+                      </span>
+                    ) : (
+                      `${checklist.stats.progressPercent}%`
+                    )}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
@@ -183,8 +207,9 @@ export function StudentChecklistList() {
                     </span>
                   )}
                   {checklist.stats.progressPercent === 100 && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700 border border-green-200">
-                      Completed
+                    <span className="px-3 py-1 text-xs rounded-full bg-gradient-to-r from-yellow-100 to-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1 shadow-sm">
+                      <Trophy className="h-3 w-3 text-yellow-600" />
+                      Complete!
                     </span>
                   )}
                 </div>

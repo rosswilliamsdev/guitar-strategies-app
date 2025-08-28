@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
-    const difficulty = formData.get('difficulty') as string;
     const isPublic = formData.get('isPublic') === 'true';
     const tags = formData.get('tags') as string;
 
@@ -96,7 +95,6 @@ export async function POST(request: NextRequest) {
           fileUrl,
           teacherId: teacherProfile.id,
           category: category as any,
-          difficulty: difficulty || null,
           isPublic,
           tags: tags || null,
         }

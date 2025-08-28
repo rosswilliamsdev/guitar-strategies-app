@@ -5,9 +5,10 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -15,7 +16,7 @@ export async function GET(
     }
 
     const invoice = await prisma.invoice.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         teacher: {
           include: {
@@ -53,9 +54,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -69,7 +71,7 @@ export async function PUT(
     const body = await request.json();
 
     const existingInvoice = await prisma.invoice.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!existingInvoice) {
@@ -99,7 +101,7 @@ export async function PUT(
     }
 
     const invoice = await prisma.invoice.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
         teacher: {
@@ -130,9 +132,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
@@ -144,7 +147,7 @@ export async function DELETE(
     }
 
     const existingInvoice = await prisma.invoice.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     if (!existingInvoice) {
@@ -159,7 +162,7 @@ export async function DELETE(
     // No status restriction - teachers can delete any of their invoices
 
     await prisma.invoice.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });

@@ -5,10 +5,11 @@ import { prisma } from '@/lib/db';
 import { InvoiceTemplate } from '@/components/invoices/invoice-template';
 
 interface InvoicePageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default async function InvoicePage({ params }: InvoicePageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -16,7 +17,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   }
 
   const invoice = await prisma.invoice.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       teacher: {
         include: {
@@ -38,7 +39,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
   // Check authorization
   const isTeacher = session.user.role === 'TEACHER' && invoice.teacherId === session.user.teacherProfile?.id;
-  const isStudent = session.user.role === 'STUDENT' && invoice.studentId === session.user.studentProfile?.id;
+  const isStudent = session.user.role === 'STUDENT' && invoice.studentId && invoice.studentId === session.user.studentProfile?.id;
   const isAdmin = session.user.role === 'ADMIN';
 
   if (!isTeacher && !isStudent && !isAdmin) {
@@ -53,10 +54,12 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 }
 
 export async function generateMetadata({ params }: InvoicePageProps) {
+  const { id } = await params;
   const invoice = await prisma.invoice.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       invoiceNumber: true,
+      customFullName: true,
       student: {
         select: {
           user: {
@@ -75,8 +78,10 @@ export async function generateMetadata({ params }: InvoicePageProps) {
     };
   }
 
+  const studentName = invoice.student ? invoice.student.user.name : invoice.customFullName;
+  
   return {
-    title: `${invoice.invoiceNumber} - ${invoice.student.user.name} | Guitar Strategies`,
-    description: `Invoice ${invoice.invoiceNumber} for ${invoice.student.user.name}`,
+    title: `${invoice.invoiceNumber} - ${studentName} | Guitar Strategies`,
+    description: `Invoice ${invoice.invoiceNumber} for ${studentName}`,
   };
 }

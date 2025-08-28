@@ -11,15 +11,16 @@ import { InvoiceCard } from '@/components/invoices/invoice-card';
 import type { InvoiceStatus } from '@/types';
 
 interface InvoicesPageProps {
-  searchParams: { 
+  searchParams: Promise<{ 
     student?: string; 
     status?: InvoiceStatus; 
     month?: string;
     page?: string;
-  };
+  }>;
 }
 
 export default async function InvoicesPage({ searchParams }: InvoicesPageProps) {
+  const params = await searchParams;
   const session = await getServerSession(authOptions);
 
   if (!session?.user || session.user.role !== 'TEACHER') {
@@ -30,7 +31,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     redirect('/settings');
   }
 
-  const page = parseInt(searchParams.page || '1');
+  const page = parseInt(params.page || '1');
   const limit = 10;
 
   // Build where clause for invoices
@@ -43,16 +44,16 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
     teacherId: session.user.teacherProfile.id,
   };
 
-  if (searchParams.student) {
-    invoiceWhere.studentId = searchParams.student;
+  if (params.student) {
+    invoiceWhere.studentId = params.student;
   }
 
-  if (searchParams.status) {
-    invoiceWhere.status = searchParams.status;
+  if (params.status) {
+    invoiceWhere.status = params.status;
   }
 
-  if (searchParams.month) {
-    invoiceWhere.month = searchParams.month;
+  if (params.month) {
+    invoiceWhere.month = params.month;
   }
 
   // Get invoices and total count
@@ -136,7 +137,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="font-medium text-foreground mb-2">No Invoices Found</h3>
           <p className="text-muted-foreground mb-4">
-            {searchParams.student || searchParams.month || searchParams.status
+            {params.student || params.month || params.status
               ? 'No invoices match your current filters.'
               : 'You haven\'t created any invoices yet.'}
           </p>
@@ -155,7 +156,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
             <Link
               key={pageNum}
-              href={`/invoices?page=${pageNum}${searchParams.student ? `&student=${searchParams.student}` : ''}${searchParams.status ? `&status=${searchParams.status}` : ''}${searchParams.month ? `&month=${searchParams.month}` : ''}`}
+              href={`/invoices?page=${pageNum}${params.student ? `&student=${params.student}` : ''}${params.status ? `&status=${params.status}` : ''}${params.month ? `&month=${params.month}` : ''}`}
             >
               <Button
                 variant={page === pageNum ? 'primary' : 'secondary'}

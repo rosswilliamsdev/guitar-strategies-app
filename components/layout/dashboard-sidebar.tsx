@@ -32,7 +32,6 @@ const navItems: NavItem[] = [
   },
   { label: "Schedule", href: "/schedule", roles: ["TEACHER"] },
   { label: "Invoices", href: "/invoices", roles: ["TEACHER"] },
-  { label: "Payments", href: "/payments", roles: ["TEACHER"] },
   { label: "Manage Teachers", href: "/admin/teachers", roles: ["ADMIN"] },
   { label: "Manage Students", href: "/admin/students", roles: ["ADMIN"] },
   { label: "All Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
