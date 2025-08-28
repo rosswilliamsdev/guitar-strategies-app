@@ -14,8 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Upload, X, FileText, AlertCircle } from "lucide-react";
 
 interface LibraryUploadProps {
@@ -63,9 +61,6 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,30 +85,13 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
     setSelectedFile(file);
     setError("");
 
-    // Auto-fill title if empty
+    // Auto-fill title if empty (but user can clear it later)
     if (!title) {
       const fileName = file.name.split(".").slice(0, -1).join(".");
       setTitle(fileName);
     }
   };
 
-  const addTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
-
-  const handleTagKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addTag();
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,8 +112,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
       formData.append("description", description);
       formData.append("category", category);
       formData.append("difficulty", difficulty);
-      formData.append("isPublic", isPublic.toString());
-      formData.append("tags", JSON.stringify(tags));
+      formData.append("isPublic", "true");
       formData.append("teacherId", teacherId);
 
       const response = await fetch("/api/library/upload", {
@@ -222,15 +199,17 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
 
         {/* Title */}
         <div>
-          <Label htmlFor="title">Title *</Label>
+          <Label htmlFor="title">Title</Label>
           <Input
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
+            placeholder={selectedFile ? `Default: ${selectedFile.name.split('.').slice(0, -1).join('.')}` : "Title (optional - will use filename if empty)"}
             className="mt-2"
-            required
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Leave blank to use the filename as the title
+          </p>
         </div>
 
         {/* Description */}
@@ -279,53 +258,6 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
               </SelectContent>
             </Select>
           </div>
-        </div>
-
-        {/* Tags */}
-        <div>
-          <Label htmlFor="tags">Tags</Label>
-          <div className="mt-2">
-            <div className="flex flex-wrap gap-2 mb-2">
-              {tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  className="flex items-center space-x-1 bg-muted text-muted-foreground border"
-                >
-                  <span>{tag}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="ml-1 hover:text-destructive"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-            <div className="flex space-x-2">
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={handleTagKeyDown}
-                placeholder="Add tags"
-              />
-              <Button type="button" onClick={addTag} variant="secondary">
-                Add Tag
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Public checkbox */}
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="isPublic"
-            checked={isPublic}
-            onCheckedChange={(checked) => setIsPublic(checked as boolean)}
-          />
-          <Label htmlFor="isPublic" className="text-sm">
-            Make this resource visible to other teachers
-          </Label>
         </div>
 
         {/* Submit */}

@@ -26,12 +26,12 @@ export async function POST(request: NextRequest) {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
-    const isPublic = formData.get('isPublic') === 'true';
-    const tags = formData.get('tags') as string;
+    // All resources are now public by default
+    const isPublic = true;
 
-    if (!file || !title || !category) {
+    if (!file || !category) {
       return NextResponse.json({ 
-        error: 'Missing required fields: file, title, and category are required' 
+        error: 'Missing required fields: file and category are required' 
       }, { status: 400 });
     }
 
@@ -85,10 +85,13 @@ export async function POST(request: NextRequest) {
         fileUrl = `https://mock-storage.example.com/files/${file.name}`;
       }
 
+      // Use filename as title if no title provided
+      const finalTitle = title && title.trim() ? title.trim() : file.name.split('.').slice(0, -1).join('.');
+
       // Create library item in database
       const libraryItem = await prisma.libraryItem.create({
         data: {
-          title,
+          title: finalTitle,
           description: description || null,
           fileName: file.name,
           fileSize: file.size,
@@ -96,7 +99,6 @@ export async function POST(request: NextRequest) {
           teacherId: teacherProfile.id,
           category: category as any,
           isPublic,
-          tags: tags || null,
         }
       });
 

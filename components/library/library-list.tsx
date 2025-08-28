@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Select, 
   SelectContent, 
@@ -19,8 +20,14 @@ import {
   BookOpen, 
   Target,
   Search,
-  Filter
+  Filter,
+  Trash2,
+  AlertTriangle,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
+import { FilePreviewModal } from "./file-preview-modal";
 
 interface LibraryItem {
   id: string;
@@ -112,9 +119,20 @@ export function LibraryList({ items }: LibraryListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [dragEnd, setDragEnd] = useState<{ x: number; y: number } | null>(null);
+  const [mouseDownTime, setMouseDownTime] = useState<number>(0);
+  const [sortColumn, setSortColumn] = useState<'name' | 'category' | 'date'>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [previewFile, setPreviewFile] = useState<LibraryItem | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const filteredItems = useMemo(() => {
-    return items.filter(item => {
+    const filtered = items.filter(item => {
       const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -124,9 +142,241 @@ export function LibraryList({ items }: LibraryListProps) {
       
       return matchesSearch && matchesCategory && matchesDifficulty;
     });
-  }, [items, searchTerm, selectedCategory, selectedDifficulty]);
+
+    // Sort the filtered items
+    const sorted = [...filtered].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (sortColumn) {
+        case 'name':
+          aValue = a.title.toLowerCase();
+          bValue = b.title.toLowerCase();
+          break;
+        case 'category':
+          aValue = categoryConfig[a.category as keyof typeof categoryConfig]?.label.toLowerCase() || '';
+          bValue = categoryConfig[b.category as keyof typeof categoryConfig]?.label.toLowerCase() || '';
+          break;
+        case 'date':
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+        default:
+          aValue = a.title.toLowerCase();
+          bValue = b.title.toLowerCase();
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else {
+        return sortDirection === 'asc' 
+          ? (aValue as number) - (bValue as number)
+          : (bValue as number) - (aValue as number);
+      }
+    });
+
+    return sorted;
+  }, [items, searchTerm, selectedCategory, selectedDifficulty, sortColumn, sortDirection]);
 
   const categories = Object.keys(categoryConfig);
+
+  const handleSort = (column: 'name' | 'category' | 'date', event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    if (sortColumn === column) {
+      // Same column clicked, toggle direction
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column clicked, set to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: 'name' | 'category' | 'date') => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="h-3 w-3" />
+      : <ChevronDown className="h-3 w-3" />;
+  };
+
+  const handleItemClick = (itemId: string, event: React.MouseEvent) => {
+    // Don't handle click if we just finished dragging
+    if (isDragging) {
+      return;
+    }
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (event.metaKey || event.ctrlKey) {
+      // Cmd/Ctrl+click: toggle selection
+      setSelectedItems(prev => 
+        prev.includes(itemId) 
+          ? prev.filter(id => id !== itemId)
+          : [...prev, itemId]
+      );
+    } else if (event.shiftKey && selectedItems.length > 0) {
+      // Shift+click: select range
+      const currentIndex = filteredItems.findIndex(item => item.id === itemId);
+      const lastSelectedIndex = filteredItems.findIndex(item => selectedItems.includes(item.id));
+      
+      if (currentIndex !== -1 && lastSelectedIndex !== -1) {
+        const start = Math.min(currentIndex, lastSelectedIndex);
+        const end = Math.max(currentIndex, lastSelectedIndex);
+        const rangeIds = filteredItems.slice(start, end + 1).map(item => item.id);
+        setSelectedItems(prev => [...new Set([...prev, ...rangeIds])]);
+      }
+    } else {
+      // Regular click: select only this item
+      setSelectedItems([itemId]);
+    }
+  };
+
+  const handleDoubleClick = (item: LibraryItem) => {
+    setPreviewFile(item);
+  };
+
+  const handlePreviewDownload = () => {
+    if (previewFile) {
+      handleDownload(previewFile);
+    }
+  };
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    setMouseDownTime(Date.now());
+    setDragStart({ x: event.clientX, y: event.clientY });
+    setDragEnd({ x: event.clientX, y: event.clientY });
+    
+    // Clear selection if not holding Cmd/Ctrl and clicking on empty space
+    const target = event.target as HTMLElement;
+    if (!target.closest('[data-item-id]') && !event.metaKey && !event.ctrlKey) {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleMouseMove = useCallback((event: MouseEvent) => {
+    if (dragStart) {
+      const distance = Math.sqrt(
+        Math.pow(event.clientX - dragStart.x, 2) + 
+        Math.pow(event.clientY - dragStart.y, 2)
+      );
+      
+      // Start dragging if mouse has moved more than 5 pixels
+      if (distance > 5 && !isDragging) {
+        setIsDragging(true);
+      }
+      
+      if (isDragging) {
+        setDragEnd({ x: event.clientX, y: event.clientY });
+        
+        // Calculate selection rectangle and select items within it
+        if (containerRef.current) {
+          const containerRect = containerRef.current.getBoundingClientRect();
+          const selectionRect = {
+            left: Math.min(dragStart.x, event.clientX) - containerRect.left,
+            top: Math.min(dragStart.y, event.clientY) - containerRect.top,
+            right: Math.max(dragStart.x, event.clientX) - containerRect.left,
+            bottom: Math.max(dragStart.y, event.clientY) - containerRect.top,
+          };
+          
+          const itemElements = containerRef.current.querySelectorAll('[data-item-id]');
+          const selectedIds: string[] = [];
+          
+          itemElements.forEach(element => {
+            const rect = element.getBoundingClientRect();
+            const relativeRect = {
+              left: rect.left - containerRect.left,
+              top: rect.top - containerRect.top,
+              right: rect.right - containerRect.left,
+              bottom: rect.bottom - containerRect.top,
+            };
+            
+            // Check if item intersects with selection rectangle
+            if (
+              relativeRect.left < selectionRect.right &&
+              relativeRect.right > selectionRect.left &&
+              relativeRect.top < selectionRect.bottom &&
+              relativeRect.bottom > selectionRect.top
+            ) {
+              const itemId = element.getAttribute('data-item-id');
+              if (itemId) selectedIds.push(itemId);
+            }
+          });
+          
+          setSelectedItems(selectedIds);
+        }
+      }
+    }
+  }, [isDragging, dragStart]);
+
+  const handleMouseUp = useCallback(() => {
+    // Small delay to let drag selection complete before allowing clicks
+    setTimeout(() => {
+      setIsDragging(false);
+      setDragStart(null);
+      setDragEnd(null);
+    }, 50);
+  }, []);
+
+  // Add event listeners for drag selection
+  useEffect(() => {
+    if (dragStart) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [dragStart, handleMouseMove, handleMouseUp]);
+
+  const handleBulkDownload = async () => {
+    const selectedItemsData = items.filter(item => selectedItems.includes(item.id));
+    
+    for (const item of selectedItemsData) {
+      try {
+        // Increment download count
+        await fetch(`/api/library/${item.id}/download`, { method: 'POST' });
+        
+        // Download the file
+        const link = document.createElement('a');
+        link.href = item.fileUrl;
+        link.download = item.fileName;
+        link.click();
+        
+        // Small delay between downloads to avoid overwhelming the browser
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        console.error('Error downloading file:', item.title, error);
+      }
+    }
+    
+    setSelectedItems([]);
+  };
+
+  const handleBulkDelete = async () => {
+    setIsDeleting(true);
+    
+    try {
+      const deletePromises = selectedItems.map(itemId =>
+        fetch(`/api/library/${itemId}`, { method: 'DELETE' })
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Refresh the page to update the list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting files:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setSelectedItems([]);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -179,9 +429,36 @@ export function LibraryList({ items }: LibraryListProps) {
       {/* Results */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">
-            {filteredItems.length} {filteredItems.length === 1 ? 'Resource' : 'Resources'}
-          </h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-foreground">
+              {filteredItems.length} {filteredItems.length === 1 ? 'Resource' : 'Resources'}
+            </h2>
+            {selectedItems.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {selectedItems.length} selected
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleBulkDownload}
+                  className="h-8"
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Download
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="h-8"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {filteredItems.length === 0 ? (
@@ -201,63 +478,211 @@ export function LibraryList({ items }: LibraryListProps) {
             </a>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
-            {filteredItems.map((item) => {
-              const categoryInfo = categoryConfig[item.category as keyof typeof categoryConfig];
-              const IconComponent = categoryInfo.icon;
-              
-              return (
-                <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
-                  <div className="flex items-start gap-3">
-                    <div className="p-1.5 bg-muted rounded">
-                      <IconComponent className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-sm text-foreground truncate">
+          <div 
+            ref={containerRef}
+            className="bg-background border border-border rounded-lg overflow-hidden relative select-none min-h-96"
+            onMouseDown={handleMouseDown}
+            style={{ userSelect: 'none' }}
+          >
+            {/* Selection Rectangle */}
+            {isDragging && dragStart && dragEnd && (
+              <div
+                className="absolute bg-primary/20 border border-primary/40 pointer-events-none z-10"
+                style={{
+                  left: Math.min(dragStart.x, dragEnd.x) - (containerRef.current?.getBoundingClientRect().left || 0),
+                  top: Math.min(dragStart.y, dragEnd.y) - (containerRef.current?.getBoundingClientRect().top || 0),
+                  width: Math.abs(dragEnd.x - dragStart.x),
+                  height: Math.abs(dragEnd.y - dragStart.y),
+                }}
+              />
+            )}
+            
+            {/* Table Header - Hidden on mobile */}
+            <div className="hidden md:grid grid-cols-8 gap-4 px-4 py-3 bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <button 
+                className="col-span-4 flex items-center justify-between text-left hover:text-foreground transition-colors cursor-pointer"
+                onClick={(e) => handleSort('name', e)}
+              >
+                <div className="flex items-center gap-2">
+                  <FileText className="h-3 w-3" />
+                  Name
+                </div>
+                {getSortIcon('name')}
+              </button>
+              <button 
+                className="col-span-2 flex items-center justify-between text-left hover:text-foreground transition-colors cursor-pointer"
+                onClick={(e) => handleSort('category', e)}
+              >
+                <span>Category</span>
+                {getSortIcon('category')}
+              </button>
+              <button 
+                className="col-span-2 flex items-center justify-between text-left hover:text-foreground transition-colors cursor-pointer"
+                onClick={(e) => handleSort('date', e)}
+              >
+                <span>Date Added</span>
+                {getSortIcon('date')}
+              </button>
+            </div>
+
+            {/* Table Body */}
+            <div className="divide-y divide-border">
+              {filteredItems.map((item) => {
+                const categoryInfo = categoryConfig[item.category as keyof typeof categoryConfig];
+                const IconComponent = categoryInfo.icon;
+                const fileSize = (item.fileSize / 1024 / 1024).toFixed(1);
+                const createdDate = new Date(item.createdAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                });
+                
+                return (
+                  <div
+                    key={item.id}
+                    data-item-id={item.id}
+                    className={`px-4 py-3 transition-colors cursor-pointer ${
+                      selectedItems.includes(item.id) 
+                        ? 'bg-primary/10 border-l-2 border-l-primary' 
+                        : 'hover:bg-muted/30'
+                    }`}
+                    onClick={(e) => handleItemClick(item.id, e)}
+                    onDoubleClick={() => handleDoubleClick(item)}
+                  >
+                    {/* Desktop Table Row */}
+                    <div className="hidden md:grid grid-cols-8 gap-4 items-center">
+                      {/* Name column */}
+                      <div className="col-span-4 flex items-center gap-3 min-w-0">
+                        <div className="p-1.5 bg-muted rounded flex-shrink-0">
+                          <IconComponent className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className={`font-medium text-sm truncate ${
+                            selectedItems.includes(item.id) ? 'text-primary' : 'text-foreground'
+                          }`}>
                             {item.title}
                           </h3>
                           {item.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            <p className="text-xs text-muted-foreground truncate">
                               {item.description}
                             </p>
                           )}
                         </div>
-                        
-                        <Button
-                          size="sm"
-                          onClick={() => handleDownload(item)}
-                          className="flex-shrink-0"
-                        >
-                          <Download className="h-3 w-3" />
-                        </Button>
                       </div>
-                      
-                      <div className="flex flex-wrap items-center gap-1 mt-2">
-                        <Badge 
-                          className={`text-xs ${categoryInfo.color}`}
-                        >
+
+                      {/* Category column */}
+                      <div className="col-span-2 flex items-center">
+                        <Badge className={`text-xs ${categoryInfo.color}`}>
                           {categoryInfo.label}
                         </Badge>
-                        
-                        {item.difficulty && (
-                          <Badge 
-                            className={`text-xs ${difficultyColors[item.difficulty as keyof typeof difficultyColors]}`}
-                          >
-                            {item.difficulty.toLowerCase()}
+                      </div>
+
+                      {/* Date column */}
+                      <div className="col-span-2 flex items-center">
+                        <span className="text-sm text-muted-foreground">
+                          {createdDate}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden flex items-center gap-3">
+                      <div className="p-1.5 bg-muted rounded flex-shrink-0">
+                        <IconComponent className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-medium text-sm truncate ${
+                          selectedItems.includes(item.id) ? 'text-primary' : 'text-foreground'
+                        }`}>
+                          {item.title}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <Badge className={`text-xs ${categoryInfo.color}`}>
+                            {categoryInfo.label}
                           </Badge>
+                        </div>
+                        {item.description && (
+                          <p className="text-xs text-muted-foreground truncate mt-1">
+                            {item.description}
+                          </p>
                         )}
                       </div>
                     </div>
                   </div>
-                </Card>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Resources"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <AlertTriangle className="h-4 w-4 mr-2 animate-pulse" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete {selectedItems.length} {selectedItems.length === 1 ? 'Resource' : 'Resources'}
+                </>
+              )}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle className="h-8 w-8 text-red-500" />
+          <div>
+            <h3 className="font-semibold text-foreground">Are you sure?</h3>
+            <p className="text-sm text-muted-foreground">
+              This action cannot be undone. This will permanently delete the selected resources.
+            </p>
+          </div>
+        </div>
+        
+        <div className="bg-muted/50 rounded-lg p-3">
+          <p className="text-sm font-medium text-foreground mb-2">
+            Resources to be deleted ({selectedItems.length}):
+          </p>
+          <div className="space-y-1 max-h-32 overflow-y-auto">
+            {items
+              .filter(item => selectedItems.includes(item.id))
+              .map(item => (
+                <div key={item.id} className="text-sm text-muted-foreground">
+                  • {item.title}
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </Modal>
+
+      {/* File Preview Modal */}
+      <FilePreviewModal
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        file={previewFile}
+        onDownload={handlePreviewDownload}
+      />
     </div>
   );
 }

@@ -2,6 +2,18 @@
 
 ## Completed in Latest Session ✅ (Aug 28, 2025)
 
+- [x] **macOS Finder-Style Library Interface**: Complete redesign of library resource management with intuitive desktop-like experience
+- [x] **Advanced Multi-Select System**: Implemented click-to-select, Cmd/Ctrl+click toggle, Shift+click range, and drag-to-select with visual selection rectangle
+- [x] **Sortable Column Headers**: Added sorting for Name, Category, and Date Added columns with visual sort indicators and ascending/descending toggle
+- [x] **File Preview System**: Built comprehensive file preview modal supporting PDFs, images (JPG/PNG/GIF), text files, and graceful fallbacks
+- [x] **Streamlined Upload Process**: Removed tags and public visibility options - all resources now public by default for simplified workflow
+- [x] **Bulk Operations**: Enhanced bulk download and delete functionality with confirmation modals and progress tracking
+- [x] **Visual Design Improvements**: Clean table layout with proper spacing, hover effects, and selection highlighting using turquoise accents
+- [x] **Desktop-Like User Interactions**: Double-click to preview, single-click to select, drag for multi-select - familiar desktop patterns
+- [x] **Comprehensive File Support**: Preview capabilities for multiple file types with loading states and error handling
+
+## Completed in Previous Session ✅ (Aug 28, 2025)
+
 - [x] **Custom Invoice System**: Added ability for teachers to create invoices for students not in the system
 - [x] **Enhanced Email Notifications**: Extended email system to support custom invoice recipients
 - [x] **Flashy Completion Badges**: Implemented trophy/star icons with gradient backgrounds for checklist completion

@@ -104,16 +104,23 @@ export default async function LibraryPage() {
             Manage lesson materials, sheet music, and educational resources
           </p>
         </div>
-        <Link href="/library/upload">
-          <Button>
-            Upload New Resource
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/library/bulk-upload">
+            <Button variant="secondary">
+              Bulk Upload
+            </Button>
+          </Link>
+          <Link href="/library/upload">
+            <Button>
+              Upload New Resource
+            </Button>
+          </Link>
+        </div>
       </div>
 
 
       {/* Library List */}
-      <LibraryList items={libraryItems} teacherId={teacherProfile.id} />
+      <LibraryList items={libraryItems} />
     </div>
   );
 }

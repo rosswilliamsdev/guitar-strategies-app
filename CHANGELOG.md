@@ -7,6 +7,17 @@ This changelog tracks all major changes, features, and fixes made during develop
 ## [Current Version] - 2025-08-28
 
 ### 🎯 **Latest Session Summary (Aug 28, 2025)**
+- **MACOS FINDER-STYLE LIBRARY INTERFACE**: Complete redesign of library resource management with macOS Finder-like functionality
+- **ADVANCED MULTI-SELECT SYSTEM**: Implemented click-to-select, Cmd/Ctrl+click toggle, Shift+click range, and drag-to-select with visual selection rectangle
+- **SORTABLE COLUMNS**: Added column sorting for Name, Category, and Date Added with visual sort indicators and ascending/descending toggle
+- **FILE PREVIEW SYSTEM**: Built comprehensive file preview modal with support for PDFs, images, text files, and fallback displays for other file types
+- **STREAMLINED UPLOAD FORMS**: Removed tags and public visibility options - all resources are now public by default with simplified upload process
+- **BULK OPERATIONS**: Enhanced bulk download and delete functionality with confirmation modals and progress tracking
+- **VISUAL DESIGN IMPROVEMENTS**: Clean table layout with proper spacing, hover effects, and selection highlighting using turquoise accent colors
+- **USER INTERACTION PATTERNS**: Double-click to preview, single-click to select, drag for multi-select - intuitive desktop-like experience
+- **FILE TYPE SUPPORT**: Comprehensive preview support for PDF, images (JPG/PNG/GIF), text files, with graceful fallbacks for documents and MIDI files
+
+### 🎯 **Previous Session Summary (Aug 28, 2025)**
 - **CUSTOM INVOICE SYSTEM**: Added ability for teachers to create invoices for students who aren't in the system yet with custom name and email fields
 - **EMAIL NOTIFICATIONS FOR CUSTOM INVOICES**: Extended email notification system to support custom invoice recipients with professional invoice templates
 - **ENHANCED COMPLETION BADGES**: Implemented flashy completion badges for checklist cards with trophy/star icons and gradient backgrounds
