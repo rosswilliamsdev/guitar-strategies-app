@@ -51,7 +51,7 @@ export function LessonManagementModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           notes,
-          status: lesson.status === "SCHEDULED" ? "COMPLETED" : lesson.status,
+          // Don't change status when saving notes - notes are for reminders, not completion
         }),
       });
 
@@ -179,11 +179,15 @@ export function LessonManagementModal({
             <div className="flex items-center gap-3">
               <Button
                 variant={mode === "notes" ? "primary" : "secondary"}
-                onClick={() => setMode(mode === "notes" ? "view" : "notes")}
+                onClick={() => mode === "notes" ? handleSaveNotes() : setMode("notes")}
+                disabled={isLoading}
                 className="flex items-center gap-2"
               >
                 <FileText className="h-4 w-4" />
-                {isLessonCompleted ? "Edit Notes" : "Add Notes"}
+                {mode === "notes" 
+                  ? (isLoading ? "Saving..." : "Save Notes")
+                  : (lesson.notes ? "Edit Notes" : "Add Notes")
+                }
               </Button>
               
               {cancellationCheck.canCancel ? (

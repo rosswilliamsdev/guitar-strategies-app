@@ -20,25 +20,32 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Scheduling", href: "/scheduling", roles: ["STUDENT"] },
+
   { label: "Lessons", href: "/lessons", roles: ["TEACHER", "STUDENT"] },
   { label: "Checklists", href: "/curriculums", roles: ["TEACHER", "STUDENT"] },
-  { label: "Students", href: "/students", roles: ["TEACHER"] },
   { label: "Library", href: "/library", roles: ["TEACHER"] },
   {
     label: "Recommendations",
     href: "/recommendations",
     roles: ["TEACHER", "STUDENT"],
   },
+  { label: "Students", href: "/students", roles: ["TEACHER"] },
+
   { label: "Schedule", href: "/schedule", roles: ["TEACHER"] },
   { label: "Invoices", href: "/invoices", roles: ["TEACHER"] },
   { label: "Manage Teachers", href: "/admin/teachers", roles: ["ADMIN"] },
   { label: "Manage Students", href: "/admin/students", roles: ["ADMIN"] },
-  { label: "All Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
-  { label: "Teacher Validation", href: "/admin/teacher-validation", roles: ["ADMIN"] },
-  { label: "Background Jobs", href: "/admin/background-jobs", roles: ["ADMIN"] },
+  { label: "Manage Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
+  { label: "Platform Activity", href: "/admin/activity", roles: ["ADMIN"] },
+  {
+    label: "Background Jobs",
+    href: "/admin/background-jobs",
+    roles: ["ADMIN"],
+  },
   { label: "Email Test", href: "/admin/email-test", roles: ["ADMIN"] },
-  { label: "Settings", href: "/settings" },
+  { label: "Scheduling", href: "/scheduling", roles: ["STUDENT"] },
+  { label: "Settings", href: "/admin/settings", roles: ["ADMIN"] },
+  { label: "Settings", href: "/settings", roles: ["TEACHER", "STUDENT"] },
 ];
 
 export function DashboardSidebar({ user }: DashboardSidebarProps) {

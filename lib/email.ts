@@ -272,7 +272,8 @@ export function createLessonBookingEmail(
   lessonDate: string,
   lessonTime: string,
   duration: number,
-  isRecurring: boolean = false
+  isRecurring: boolean = false,
+  invoiceGenerated: boolean = false
 ): string {
   const content = `
     <h2>✅ Lesson Booked Successfully!</h2>
@@ -290,6 +291,16 @@ export function createLessonBookingEmail(
     
     ${isRecurring ? 
       '<p><strong>Recurring Lesson Series:</strong> This booking creates a weekly recurring lesson that will continue until you decide to cancel. Future lessons will be automatically scheduled at the same time each week.</p>' 
+      : ''
+    }
+    
+    ${invoiceGenerated && !isRecurring
+      ? '<div class="warning-box"><strong>📄 Invoice Generated:</strong> An invoice for this lesson has been automatically created and sent to you in a separate email. Please check your inbox for payment details.</div>'
+      : ''
+    }
+    
+    ${isRecurring
+      ? '<div class="info-box"><strong>💰 Monthly Billing:</strong> You\'ll receive a monthly invoice on the 1st of each month for all lessons scheduled in that month.</div>'
       : ''
     }
     

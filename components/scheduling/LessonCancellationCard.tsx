@@ -16,7 +16,7 @@ import {
   AlertCircle,
   AlertTriangle
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format } from "date-fns";
 
 interface UpcomingLesson {
   id: string;
@@ -47,26 +47,25 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
 
   const fetchUpcomingLessons = async () => {
     try {
-      // Fetch all lessons for current month
+      // Fetch all lessons
       const response = await fetch(`/api/lessons`);
       if (!response.ok) throw new Error('Failed to fetch lessons');
       
       const data = await response.json();
       const now = new Date();
-      const monthStart = startOfMonth(now);
-      const monthEnd = endOfMonth(now);
       
-      // Filter to current month and only show lessons that can be cancelled 
-      // (SCHEDULED status and in the future)
-      const currentMonthLessons = (data.lessons || []).filter((lesson: any) => {
-        const lessonDate = new Date(lesson.date);
-        return lessonDate >= monthStart && 
-               lessonDate <= monthEnd && 
-               lesson.status === 'SCHEDULED' &&
-               lessonDate > now; // Only show future lessons that can be cancelled
-      });
+      // Filter to only show lessons that can be cancelled (SCHEDULED status and in the future)
+      // Sort by date and take only the next 5 lessons
+      const upcomingLessons = (data.lessons || [])
+        .filter((lesson: any) => {
+          const lessonDate = new Date(lesson.date);
+          return lesson.status === 'SCHEDULED' &&
+                 lessonDate > now; // Only show future lessons that can be cancelled
+        })
+        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by date (earliest first)
+        .slice(0, 5); // Take only the next 5 lessons
       
-      setUpcomingLessons(currentMonthLessons);
+      setUpcomingLessons(upcomingLessons);
     } catch (error) {
       console.error('Error fetching lessons:', error);
       setError('Failed to load upcoming lessons');
@@ -132,7 +131,7 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
           <AlertTriangle className="h-5 w-5 text-orange-600" />
           <h3 className="text-lg font-semibold">Need to cancel?</h3>
         </div>
-        <p className="text-muted-foreground">No scheduled lessons this month to cancel.</p>
+        <p className="text-muted-foreground">No upcoming scheduled lessons to cancel.</p>
       </Card>
     );
   }
@@ -153,7 +152,7 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
 
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground mb-3">
-          Select a lesson to cancel from your current month schedule:
+          Select a lesson to cancel from your upcoming schedule:
         </p>
         
         {upcomingLessons.map((lesson) => (
@@ -163,7 +162,7 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
           >
             <div className="flex-1">
               <span className="text-sm font-medium">
-                {format(new Date(lesson.date), "h:mm a, MMMM d")} • {lesson.duration} min
+                {format(new Date(lesson.date), "EEE, MMM d 'at' h:mm a")} • {lesson.duration} min
               </span>
             </div>
             

@@ -88,13 +88,19 @@ export function BookingSuccessModal({
   lesson,
   recurringSlot,
   lessons = [],
-  timezone = "America/New_York",
+  timezone = "America/Chicago",
 }: BookingSuccessModalProps) {
   const router = useRouter();
 
   const handleViewLessons = () => {
     onClose();
     router.push("/lessons");
+    router.refresh(); // Refresh to show new lessons
+  };
+  
+  const handleClose = () => {
+    onClose();
+    router.refresh(); // Refresh the page to update availability
   };
 
   const formatPrice = (cents: number) => {
@@ -126,7 +132,7 @@ export function BookingSuccessModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-4">
@@ -185,7 +191,7 @@ export function BookingSuccessModal({
                 </div>
 
                 {/* Schedule */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">
@@ -201,24 +207,19 @@ export function BookingSuccessModal({
                           )
                         : recurringSlot &&
                           `Every ${dayNames[recurringSlot.dayOfWeek]} at ${
-                            recurringSlot.startTime
+                            (() => {
+                              const [hours, minutes] = recurringSlot.startTime.split(':');
+                              const hour = parseInt(hours);
+                              const period = hour >= 12 ? 'PM' : 'AM';
+                              const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                              return `${displayHour}:${minutes} ${period}`;
+                            })()
                           } ${formatTimezone(timezone)}`}
                     </p>
                   </div>
                 </div>
 
-                {/* Value */}
-                {getTotalValue() && (
-                  <div className="flex items-center gap-3">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Investment
-                      </p>
-                      <p className="font-medium">{getTotalValue()}</p>
-                    </div>
-                  </div>
-                )}
+                
               </div>
             </CardContent>
           </Card>
@@ -318,7 +319,7 @@ export function BookingSuccessModal({
 
         <DialogFooter>
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={onClose}>
+            <Button variant="secondary" onClick={handleClose}>
               Close
             </Button>
             <Button

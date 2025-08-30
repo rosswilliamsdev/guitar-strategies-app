@@ -105,23 +105,42 @@ function BookingConfirmationCard({
             hasSelection ? "text-muted-foreground" : "text-muted-foreground/60"
           )}>
             {hasSelection ? (
-              selectedSlots.length === 1 ? (
-                <>
-                  {format(selectedSlots[0].start, "EEEE, MMMM d")} at{" "}
-                  {format(selectedSlots[0].start, "h:mm a")} {formatTimezone(timezone)}
-                  <br />
-                  (30 minutes)
-                  {bookingMode === "recurring" && <span> - every week</span>}
-                </>
+              bookingMode === "recurring" ? (
+                // For recurring bookings, show day and time without specific date
+                selectedSlots.length === 1 ? (
+                  <>
+                    Every {format(selectedSlots[0].start, "EEEE")} at{" "}
+                    {format(selectedSlots[0].start, "h:mm a")} {formatTimezone(timezone)}
+                    <br />
+                    (30 minutes weekly)
+                  </>
+                ) : (
+                  <>
+                    Every {format(selectedSlots[0].start, "EEEE")} from{" "}
+                    {format(selectedSlots[0].start, "h:mm a")} to{" "}
+                    {format(selectedSlots[1].end, "h:mm a")} {formatTimezone(timezone)}
+                    <br />
+                    (60 minutes weekly)
+                  </>
+                )
               ) : (
-                <>
-                  {format(selectedSlots[0].start, "EEEE, MMMM d")} from{" "}
-                  {format(selectedSlots[0].start, "h:mm a")} to{" "}
-                  {format(selectedSlots[1].end, "h:mm a")} {formatTimezone(timezone)}
-                  <br />
-                  (60 minutes)
-                  {bookingMode === "recurring" && <span> - every week</span>}
-                </>
+                // For single bookings, show full date and time
+                selectedSlots.length === 1 ? (
+                  <>
+                    {format(selectedSlots[0].start, "EEEE, MMMM d")} at{" "}
+                    {format(selectedSlots[0].start, "h:mm a")} {formatTimezone(timezone)}
+                    <br />
+                    (30 minutes)
+                  </>
+                ) : (
+                  <>
+                    {format(selectedSlots[0].start, "EEEE, MMMM d")} from{" "}
+                    {format(selectedSlots[0].start, "h:mm a")} to{" "}
+                    {format(selectedSlots[1].end, "h:mm a")} {formatTimezone(timezone)}
+                    <br />
+                    (60 minutes)
+                  </>
+                )
               )
             ) : (
               "Select time slots from the calendar below"
@@ -164,13 +183,14 @@ function BookingConfirmationCard({
 
 export function AvailabilityCalendar({
   teacherId,
-  studentTimezone = "America/New_York",
+  studentTimezone = "America/Chicago",
   onBookSlot,
   onBookRecurring,
   loading = false,
   readonly = false,
   onSelectionChange,
 }: AvailabilityCalendarProps) {
+  // Start from current week, but this is fine since we handle past slots in the backend
   const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date()));
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -185,29 +205,60 @@ export function AvailabilityCalendar({
     setError("");
 
     try {
-      const startDate = currentWeek;
-      const endDate = addDays(currentWeek, 6); // 7 days in the week
+      // For recurring bookings, get availability for the next week to show all possible times
+      // For single bookings, use the selected week
+      let startDate: Date;
+      let endDate: Date;
+      
+      if (bookingMode === "recurring") {
+        // For weekly lessons, always show next week's availability
+        // This gives us a full week of availability patterns
+        const nextWeek = startOfWeek(addWeeks(new Date(), 1));
+        startDate = nextWeek;
+        endDate = addDays(nextWeek, 6);
+      } else {
+        // For single bookings, use the current selected week
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        startDate = currentWeek < today ? today : currentWeek;
+        endDate = addDays(currentWeek, 6);
+      }
 
-      const response = await fetch(
-        `/api/availability/${teacherId}?` +
+      const url = `/api/availability/${teacherId}?` +
           `startDate=${startDate.toISOString()}&` +
           `endDate=${endDate.toISOString()}&` +
-          `timezone=${studentTimezone}`
-      );
+          `timezone=${studentTimezone}`;
+      
+      console.log('🔗 Fetching availability from:', url);
+      const response = await fetch(url);
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Availability API error:', errorData);
         throw new Error(errorData.error || "Failed to load available slots");
       }
 
       const data = await response.json();
+      console.log('✅ Availability data received:', data);
+      console.log('🔍 Data structure:', {
+        hasSlots: 'slots' in data,
+        slotsType: typeof data.slots,
+        slotsLength: Array.isArray(data.slots) ? data.slots.length : 'not array',
+        keys: Object.keys(data)
+      });
 
       // Parse dates from ISO strings - ensure slots exists and is an array
-      const parsedSlots = (data.slots || []).map((slot: { start: string; end: string; duration: 30; price: number; available: boolean }) => ({
+      // The API wraps the response in { success: true, data: { slots: [...] } }
+      const slotsArray = data.data?.slots || data.slots || [];
+      const parsedSlots = slotsArray.map((slot: { start: string; end: string; duration: 30 | 60; price: number; available: boolean }) => ({
         ...slot,
         start: new Date(slot.start),
         end: new Date(slot.end),
       }));
+
+      console.log('🔍 Parsed slots:', parsedSlots.length, 'total');
+      console.log('🔍 Available slots:', parsedSlots.filter(s => s.available).length);
+      console.log('🔍 Sample slots:', parsedSlots.slice(0, 3));
 
       setSlots(parsedSlots);
     } catch (error: unknown) {
@@ -217,7 +268,7 @@ export function AvailabilityCalendar({
     } finally {
       setSlotsLoading(false);
     }
-  }, [currentWeek, teacherId, studentTimezone]);
+  }, [currentWeek, teacherId, studentTimezone, bookingMode]);
 
   // Load available slots when dependencies change
   useEffect(() => {
@@ -319,19 +370,35 @@ export function AvailabilityCalendar({
 
   const getDaysOfWeek = () => {
     const days = [];
-    for (let i = 0; i < 7; i++) {
-      days.push(addDays(currentWeek, i));
+    if (bookingMode === "recurring") {
+      // For weekly lessons, use next week to get fresh availability
+      const nextWeek = startOfWeek(addWeeks(new Date(), 1));
+      for (let i = 0; i < 7; i++) {
+        days.push(addDays(nextWeek, i));
+      }
+    } else {
+      // For single bookings, use the current selected week
+      for (let i = 0; i < 7; i++) {
+        days.push(addDays(currentWeek, i));
+      }
     }
     return days;
   };
 
   const getSlotsForDay = (date: Date) => {
-    return slots
+    const daySlots = slots
       .filter(
         (slot) =>
-          isSameDay(slot.start, date) && slot.available && slot.duration === 30
+          isSameDay(slot.start, date) && slot.available
       )
       .sort((a, b) => a.start.getTime() - b.start.getTime());
+    
+    // Debug logging for specific days
+    if (daySlots.length > 0 || date.getDate() === 1) { // Sep 1st or any day with slots
+      console.log(`🔍 Slots for ${date.toDateString()}:`, daySlots.length, daySlots.slice(0, 2));
+    }
+    
+    return daySlots;
   };
 
   const isCurrentWeek = isSameDay(currentWeek, startOfWeek(new Date()));
@@ -347,12 +414,7 @@ export function AvailabilityCalendar({
             Select one 30-minute slot, or two consecutive slots for a 60-minute
             session
           </p>
-          <div className="flex items-center gap-2 mt-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Times shown in <span className="font-medium">{formatTimezone(studentTimezone)}</span>
-            </p>
-          </div>
+          
         </div>
 
         <div className="flex items-center gap-2">
@@ -396,55 +458,50 @@ export function AvailabilityCalendar({
         </div>
       </div>
 
-      {/* Week Navigation */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={goToPreviousWeek}
-          disabled={!canGoBack || slotsLoading}
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Previous Week
-        </Button>
+      {/* Week Navigation - Only show for single session bookings */}
+      {bookingMode === "single" ? (
+        <div className="flex items-center justify-between">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={goToPreviousWeek}
+            disabled={!canGoBack || slotsLoading}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous Week
+          </Button>
 
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">
-            {format(currentWeek, "MMM d")} -{" "}
-            {format(addDays(currentWeek, 6), "MMM d, yyyy")}
-          </span>
-          {!isCurrentWeek && (
-            <Button variant="secondary" size="sm" onClick={goToCurrentWeek}>
-              Today
-            </Button>
-          )}
-        </div>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={goToNextWeek}
-          disabled={!canGoForward || slotsLoading}
-        >
-          Next Week
-          <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
-
-      {/* Recurring Options */}
-      {bookingMode === "recurring" && !readonly && (
-        <Card className="p-4 bg-blue-50 border-blue-200">
-          <div>
-            <h3 className="font-medium text-blue-900">
-              Weekly Lesson Schedule
-            </h3>
-            <p className="text-sm text-blue-700">
-              This will become your regular weekly lesson time.
-            </p>
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">
+              {format(currentWeek, "MMM d")} -{" "}
+              {format(addDays(currentWeek, 6), "MMM d, yyyy")}
+            </span>
+            {!isCurrentWeek && (
+              <Button variant="secondary" size="sm" onClick={goToCurrentWeek}>
+                Today
+              </Button>
+            )}
           </div>
-        </Card>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={goToNextWeek}
+            disabled={!canGoForward || slotsLoading}
+          >
+            Next Week
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
+      ) : (
+        // For weekly lessons, show a simple header
+        <div>
+          
+        </div>
       )}
+
+
 
       {/* Error Message */}
       {error && (
@@ -491,7 +548,8 @@ export function AvailabilityCalendar({
         <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
           {getDaysOfWeek().map((date, index) => {
             const daySlots = getSlotsForDay(date);
-            const isPast = isBefore(date, new Date()) && !isToday(date);
+            // Only dim past days for single bookings, not for recurring
+            const isPast = bookingMode === "single" && isBefore(date, new Date()) && !isToday(date);
 
             return (
               <div
@@ -502,33 +560,15 @@ export function AvailabilityCalendar({
                 <div
                   className={cn(
                     "text-center p-2 border rounded-lg bg-muted/50",
-                    isToday(date) && "border-primary"
+                    bookingMode === "single" && isToday(date) && "border-primary"
                   )}
                 >
                   {bookingMode === "recurring" ? (
-                    // Weekly lessons mode: show custom day abbreviations
-                    <div className="text-lg font-semibold">
-                      {(() => {
-                        const dayName = format(date, "EEEE");
-                        switch (dayName) {
-                          case "Sunday":
-                            return "Sun";
-                          case "Monday":
-                            return "Mon";
-                          case "Tuesday":
-                            return "Tues";
-                          case "Wednesday":
-                            return "Weds";
-                          case "Thursday":
-                            return "Thurs";
-                          case "Friday":
-                            return "Fri";
-                          case "Saturday":
-                            return "Sat";
-                          default:
-                            return dayName;
-                        }
-                      })()}
+                    // Weekly lessons mode: show full day name only (no dates)
+                    <div className="py-2">
+                      <div className="text-lg font-semibold">
+                        {format(date, "EEEE")}
+                      </div>
                     </div>
                   ) : (
                     // Single session mode: show day abbreviation and date
@@ -575,10 +615,6 @@ export function AvailabilityCalendar({
                             <div>
                               <div className="font-medium text-sm">
                                 {format(slot.start, "h:mm a")}
-                              </div>
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3" />
-                                30min
                               </div>
                             </div>
                           </div>

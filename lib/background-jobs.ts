@@ -1,11 +1,18 @@
 import { prisma } from "@/lib/db";
 import { addWeeks, addMonths, startOfDay, endOfDay } from "date-fns";
 import { generateRecurringLessons } from "@/lib/recurring-lessons";
+import { generateMonthlyRecurringInvoices } from "@/lib/invoice-automation";
 
 export interface JobResult {
   success: boolean;
   lessonsGenerated: number;
   teachersProcessed: number;
+  errors: string[];
+}
+
+export interface InvoiceJobResult {
+  success: boolean;
+  invoicesCreated: number;
   errors: string[];
 }
 
@@ -136,6 +143,54 @@ export async function cleanupJobLogs(): Promise<void> {
 }
 
 /**
+ * Background job to generate monthly invoices for recurring lessons
+ * This should run on the 1st of each month
+ */
+export async function generateMonthlyInvoices(): Promise<InvoiceJobResult> {
+  const result: InvoiceJobResult = {
+    success: false,
+    invoicesCreated: 0,
+    errors: [],
+  };
+
+  try {
+    console.log("Starting monthly invoice generation job...");
+
+    // Generate invoices for the current month
+    const invoiceResult = await generateMonthlyRecurringInvoices();
+    
+    result.invoicesCreated = invoiceResult.invoicesCreated;
+    result.errors = invoiceResult.errors;
+    result.success = invoiceResult.errors.length === 0;
+
+    console.log(
+      `Monthly invoice generation job completed. Generated ${result.invoicesCreated} invoices. Errors: ${result.errors.length}`
+    );
+
+    // Log job execution to database for monitoring
+    await logInvoiceJobExecution(result);
+
+    return result;
+  } catch (error) {
+    const errorMessage = `Fatal error in monthly invoice generation job: ${
+      error instanceof Error ? error.message : "Unknown error"
+    }`;
+    console.error(errorMessage);
+    result.errors.push(errorMessage);
+    result.success = false;
+
+    // Still try to log the failure
+    try {
+      await logInvoiceJobExecution(result);
+    } catch (logError) {
+      console.error("Failed to log invoice job execution:", logError);
+    }
+
+    return result;
+  }
+}
+
+/**
  * Log job execution for monitoring and debugging
  */
 async function logJobExecution(result: JobResult): Promise<void> {
@@ -152,6 +207,27 @@ async function logJobExecution(result: JobResult): Promise<void> {
     });
   } catch (error) {
     console.error("Failed to log job execution:", error);
+    // Don't throw here - logging failure shouldn't break the main job
+  }
+}
+
+/**
+ * Log invoice job execution for monitoring and debugging
+ */
+async function logInvoiceJobExecution(result: InvoiceJobResult): Promise<void> {
+  try {
+    await prisma.backgroundJobLog.create({
+      data: {
+        jobName: "generate-monthly-invoices",
+        executedAt: new Date(),
+        success: result.success,
+        lessonsGenerated: result.invoicesCreated, // Reuse this field for invoice count
+        teachersProcessed: 0, // Not applicable for invoice job
+        errors: result.errors.join("; "),
+      },
+    });
+  } catch (error) {
+    console.error("Failed to log invoice job execution:", error);
     // Don't throw here - logging failure shouldn't break the main job
   }
 }
@@ -181,27 +257,111 @@ export async function validateSystemHealth(): Promise<{
   isHealthy: boolean;
   issues: string[];
   suggestions: string[];
+  indicators: {
+    totalUsers: number;
+    activeTeachers: number;
+    activeStudents: number;
+    activeRecurringSlots: number;
+    teachersWithSettings: number;
+    teachersWithoutSettings: number;
+    oldSlotsCount: number;
+    recentLessons: number;
+    pendingInvoices: number;
+  };
 }> {
   const issues: string[] = [];
   const suggestions: string[] = [];
 
   try {
-    // Check for teachers with recurring slots but no lesson settings
-    const teachersWithoutSettings = await prisma.teacherProfile.findMany({
-      where: {
-        isActive: true,
-        recurringSlots: {
-          some: {
-            status: "ACTIVE",
+    // Gather system health indicators
+    const [
+      totalUsers,
+      activeTeachers,
+      activeStudents, 
+      activeRecurringSlots,
+      teachersWithoutSettings,
+      oldSlots,
+      recentLessons,
+      pendingInvoices
+    ] = await Promise.all([
+      // Total users count
+      prisma.user.count(),
+      
+      // Active teachers
+      prisma.teacherProfile.count({
+        where: { isActive: true }
+      }),
+      
+      // Active students
+      prisma.studentProfile.count({
+        where: { isActive: true }
+      }),
+      
+      // Active recurring slots
+      prisma.recurringSlot.count({
+        where: { status: "ACTIVE" }
+      }),
+      
+      // Teachers with recurring slots but no lesson settings
+      prisma.teacherProfile.findMany({
+        where: {
+          isActive: true,
+          recurringSlots: {
+            some: {
+              status: "ACTIVE",
+            },
+          },
+          lessonSettings: null,
+        },
+        include: {
+          user: true,
+        },
+      }),
+      
+      // Very old recurring slots (6+ months)
+      prisma.recurringSlot.findMany({
+        where: {
+          status: "ACTIVE",
+          bookedAt: {
+            lt: addMonths(new Date(), -6),
           },
         },
-        lessonSettings: null,
-      },
-      include: {
-        user: true,
-      },
-    });
+      }),
+      
+      // Lessons in the last 30 days
+      prisma.lesson.count({
+        where: {
+          createdAt: {
+            gte: addMonths(new Date(), -1),
+          },
+        },
+      }),
+      
+      // Pending invoices
+      prisma.invoice.count({
+        where: {
+          status: "PENDING",
+        },
+      }),
+    ]);
 
+    // Calculate teachers with settings
+    const teachersWithSettings = activeTeachers - teachersWithoutSettings.length;
+
+    // Create indicators object
+    const indicators = {
+      totalUsers,
+      activeTeachers,
+      activeStudents,
+      activeRecurringSlots,
+      teachersWithSettings,
+      teachersWithoutSettings: teachersWithoutSettings.length,
+      oldSlotsCount: oldSlots.length,
+      recentLessons,
+      pendingInvoices,
+    };
+
+    // Check for issues based on indicators
     if (teachersWithoutSettings.length > 0) {
       issues.push(
         `${teachersWithoutSettings.length} teachers have recurring slots but no lesson settings configured`
@@ -210,41 +370,6 @@ export async function validateSystemHealth(): Promise<{
         "Teachers should configure their lesson settings (pricing, durations) in the Settings page"
       );
     }
-
-    // Check for recurring slots with students that no longer exist
-    const orphanedSlots = await prisma.recurringSlot.findMany({
-      where: {
-        status: "ACTIVE",
-        student: { is: null },
-      },
-    });
-
-    if (orphanedSlots.length > 0) {
-      issues.push(`${orphanedSlots.length} recurring slots have missing student references`);
-      suggestions.push("Clean up recurring slots with invalid student references");
-    }
-
-    // Check for very old recurring slots that might need attention
-    const oldSlots = await prisma.recurringSlot.findMany({
-      where: {
-        status: "ACTIVE",
-        bookedAt: {
-          lt: addMonths(new Date(), -6),
-        },
-      },
-      include: {
-        teacher: {
-          include: {
-            user: true,
-          },
-        },
-        student: {
-          include: {
-            user: true,
-          },
-        },
-      },
-    });
 
     if (oldSlots.length > 0) {
       issues.push(`${oldSlots.length} recurring slots are older than 6 months and may need review`);
@@ -255,6 +380,7 @@ export async function validateSystemHealth(): Promise<{
       isHealthy: issues.length === 0,
       issues,
       suggestions,
+      indicators,
     };
   } catch (error) {
     console.error("Failed to validate system health:", error);
@@ -262,6 +388,17 @@ export async function validateSystemHealth(): Promise<{
       isHealthy: false,
       issues: ["Failed to perform system health check"],
       suggestions: ["Contact system administrator"],
+      indicators: {
+        totalUsers: 0,
+        activeTeachers: 0,
+        activeStudents: 0,
+        activeRecurringSlots: 0,
+        teachersWithSettings: 0,
+        teachersWithoutSettings: 0,
+        oldSlotsCount: 0,
+        recentLessons: 0,
+        pendingInvoices: 0,
+      },
     };
   }
 }

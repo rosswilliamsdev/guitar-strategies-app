@@ -26,7 +26,7 @@ interface BookingInterfaceProps {
 export function BookingInterface({
   teacherId,
   teacherName,
-  studentTimezone = "America/New_York",
+  studentTimezone = "America/Chicago",
   onSelectionChange
 }: BookingInterfaceProps) {
   const [loading, setLoading] = useState(false)
@@ -65,7 +65,7 @@ export function BookingInterface({
       // Store the booking result and show the success modal
       setBookingResult({
         type: 'single',
-        lesson: data.lesson,
+        lesson: data.data?.lesson || data.lesson,
         teacherName
       })
       setShowSuccessModal(true)
@@ -108,8 +108,8 @@ export function BookingInterface({
       // Store the booking result and show the success modal
       setBookingResult({
         type: 'recurring',
-        recurringSlot: data.slot,
-        lessons: data.lessons,
+        recurringSlot: data.data?.slot || data.slot,
+        lessons: data.data?.lessons || data.lessons,
         teacherName
       })
       setShowSuccessModal(true)

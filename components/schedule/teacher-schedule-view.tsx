@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -378,8 +379,9 @@ export function TeacherScheduleView({
   lessonSettings,
   students,
   loading = false,
-  timezone = "America/New_York",
+  timezone = "America/Chicago",
 }: TeacherScheduleViewProps) {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"day" | "week">("day");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookingModal, setBookingModal] = useState<{
@@ -431,13 +433,13 @@ export function TeacherScheduleView({
       throw new Error(error.message || "Failed to book lesson");
     }
 
-    // Refresh the page to show the new booking
-    window.location.reload();
+    // Refresh the data to show the new booking while preserving the current view
+    router.refresh();
   };
 
   const handleLessonUpdate = () => {
-    // Refresh the page to show the updated lesson
-    window.location.reload();
+    // Refresh the data to show the updated lesson while preserving the current view
+    router.refresh();
   };
 
   // Day view navigation

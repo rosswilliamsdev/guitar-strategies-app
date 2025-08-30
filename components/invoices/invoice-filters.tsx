@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
 import type { StudentProfile, InvoiceStatus } from '@/types';
 
 interface InvoiceFiltersProps {
@@ -17,31 +16,27 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  const [selectedStudent, setSelectedStudent] = useState(searchParams.get('student') || 'all');
-  const [selectedMonth, setSelectedMonth] = useState(searchParams.get('month') || '');
-  const [selectedStatus, setSelectedStatus] = useState(searchParams.get('status') || 'all');
+  const selectedStudent = searchParams.get('student') || 'all';
+  const selectedMonth = searchParams.get('month') || '';
+  const selectedStatus = searchParams.get('status') || 'all';
 
-  const handleSearch = () => {
-    const params = new URLSearchParams();
+  const updateFilters = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams);
     
-    if (selectedStudent && selectedStudent !== 'all') {
-      params.append('student', selectedStudent);
+    if (value && value !== 'all' && value !== '') {
+      params.set(key, value);
+    } else {
+      params.delete(key);
     }
-    if (selectedMonth) {
-      params.append('month', selectedMonth);
-    }
-    if (selectedStatus && selectedStatus !== 'all') {
-      params.append('status', selectedStatus);
-    }
+    
+    // Reset to page 1 when filtering
+    params.delete('page');
     
     const queryString = params.toString();
     router.push(`/invoices${queryString ? `?${queryString}` : ''}`);
   };
 
   const handleClear = () => {
-    setSelectedStudent('all');
-    setSelectedMonth('');
-    setSelectedStatus('all');
     router.push('/invoices');
   };
 
@@ -54,7 +49,7 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <Select value={selectedStudent} onValueChange={setSelectedStudent}>
+          <Select value={selectedStudent} onValueChange={(value) => updateFilters('student', value)}>
             <SelectTrigger>
               <SelectValue placeholder="All students" />
             </SelectTrigger>
@@ -70,7 +65,7 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
         </div>
         
         <div>
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <Select value={selectedStatus} onValueChange={(value) => updateFilters('status', value)}>
             <SelectTrigger>
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
@@ -91,26 +86,18 @@ export function InvoiceFilters({ students }: InvoiceFiltersProps) {
             type="month"
             placeholder="Select month"
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
+            onChange={(e) => updateFilters('month', e.target.value)}
             className="w-full"
           />
         </div>
         
-        <div className="flex items-center space-x-2">
-          <Button 
-            variant="secondary" 
-            size="sm"
-            onClick={handleSearch}
-          >
-            <Search className="h-3 w-3 mr-1" />
-            Search
-          </Button>
+        <div className="flex items-center justify-end">
           <Button 
             variant="secondary" 
             size="sm"
             onClick={handleClear}
           >
-            Clear
+            Clear All
           </Button>
         </div>
       </div>

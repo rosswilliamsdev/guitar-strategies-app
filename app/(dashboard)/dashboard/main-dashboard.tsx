@@ -4,9 +4,20 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { User } from "next-auth";
+import { UserStats, AdminStats, formatRelativeTime } from "@/lib/dashboard-stats";
+import {
+  Users,
+  UserCheck,
+  BookOpen,
+  Activity,
+  FileText,
+  Mail,
+} from "lucide-react";
 
 interface DashboardProps {
   user: User;
+  userStats?: UserStats;
+  adminStats?: AdminStats;
 }
 
 interface StatCardProps {
@@ -77,61 +88,96 @@ function QuickAction({
   );
 }
 
-export function MainDashboard({ user }: DashboardProps) {
-  // Role-specific stats and actions
+export function MainDashboard({ user, userStats, adminStats }: DashboardProps) {
+  // If admin user with admin stats, show only recent activity
+  if (user.role === 'ADMIN' && adminStats) {
+    return (
+      <div className="space-y-8">
+        {/* Welcome Section */}
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground">
+            Welcome back, {user.name}!
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Here&apos;s the latest platform activity.
+          </p>
+        </div>
+
+        {/* Recent Activity */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+          {adminStats.recentActivity.length === 0 ? (
+            <p className="text-muted-foreground">No recent activity</p>
+          ) : (
+            <div className="space-y-3">
+              {adminStats.recentActivity.slice(0, 10).map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-start space-x-3 pb-3 border-b border-border last:border-b-0"
+                >
+                  <div className="flex-shrink-0 mt-1">
+                    {activity.type === "lesson_completed" && (
+                      <BookOpen className="h-4 w-4 text-green-500" />
+                    )}
+                    {activity.type === "user_created" && (
+                      <Users className="h-4 w-4 text-blue-500" />
+                    )}
+                    {activity.type === "teacher_joined" && (
+                      <UserCheck className="h-4 w-4 text-purple-500" />
+                    )}
+                    {activity.type === "invoice_generated" && (
+                      <FileText className="h-4 w-4 text-orange-500" />
+                    )}
+                    {activity.type === "email_sent" && (
+                      <Mail className="h-4 w-4 text-cyan-500" />
+                    )}
+                    {activity.type === "system_event" && (
+                      <Activity className="h-4 w-4 text-yellow-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground font-medium">
+                      {activity.description}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatRelativeTime(activity.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div className="text-center pt-2">
+                <Link href="/admin/activity">
+                  <Button variant="secondary" size="sm">
+                    View All Activity
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
+    );
+  }
+
+  // Role-specific stats and actions for non-admin users
   const getStatsForRole = () => {
-    switch (user.role) {
-      case "ADMIN":
-        return [
-          { title: "Total Users", value: 156, description: "Active accounts" },
-          { title: "Total Lessons", value: 342, description: "All lessons" },
-          {
-            title: "Monthly Revenue",
-            value: "$2,450",
-            trend: { value: 12, isPositive: true },
-          },
-          { title: "System Health", value: "99.9%", description: "Uptime" },
-        ];
-      case "TEACHER":
-        return [
-          {
-            title: "Active Students",
-            value: 24,
-            description: "Enrolled students",
-          },
-          {
-            title: "Lessons This Week",
-            value: 18,
-            trend: { value: 8, isPositive: true },
-          },
-          {
-            title: "Monthly Earnings",
-            value: "$1,250",
-            trend: { value: 15, isPositive: true },
-          },
-          {
-            title: "Avg Rating",
-            value: "4.8",
-            description: "Student feedback",
-          },
-        ];
-      case "STUDENT":
-      default:
-        return [
-          {
-            title: "Lessons Completed",
-            value: 12,
-            trend: { value: 25, isPositive: true },
-          },
-          { title: "Practice Hours", value: "24h", description: "This month" },
-          {
-            title: "Current Streak",
-            value: "7 days",
-            description: "Keep it up!",
-          },
-          { title: "Next Lesson", value: "Tomorrow", description: "2:00 PM" },
-        ];
+    // If we have userStats, use real data
+    if (userStats) {
+      return [
+        { title: "Total Platform Users", value: userStats.totalUsers, description: "Registered accounts" },
+        { title: "Platform Status", value: userStats.platformActivity, description: "Current status" },
+        { title: "System Health", value: userStats.systemStatus, description: "Operational status" },
+        { title: "Your Role", value: user.role, description: "Account type" },
+      ];
     }
+
+    // Fallback to basic info if no stats available
+    return [
+      { title: "Welcome", value: "👋", description: "Getting started" },
+      { title: "Your Role", value: user.role, description: "Account type" },
+      { title: "Status", value: "Active", description: "Account status" },
+      { title: "Getting Started", value: "📚", description: "Setup in progress" },
+    ];
   };
 
   const getQuickActionsForRole = () => {

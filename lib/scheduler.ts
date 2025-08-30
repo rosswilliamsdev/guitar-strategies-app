@@ -110,8 +110,19 @@ export async function getAvailableSlots(
 
 
   if (!teacher || !teacher.lessonSettings) {
+    console.log('⚠️ Teacher not found or missing lesson settings:', { teacherId, hasTeacher: !!teacher, hasSettings: !!teacher?.lessonSettings });
     return []
   }
+
+  // Debug logging (can be removed in production)
+  console.log('🔍 Scheduler debug:', {
+    teacherId,
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+    studentTimezone,
+    teacherTimezone: teacher.timezone,
+    availabilityCount: teacher.availability.length
+  });
 
   const slots: TimeSlot[] = []
   const teacherTimezone = teacher.timezone
@@ -132,6 +143,11 @@ export async function getAvailableSlots(
       a => a.dayOfWeek === dayOfWeek
     )
     
+    // Debug: Log days with availability
+    if (dayAvailability.length > 0) {
+      console.log(`📅 Day ${dayOfWeek} (${currentDate.toDateString()}): ${dayAvailability.length} availability slots found`)
+    }
+    
 
     for (const availability of dayAvailability) {
       // Parse time strings and create slot times in teacher's timezone
@@ -147,50 +163,24 @@ export async function getAvailableSlots(
 
       // Generate slots within this availability window
       while (slotStart < dayEnd) {
-        // Try 30-minute slot if allowed
-        if (settings.allows30Min) {
-          const slotEnd = addMinutes(slotStart, 30)
-          if (slotEnd <= dayEnd) {
-            // The times are already in the correct date/time - no conversion needed
-            // The teacher's availability times are applied to the current date
-            
-            // Check if slot is available (not blocked or booked)
-            const isAvailable = await isSlotAvailable(
-              slotStart,
-              slotEnd,
-              teacher.blockedTimes,
-              teacher.lessons
-            )
+        // Generate 30-minute slots only (users select 1 for 30min, 2 consecutive for 60min)
+        const slotEnd = addMinutes(slotStart, 30)
+        if (slotEnd <= dayEnd) {
+          // Check if slot is available (not blocked or booked)
+          const isAvailable = await isSlotAvailable(
+            slotStart,
+            slotEnd,
+            teacher.blockedTimes,
+            teacher.lessons
+          )
 
-            slots.push({
-              start: slotStart,
-              end: slotEnd,
-              duration: 30,
-              price: settings.price30Min,
-              available: isAvailable
-            })
-          }
-        }
-
-        // Try 60-minute slot if allowed
-        if (settings.allows60Min) {
-          const slotEnd = addMinutes(slotStart, 60)
-          if (slotEnd <= dayEnd) {
-            const isAvailable = await isSlotAvailable(
-              slotStart,
-              slotEnd,
-              teacher.blockedTimes,
-              teacher.lessons
-            )
-
-            slots.push({
-              start: slotStart,
-              end: slotEnd,
-              duration: 60,
-              price: settings.price60Min,
-              available: isAvailable
-            })
-          }
+          slots.push({
+            start: slotStart,
+            end: slotEnd,
+            duration: 30,
+            price: settings.price30Min,
+            available: isAvailable
+          })
         }
 
         // Move to next slot (30-minute increments)
@@ -201,6 +191,7 @@ export async function getAvailableSlots(
     currentDate = addDays(currentDate, 1)
   }
 
+  console.log(`✅ Generated ${slots.length} total slots (${slots.filter(s => s.available).length} available)`)
   return slots
 }
 
@@ -233,8 +224,14 @@ async function isSlotAvailable(
     }
   }
 
-  // Check if slot is in the past
-  if (slotStart < new Date()) {
+  // Check if slot is in the past (allow booking up to 1 hour after slot starts)
+  const now = new Date()
+  const gracePeriod = 60 * 60 * 1000 // 1 hour in milliseconds
+  const cutoffTime = new Date(slotStart.getTime() + gracePeriod)
+  
+  if (now > cutoffTime) {
+    // Uncomment for debugging past slot filtering:
+    // console.log(`⏰ Slot filtered as past: current ${now.toISOString()} > cutoff ${cutoffTime.toISOString()} (slot: ${slotStart.toISOString()})`)
     return false
   }
 
@@ -297,23 +294,99 @@ export async function validateBooking(data: BookingData): Promise<{
   }
 
   // Check if slot is available
-  const slotEnd = addMinutes(data.date, data.duration)
+  // We need to fetch slots for the entire day to find the matching slot
+  const dayStart = startOfDay(data.date)
+  const dayEnd = endOfDay(data.date)
+  
+  console.log('🔍 Validating booking:', {
+    requestedDate: data.date.toISOString(),
+    duration: data.duration,
+    dayStart: dayStart.toISOString(),
+    dayEnd: dayEnd.toISOString(),
+    timezone: data.timezone
+  })
+  
   const slots = await getAvailableSlots(
     data.teacherId,
-    data.date,
-    slotEnd,
+    dayStart,
+    dayEnd,
     data.timezone
   )
 
-  const requestedSlot = slots.find(
-    slot => 
-      slot.start.getTime() === data.date.getTime() &&
-      slot.duration === data.duration &&
-      slot.available
-  )
+  // Normalize dates for comparison (remove milliseconds and seconds for slot matching)
+  const normalizeDate = (date: Date) => {
+    const normalized = new Date(date)
+    normalized.setSeconds(0, 0) // Set seconds and milliseconds to 0
+    return normalized
+  }
 
-  if (!requestedSlot) {
-    return { success: false, error: 'This time slot is not available' }
+  const requestedDateTime = normalizeDate(data.date)
+  
+  // For 30-minute lessons, just find the single slot
+  // For 60-minute lessons, we need to verify two consecutive 30-minute slots
+  if (data.duration === 30) {
+    const requestedSlot = slots.find(slot => {
+      const slotDateTime = normalizeDate(slot.start)
+      return slotDateTime.getTime() === requestedDateTime.getTime() &&
+             slot.duration === 30 &&
+             slot.available
+    })
+    
+    if (!requestedSlot) {
+      console.log('❌ 30-min slot validation failed:', {
+        requestedTime: requestedDateTime.toISOString(),
+        availableSlots: slots.filter(s => s.available).map(s => ({
+          start: normalizeDate(s.start).toISOString(),
+          duration: s.duration
+        }))
+      })
+      return { success: false, error: 'This time slot is not available' }
+    }
+  } else if (data.duration === 60) {
+    // For 60-minute lessons, check for two consecutive 30-minute slots
+    const firstSlot = slots.find(slot => {
+      const slotDateTime = normalizeDate(slot.start)
+      return slotDateTime.getTime() === requestedDateTime.getTime() &&
+             slot.duration === 30 &&
+             slot.available
+    })
+    
+    if (!firstSlot) {
+      console.log('❌ 60-min first slot not found:', {
+        requestedTime: requestedDateTime.toISOString()
+      })
+      return { success: false, error: 'This time slot is not available' }
+    }
+    
+    // Check for the second consecutive slot (30 minutes after the first)
+    const secondSlotTime = addMinutes(requestedDateTime, 30)
+    const secondSlot = slots.find(slot => {
+      const slotDateTime = normalizeDate(slot.start)
+      return slotDateTime.getTime() === secondSlotTime.getTime() &&
+             slot.duration === 30 &&
+             slot.available
+    })
+    
+    if (!secondSlot) {
+      console.log('❌ 60-min second slot not found:', {
+        firstSlotTime: requestedDateTime.toISOString(),
+        expectedSecondSlotTime: secondSlotTime.toISOString(),
+        availableSlots: slots.filter(s => s.available && 
+          Math.abs(normalizeDate(s.start).getTime() - secondSlotTime.getTime()) < 60 * 60 * 1000
+        ).map(s => ({
+          start: normalizeDate(s.start).toISOString(),
+          duration: s.duration
+        }))
+      })
+      return { success: false, error: 'Both consecutive time slots must be available for a 60-minute lesson' }
+    }
+    
+    console.log('✅ 60-min booking validated:', {
+      firstSlot: requestedDateTime.toISOString(),
+      secondSlot: secondSlotTime.toISOString()
+    })
+  } else {
+    return { success: false, error: 'Invalid lesson duration' }
   }
 
   return { success: true }
@@ -338,17 +411,35 @@ export async function bookSingleLesson(data: BookingData) {
     ? teacher.lessonSettings.price30Min 
     : teacher.lessonSettings.price60Min
 
+  // Normalize the date (remove milliseconds) before saving
+  const normalizedDate = new Date(data.date)
+  normalizedDate.setSeconds(0, 0)
+
+  console.log('🎯 Creating lesson with duration:', {
+    teacherId: data.teacherId,
+    duration: data.duration,
+    price,
+    date: normalizedDate.toISOString()
+  })
+
   const lesson = await prisma.lesson.create({
     data: {
       teacherId: data.teacherId,
       studentId: data.studentId,
-      date: data.date,
+      date: normalizedDate,
       duration: data.duration,
       timezone: data.timezone,
       price,
       status: 'SCHEDULED',
       isRecurring: data.isRecurring || false
     }
+  })
+
+  console.log('✅ Lesson created:', {
+    id: lesson.id,
+    duration: lesson.duration,
+    price: lesson.price,
+    date: lesson.date.toISOString()
   })
 
   return lesson
@@ -378,13 +469,17 @@ export async function bookRecurringSlot(
     ? teacher.lessonSettings.price30Min 
     : teacher.lessonSettings.price60Min
 
+  // Normalize the date (remove milliseconds) for consistent processing
+  const normalizedDate = new Date(data.date)
+  normalizedDate.setSeconds(0, 0)
+  
   // Extract day of week and time from the date
-  const dayOfWeek = data.date.getDay()
+  const dayOfWeek = normalizedDate.getDay()
   
   // Store the per-lesson price - monthly rates will be calculated dynamically
   const perLessonPrice = price
-  const hours = data.date.getHours()
-  const minutes = data.date.getMinutes()
+  const hours = normalizedDate.getHours()
+  const minutes = normalizedDate.getMinutes()
   const startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
 
   // Create the recurring slot
@@ -405,7 +500,7 @@ export async function bookRecurringSlot(
   const recurringId = `slot-${recurringSlot.id}`
   
   for (let week = 0; week < 4; week++) {
-    const lessonDate = addWeeks(data.date, week)
+    const lessonDate = addWeeks(normalizedDate, week)
     
     const lesson = await prisma.lesson.create({
       data: {

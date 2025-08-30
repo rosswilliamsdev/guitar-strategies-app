@@ -27,7 +27,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    const timezone = searchParams.get('timezone') || 'America/New_York';
+    const timezone = searchParams.get('timezone') || 'America/Chicago';
 
     if (!startDate || !endDate) {
       return createBadRequestResponse('startDate and endDate are required');
@@ -55,8 +55,6 @@ export async function GET(
       new Date(endDate),
       timezone
     );
-
-
     return createSuccessResponse({ slots });
 
   } catch (error: any) {

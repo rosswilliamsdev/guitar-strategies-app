@@ -102,21 +102,24 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
     const body = await request.json();
     
+    // Prepare update data - only include fields that are provided
+    const updateData: any = {};
+    
+    if (body.studentId !== undefined) updateData.studentId = body.studentId;
+    if (body.duration !== undefined) updateData.duration = body.duration || 30;
+    if (body.notes !== undefined) updateData.notes = body.notes || null;
+    if (body.homework !== undefined) updateData.homework = body.homework || null;
+    if (body.progress !== undefined) updateData.progress = body.progress || null;
+    if (body.focusAreas !== undefined) updateData.focusAreas = body.focusAreas || null;
+    if (body.songsPracticed !== undefined) updateData.songsPracticed = body.songsPracticed || null;
+    if (body.nextSteps !== undefined) updateData.nextSteps = body.nextSteps || null;
+    if (body.status !== undefined) updateData.status = body.status;
+    // Don't update date when editing existing lesson
+
     // Update lesson with validation
     const lesson = await prisma.lesson.update({
       where: { id: params.id },
-      data: {
-        studentId: body.studentId,
-        duration: body.duration || 30,
-        notes: body.notes || null,
-        homework: body.homework || null,
-        progress: body.progress || null,
-        focusAreas: body.focusAreas || null,
-        songsPracticed: body.songsPracticed || null,
-        nextSteps: body.nextSteps || null,
-        status: body.status || 'COMPLETED',
-        // Don't update date when editing existing lesson
-      },
+      data: updateData,
       include: {
         student: {
           include: { user: true }

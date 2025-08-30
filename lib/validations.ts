@@ -373,7 +373,10 @@ export const lessonSettingsSchema = z.object({
 
 export const bookingSchema = z.object({
   teacherId: z.string().min(1, "Teacher is required"),
-  date: z.string().datetime().transform((str) => new Date(str)),
+  date: z.union([
+    z.string().datetime(),
+    z.string()
+  ]).transform((val) => new Date(val)),
   duration: z.literal(30).or(z.literal(60)),
   timezone: z.string(),
   isRecurring: z.boolean().default(false),

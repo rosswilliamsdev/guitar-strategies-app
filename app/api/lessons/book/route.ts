@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db';
 import { bookingSchema } from '@/lib/validations';
 import { bookSingleLesson, bookRecurringSlot } from '@/lib/scheduler';
 import { sendEmail, createLessonBookingEmail } from '@/lib/email';
+import { createSingleLessonInvoice } from '@/lib/invoice-automation';
+import { isEmailTypeEnabled } from '@/lib/admin-settings';
 import {
   createSuccessResponse,
   createAuthErrorResponse,
@@ -30,10 +32,21 @@ export async function POST(request: NextRequest) {
       return createBadRequestResponse('Invalid JSON in request body');
     }
     
-    console.log('Received booking data:', body);
+    console.log('Received booking data:', {
+      ...body,
+      date: body.date,
+      dateType: typeof body.date,
+      dateString: new Date(body.date).toISOString()
+    });
     
     // Validate input
     const validatedData = bookingSchema.parse(body);
+    
+    console.log('Validated booking data:', {
+      ...validatedData,
+      date: validatedData.date,
+      dateString: new Date(validatedData.date).toISOString()
+    });
 
     // Get student profile with user and teacher data for emails
     const studentProfile = await prisma.studentProfile.findUnique({
@@ -90,8 +103,8 @@ export async function POST(request: NextRequest) {
         });
       }
       
-      // Send email notification for recurring booking
-      if (studentProfile.user.email && lessonDate && lessonTime) {
+      // Send email notification for recurring booking (only if enabled)
+      if (studentProfile.user.email && lessonDate && lessonTime && await isEmailTypeEnabled('booking')) {
         try {
           const emailContent = createLessonBookingEmail(
             studentProfile.user.name || 'Student',
@@ -137,8 +150,19 @@ export async function POST(request: NextRequest) {
         hour12: true
       });
       
-      // Send email notification for single lesson booking
-      if (studentProfile.user.email) {
+      // Create invoice for single lesson
+      let invoiceGenerated = false;
+      try {
+        await createSingleLessonInvoice(result.id);
+        invoiceGenerated = true;
+        console.log(`✅ Created invoice for single lesson ${result.id}`);
+      } catch (error) {
+        console.error('❌ Failed to create invoice for single lesson:', error);
+        // Don't fail the booking if invoice creation fails
+      }
+
+      // Send email notification for single lesson booking (only if enabled)
+      if (studentProfile.user.email && await isEmailTypeEnabled('booking')) {
         try {
           const emailContent = createLessonBookingEmail(
             studentProfile.user.name || 'Student',
@@ -146,7 +170,8 @@ export async function POST(request: NextRequest) {
             lessonDate,
             lessonTime,
             validatedData.duration,
-            false // isRecurring
+            false, // isRecurring
+            invoiceGenerated
           );
 
           await sendEmail({
@@ -159,6 +184,12 @@ export async function POST(request: NextRequest) {
         }
       }
       
+      console.log('📤 Sending lesson booking response:', {
+        lessonId: result.id,
+        duration: result.duration,
+        date: result.date.toISOString()
+      })
+
       return createSuccessResponse(
         {
           lesson: result,

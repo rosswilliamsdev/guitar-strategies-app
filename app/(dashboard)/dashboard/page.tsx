@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { MainDashboard } from './main-dashboard';
 import { TeacherDashboard } from '@/components/dashboard/teacher-dashboard';
 import { StudentDashboard } from '@/components/dashboard/student-dashboard';
+import { getUserStats, getAdminStats } from '@/lib/dashboard-stats';
 
 export const metadata = {
   title: 'Dashboard',
@@ -26,6 +27,7 @@ export async function getTeacherData(userId: string) {
           orderBy: { date: 'desc' }
         },
         libraryItems: true,
+        lessonSettings: true,
       }
     });
 
@@ -46,7 +48,20 @@ export async function getTeacherData(userId: string) {
       lesson => new Date(lesson.date) >= startOfMonth
     ).length;
 
-    const monthlyEarnings = lessonsThisMonth * (teacherProfile.hourlyRate || 6000);
+    // Calculate monthly earnings based on actual lesson settings and durations
+    const monthlyEarnings = teacherProfile.lessons
+      .filter(lesson => new Date(lesson.date) >= startOfMonth && lesson.status === 'COMPLETED')
+      .reduce((total, lesson) => {
+        // Use actual lesson duration and teacher's rates from lesson settings
+        const lessonSettings = teacherProfile.lessonSettings;
+        if (!lessonSettings) return total;
+        
+        const rate = lesson.duration === 60 
+          ? lessonSettings.price60Min || 0
+          : lessonSettings.price30Min || 0;
+          
+        return total + rate;
+      }, 0);
 
     const ratingsWithValues = teacherProfile.lessons
       .map(l => l.studentRating)
@@ -210,6 +225,13 @@ export default async function DashboardPage() {
     }
   }
 
+  // For admin users, show admin-specific dashboard with activity feed
+  if (session.user.role === 'ADMIN') {
+    const adminStats = await getAdminStats();
+    return <MainDashboard user={session.user} adminStats={adminStats} />;
+  }
+
   // For non-specific roles or if data fails to load, use the main dashboard
-  return <MainDashboard user={session.user} />;
+  const userStats = await getUserStats();
+  return <MainDashboard user={session.user} userStats={userStats} />;
 }

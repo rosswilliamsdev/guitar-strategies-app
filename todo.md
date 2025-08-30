@@ -1,6 +1,33 @@
 # Guitar Strategies App - Todo List
 
-## Completed in Latest Session ✅ (Aug 28, 2025)
+## Completed in Latest Session ✅ (Aug 30, 2025)
+
+### Admin Settings & Dashboard Improvements
+- [x] **Admin Settings System**: Implemented comprehensive admin settings page with tiered approach
+  - [x] Invoice configuration (due dates, reminders, numbering)
+  - [x] Email system settings (sender info, toggles, footer)
+  - [x] Lesson defaults (durations, booking windows, policies)
+  - [x] Database migration for SystemSettings model
+  - [x] Integration with invoice automation and email systems
+- [x] **Platform Activity Feed**: Created complete activity tracking system
+  - [x] Shows all platform events (lessons, users, invoices, emails)
+  - [x] Advanced filtering by date range, activity type, and user role
+  - [x] Color-coded badges and icons for different event types
+  - [x] API endpoint for filtered activity queries
+- [x] **Real-time Dashboard Statistics**: Replaced hardcoded values with database queries
+  - [x] Enhanced teacher earnings calculations
+  - [x] Real activity feed generation with user context
+  - [x] Comprehensive admin stats library
+- [x] **Simplified Admin Dashboard**: Streamlined to show only recent activity
+  - [x] Removed stat cards for cleaner interface
+  - [x] Unified dashboard experience (removed /dashboard/admin)
+  - [x] Admin users now use main dashboard with activity feed
+- [x] **Navigation Improvements**: Enhanced admin sidebar organization
+  - [x] Added "Platform Activity" menu item
+  - [x] Renamed "All Lessons" to "Manage Lessons"
+  - [x] Repositioned Settings as last sidebar item
+
+## Completed in Previous Session ✅ (Aug 28, 2025)
 
 - [x] **macOS Finder-Style Library Interface**: Complete redesign of library resource management with intuitive desktop-like experience
 - [x] **Advanced Multi-Select System**: Implemented click-to-select, Cmd/Ctrl+click toggle, Shift+click range, and drag-to-select with visual selection rectangle
@@ -22,11 +49,37 @@
 - [x] **Payments Page Cleanup**: Removed redundant payments page, consolidated into invoices section
 - [x] **UI/UX Enhancements**: Added celebratory styling and improved completion indicators
 
-## Priority Issues for Next Session 🚨
+## 🚨 CRITICAL PRODUCTION READINESS ISSUES (From Dec 29, 2024 Audit) 🚨
 
-### User Experience Improvements
+### P0 - Critical Security & Configuration Issues (MUST FIX BEFORE PRODUCTION)
+- [ ] **URGENT: Rotate exposed Resend API key** - Currently exposed in .env file in repository
+- [ ] **Generate secure NEXTAUTH_SECRET** - Current placeholder "your-secret-key-here-change-in-production" is insecure
+- [ ] **Remove all sensitive keys from version control** - Add .env to .gitignore, create .env.example
+- [ ] **Create health check endpoint** - Add /api/health for production monitoring
+- [ ] **Configure database connection pooling** - Add pool limits to prevent connection exhaustion
+- [ ] **Add request size limits** - Prevent DoS attacks with body size limits
+- [ ] **Wrap all booking operations in transactions** - Prevent race conditions and data corruption
+- [ ] **Add global error boundary** - Create app/global-error.tsx for catastrophic failures
 
-### Technical Enhancements
+### P1 - High Priority Issues (SHOULD FIX BEFORE PRODUCTION)
+- [ ] **Implement retry logic** - Add exponential backoff for database and email operations
+- [ ] **Add environment validation** - Validate all required env vars on startup
+- [ ] **Configure security headers** - Add CSP, HSTS, X-Frame-Options, etc.
+- [ ] **Add structured logging** - Replace console.log with proper logging library
+- [ ] **Implement email retry mechanism** - Handle transient email failures
+- [ ] **Add XSS sanitization** - Sanitize rich text content to prevent XSS attacks
+- [ ] **Add optimistic locking** - Version fields for concurrent booking updates
+- [ ] **Configure transaction isolation levels** - Ensure proper isolation for bookings
+
+### P2 - Medium Priority Issues (CAN FIX POST-LAUNCH)
+- [ ] **Integrate error tracking** - Add Sentry or similar for production error monitoring
+- [ ] **Implement rate limiting** - Protect API endpoints from abuse
+- [ ] **Add email queue system** - Handle high volume email sending
+- [ ] **Set up APM monitoring** - Application Performance Monitoring
+- [ ] **Add distributed locking** - For multi-instance deployments
+- [ ] **Implement custom metrics** - Track business KPIs and performance
+
+### Technical Debt & Code Quality
 
 - [ ] **Remaining TypeScript Issues**: Address remaining API route type issues and legacy code (reduced from 50+ to ~15 non-critical errors)
 
@@ -165,6 +218,44 @@
   - [ ] Manual credit adjustments for special cases
   - [ ] System-wide credit policy configuration
   - [ ] Credit expiration reports and trends
+
+## Admin Settings Implementation
+
+### Tier 2: Operational Efficiency (Next Phase)
+
+- [ ] **Background Job Configuration**
+  - [ ] Monthly invoice generation day (currently 1st of month)
+  - [ ] Lesson generation window (currently 12 weeks ahead)
+  - [ ] Job execution schedules and timing
+
+- [ ] **User Management Tools**
+  - [ ] Bulk user creation/import
+  - [ ] Password reset for any user
+  - [ ] Account activation/deactivation
+  - [ ] User role changes
+
+- [ ] **Business Rules**
+  - [ ] Platform-wide payment instructions
+  - [ ] Default teacher settings for new accounts
+  - [ ] Student onboarding requirements
+
+### Tier 3: Advanced Customization (Future Enhancement)
+
+- [ ] **Email Template Customization**
+  - [ ] Edit email subject lines
+  - [ ] Customize email body templates
+  - [ ] Upload custom logos/branding
+  - [ ] A/B test different email versions
+
+- [ ] **System Analytics Settings**
+  - [ ] Data retention periods
+  - [ ] Report generation schedules
+  - [ ] Performance monitoring thresholds
+
+- [ ] **Integration Settings**
+  - [ ] Third-party payment processor configs
+  - [ ] Calendar sync settings (Google Calendar, etc.)
+  - [ ] SMS notification service setup
 
 ## Schedule Management Enhancements
 

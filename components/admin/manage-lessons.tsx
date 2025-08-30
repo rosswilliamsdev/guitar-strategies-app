@@ -124,68 +124,6 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <BookOpen className="h-8 w-8 text-muted-foreground" />
-            <div className="text-right">
-              <p className="text-2xl font-semibold">{stats.totalLessons}</p>
-              <p className="text-xs text-muted-foreground">Total Lessons</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-            <div className="text-right">
-              <p className="text-2xl font-semibold">{stats.completedLessons}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <XCircle className="h-8 w-8 text-red-600" />
-            <div className="text-right">
-              <p className="text-2xl font-semibold">{stats.cancelledLessons}</p>
-              <p className="text-xs text-muted-foreground">Cancelled</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <Clock className="h-8 w-8 text-muted-foreground" />
-            <div className="text-right">
-              <p className="text-2xl font-semibold">{formatDuration(stats.totalDuration)}</p>
-              <p className="text-xs text-muted-foreground">Total Time</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <User className="h-8 w-8 text-muted-foreground" />
-            <div className="text-right">
-              <p className="text-2xl font-semibold">{stats.uniqueTeachers}</p>
-              <p className="text-xs text-muted-foreground">Teachers</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <GraduationCap className="h-8 w-8 text-muted-foreground" />
-            <div className="text-right">
-              <p className="text-2xl font-semibold">{stats.uniqueStudents}</p>
-              <p className="text-xs text-muted-foreground">Students</p>
-            </div>
-          </div>
-        </Card>
-      </div>
 
       {/* Search and Filters */}
       <Card className="p-4">

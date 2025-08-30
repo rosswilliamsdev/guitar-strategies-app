@@ -648,6 +648,25 @@ model SystemSettings {
   libraryEnabled          Boolean @default(true)
   recommendationsEnabled  Boolean @default(true)
   
+  // Tier 1 Admin Settings - Invoice Configuration
+  defaultInvoiceDueDays   Int     @default(14) // Days after generation invoice is due
+  latePaymentReminderDays Int     @default(7)  // Days after due date to send reminder
+  invoiceNumberFormat     String  @default("INV-{YEAR}-{NUMBER}") // Invoice number format
+  
+  // Tier 1 Admin Settings - Email System
+  emailSenderName         String  @default("Guitar Strategies")
+  emailSenderAddress      String  @default("onboarding@resend.dev")
+  enableBookingConfirmations Boolean @default(true)
+  enableInvoiceNotifications Boolean @default(true)
+  enableReminderEmails    Boolean @default(true)
+  emailFooterText         String  @default("Thank you for choosing Guitar Strategies!")
+  
+  // Tier 1 Admin Settings - Lesson Defaults
+  defaultLessonDuration30 Boolean @default(true)  // Enable 30-min lessons
+  defaultLessonDuration60 Boolean @default(true)  // Enable 60-min lessons
+  defaultAdvanceBookingDays Int   @default(14)    // Default advance booking window
+  cancellationPolicyText  String  @default("Please cancel at least 2 hours in advance to avoid charges.")
+  
   updatedAt DateTime @updatedAt
 }
 
