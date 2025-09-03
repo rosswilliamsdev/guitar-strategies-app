@@ -5,7 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import toast from "react-hot-toast";
 import { 
   Search,
   Calendar,
@@ -18,7 +28,12 @@ import {
   AlertCircle,
   MinusCircle,
   Eye,
-  Filter
+  Filter,
+  Trash2,
+  Loader2,
+  AlertTriangle,
+  CheckSquare,
+  Square
 } from "lucide-react";
 import Link from "next/link";
 
@@ -63,6 +78,13 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [teacherFilter, setTeacherFilter] = useState("all");
+  
+  // Selection and deletion state
+  const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  const [lessonToDelete, setLessonToDelete] = useState<Lesson | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Get unique teachers for filter
   const uniqueTeachers = Array.from(
@@ -122,6 +144,96 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
     return `${mins}m`;
   };
 
+  // Selection functions
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedLessons(new Set(filteredLessons.map(l => l.id)));
+    } else {
+      setSelectedLessons(new Set());
+    }
+  };
+
+  const handleSelectLesson = (lessonId: string, checked: boolean) => {
+    const newSelected = new Set(selectedLessons);
+    if (checked) {
+      newSelected.add(lessonId);
+    } else {
+      newSelected.delete(lessonId);
+    }
+    setSelectedLessons(newSelected);
+  };
+
+  // Delete functions
+  const handleDeleteClick = (lesson: Lesson) => {
+    setLessonToDelete(lesson);
+    setDeleteModalOpen(true);
+  };
+
+  const handleBulkDeleteClick = () => {
+    setBulkDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!lessonToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/lessons/${lessonToDelete.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        toast.success("Lesson has been successfully deleted.");
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        toast.error(error.message || "Failed to delete lesson");
+      }
+    } catch (error) {
+      console.error("Error deleting lesson:", error);
+      toast.error("An unexpected error occurred while deleting the lesson");
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setLessonToDelete(null);
+    }
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    if (selectedLessons.size === 0) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch("/api/admin/lessons/bulk-delete", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lessonIds: Array.from(selectedLessons)
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(`${selectedLessons.size} lesson(s) have been successfully deleted.`);
+        setSelectedLessons(new Set());
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        toast.error(error.message || "Failed to delete lessons");
+      }
+    } catch (error) {
+      console.error("Error deleting lessons:", error);
+      toast.error("An unexpected error occurred while deleting the lessons");
+    } finally {
+      setIsDeleting(false);
+      setBulkDeleteModalOpen(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
 
@@ -167,28 +279,72 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
         </div>
 
         <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-          <span>Showing {filteredLessons.length} of {lessons.length} lessons</span>
-          {(searchTerm || statusFilter !== "all" || teacherFilter !== "all") && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("all");
-                setTeacherFilter("all");
-              }}
-            >
-              Clear Filters
-            </Button>
-          )}
+          <div className="flex items-center gap-4">
+            <span>Showing {filteredLessons.length} of {lessons.length} lessons</span>
+            {selectedLessons.size > 0 && (
+              <span className="font-medium text-foreground">
+                {selectedLessons.size} selected
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedLessons.size > 0 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="bg-red-500 hover:bg-red-700 text-white border-red-600"
+                onClick={handleBulkDeleteClick}
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Delete Selected ({selectedLessons.size})
+              </Button>
+            )}
+            {(searchTerm || statusFilter !== "all" || teacherFilter !== "all") && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("all");
+                  setTeacherFilter("all");
+                  setSelectedLessons(new Set());
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
+
+      {/* Select All Header */}
+      {filteredLessons.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={selectedLessons.size === filteredLessons.length && filteredLessons.length > 0}
+              onCheckedChange={handleSelectAll}
+            />
+            <span className="text-sm font-medium">
+              Select All ({filteredLessons.length} lessons)
+            </span>
+          </div>
+        </Card>
+      )}
 
       {/* Lessons List */}
       <div className="space-y-4">
         {filteredLessons.map((lesson) => (
           <Card key={lesson.id} className="p-4">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              {/* Selection Checkbox */}
+              <div className="pt-1">
+                <Checkbox
+                  checked={selectedLessons.has(lesson.id)}
+                  onCheckedChange={(checked) => handleSelectLesson(lesson.id, checked as boolean)}
+                />
+              </div>
+              
               <div className="flex-1 space-y-3">
                 {/* Header Row */}
                 <div className="flex items-center gap-4">
@@ -253,13 +409,23 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
                 )}
               </div>
 
-              {/* View Button */}
-              <Link href={`/lessons/${lesson.id}`}>
-                <Button variant="secondary" size="sm">
-                  <Eye className="h-4 w-4 mr-1" />
-                  View
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-red-500 hover:bg-red-700 text-white border-red-600"
+                  onClick={() => handleDeleteClick(lesson)}
+                >
+                  <Trash2 className="h-3 w-3" />
                 </Button>
-              </Link>
+                <Link href={`/lessons/${lesson.id}`}>
+                  <Button variant="secondary" size="sm">
+                    <Eye className="h-4 w-4 mr-1" />
+                    View
+                  </Button>
+                </Link>
+              </div>
             </div>
           </Card>
         ))}
@@ -279,6 +445,147 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
           </p>
         </Card>
       )}
+
+      {/* Individual Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Lesson
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this lesson?
+            </DialogDescription>
+          </DialogHeader>
+          
+          {lessonToDelete && (
+            <div className="space-y-4 py-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800 font-medium mb-2">
+                  Lesson Details:
+                </p>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Teacher: {lessonToDelete.teacher.user.name}</li>
+                  <li>• Student: {lessonToDelete.student.user.name}</li>
+                  <li>• Date: {new Date(lessonToDelete.date).toLocaleDateString()}</li>
+                  <li>• Duration: {formatDuration(lessonToDelete.duration)}</li>
+                  <li>• Status: {lessonToDelete.status}</li>
+                </ul>
+              </div>
+              
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800 font-medium mb-2">
+                  This action will permanently delete:
+                </p>
+                <ul className="text-sm text-red-700 space-y-1 ml-4">
+                  <li>• The lesson record and all associated data</li>
+                  <li>• Any notes or homework assignments</li>
+                  <li>• Progress tracking information</li>
+                </ul>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                <strong>This action cannot be undone.</strong> The lesson data will be permanently removed from the system.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Lesson
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Modal */}
+      <Dialog open={bulkDeleteModalOpen} onOpenChange={setBulkDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Multiple Lessons
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedLessons.size} selected lesson(s)?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800 font-medium mb-2">
+                This action will permanently delete:
+              </p>
+              <ul className="text-sm text-red-700 space-y-1 ml-4">
+                <li>• {selectedLessons.size} lesson record(s) and all associated data</li>
+                <li>• Any notes or homework assignments for these lessons</li>
+                <li>• Progress tracking information for these lessons</li>
+              </ul>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800 font-medium">
+                Selected lessons include various teachers, students, and dates. All selected lessons will be permanently removed regardless of their current status.
+              </p>
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              <strong>This action cannot be undone.</strong> All selected lesson data will be permanently removed from the system.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setBulkDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              onClick={handleBulkDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete {selectedLessons.size} Lessons
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

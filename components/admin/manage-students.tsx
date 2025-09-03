@@ -5,16 +5,26 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import toast from "react-hot-toast";
 import { 
   Search,
   Users,
-  Mail,
-  Calendar,
   Eye,
   EyeOff,
   CheckCircle,
   XCircle,
-  GraduationCap
+  GraduationCap,
+  Trash2,
+  Loader2,
+  AlertTriangle
 } from "lucide-react";
 
 export interface Student {
@@ -43,6 +53,13 @@ interface ManageStudentsProps {
 
 export function ManageStudents({ students }: ManageStudentsProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Student details modal state
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [studentToView, setStudentToView] = useState<Student | null>(null);
 
   const filteredStudents = students.filter(student =>
     student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,6 +83,51 @@ export function ManageStudents({ students }: ManageStudentsProps) {
       }
     } catch (error) {
       console.error("Error toggling student status:", error);
+    }
+  };
+
+  const handleDeleteClick = (student: Student) => {
+    setStudentToDelete(student);
+    setDeleteModalOpen(true);
+  };
+
+  const handleViewDetails = (student: Student) => {
+    setStudentToView(student);
+    setDetailsModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!studentToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(
+        `/api/admin/students/${studentToDelete.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        toast.success(
+          `${studentToDelete.name} has been successfully removed from the system.`
+        );
+        // Refresh the page
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        toast.error(error.message || "Failed to delete student");
+      }
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      toast.error("An unexpected error occurred while deleting the student");
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setStudentToDelete(null);
     }
   };
 
@@ -98,8 +160,11 @@ export function ManageStudents({ students }: ManageStudentsProps) {
           const isActive = profile?.isActive ?? true;
 
           return (
-            <Card key={student.id} className="p-4">
-              <div className="space-y-3">
+            <Card key={student.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow">
+              <div 
+                className="space-y-3"
+                onClick={() => handleViewDetails(student)}
+              >
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -116,23 +181,33 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                       Joined {new Date(student.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={isActive ? "secondary" : "primary"}
-                    onClick={() => toggleStudentStatus(student.id, isActive)}
-                  >
-                    {isActive ? (
-                      <>
-                        <EyeOff className="h-3 w-3 mr-1" />
-                        Deactivate
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-3 w-3 mr-1" />
-                        Activate
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      size="sm"
+                      variant={isActive ? "secondary" : "primary"}
+                      onClick={() => toggleStudentStatus(student.id, isActive)}
+                    >
+                      {isActive ? (
+                        <>
+                          <EyeOff className="h-3 w-3 mr-1" />
+                          Deactivate
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-3 w-3 mr-1" />
+                          Activate
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="bg-red-500 hover:bg-red-700 text-white border-red-600"
+                      onClick={() => handleDeleteClick(student)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Teacher Info */}
@@ -187,6 +262,188 @@ export function ManageStudents({ students }: ManageStudentsProps) {
           </p>
         </Card>
       )}
+
+      {/* Student Details Modal */}
+      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              Student Details: {studentToView?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Complete information about this student&apos;s profile and learning journey
+            </DialogDescription>
+          </DialogHeader>
+          
+          {studentToView && (
+            <div className="space-y-6 py-4">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                    <p className="text-sm">{studentToView.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Email</label>
+                    <p className="text-sm">{studentToView.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <div className="flex items-center gap-2">
+                      {studentToView.studentProfile?.isActive ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="text-sm text-green-600">Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 text-red-600" />
+                          <span className="text-sm text-red-600">Inactive</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Joined</label>
+                    <p className="text-sm">{new Date(studentToView.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Learning Information */}
+              {studentToView.studentProfile && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold border-b pb-2">Learning Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Instrument</label>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-background border">
+                          {studentToView.studentProfile.instrument}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Assigned Teacher</label>
+                      <p className="text-sm">
+                        {studentToView.studentProfile.teacher 
+                          ? studentToView.studentProfile.teacher.user.name
+                          : 'No teacher assigned'
+                        }
+                      </p>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-muted-foreground">Learning Goals</label>
+                      <p className="text-sm mt-1 p-3 bg-muted rounded-lg">
+                        {studentToView.studentProfile.goals || 'No goals specified'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Teacher Information */}
+              {studentToView.studentProfile?.teacher && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold border-b pb-2">Assigned Teacher</h3>
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                      <Users className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">{studentToView.studentProfile.teacher.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{studentToView.studentProfile.teacher.user.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setDetailsModalOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Delete Student Account
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{studentToDelete?.name}</strong>&apos;s account?
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-800 font-medium mb-2">
+                This action will permanently delete:
+              </p>
+              <ul className="text-sm text-red-700 space-y-1 ml-4">
+                <li>• The student&apos;s account and profile</li>
+                <li>• All lessons associated with this student</li>
+                <li>• All invoices and payment records</li>
+                <li>• All checklist progress and completion data</li>
+                <li>• All recurring lesson bookings</li>
+              </ul>
+            </div>
+            
+            {studentToDelete?.studentProfile?.teacher && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800 font-medium">
+                  📚 Currently assigned to teacher: {studentToDelete.studentProfile.teacher.user.name}
+                </p>
+              </div>
+            )}
+            
+            <p className="text-sm text-muted-foreground">
+              <strong>This action cannot be undone.</strong> Please ensure you have backed up any necessary data before proceeding.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="secondary"
+              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Student
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

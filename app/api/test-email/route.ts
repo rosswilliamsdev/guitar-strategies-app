@@ -93,20 +93,95 @@ export async function POST(request: NextRequest) {
         `;
         break;
         
-      case 'overdue-invoice':
-        subject = 'Test: Overdue Invoice Notification';
+      case 'invoice-created':
+        subject = 'Test: New Invoice Created';
+        content = `
+          <h2>📄 Test Invoice from Test Teacher</h2>
+          <p>Hi Test Student,</p>
+          <p>This is a test of the invoice creation email system.</p>
+          <div class="info-box">
+            <strong>Test Invoice Details:</strong><br>
+            Invoice Number: INV-TEST-001<br>
+            Period: ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}<br>
+            Amount Due: $120.00<br>
+            Due Date: ${new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString()}<br>
+            Number of Lessons: 4
+          </div>
+          <div class="info-box">
+            <strong>Payment Methods:</strong><br>
+            Venmo: @test-teacher<br>
+            PayPal: test@paypal.com<br>
+            Zelle: test@zelle.com
+          </div>
+          <p>When making your payment, please include the invoice number <strong>INV-TEST-001</strong> in your payment reference.</p>
+          <p><strong>⚠️ This is a test email.</strong> No actual invoice has been created.</p>
+        `;
+        break;
+        
+      case 'invoice-overdue':
+        subject = 'Test: Invoice Overdue Reminder';
         content = `
           <h2>Payment Reminder - Test Invoice Overdue</h2>
           <p>Hi Test Student,</p>
-          <p>This is a test of the overdue invoice email system.</p>
+          <p>This is a test of the overdue invoice reminder email system.</p>
           <div class="warning-box">
             <strong>Test Overdue Invoice Details:</strong><br>
-            Invoice Number: INV-TEST-001<br>
-            Amount Due: $120.00<br>
-            Original Due Date: December 1, 2024<br>
+            Invoice Number: INV-TEST-002<br>
+            Amount Due: $150.00<br>
+            Original Due Date: ${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString()}<br>
             Teacher: Test Teacher
           </div>
-          <p><strong>This is a test email.</strong> No actual invoice is overdue.</p>
+          <div class="info-box">
+            <strong>Payment Methods:</strong><br>
+            Venmo: @test-teacher<br>
+            PayPal: test@paypal.com<br>
+            Zelle: test@zelle.com
+          </div>
+          <p>Please make payment as soon as possible to avoid any disruption to your lessons.</p>
+          <p><strong>⚠️ This is a test email.</strong> No actual invoice is overdue.</p>
+        `;
+        break;
+        
+      case 'invoice-paid':
+        subject = 'Test: Payment Confirmation';
+        content = `
+          <h2>✅ Payment Received - Thank You!</h2>
+          <p>Hi Test Student,</p>
+          <p>This is a test of the invoice payment confirmation email system.</p>
+          <div class="info-box">
+            <strong>Payment Details:</strong><br>
+            Invoice Number: INV-TEST-003<br>
+            Amount Paid: $90.00<br>
+            Payment Method: Venmo<br>
+            Payment Date: ${new Date().toLocaleDateString()}<br>
+            Teacher: Test Teacher
+          </div>
+          <p>Thank you for your prompt payment. Your account is now up to date.</p>
+          <p><strong>This is a test email.</strong> No actual payment has been processed.</p>
+        `;
+        break;
+        
+      case 'invoice-upcoming':
+        subject = 'Test: Payment Due Soon Reminder';
+        content = `
+          <h2>📅 Payment Due Soon</h2>
+          <p>Hi Test Student,</p>
+          <p>This is a test of the upcoming payment reminder email system.</p>
+          <div class="info-box">
+            <strong>Upcoming Invoice:</strong><br>
+            Invoice Number: INV-TEST-004<br>
+            Amount Due: $120.00<br>
+            Due Date: ${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString()}<br>
+            Teacher: Test Teacher
+          </div>
+          <div class="info-box">
+            <strong>Payment Methods:</strong><br>
+            Venmo: @test-teacher<br>
+            PayPal: test@paypal.com<br>
+            Zelle: test@zelle.com
+          </div>
+          <p>Please ensure payment is made by the due date to avoid any late fees or disruption to your lessons.</p>
+          <p><strong>This is a test email.</strong> No actual payment is due.</p>
         `;
         break;
     }
