@@ -439,7 +439,7 @@ openssl rand -base64 32
   
   // Invoice details
   invoiceNumber: string             // "INV-2025-001" format
-  month: string                     // "2025-01" format
+  month: string                     // "2025-09" format
   dueDate: DateTime
   status: 'PENDING' | 'SENT' | 'VIEWED' | 'PAID' | 'OVERDUE' | 'CANCELLED'
   
@@ -463,7 +463,7 @@ openssl rand -base64 32
   invoiceId: string
   
   // Item details
-  description: string               // "Guitar Lesson - Jan 15, 2025"
+  description: string               // "Guitar Lesson - Sep 15, 2025"
   quantity: number                  // Default: 1
   rate: number                      // cents (teacher's hourly rate)
   amount: number                    // cents (quantity × rate)

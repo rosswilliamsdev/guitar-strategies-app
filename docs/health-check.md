@@ -16,7 +16,7 @@ The health check returns a JSON response with the following structure:
 ```json
 {
   "status": "healthy" | "degraded" | "unhealthy",
-  "timestamp": "2025-01-03T12:00:00.000Z",
+  "timestamp": "2025-09-03T12:00:00.000Z",
   "uptime": 3600,
   "version": "1.0.0",
   "environment": "production",

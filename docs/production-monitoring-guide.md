@@ -30,7 +30,7 @@ Your Guitar Strategies app includes a health check endpoint at `/api/health` tha
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-01-03T12:00:00.000Z",
+  "timestamp": "2025-09-03T12:00:00.000Z",
   "uptime": 3600,
   "checks": {
     "database": {"status": "pass", "responseTime": 45},
@@ -282,7 +282,7 @@ Body:
 - Status: unhealthy
 - Failed Component: database
 - Error: Connection timeout
-- Time: 2025-01-03 02:15:30 UTC
+- Time: 2025-09-03 02:15:30 UTC
 - URL: https://yourapp.com/api/health
 ```
 

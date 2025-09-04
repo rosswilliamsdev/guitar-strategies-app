@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
 import { createInvoiceSchema } from '@/lib/validations';
 
 export async function GET(request: NextRequest) {
@@ -44,29 +45,32 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
+    // Use retry logic for database queries
     const [invoices, total] = await Promise.all([
-      prisma.invoice.findMany({
-        where,
-        include: {
-          teacher: {
-            include: {
-              user: true,
+      dbQuery(() => 
+        prisma.invoice.findMany({
+          where,
+          include: {
+            teacher: {
+              include: {
+                user: true,
+              },
             },
-          },
-          student: {
-            include: {
-              user: true,
+            student: {
+              include: {
+                user: true,
+              },
             },
+            items: true,
           },
-          items: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.invoice.count({ where }),
+          orderBy: {
+            createdAt: 'desc',
+          },
+          skip: (page - 1) * limit,
+          take: limit,
+        })
+      ),
+      dbQuery(() => prisma.invoice.count({ where })),
     ]);
 
     return NextResponse.json({
@@ -111,14 +115,16 @@ export async function POST(request: NextRequest) {
     
     if (body.studentId) {
       // Regular invoice - validate that the student exists and belongs to this teacher
-      const student = await prisma.studentProfile.findUnique({
-        where: { 
-          id: body.studentId,
-        },
-        include: {
-          user: true,
-        },
-      });
+      const student = await dbQuery(() => 
+        prisma.studentProfile.findUnique({
+          where: { 
+            id: body.studentId,
+          },
+          include: {
+            user: true,
+          },
+        })
+      );
 
       if (!student) {
         return NextResponse.json({ error: 'Student not found' }, { status: 404 });
@@ -142,17 +148,19 @@ export async function POST(request: NextRequest) {
     
     // Generate invoice number
     const year = new Date().getFullYear();
-    const lastInvoice = await prisma.invoice.findFirst({
-      where: {
-        teacherId: session.user.teacherProfile.id,
-        invoiceNumber: {
-          startsWith: `INV-${year}-`,
+    const lastInvoice = await dbQuery(() => 
+      prisma.invoice.findFirst({
+        where: {
+          teacherId: session.user.teacherProfile.id,
+          invoiceNumber: {
+            startsWith: `INV-${year}-`,
+          },
         },
-      },
-      orderBy: {
-        invoiceNumber: 'desc',
-      },
-    });
+        orderBy: {
+          invoiceNumber: 'desc',
+        },
+      })
+    );
 
     let nextNumber = 1;
     if (lastInvoice) {
@@ -166,49 +174,52 @@ export async function POST(request: NextRequest) {
     const subtotal = body.items.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0);
     const total = subtotal; // No taxes/fees for now
 
-    const invoice = await prisma.invoice.create({
-      data: {
-        teacherId: session.user.teacherProfile.id,
-        studentId,
-        customFullName,
-        customEmail,
-        invoiceNumber,
-        month: body.month,
-        dueDate: new Date(body.dueDate),
-        subtotal,
-        total,
-        items: {
-          create: body.items.map((item: {
-            description: string;
-            quantity: number;
-            rate: number;
-            amount: number;
-            lessonDate?: string;
-            lessonId?: string;
-          }) => ({
-            description: item.description,
-            quantity: item.quantity,
-            rate: item.rate,
-            amount: item.amount,
-            lessonDate: item.lessonDate ? new Date(item.lessonDate) : null,
-            lessonId: item.lessonId || null,
-          })),
-        },
-      },
-      include: {
-        teacher: {
-          include: {
-            user: true,
+    // Use critical retry for invoice creation (financial operation)
+    const invoice = await criticalDbQuery(() => 
+      prisma.invoice.create({
+        data: {
+          teacherId: session.user.teacherProfile.id,
+          studentId,
+          customFullName,
+          customEmail,
+          invoiceNumber,
+          month: body.month,
+          dueDate: new Date(body.dueDate),
+          subtotal,
+          total,
+          items: {
+            create: body.items.map((item: {
+              description: string;
+              quantity: number;
+              rate: number;
+              amount: number;
+              lessonDate?: string;
+              lessonId?: string;
+            }) => ({
+              description: item.description,
+              quantity: item.quantity,
+              rate: item.rate,
+              amount: item.amount,
+              lessonDate: item.lessonDate ? new Date(item.lessonDate) : null,
+              lessonId: item.lessonId || null,
+            })),
           },
         },
-        student: {
-          include: {
-            user: true,
+        include: {
+          teacher: {
+            include: {
+              user: true,
+            },
           },
+          student: {
+            include: {
+              user: true,
+            },
+          },
+          items: true,
         },
-        items: true,
-      },
-    });
+      })
+    );
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {

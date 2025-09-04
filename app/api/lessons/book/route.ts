@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
 import { bookingSchema } from '@/lib/validations';
 import { bookSingleLesson, bookRecurringSlot } from '@/lib/scheduler';
 import { sendEmail, createLessonBookingEmail } from '@/lib/email';
@@ -50,18 +51,20 @@ export async function POST(request: NextRequest) {
       dateString: new Date(validatedData.date).toISOString()
     });
 
-    // Get student profile with user and teacher data for emails
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-      include: { 
-        user: true,
-        teacher: {
-          include: {
-            user: true
+    // Get student profile with user and teacher data for emails (with retry)
+    const studentProfile = await dbQuery(() => 
+      prisma.studentProfile.findUnique({
+        where: { userId: session.user.id },
+        include: { 
+          user: true,
+          teacher: {
+            include: {
+              user: true
+            }
           }
         }
-      }
-    });
+      })
+    );
 
     if (!studentProfile) {
       return createNotFoundResponse('Student profile');
@@ -88,7 +91,8 @@ export async function POST(request: NextRequest) {
     if (validatedData.isRecurring) {
       // Use the new RecurringSlot system for truly indefinite recurring lessons
       // This creates a recurring slot and initial lessons for the next 4 weeks
-      result = await bookRecurringSlot(bookingData);
+      // Use critical retry for recurring bookings since they're more important
+      result = await criticalDbQuery(() => bookRecurringSlot(bookingData));
       
       // Use the date from the first lesson for email
       if (result.lessons && result.lessons.length > 0) {
@@ -136,8 +140,8 @@ export async function POST(request: NextRequest) {
         'Successfully booked your weekly lesson time!'
       );
     } else {
-      // Book single lesson
-      result = await bookSingleLesson(bookingData);
+      // Book single lesson with retry logic
+      result = await dbQuery(() => bookSingleLesson(bookingData));
       
       // Format lesson details for email
       lessonDate = result.date.toLocaleDateString('en-US', {

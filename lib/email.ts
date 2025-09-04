@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { withRetry, emailRetryOptions } from './retry';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -9,7 +10,52 @@ export interface EmailData {
   from?: string;
 }
 
+/**
+ * Send email with automatic retry logic for transient failures
+ */
 export async function sendEmail(data: EmailData): Promise<boolean> {
+  try {
+    // Wrap the email sending in retry logic
+    const result = await withRetry(async () => {
+      const emailResult = await resend.emails.send({
+        from: data.from || 'Guitar Strategies <onboarding@resend.dev>',
+        to: [data.to],
+        subject: data.subject,
+        html: data.html,
+      });
+      
+      // If Resend returns an error in the result, throw it to trigger retry
+      if (emailResult.error) {
+        const error = new Error(emailResult.error.message || 'Email sending failed');
+        // Attach status code if available for retry logic
+        (error as any).status = emailResult.error.name === 'rate_limit_exceeded' ? 429 : 500;
+        throw error;
+      }
+      
+      return emailResult;
+    }, emailRetryOptions);
+
+    console.log('Email sent successfully:', result.data?.id);
+    return true;
+  } catch (error) {
+    // After all retry attempts failed
+    console.error('Email sending failed after retries:', error);
+    
+    // Log additional context for debugging
+    logEmailError('sendEmail', error, {
+      to: data.to,
+      subject: data.subject,
+      hasApiKey: !!process.env.RESEND_API_KEY,
+    });
+    
+    return false;
+  }
+}
+
+/**
+ * Send email without retry (for non-critical emails)
+ */
+export async function sendEmailNoRetry(data: EmailData): Promise<boolean> {
   try {
     const result = await resend.emails.send({
       from: data.from || 'Guitar Strategies <onboarding@resend.dev>',
@@ -28,6 +74,70 @@ export async function sendEmail(data: EmailData): Promise<boolean> {
   } catch (error) {
     console.error('Email sending error:', error);
     return false;
+  }
+}
+
+/**
+ * Batch send emails with retry logic
+ */
+export async function sendBatchEmails(emails: EmailData[]): Promise<{
+  successful: string[];
+  failed: string[];
+}> {
+  const results = {
+    successful: [] as string[],
+    failed: [] as string[],
+  };
+  
+  // Process emails in parallel with a concurrency limit
+  const concurrencyLimit = 5;
+  const emailChunks = [];
+  
+  for (let i = 0; i < emails.length; i += concurrencyLimit) {
+    emailChunks.push(emails.slice(i, i + concurrencyLimit));
+  }
+  
+  for (const chunk of emailChunks) {
+    const chunkPromises = chunk.map(async (emailData) => {
+      const success = await sendEmail(emailData);
+      if (success) {
+        results.successful.push(emailData.to);
+      } else {
+        results.failed.push(emailData.to);
+      }
+    });
+    
+    await Promise.all(chunkPromises);
+  }
+  
+  return results;
+}
+
+/**
+ * Log email errors with context for monitoring
+ */
+function logEmailError(
+  operation: string,
+  error: any,
+  context?: Record<string, any>
+): void {
+  const errorInfo = {
+    operation,
+    error: {
+      message: error?.message,
+      status: error?.status,
+      code: error?.code,
+    },
+    context,
+    timestamp: new Date().toISOString(),
+  };
+  
+  if (process.env.NODE_ENV === 'production') {
+    // In production, log to monitoring service
+    console.error('[Email Error]', JSON.stringify(errorInfo));
+  } else {
+    // In development, log more verbosely
+    console.error('[Email Error]', errorInfo);
   }
 }
 
