@@ -44,17 +44,9 @@ export async function GET(
       return createBadRequestResponse('End date must be after start date');
     }
 
-    // Check if student is authorized to view this teacher's slots
+    // Students can no longer view teacher availability
     if (session.user.role === 'STUDENT') {
-      // Verify student is assigned to this teacher
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: session.user.id },
-        include: { teacher: true }
-      });
-
-      if (!studentProfile || studentProfile.teacherId !== teacherId) {
-        return createForbiddenResponse('Not authorized to view this teacher\'s availability');
-      }
+      return createForbiddenResponse('Student scheduling disabled. Please contact your teacher to schedule lessons.');
     }
 
     // Get available slots

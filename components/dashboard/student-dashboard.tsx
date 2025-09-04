@@ -36,15 +36,9 @@ export function StudentDashboard({
 
   const quickActions = [
     {
-      href: "/scheduling",
-      text: "Scheduling",
-      variant: "primary" as const,
-      description: "Manage your lesson schedule",
-    },
-    {
       href: "/lessons",
       text: "View Lessons", 
-      variant: "secondary" as const,
+      variant: "primary" as const,
       description: "See your lesson history",
     },
     {

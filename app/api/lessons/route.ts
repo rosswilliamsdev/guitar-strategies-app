@@ -16,6 +16,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { createLessonSchema } from '@/lib/validations';
+import { validateJsonSize } from '@/lib/request-validation';
 
 /**
  * GET /api/lessons
@@ -170,6 +171,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    
+    // Validate request size (rich text content can be large)
+    const sizeValidation = validateJsonSize(body, 'RICH_TEXT');
+    if (sizeValidation) {
+      return sizeValidation;
+    }
+    
     const validatedData = createLessonSchema.parse(body);
 
     // Get teacher's profile

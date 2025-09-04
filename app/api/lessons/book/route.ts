@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
@@ -20,9 +20,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== 'STUDENT') {
-      return createAuthErrorResponse('Students only');
-    }
+    // Student self-booking has been disabled - only teachers can book for students
+    return NextResponse.json({ 
+      error: 'Student booking disabled',
+      message: 'Students can no longer book lessons directly. Please contact your teacher to schedule lessons.'
+    }, { status: 403 });
 
     let body;
     try {

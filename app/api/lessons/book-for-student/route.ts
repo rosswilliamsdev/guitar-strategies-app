@@ -87,72 +87,100 @@ export async function POST(request: NextRequest) {
       return createConflictResponse("This time slot already has a lesson scheduled");
     }
 
-    if (validatedData.type === "single") {
-      // Create single lesson
-      const lesson = await prisma.lesson.create({
-        data: {
-          teacherId: validatedData.teacherId,
-          studentId: validatedData.studentId,
-          date: lessonDate,
-          duration: validatedData.duration,
-          status: "SCHEDULED",
-        },
-      });
-
-      return createSuccessResponse(lesson, "Single lesson created successfully");
-    } else {
-      // Create indefinite recurring slot
-      const lessonDate = new Date(validatedData.date);
-      const dayOfWeek = lessonDate.getDay();
-      const hours = lessonDate.getHours();
-      const minutes = lessonDate.getMinutes();
-      const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-
-      // Check for existing recurring slot conflicts
-      const existingSlot = await prisma.recurringSlot.findFirst({
+    // Use transaction to ensure atomicity for both single and recurring bookings
+    const result = await prisma.$transaction(async (tx) => {
+      // Double-check for conflicts within the transaction to prevent race conditions
+      const conflict = await tx.lesson.findFirst({
         where: {
           teacherId: validatedData.teacherId,
-          dayOfWeek,
-          startTime: timeString,
-          duration: validatedData.duration,
-          status: "ACTIVE",
+          date: {
+            gte: lessonDate,
+            lt: endTime,
+          },
+          status: {
+            in: ["SCHEDULED"],
+          },
         },
       });
 
-      if (existingSlot) {
-        return createConflictResponse("You already have a recurring slot at this time");
+      if (conflict) {
+        throw new Error("This time slot was just booked by another lesson");
       }
 
-      // Create recurring slot
-      const recurringSlot = await prisma.recurringSlot.create({
-        data: {
-          teacherId: validatedData.teacherId,
-          studentId: validatedData.studentId,
-          dayOfWeek,
-          startTime: timeString,
-          duration: validatedData.duration,
-          monthlyRate: 0, // Set based on teacher's rate
-          status: "ACTIVE",
-        },
-      });
+      if (validatedData.type === "single") {
+        // Create single lesson
+        const lesson = await tx.lesson.create({
+          data: {
+            teacherId: validatedData.teacherId,
+            studentId: validatedData.studentId,
+            date: lessonDate,
+            duration: validatedData.duration,
+            status: "SCHEDULED",
+          },
+        });
 
-      // Create the first lesson for this week
-      const firstLesson = await prisma.lesson.create({
-        data: {
-          teacherId: validatedData.teacherId,
-          studentId: validatedData.studentId,
-          date: lessonDate,
-          duration: validatedData.duration,
-          status: "SCHEDULED",
-          isRecurring: true,
-          recurringSlotId: recurringSlot.id,
-        },
-      });
+        return { type: "single", lesson };
+      } else {
+        // Create indefinite recurring slot
+        const lessonDate = new Date(validatedData.date);
+        const dayOfWeek = lessonDate.getDay();
+        const hours = lessonDate.getHours();
+        const minutes = lessonDate.getMinutes();
+        const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 
+        // Check for existing recurring slot conflicts within transaction
+        const existingSlot = await tx.recurringSlot.findFirst({
+          where: {
+            teacherId: validatedData.teacherId,
+            dayOfWeek,
+            startTime: timeString,
+            duration: validatedData.duration,
+            status: "ACTIVE",
+          },
+        });
+
+        if (existingSlot) {
+          throw new Error("You already have a recurring slot at this time");
+        }
+
+        // Create recurring slot
+        const recurringSlot = await tx.recurringSlot.create({
+          data: {
+            teacherId: validatedData.teacherId,
+            studentId: validatedData.studentId,
+            dayOfWeek,
+            startTime: timeString,
+            duration: validatedData.duration,
+            monthlyRate: 0, // Set based on teacher's rate
+            status: "ACTIVE",
+          },
+        });
+
+        // Create the first lesson for this week
+        const firstLesson = await tx.lesson.create({
+          data: {
+            teacherId: validatedData.teacherId,
+            studentId: validatedData.studentId,
+            date: lessonDate,
+            duration: validatedData.duration,
+            status: "SCHEDULED",
+            isRecurring: true,
+            recurringSlotId: recurringSlot.id,
+          },
+        });
+
+        return { type: "recurring", recurringSlot, firstLesson };
+      }
+    });
+
+    // Handle successful transaction result
+    if (result.type === "single") {
+      return createSuccessResponse(result.lesson, "Single lesson created successfully");
+    } else {
       return createSuccessResponse(
         {
-          recurringSlot,
-          firstLesson
+          recurringSlot: result.recurringSlot,
+          firstLesson: result.firstLesson
         },
         "Created indefinite recurring lesson"
       );

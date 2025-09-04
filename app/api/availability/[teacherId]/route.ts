@@ -20,9 +20,8 @@ export async function GET(
     const { teacherId } = await params;
     const session = await getServerSession(authOptions);
     
-    if (!session || session.user.role !== 'STUDENT') {
-      return createAuthErrorResponse('Students only');
-    }
+    // Student availability viewing has been disabled
+    return createAuthErrorResponse('Student scheduling disabled. Please contact your teacher to schedule lessons.');
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');

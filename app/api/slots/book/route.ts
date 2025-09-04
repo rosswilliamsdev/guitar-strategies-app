@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -23,10 +23,11 @@ export async function POST(request: NextRequest) {
       return createAuthErrorResponse();
     }
 
-    // Only students can book slots
-    if (session.user.role !== "STUDENT") {
-      return createForbiddenResponse("Only students can book slots");
-    }
+    // Student slot booking has been disabled - only teachers can book for students
+    return NextResponse.json({ 
+      error: 'Student booking disabled',
+      message: 'Students can no longer book slots directly. Please contact your teacher to schedule lessons.'
+    }, { status: 403 });
 
     const body = await request.json();
     const validation = createSlotBookingSchema.safeParse(body);

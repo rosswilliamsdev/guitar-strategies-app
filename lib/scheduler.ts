@@ -393,134 +393,191 @@ export async function validateBooking(data: BookingData): Promise<{
 }
 
 export async function bookSingleLesson(data: BookingData) {
-  const validation = await validateBooking(data)
-  if (!validation.success) {
-    throw new Error(validation.error)
-  }
-
-  const teacher = await prisma.teacherProfile.findUnique({
-    where: { id: data.teacherId },
-    include: { lessonSettings: true }
-  })
-
-  if (!teacher?.lessonSettings) {
-    throw new Error('Teacher settings not found')
-  }
-
-  const price = data.duration === 30 
-    ? teacher.lessonSettings.price30Min 
-    : teacher.lessonSettings.price60Min
-
-  // Normalize the date (remove milliseconds) before saving
-  const normalizedDate = new Date(data.date)
-  normalizedDate.setSeconds(0, 0)
-
-  console.log('🎯 Creating lesson with duration:', {
-    teacherId: data.teacherId,
-    duration: data.duration,
-    price,
-    date: normalizedDate.toISOString()
-  })
-
-  const lesson = await prisma.lesson.create({
-    data: {
-      teacherId: data.teacherId,
-      studentId: data.studentId,
-      date: normalizedDate,
-      duration: data.duration,
-      timezone: data.timezone,
-      price,
-      status: 'SCHEDULED',
-      isRecurring: data.isRecurring || false
+  // Use a database transaction to ensure atomicity
+  return await prisma.$transaction(async (tx) => {
+    const validation = await validateBooking(data)
+    if (!validation.success) {
+      throw new Error(validation.error)
     }
-  })
 
-  console.log('✅ Lesson created:', {
-    id: lesson.id,
-    duration: lesson.duration,
-    price: lesson.price,
-    date: lesson.date.toISOString()
-  })
+    const teacher = await tx.teacherProfile.findUnique({
+      where: { id: data.teacherId },
+      include: { lessonSettings: true }
+    })
 
-  return lesson
+    if (!teacher?.lessonSettings) {
+      throw new Error('Teacher settings not found')
+    }
+
+    const price = data.duration === 30 
+      ? teacher.lessonSettings.price30Min 
+      : teacher.lessonSettings.price60Min
+
+    // Normalize the date (remove milliseconds) before saving
+    const normalizedDate = new Date(data.date)
+    normalizedDate.setSeconds(0, 0)
+
+    console.log('🎯 Creating lesson with duration:', {
+      teacherId: data.teacherId,
+      duration: data.duration,
+      price,
+      date: normalizedDate.toISOString()
+    })
+
+    // Check for conflicts again within the transaction to prevent race conditions
+    const existingLesson = await tx.lesson.findFirst({
+      where: {
+        teacherId: data.teacherId,
+        date: normalizedDate,
+        status: {
+          not: 'CANCELLED'
+        }
+      }
+    })
+
+    if (existingLesson) {
+      throw new Error('This time slot has been booked by another student')
+    }
+
+    const lesson = await tx.lesson.create({
+      data: {
+        teacherId: data.teacherId,
+        studentId: data.studentId,
+        date: normalizedDate,
+        duration: data.duration,
+        timezone: data.timezone,
+        price,
+        status: 'SCHEDULED',
+        isRecurring: data.isRecurring || false
+      }
+    })
+
+    console.log('✅ Lesson created:', {
+      id: lesson.id,
+      duration: lesson.duration,
+      price: lesson.price,
+      date: lesson.date.toISOString()
+    })
+
+    return lesson
+  })
 }
 
 // Book a recurring slot that continues indefinitely
 export async function bookRecurringSlot(
   data: BookingData
 ) {
-  // Validate the first occurrence
-  const validation = await validateBooking({ ...data, isRecurring: true })
-  if (!validation.success) {
-    throw new Error(validation.error)
-  }
-
-  // Get teacher and pricing
-  const teacher = await prisma.teacherProfile.findUnique({
-    where: { id: data.teacherId },
-    include: { lessonSettings: true }
-  })
-
-  if (!teacher?.lessonSettings) {
-    throw new Error('Teacher settings not found')
-  }
-
-  const price = data.duration === 30 
-    ? teacher.lessonSettings.price30Min 
-    : teacher.lessonSettings.price60Min
-
-  // Normalize the date (remove milliseconds) for consistent processing
-  const normalizedDate = new Date(data.date)
-  normalizedDate.setSeconds(0, 0)
-  
-  // Extract day of week and time from the date
-  const dayOfWeek = normalizedDate.getDay()
-  
-  // Store the per-lesson price - monthly rates will be calculated dynamically
-  const perLessonPrice = price
-  const hours = normalizedDate.getHours()
-  const minutes = normalizedDate.getMinutes()
-  const startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-
-  // Create the recurring slot
-  const recurringSlot = await prisma.recurringSlot.create({
-    data: {
-      teacherId: data.teacherId,
-      studentId: data.studentId,
-      dayOfWeek,
-      startTime,
-      duration: data.duration,
-      perLessonPrice, // Store per-lesson price, calculate monthly rates dynamically
-      status: 'ACTIVE'
+  // Use a database transaction to ensure atomicity
+  return await prisma.$transaction(async (tx) => {
+    // Validate the first occurrence
+    const validation = await validateBooking({ ...data, isRecurring: true })
+    if (!validation.success) {
+      throw new Error(validation.error)
     }
-  })
 
-  // Create initial lessons for the next 4 weeks
-  const lessons = []
-  const recurringId = `slot-${recurringSlot.id}`
-  
-  for (let week = 0; week < 4; week++) {
-    const lessonDate = addWeeks(normalizedDate, week)
+    // Get teacher and pricing
+    const teacher = await tx.teacherProfile.findUnique({
+      where: { id: data.teacherId },
+      include: { lessonSettings: true }
+    })
+
+    if (!teacher?.lessonSettings) {
+      throw new Error('Teacher settings not found')
+    }
+
+    const price = data.duration === 30 
+      ? teacher.lessonSettings.price30Min 
+      : teacher.lessonSettings.price60Min
+
+    // Normalize the date (remove milliseconds) for consistent processing
+    const normalizedDate = new Date(data.date)
+    normalizedDate.setSeconds(0, 0)
     
-    const lesson = await prisma.lesson.create({
+    // Extract day of week and time from the date
+    const dayOfWeek = normalizedDate.getDay()
+    
+    // Store the per-lesson price - monthly rates will be calculated dynamically
+    const perLessonPrice = price
+    const hours = normalizedDate.getHours()
+    const minutes = normalizedDate.getMinutes()
+    const startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+
+    // Check for existing recurring slot conflicts
+    const existingRecurringSlot = await tx.recurringSlot.findFirst({
+      where: {
+        teacherId: data.teacherId,
+        dayOfWeek,
+        startTime,
+        status: 'ACTIVE'
+      }
+    })
+
+    if (existingRecurringSlot) {
+      throw new Error('Teacher already has a recurring lesson at this time')
+    }
+
+    // Check for conflicts with existing lessons for the next 4 weeks
+    const conflictingLessons = []
+    for (let week = 0; week < 4; week++) {
+      const lessonDate = addWeeks(normalizedDate, week)
+      const existing = await tx.lesson.findFirst({
+        where: {
+          teacherId: data.teacherId,
+          date: lessonDate,
+          status: {
+            not: 'CANCELLED'
+          }
+        }
+      })
+      if (existing) {
+        conflictingLessons.push(lessonDate.toLocaleDateString())
+      }
+    }
+
+    if (conflictingLessons.length > 0) {
+      throw new Error(`Conflicting lessons found on: ${conflictingLessons.join(', ')}`)
+    }
+
+    // Create the recurring slot
+    const recurringSlot = await tx.recurringSlot.create({
       data: {
         teacherId: data.teacherId,
         studentId: data.studentId,
-        date: lessonDate,
+        dayOfWeek,
+        startTime,
         duration: data.duration,
-        timezone: data.timezone,
-        price,
-        status: 'SCHEDULED',
-        isRecurring: true,
-        recurringId,
-        recurringSlotId: recurringSlot.id
+        perLessonPrice, // Store per-lesson price, calculate monthly rates dynamically
+        status: 'ACTIVE'
       }
     })
-    
-    lessons.push(lesson)
-  }
 
-  return { slot: recurringSlot, lessons }
+    // Create initial lessons for the next 4 weeks
+    const lessons = []
+    const recurringId = `slot-${recurringSlot.id}`
+    
+    for (let week = 0; week < 4; week++) {
+      const lessonDate = addWeeks(normalizedDate, week)
+      
+      const lesson = await tx.lesson.create({
+        data: {
+          teacherId: data.teacherId,
+          studentId: data.studentId,
+          date: lessonDate,
+          duration: data.duration,
+          timezone: data.timezone,
+          price,
+          status: 'SCHEDULED',
+          isRecurring: true,
+          recurringId,
+          recurringSlotId: recurringSlot.id
+        }
+      })
+      
+      lessons.push(lesson)
+    }
+
+    return { slot: recurringSlot, lessons }
+  })
 }
 
 export async function cancelLesson(lessonId: string, userId: string) {
