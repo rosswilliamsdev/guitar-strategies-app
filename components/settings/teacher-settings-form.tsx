@@ -123,7 +123,10 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
       const availabilityResponse = await fetch('/api/teacher/availability');
       if (availabilityResponse.ok) {
         const availabilityData = await availabilityResponse.json();
-        setAvailability(availabilityData.availability || []);
+        setAvailability(availabilityData.data?.availability || []);
+      } else {
+        console.error('Failed to load availability:', availabilityResponse.status, await availabilityResponse.text());
+        setError('Failed to load availability data');
       }
 
       // Load lesson settings
@@ -161,7 +164,7 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
       }
 
       const data = await response.json();
-      setAvailability(data.availability || []);
+      setAvailability(data.data?.availability || []);
       setSuccess('Availability saved successfully!');
       setError('');
     } catch (error: any) {
