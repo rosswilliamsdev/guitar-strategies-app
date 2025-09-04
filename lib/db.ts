@@ -15,14 +15,16 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /**
- * Singleton Prisma client instance.
+ * Singleton Prisma client instance with connection pooling.
  * 
  * In development:
  * - Logs queries, errors, and warnings for debugging
  * - Uses global variable to prevent multiple instances from hot reloading
+ * - Conservative connection pool for local development
  * 
  * In production:
  * - Only logs errors to reduce noise
+ * - Optimized connection pool limits for production workloads
  * - Uses pretty error formatting for better debugging
  */
 export const prisma =
@@ -33,6 +35,14 @@ export const prisma =
         ? ["query", "error", "warn"]
         : ["error"],
     errorFormat: "pretty",
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL + 
+          (process.env.NODE_ENV === "production" 
+            ? "?connection_limit=10&pool_timeout=20&connect_timeout=10" 
+            : "?connection_limit=5&pool_timeout=10&connect_timeout=5")
+      }
+    }
   });
 
 // Store Prisma client globally in development to prevent multiple instances
@@ -72,4 +82,81 @@ export async function checkDatabaseConnection(): Promise<boolean> {
     console.error("Database connection failed:", error);
     return false;
   }
+}
+
+/**
+ * Database connection pool status check.
+ * 
+ * Provides information about current connection pool usage.
+ * Useful for monitoring and debugging connection issues.
+ * 
+ * @returns Promise with pool status information
+ * 
+ * @example
+ * ```typescript
+ * const poolStatus = await getConnectionPoolStatus();
+ * console.log('Pool status:', poolStatus);
+ * ```
+ */
+export async function getConnectionPoolStatus() {
+  try {
+    // Test connection with a simple query and measure response time
+    const startTime = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    const responseTime = Date.now() - startTime;
+    
+    const poolSettings = {
+      maxConnections: process.env.NODE_ENV === "production" ? 10 : 5,
+      poolTimeout: process.env.NODE_ENV === "production" ? 20 : 10,
+      connectTimeout: process.env.NODE_ENV === "production" ? 10 : 5,
+    };
+    
+    return {
+      isHealthy: true,
+      connectionTest: {
+        success: true,
+        responseTime: responseTime,
+        threshold: 1000 // ms
+      },
+      poolSettings,
+      environment: process.env.NODE_ENV || 'development',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Failed to get connection pool status:", error);
+    return {
+      isHealthy: false,
+      connectionTest: {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      },
+      poolSettings: {
+        maxConnections: process.env.NODE_ENV === "production" ? 10 : 5,
+        poolTimeout: process.env.NODE_ENV === "production" ? 20 : 10,
+        connectTimeout: process.env.NODE_ENV === "production" ? 10 : 5,
+      },
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+/**
+ * Validates required database environment variables.
+ * 
+ * Ensures all necessary environment variables are set for database connections.
+ * Should be called during application startup.
+ * 
+ * @throws Error if required environment variables are missing
+ */
+export function validateDatabaseEnvironment(): void {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  
+  // Validate DATABASE_URL format for PostgreSQL
+  if (!process.env.DATABASE_URL.startsWith('postgresql://')) {
+    throw new Error('DATABASE_URL must be a valid PostgreSQL connection string');
+  }
+  
+  console.log('✅ Database environment variables validated successfully');
 }

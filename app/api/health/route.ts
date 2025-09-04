@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { prisma, getConnectionPoolStatus } from '@/lib/db';
 
 // Health check response interface
 interface HealthCheckResponse {
@@ -132,8 +132,8 @@ async function checkDatabase(): Promise<HealthCheck> {
   const startTime = Date.now();
   
   try {
-    // Simple connectivity test
-    await prisma.$queryRaw`SELECT 1`;
+    // Get connection pool status and performance metrics
+    const poolStatus = await getConnectionPoolStatus();
     
     // Performance test - count users (should be fast)
     const userCount = await prisma.user.count();
@@ -141,12 +141,13 @@ async function checkDatabase(): Promise<HealthCheck> {
     const responseTime = Date.now() - startTime;
     
     return {
-      status: responseTime < 1000 ? 'pass' : 'warn',
+      status: responseTime < 1000 && poolStatus.isHealthy ? 'pass' : 'warn',
       responseTime,
-      message: `Database connected. ${userCount} users registered.`,
+      message: `Database connected with connection pooling. ${userCount} users registered.`,
       details: {
         userCount,
         responseTimeThreshold: 1000,
+        connectionPool: poolStatus,
       }
     };
     
