@@ -56,6 +56,8 @@ interface CurriculumSection {
 interface StudentCurriculum {
   id: string;
   title: string;
+  createdByRole?: string;
+  creatorName?: string;
   sections: CurriculumSection[];
   studentProgress?: {
     itemProgress: Array<{
@@ -74,6 +76,8 @@ export function LessonForm({
   const [students, setStudents] = useState<Student[]>([]);
   const [studentCurriculums, setStudentCurriculums] = useState<StudentCurriculum[]>([]);
   const [selectedCurriculumItems, setSelectedCurriculumItems] = useState<string[]>([]);
+  const [expandedChecklists, setExpandedChecklists] = useState<Set<string>>(new Set());
+  const [isChecklistSectionExpanded, setIsChecklistSectionExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -96,13 +100,25 @@ export function LessonForm({
   );
   const [currentLink, setCurrentLink] = useState("");
 
-  // Initialize existing links as URLs in the links array for easier editing
+  // Initialize existing links and checklist items for editing
   useEffect(() => {
     if (initialData?.existingLinks && initialData.existingLinks.length > 0) {
       const existingUrls = initialData.existingLinks.map(
         (link: any) => link.url
       );
       setLinks(existingUrls);
+    }
+    
+    // Load previously selected checklist items
+    if (initialData?.checklistItems) {
+      try {
+        const items = JSON.parse(initialData.checklistItems);
+        if (Array.isArray(items)) {
+          setSelectedCurriculumItems(items);
+        }
+      } catch (error) {
+        console.error("Error parsing checklist items:", error);
+      }
     }
   }, [initialData]);
 
@@ -123,26 +139,58 @@ export function LessonForm({
     fetchStudents();
   }, [teacherId]);
 
-  // Fetch student's curriculums when student is selected
+  // Fetch student's checklists when student is selected
   useEffect(() => {
-    const fetchStudentCurriculums = async () => {
+    const fetchStudentChecklists = async () => {
       if (!formData.studentId) {
         setStudentCurriculums([]);
+        setSelectedCurriculumItems([]);
         return;
       }
 
       try {
-        const response = await fetch(`/api/curriculums`);
+        const response = await fetch(`/api/student-checklists?studentId=${formData.studentId}`);
+        
         if (response.ok) {
           const data = await response.json();
-          setStudentCurriculums(data || []);
+          
+          // Transform the checklist data to match the expected format
+          const transformedChecklists = data.checklists?.map((checklist: any) => ({
+              id: checklist.id,
+              title: checklist.title,
+              createdByRole: checklist.createdByRole || 'STUDENT',
+              creatorName: checklist.creator?.name || 'Unknown',
+              sections: [{
+                id: 'main',
+                title: 'Checklist Items',
+                category: 'checklist',
+                items: checklist.items?.map((item: any) => ({
+                  id: item.id,
+                  title: item.title,
+                  description: item.description,
+                  isCompleted: item.isCompleted,
+                  completedAt: item.completedAt,
+                })) || []
+              }],
+              studentProgress: {
+                itemProgress: checklist.items?.map((item: any) => ({
+                  itemId: item.id,
+                  status: item.isCompleted ? "COMPLETED" : "NOT_STARTED"
+                })) || []
+              }
+          })) || [];
+          
+          setStudentCurriculums(transformedChecklists);
+        } else {
+          const errorData = await response.json();
+          console.error("API error:", errorData);
         }
       } catch (error) {
-        console.error("Error fetching curriculums:", error);
+        console.error("Error fetching student checklists:", error);
       }
     };
 
-    fetchStudentCurriculums();
+    fetchStudentChecklists();
   }, [formData.studentId]);
 
   // File handling
@@ -213,6 +261,23 @@ export function LessonForm({
     );
   };
 
+  // Checklist expansion handling
+  const toggleChecklistExpansion = (checklistId: string) => {
+    setExpandedChecklists(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(checklistId)) {
+        newSet.delete(checklistId);
+      } else {
+        newSet.add(checklistId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleChecklistSection = () => {
+    setIsChecklistSectionExpanded(prev => !prev);
+  };
+
   const getItemProgress = (itemId: string, curriculum: StudentCurriculum) => {
     return curriculum.studentProgress?.itemProgress?.find(p => p.itemId === itemId);
   };
@@ -236,6 +301,7 @@ export function LessonForm({
         duration: formData.duration,
         notes: formData.notes || "",
         status: formData.status,
+        checklistItems: selectedCurriculumItems.length > 0 ? JSON.stringify(selectedCurriculumItems) : null,
       };
 
       const url = lessonId ? `/api/lessons/${lessonId}` : "/api/lessons";
@@ -367,29 +433,32 @@ export function LessonForm({
         }
       }
 
-      // Update curriculum progress for selected items
+      // Update checklist items as completed
       if (selectedCurriculumItems.length > 0) {
         try {
           for (const itemId of selectedCurriculumItems) {
-            await fetch("/api/curriculums/progress", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                studentId: formData.studentId,
-                curriculumId: studentCurriculums.find(c => 
-                  c.sections.some(s => s.items.some(i => i.id === itemId))
-                )?.id,
-                itemId: itemId,
-                status: "COMPLETED",
-                teacherNotes: `Completed during lesson on ${new Date().toLocaleDateString()}`,
-              }),
-            });
+            // Find which checklist contains this item
+            const checklist = studentCurriculums.find(c => 
+              c.sections.some(s => s.items.some(i => i.id === itemId))
+            );
+            
+            if (checklist) {
+              // Mark the checklist item as completed
+              await fetch(`/api/student-checklists/items/${itemId}`, {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  isCompleted: true,
+                  completedAt: new Date().toISOString(),
+                }),
+              });
+            }
           }
         } catch (progressError) {
-          console.error("Error updating curriculum progress:", progressError);
-          // Don't fail the lesson submission if curriculum progress fails
+          console.error("Error updating checklist progress:", progressError);
+          // Don't fail the lesson submission if checklist update fails
         }
       }
 
@@ -452,18 +521,82 @@ export function LessonForm({
         {/* Curriculum Progress */}
         {formData.studentId && studentCurriculums.length > 0 && (
           <div className="space-y-4">
-            <div>
-              <Label className="text-base font-semibold">Checklist Progress</Label>
-              <p className="text-xs text-muted-foreground mt-1">
-                Check off checklist items the student practiced or completed during this lesson
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={toggleChecklistSection}
+              className="flex items-center justify-between w-full p-2 -m-2 hover:bg-muted/30 rounded-lg transition-colors group"
+            >
+              <div className="flex items-center space-x-2">
+                <svg 
+                  className={`w-4 h-4 transition-transform ${isChecklistSectionExpanded ? 'rotate-90' : ''}`}
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <div className="text-left">
+                  <Label className="text-base font-semibold cursor-pointer">Checklist Progress</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {isChecklistSectionExpanded 
+                      ? "Check off checklist items the student practiced or completed during this lesson"
+                      : `${studentCurriculums.length} checklist${studentCurriculums.length === 1 ? '' : 's'} available`
+                    }
+                  </p>
+                </div>
+              </div>
+              {selectedCurriculumItems.length > 0 && (
+                <span className="px-2 py-1 text-xs bg-turquoise-100 text-turquoise-700 rounded-full border border-turquoise-200">
+                  {selectedCurriculumItems.length} item{selectedCurriculumItems.length === 1 ? '' : 's'} checked
+                </span>
+              )}
+            </button>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {studentCurriculums.map((curriculum) => (
-                <Card key={curriculum.id} className="p-4">
-                  <h4 className="font-semibold text-sm mb-3">{curriculum.title}</h4>
-                  <div className="space-y-3">
+            {isChecklistSectionExpanded && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {studentCurriculums.map((curriculum) => {
+                const isTeacherCreated = curriculum.createdByRole === 'TEACHER';
+                const isExpanded = expandedChecklists.has(curriculum.id);
+                return (
+                <Card 
+                  key={curriculum.id} 
+                  className={`p-4 ${isTeacherCreated 
+                    ? 'border-turquoise-200 bg-turquoise-50' 
+                    : 'border-neutral-200 bg-white'}`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleChecklistExpansion(curriculum.id)}
+                    className="flex items-center justify-between w-full mb-3 p-1 -m-1 hover:bg-black/5 rounded transition-colors group"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <svg 
+                        className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      <h4 className="font-semibold text-sm cursor-pointer">{curriculum.title}</h4>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      isTeacherCreated 
+                        ? 'bg-turquoise-100 text-turquoise-700 border border-turquoise-200' 
+                        : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
+                    }`}>
+                      {isTeacherCreated ? '👨‍🏫 Teacher' : '🎸 Student'}
+                    </span>
+                  </button>
+                  {isExpanded && (
+                    <>
+                      {curriculum.creatorName && (
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Created by {curriculum.creatorName}
+                        </p>
+                      )}
+                      <div className="space-y-3">
                     {curriculum.sections.map((section) => (
                       <div key={section.id}>
                         <h5 className="font-medium text-xs text-muted-foreground mb-2 uppercase tracking-wide">
@@ -472,8 +605,13 @@ export function LessonForm({
                         <div className="space-y-1.5 ml-2">
                           {section.items.map((item) => {
                             const progress = getItemProgress(item.id, curriculum);
-                            const isCompleted = progress?.status === "COMPLETED";
+                            const isCompleted = progress?.status === "COMPLETED" || item.isCompleted;
                             const isSelected = selectedCurriculumItems.includes(item.id);
+                            
+                            // For teacher curricula: show strikethrough when selected
+                            // For student checklists: show strikethrough when completed AND selected
+                            const shouldShowStrikethrough = isTeacherCreated ? isSelected : (isCompleted && isSelected);
+                            
                             return (
                               <label
                                 key={item.id}
@@ -485,31 +623,31 @@ export function LessonForm({
                                   onChange={() => toggleCurriculumItem(item.id)}
                                   className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                                 />
-                                <span className={`text-sm flex-1 ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                                <span className={`text-sm flex-1 ${shouldShowStrikethrough ? 'line-through text-muted-foreground' : ''}`}>
                                   {item.title}
                                 </span>
-                                {isCompleted && (
-                                  <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
-                                    ✓
-                                  </span>
-                                )}
                               </label>
                             );
                           })}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      ))}
+                      </div>
+                    </>
+                  )}
                 </Card>
-              ))}
+                );
+              })}
             </div>
             
-            {selectedCurriculumItems.length > 0 && (
-              <div className="p-3 bg-turquoise-50 border border-turquoise-200 rounded-lg">
-                <p className="text-sm text-turquoise-700">
-                  <span className="font-semibold">{selectedCurriculumItems.length}</span> checklist item(s) will be marked as completed when you save this lesson.
-                </p>
-              </div>
+                {selectedCurriculumItems.length > 0 && (
+                  <div className="p-3 bg-turquoise-50 border border-turquoise-200 rounded-lg">
+                    <p className="text-sm text-turquoise-700">
+                      <span className="font-semibold">{selectedCurriculumItems.length}</span> checklist item(s) will be marked as completed when you save this lesson.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

@@ -6,6 +6,75 @@ import { updateStudentChecklistItemSchema, toggleChecklistItemSchema } from "@/l
 import { sendEmail, createChecklistCompletionEmail } from "@/lib/email";
 import { z } from "zod";
 
+// GET /api/student-checklists/items/[id] - Get a single checklist item
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const item = await prisma.studentChecklistItem.findFirst({
+      where: { id: params.id },
+      include: {
+        checklist: {
+          include: {
+            student: true,
+          }
+        },
+      },
+    });
+
+    if (!item) {
+      return NextResponse.json(
+        { error: "Item not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check authorization based on role
+    if (session.user.role === "STUDENT") {
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!studentProfile || item.checklist.studentId !== studentProfile.id) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
+    } else if (session.user.role === "TEACHER") {
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!teacherProfile || item.checklist.student.teacherId !== teacherProfile.id) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
+    } else if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json({ item });
+  } catch (error) {
+    console.error("Error fetching checklist item:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch checklist item" },
+      { status: 500 }
+    );
+  }
+}
+
 // PUT /api/student-checklists/items/[id] - Update a checklist item
 export async function PUT(
   request: NextRequest,
@@ -13,34 +82,52 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "STUDENT") {
+    if (!session?.user || !["STUDENT", "TEACHER"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!studentProfile) {
-      return NextResponse.json(
-        { error: "Student profile not found" },
-        { status: 404 }
-      );
     }
 
     // Verify ownership through the checklist
     const item = await prisma.studentChecklistItem.findFirst({
       where: { id: params.id },
       include: {
-        checklist: true,
+        checklist: {
+          include: {
+            student: true,
+          }
+        },
       },
     });
 
-    if (!item || item.checklist.studentId !== studentProfile.id) {
+    if (!item) {
       return NextResponse.json(
-        { error: "Item not found or unauthorized" },
+        { error: "Item not found" },
         { status: 404 }
       );
+    }
+
+    // Check authorization based on role
+    if (session.user.role === "STUDENT") {
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!studentProfile || item.checklist.studentId !== studentProfile.id) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
+    } else if (session.user.role === "TEACHER") {
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!teacherProfile || item.checklist.student.teacherId !== teacherProfile.id) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();

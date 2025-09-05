@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // Enable strict CSP in development
     strictNextHead: true,
+    // Enable instrumentation for startup validation
+    instrumentationHook: true,
   },
   
   // Security headers

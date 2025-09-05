@@ -55,6 +55,8 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 --turquoise-800: #115e59
 --turquoise-900: #134e4a
 
+
+
 /* Semantic Colors */
 --primary: #14b8b3        /* turquoise-500 */
 --accent: #73EEDC         /* Original turquoise as accent */
@@ -66,6 +68,15 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 --input: #ffffff
 --ring: #14b8b3           /* Primary focus ring */
 ```
+
+
+#4c5b6e
+#417685
+#417d8c
+#e4e9ec
+#c4d1d6
+#a5b7bf
+
 
 ## Typography System (OpenAI-Inspired)
 

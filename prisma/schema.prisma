@@ -63,6 +63,7 @@ model User {
   // App-specific relations
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
+  createdChecklists StudentChecklist[] // Checklists created by this user
 
   @@index([email])
   @@index([role])
@@ -163,6 +164,7 @@ model Lesson {
   nextSteps       String?    @db.Text
   studentRating   Int?       // 1-5 scale, student feedback
   teacherRating   Int?       // 1-5 scale, teacher assessment
+  checklistItems  String?    @db.Text // JSON array of checklist item IDs completed in this lesson
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -439,6 +441,8 @@ model StudentChecklist {
   id          String   @id @default(cuid())
   studentId   String
   title       String
+  createdBy   String?  // User ID of who created this checklist (teacher or student)
+  createdByRole String? // "TEACHER" or "STUDENT" for quick reference
   
   // Checklist metadata
   isActive    Boolean  @default(true)
@@ -449,10 +453,12 @@ model StudentChecklist {
   
   // Relations
   student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  creator     User?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
   items       StudentChecklistItem[]
   
   @@index([studentId])
   @@index([isActive])
+  @@index([createdBy])
 }
 
 model StudentChecklistItem {

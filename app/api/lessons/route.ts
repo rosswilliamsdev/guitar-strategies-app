@@ -17,6 +17,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { createLessonSchema } from '@/lib/validations';
 import { validateJsonSize } from '@/lib/request-validation';
+import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
 
 /**
  * GET /api/lessons
@@ -201,20 +202,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Student not found or not assigned to you' }, { status: 404 });
     }
 
-    // Create lesson with validated data
+    // Sanitize rich text fields before saving
+    const sanitizedNotes = validatedData.notes ? sanitizeRichText(validatedData.notes) : null;
+    const sanitizedHomework = validatedData.homework ? sanitizeRichText(validatedData.homework) : null;
+    const sanitizedProgress = validatedData.progress ? sanitizeRichText(validatedData.progress) : null;
+    const sanitizedNextSteps = validatedData.nextSteps ? sanitizeRichText(validatedData.nextSteps) : null;
+    
+    // Sanitize plain text fields
+    const sanitizedFocusAreas = validatedData.focusAreas?.map(area => sanitizePlainText(area));
+    const sanitizedSongsPracticed = validatedData.songsPracticed?.map(song => sanitizePlainText(song));
+
+    // Create lesson with sanitized data
     const lesson = await prisma.lesson.create({
       data: {
         teacherId: teacherProfile.id,
         studentId: validatedData.studentId,
         date: validatedData.date,
         duration: validatedData.duration || 30,
-        notes: validatedData.notes || null,
-        homework: validatedData.homework || null,
-        progress: validatedData.progress || null,
-        focusAreas: validatedData.focusAreas?.join(',') || null,
-        songsPracticed: validatedData.songsPracticed?.join(',') || null,
-        nextSteps: validatedData.nextSteps || null,
+        notes: sanitizedNotes,
+        homework: sanitizedHomework,
+        progress: sanitizedProgress,
+        focusAreas: sanitizedFocusAreas?.join(',') || null,
+        songsPracticed: sanitizedSongsPracticed?.join(',') || null,
+        nextSteps: sanitizedNextSteps,
         status: validatedData.status || 'COMPLETED',
+        checklistItems: body.checklistItems || null, // Store checklist items
       },
       include: {
         student: {

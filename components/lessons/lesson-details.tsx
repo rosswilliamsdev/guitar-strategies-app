@@ -14,6 +14,7 @@ import {
   Paperclip,
   ExternalLink,
   Play,
+  CheckSquare,
 } from "lucide-react";
 import { YouTubeEmbed } from "@/components/ui/youtube-embed";
 
@@ -28,6 +29,7 @@ interface Lesson {
   focusAreas?: string;
   songsPracticed?: string;
   nextSteps?: string;
+  checklistItems?: string;
   student: {
     user: {
       name: string;
@@ -57,6 +59,12 @@ interface Lesson {
   }>;
 }
 
+interface ChecklistItem {
+  id: string;
+  title: string;
+  description?: string;
+}
+
 interface LessonDetailsProps {
   lessonId: string;
   userId: string;
@@ -76,6 +84,7 @@ export function LessonDetails({
   canEdit,
 }: LessonDetailsProps) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
 
@@ -93,6 +102,35 @@ export function LessonDetails({
         }
         const data = await response.json();
         setLesson(data.lesson);
+        
+        // Fetch checklist item details if they exist
+        if (data.lesson.checklistItems) {
+          try {
+            const itemIds = JSON.parse(data.lesson.checklistItems);
+            if (Array.isArray(itemIds) && itemIds.length > 0) {
+              const checklistItemsData = await Promise.all(
+                itemIds.map(async (itemId: string) => {
+                  try {
+                    const itemResponse = await fetch(`/api/student-checklists/items/${itemId}`);
+                    if (itemResponse.ok) {
+                      const itemData = await itemResponse.json();
+                      return itemData.item;
+                    }
+                  } catch (err) {
+                    console.error(`Error fetching checklist item ${itemId}:`, err);
+                    return null;
+                  }
+                })
+              );
+              
+              // Filter out any null responses and set valid items
+              const validItems = checklistItemsData.filter(item => item !== null);
+              setChecklistItems(validItems);
+            }
+          } catch (parseError) {
+            console.error("Error parsing checklist items:", parseError);
+          }
+        }
       } catch (error) {
         setError("Failed to load lesson details");
         console.error("Error fetching lesson:", error);
@@ -158,6 +196,43 @@ export function LessonDetails({
           </div>
           <div className="prose prose-sm max-w-none">
             <div dangerouslySetInnerHTML={{ __html: lesson.notes }} />
+          </div>
+        </Card>
+      )}
+
+      {/* Checklist Items Completed */}
+      {checklistItems.length > 0 && (
+        <Card className="p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <CheckSquare className="h-5 w-5 text-turquoise-500" />
+            <h3 className="text-lg font-semibold text-foreground">
+              Checklist Items Completed
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {checklistItems.map((item) => (
+              <div 
+                key={item.id} 
+                className="flex items-start space-x-3 px-3 py-2 bg-turquoise-50 border border-turquoise-200 rounded-lg"
+              >
+                <CheckSquare className="h-4 w-4 text-turquoise-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-turquoise-800">
+                    {item.title}
+                  </p>
+                  {item.description && (
+                    <p className="text-xs text-turquoise-600 mt-1">
+                      {item.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 p-3 bg-turquoise-50 border border-turquoise-200 rounded-lg">
+            <p className="text-sm text-turquoise-700">
+              <span className="font-semibold">{checklistItems.length}</span> checklist item(s) were completed during this lesson.
+            </p>
           </div>
         </Card>
       )}

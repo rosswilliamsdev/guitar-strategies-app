@@ -7,15 +7,15 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   safelist: [
-    'bg-primary',
-    'text-primary',
-    'bg-background',
-    'text-foreground',
-    'border-border',
-    'bg-muted',
-    'text-muted-foreground',
-    'hover:bg-turquoise-600',
-    'focus-visible:ring-turquoise-500',
+    "bg-primary",
+    "text-primary",
+    "bg-background",
+    "text-foreground",
+    "border-border",
+    "bg-muted",
+    "text-muted-foreground",
+    "hover:bg-turquoise-600",
+    "focus-visible:ring-turquoise-500",
   ],
   theme: {
     extend: {
@@ -51,7 +51,7 @@ module.exports = {
         primary: {
           DEFAULT: "#14b8b3",
           50: "#f0fdfc",
-          100: "#ccfbf7", 
+          100: "#ccfbf7",
           200: "#99f6ef",
           300: "#5eebe4",
           400: "#2dd4cc",
@@ -66,12 +66,13 @@ module.exports = {
         background: "#fafafa", // neutral-50
         foreground: "#0a0a0a", // neutral-950
         muted: "#f5f5f5", // neutral-100
-        "muted-foreground": "#737373", // neutral-500
-        border: "#e5e5e5", // neutral-200
+        "muted-foreground": `hsl(0, 0%, 25%)`, // neutral-500
+        border: `hsl(0, 0%, 90%)
+`, // neutral-200
         input: "#ffffff",
         ring: "#14b8b3", // primary focus ring
         popover: "#ffffff",
-        "popover-foreground": "#0a0a0a"
+        "popover-foreground": "#0a0a0a",
       },
       fontFamily: {
         // OpenAI-inspired typography system
@@ -119,5 +120,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [require("@tailwindcss/typography")],
 };

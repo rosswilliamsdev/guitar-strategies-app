@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { teacherProfileSchema } from '@/lib/validations';
+import { sanitizeRichText, sanitizePlainText, sanitizeEmail } from '@/lib/sanitize';
 
 export async function GET() {
   try {
@@ -73,27 +74,35 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
     }
 
+    // Sanitize data before saving
+    const sanitizedName = sanitizePlainText(validatedData.name);
+    const sanitizedBio = validatedData.bio ? sanitizeRichText(validatedData.bio) : null;
+    const sanitizedPhoneNumber = validatedData.phoneNumber ? sanitizePlainText(validatedData.phoneNumber) : null;
+    const sanitizedVenmoHandle = validatedData.venmoHandle ? sanitizePlainText(validatedData.venmoHandle) : null;
+    const sanitizedPaypalEmail = validatedData.paypalEmail ? sanitizeEmail(validatedData.paypalEmail) : null;
+    const sanitizedZelleEmail = validatedData.zelleEmail ? sanitizePlainText(validatedData.zelleEmail) : null;
+
     // Update user and teacher profile in a transaction
     await prisma.$transaction(async (tx) => {
       // Update user
       await tx.user.update({
         where: { id: session.user.id },
         data: {
-          name: validatedData.name,
-          email: validatedData.email,
+          name: sanitizedName,
+          email: validatedData.email, // Email is already validated by Zod
         },
       });
 
-      // Update teacher profile - explicitly handle empty strings as null
+      // Update teacher profile with sanitized data
       await tx.teacherProfile.update({
         where: { userId: session.user.id },
         data: {
-          bio: validatedData.bio || null,
+          bio: sanitizedBio,
           timezone: validatedData.timezone,
-          phoneNumber: validatedData.phoneNumber || null,
-          venmoHandle: validatedData.venmoHandle || null,
-          paypalEmail: validatedData.paypalEmail || null,
-          zelleEmail: validatedData.zelleEmail || null,
+          phoneNumber: sanitizedPhoneNumber,
+          venmoHandle: sanitizedVenmoHandle,
+          paypalEmail: sanitizedPaypalEmail,
+          zelleEmail: sanitizedZelleEmail,
         },
       });
     });

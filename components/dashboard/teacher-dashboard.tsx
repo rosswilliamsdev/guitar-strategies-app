@@ -4,7 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ProfileValidationAlert } from "@/components/teacher/profile-validation-alert";
-import { SkeletonDashboardCard, SkeletonLessonCard, Skeleton } from "@/components/ui/skeleton";
+import {
+  SkeletonDashboardCard,
+  SkeletonLessonCard,
+  Skeleton,
+} from "@/components/ui/skeleton";
 
 interface TeacherDashboardProps {
   teacherId: string;
@@ -162,7 +166,10 @@ export function TeacherDashboard({
             </div>
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="py-2 border-b border-border last:border-b-0">
+                <div
+                  key={i}
+                  className="py-2 border-b border-border last:border-b-0"
+                >
                   <Skeleton className="h-4 w-32 mb-1" />
                   <Skeleton className="h-3 w-24" />
                 </div>
@@ -192,7 +199,7 @@ export function TeacherDashboard({
           Teacher Dashboard
         </h1>
         <p className="text-muted-foreground mt-2">
-          Welcome back! Here&apos;s your teaching overview.
+          Ready to teach? Here&apos;s what&apos;s happening today.
         </p>
       </div>
 
@@ -281,7 +288,6 @@ export function TeacherDashboard({
           <StatCard key={index} {...stat} />
         ))}
       </div>
-
     </div>
   );
 }

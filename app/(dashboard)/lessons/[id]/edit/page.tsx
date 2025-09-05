@@ -61,6 +61,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
     nextSteps: lesson.nextSteps || '',
     duration: lesson.duration,
     status: lesson.status,
+    checklistItems: lesson.checklistItems || null,
     existingAttachments: lesson.attachments || [],
     existingLinks: lesson.links || [],
   };

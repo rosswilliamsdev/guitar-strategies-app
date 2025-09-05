@@ -4,7 +4,19 @@
 
 ---
 
-## 🚀 [Current Version] - September 4, 2025
+## 🚀 [Current Version] - September 5, 2025
+
+### **Checklist UI Enhancements** (Sep 5, 2025)
+- **Strikethrough Logic Fix**: Fixed inconsistent strikethrough behavior between teacher curricula and student checklists
+- **Teacher Curriculum Behavior**: Checked items show strikethrough, unchecked items show normal text
+- **Student Checklist Behavior**: Only completed AND selected items show strikethrough (teachers can uncheck completed items)
+- **Visual Distinction**: Teacher curricula (turquoise cards) vs student checklists (white cards)
+- **API Data Integration**: Enhanced curriculum progress tracking with proper database queries
+- **Teacher Control**: Full control over student progress assessment during lesson creation
+
+---
+
+## 📋 [Previous Version] - September 4, 2025
 
 ### **Retry Logic & Resilience System** (Sep 4, 2025 - Evening)
 - **Comprehensive Retry Logic**: Implemented exponential backoff retry for database and email operations

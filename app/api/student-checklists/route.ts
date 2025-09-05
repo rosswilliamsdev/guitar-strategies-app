@@ -9,38 +9,139 @@ import { z } from "zod";
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "STUDENT") {
+    if (!session?.user || !["STUDENT", "TEACHER", "ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!studentProfile) {
-      return NextResponse.json(
-        { error: "Student profile not found" },
-        { status: 404 }
-      );
     }
 
     const { searchParams } = new URL(request.url);
     const includeArchived = searchParams.get("includeArchived") === "true";
+    const studentId = searchParams.get("studentId"); // For teachers to specify which student
+
+    let targetStudentId: string;
+
+    if (session.user.role === "STUDENT") {
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!studentProfile) {
+        return NextResponse.json(
+          { error: "Student profile not found" },
+          { status: 404 }
+        );
+      }
+      
+      targetStudentId = studentProfile.id;
+    } else if (session.user.role === "TEACHER") {
+      if (!studentId) {
+        return NextResponse.json(
+          { error: "studentId parameter required for teachers" },
+          { status: 400 }
+        );
+      }
+
+      // Verify the teacher has access to this student
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!teacherProfile) {
+        return NextResponse.json(
+          { error: "Teacher profile not found" },
+          { status: 404 }
+        );
+      }
+
+      const studentProfile = await prisma.studentProfile.findFirst({
+        where: { 
+          id: studentId,
+          teacherId: teacherProfile.id 
+        },
+      });
+
+      if (!studentProfile) {
+        return NextResponse.json(
+          { error: "Student not found or not assigned to you" },
+          { status: 404 }
+        );
+      }
+
+      targetStudentId = studentProfile.id;
+    } else {
+      // Admin - require studentId parameter
+      if (!studentId) {
+        return NextResponse.json(
+          { error: "studentId parameter required" },
+          { status: 400 }
+        );
+      }
+      targetStudentId = studentId;
+    }
 
     const whereClause: any = {
-      studentId: studentProfile.id,
+      studentId: targetStudentId,
       ...(includeArchived ? {} : { isArchived: false }),
     };
 
+    // Fetch student checklists
     const checklists = await prisma.studentChecklist.findMany({
       where: whereClause,
       include: {
         items: {
           orderBy: { createdAt: "asc" },
         },
+        creator: {
+          select: { name: true, role: true }
+        }
       },
       orderBy: { createdAt: "desc" },
     });
+
+    // Also fetch teacher curricula that could be used for this student
+    let curricula = [];
+    if (session.user.role === "TEACHER" || session.user.role === "ADMIN") {
+      // Get the teacher ID for this student
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { id: targetStudentId },
+        select: { teacherId: true }
+      });
+
+      if (studentProfile?.teacherId) {
+        curricula = await prisma.curriculum.findMany({
+          where: {
+            teacherId: studentProfile.teacherId,
+            isActive: true,
+          },
+          include: {
+            sections: {
+              include: {
+                items: {
+                  orderBy: { sortOrder: "asc" },
+                }
+              },
+              orderBy: { sortOrder: "asc" }
+            },
+            teacher: {
+              select: { 
+                userId: true,
+                user: {
+                  select: { name: true, role: true }
+                }
+              }
+            },
+            studentProgress: {
+              where: {
+                studentId: targetStudentId
+              },
+              include: {
+                itemProgress: true
+              }
+            }
+          },
+          orderBy: { createdAt: "desc" },
+        });
+      }
+    }
 
     // Calculate completion stats for each checklist
     const checklistsWithStats = checklists.map((checklist) => {
@@ -61,7 +162,59 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(checklistsWithStats);
+    // Transform curricula to match checklist format
+    const curriculaAsChecklists = curricula.map((curriculum) => {
+      // Get the student progress for this curriculum
+      const studentProgress = curriculum.studentProgress?.[0]; // Should only be one progress record per student per curriculum
+      
+      // Flatten all items from all sections
+      const allItems = curriculum.sections.flatMap(section => 
+        section.items.map(item => {
+          // Find the progress for this specific item
+          const itemProgress = studentProgress?.itemProgress?.find(progress => progress.itemId === item.id);
+          const isCompleted = itemProgress?.status === "COMPLETED";
+          
+          return {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            isCompleted: isCompleted,
+            completedAt: itemProgress?.completedAt || null,
+          };
+        })
+      );
+
+      const totalItems = allItems.length;
+      const completedItems = allItems.filter(item => item.isCompleted).length;
+      const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+      return {
+        id: curriculum.id,
+        title: curriculum.title,
+        isActive: curriculum.isActive,
+        isArchived: false,
+        createdAt: curriculum.createdAt,
+        updatedAt: curriculum.updatedAt,
+        studentId: targetStudentId, // This isn't really correct, but needed for compatibility
+        createdBy: curriculum.teacher.userId,
+        createdByRole: "TEACHER",
+        creator: {
+          name: curriculum.teacher.user.name,
+          role: curriculum.teacher.user.role
+        },
+        items: allItems,
+        stats: {
+          totalItems,
+          completedItems,
+          progressPercent,
+        }
+      };
+    });
+
+    // Combine both types of checklists
+    const allChecklists = [...checklistsWithStats, ...curriculaAsChecklists];
+
+    return NextResponse.json({ checklists: allChecklists });
   } catch (error) {
     console.error("Error fetching student checklists:", error);
     return NextResponse.json(
@@ -75,28 +228,72 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "STUDENT") {
+    if (!session?.user || !["STUDENT", "TEACHER"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!studentProfile) {
-      return NextResponse.json(
-        { error: "Student profile not found" },
-        { status: 404 }
-      );
     }
 
     const body = await request.json();
     const validatedData = createStudentChecklistSchema.parse(body);
 
+    let targetStudentId: string;
+
+    if (session.user.role === "STUDENT") {
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!studentProfile) {
+        return NextResponse.json(
+          { error: "Student profile not found" },
+          { status: 404 }
+        );
+      }
+      
+      targetStudentId = studentProfile.id;
+    } else if (session.user.role === "TEACHER") {
+      // Teachers need to specify which student the checklist is for
+      if (!body.studentId) {
+        return NextResponse.json(
+          { error: "studentId is required for teachers" },
+          { status: 400 }
+        );
+      }
+
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!teacherProfile) {
+        return NextResponse.json(
+          { error: "Teacher profile not found" },
+          { status: 404 }
+        );
+      }
+
+      // Verify the teacher has access to this student
+      const studentProfile = await prisma.studentProfile.findFirst({
+        where: { 
+          id: body.studentId,
+          teacherId: teacherProfile.id 
+        },
+      });
+
+      if (!studentProfile) {
+        return NextResponse.json(
+          { error: "Student not found or not assigned to you" },
+          { status: 404 }
+        );
+      }
+
+      targetStudentId = studentProfile.id;
+    }
+
     const checklist = await prisma.studentChecklist.create({
       data: {
         ...validatedData,
-        studentId: studentProfile.id,
+        studentId: targetStudentId,
+        createdBy: session.user.id,
+        createdByRole: session.user.role,
       },
       include: {
         items: true,

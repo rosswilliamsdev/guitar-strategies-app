@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
 
 interface RouteContext {
   params: {
@@ -107,13 +108,35 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     
     if (body.studentId !== undefined) updateData.studentId = body.studentId;
     if (body.duration !== undefined) updateData.duration = body.duration || 30;
-    if (body.notes !== undefined) updateData.notes = body.notes || null;
-    if (body.homework !== undefined) updateData.homework = body.homework || null;
-    if (body.progress !== undefined) updateData.progress = body.progress || null;
-    if (body.focusAreas !== undefined) updateData.focusAreas = body.focusAreas || null;
-    if (body.songsPracticed !== undefined) updateData.songsPracticed = body.songsPracticed || null;
-    if (body.nextSteps !== undefined) updateData.nextSteps = body.nextSteps || null;
+    
+    // Sanitize rich text fields before updating
+    if (body.notes !== undefined) {
+      updateData.notes = body.notes ? sanitizeRichText(body.notes) : null;
+    }
+    if (body.homework !== undefined) {
+      updateData.homework = body.homework ? sanitizeRichText(body.homework) : null;
+    }
+    if (body.progress !== undefined) {
+      updateData.progress = body.progress ? sanitizeRichText(body.progress) : null;
+    }
+    if (body.nextSteps !== undefined) {
+      updateData.nextSteps = body.nextSteps ? sanitizeRichText(body.nextSteps) : null;
+    }
+    
+    // Sanitize plain text fields
+    if (body.focusAreas !== undefined) {
+      updateData.focusAreas = body.focusAreas ? sanitizePlainText(body.focusAreas) : null;
+    }
+    if (body.songsPracticed !== undefined) {
+      updateData.songsPracticed = body.songsPracticed ? sanitizePlainText(body.songsPracticed) : null;
+    }
+    
     if (body.status !== undefined) updateData.status = body.status;
+    
+    // Handle checklist items
+    if (body.checklistItems !== undefined) {
+      updateData.checklistItems = body.checklistItems || null;
+    }
     // Don't update date when editing existing lesson
 
     // Update lesson with validation

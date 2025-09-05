@@ -6,6 +6,7 @@
  */
 
 import { validateDatabaseEnvironment } from './db';
+import { validateEnv, formatValidationResults } from './env-validation';
 
 /**
  * Validates all critical environment variables and system settings.
@@ -19,76 +20,43 @@ import { validateDatabaseEnvironment } from './db';
 export function validateStartupEnvironment(isProduction: boolean = process.env.NODE_ENV === 'production'): void {
   console.log('🔍 Running startup environment validation...');
   
-  const errors: string[] = [];
-  const warnings: string[] = [];
+  // Use the comprehensive environment validation
+  const envResult = validateEnv();
   
-  // Validate database configuration
+  // Format and log the validation results
+  console.log(formatValidationResults(envResult));
+  
+  // Additional database-specific validation
   try {
     validateDatabaseEnvironment();
   } catch (error) {
-    errors.push(`Database: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-  
-  // Validate authentication configuration
-  if (!process.env.NEXTAUTH_SECRET) {
-    errors.push('NEXTAUTH_SECRET is required for authentication');
-  } else if (process.env.NEXTAUTH_SECRET === 'your-secret-key-here-change-in-production') {
-    if (isProduction) {
-      errors.push('NEXTAUTH_SECRET is using insecure default value in production');
-    } else {
-      warnings.push('NEXTAUTH_SECRET is using default value - should be changed for production');
+    if (!envResult.errors) {
+      envResult.errors = [];
     }
-  } else if (process.env.NEXTAUTH_SECRET.length < 32) {
-    if (isProduction) {
-      errors.push('NEXTAUTH_SECRET is too short (minimum 32 characters for security)');
-    } else {
-      warnings.push('NEXTAUTH_SECRET is short - consider using a longer secret');
+    envResult.errors.push(`Database: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    envResult.success = false;
+  }
+  
+  // Check for exposed Resend API key (security check)
+  if (process.env.RESEND_API_KEY === 're_hUfYSCED_MEDdVhEVbvheZgaa94kPEHkm') {
+    if (!envResult.errors) {
+      envResult.errors = [];
     }
+    envResult.errors.push('RESEND_API_KEY appears to be exposed/example key - rotate immediately');
+    envResult.success = false;
   }
   
-  // Validate NextAuth URL
-  if (!process.env.NEXTAUTH_URL) {
+  // Handle validation results
+  if (!envResult.success) {
     if (isProduction) {
-      errors.push('NEXTAUTH_URL is required in production');
-    } else {
-      warnings.push('NEXTAUTH_URL not set - using default localhost:3000');
-    }
-  }
-  
-  // Validate email service configuration
-  if (!process.env.RESEND_API_KEY) {
-    warnings.push('RESEND_API_KEY not configured - email notifications will not work');
-  } else if (process.env.RESEND_API_KEY === 're_hUfYSCED_MEDdVhEVbvheZgaa94kPEHkm') {
-    errors.push('RESEND_API_KEY appears to be exposed/example key - rotate immediately');
-  }
-  
-  // Validate connection pooling is configured
-  const dbUrl = process.env.DATABASE_URL || '';
-  if (!dbUrl.includes('connection_limit')) {
-    warnings.push('DATABASE_URL does not specify connection pooling parameters (automatically configured)');
-  }
-  
-  // Report results
-  if (errors.length > 0) {
-    console.error('❌ Startup validation failed:');
-    errors.forEach(error => console.error(`   • ${error}`));
-    
-    if (isProduction) {
-      throw new Error(`Startup validation failed with ${errors.length} critical errors. Cannot start in production.`);
+      throw new Error(
+        `Startup validation failed with ${envResult.errors?.length || 0} critical errors. ` +
+        `Cannot start in production mode. Please check your environment configuration.`
+      );
     } else {
       console.warn('⚠️  Development mode: Continuing despite validation errors...');
+      console.warn('   Fix these issues before deploying to production!');
     }
-  }
-  
-  if (warnings.length > 0) {
-    console.warn('⚠️  Startup validation warnings:');
-    warnings.forEach(warning => console.warn(`   • ${warning}`));
-  }
-  
-  if (errors.length === 0 && warnings.length === 0) {
-    console.log('✅ Startup environment validation passed');
-  } else if (errors.length === 0) {
-    console.log(`✅ Startup validation passed with ${warnings.length} warnings`);
   }
 }
 
