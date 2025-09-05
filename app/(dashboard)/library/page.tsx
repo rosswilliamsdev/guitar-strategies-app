@@ -7,6 +7,7 @@ import { LibraryUpload } from '@/components/library/library-upload';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { log, dbLog } from '@/lib/logger';
 
 export const metadata = {
   title: 'Library - Guitar Strategies',
@@ -41,7 +42,10 @@ async function getLibraryData(teacherId: string) {
       teacherName: item.teacher.user.name,
     }));
   } catch (error) {
-    console.error('Error fetching library data:', error);
+    log.error('Error fetching library data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return [];
   }
 }

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateSlotSchema, cancelSlotSchema } from "@/lib/validations";
 import { calculateRefundAmount } from "@/lib/slot-helpers";
+import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 
 // Get slot details
 export async function GET(
@@ -69,7 +70,10 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error("Error fetching slot:", error);
+    apiLog.error('Error fetching slot:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -156,7 +160,10 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error("Error updating slot:", error);
+    apiLog.error('Error updating slot:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -281,7 +288,10 @@ export async function DELETE(
     });
 
   } catch (error) {
-    console.error("Error cancelling slot:", error);
+    apiLog.error('Error cancelling slot:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

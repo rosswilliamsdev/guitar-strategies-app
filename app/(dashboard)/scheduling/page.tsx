@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { SchedulingClient } from '@/components/scheduling/SchedulingClient';
+import { log, dbLog, schedulerLog } from '@/lib/logger';
 
 export const metadata = {
   title: 'Scheduling - Guitar Strategies',
@@ -54,7 +55,10 @@ async function getStudentData(userId: string) {
     });
     return studentData;
   } catch (error) {
-    console.error('Error fetching student data:', error);
+    log.error('Error fetching student data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return null;
   }
 }

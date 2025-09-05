@@ -83,7 +83,7 @@ export function getRoleColor(
  * ```
  */
 export function getButtonVariant(
-  variant: "primary" | "secondary" | "role",
+  variant: "primary" | "secondary" | "role" | "destructive",
   role?: Role
 ) {
   const baseClasses =
@@ -103,6 +103,11 @@ export function getButtonVariant(
       
       // Use turquoise accent for all roles in OpenAI style
       return cn(baseClasses, "bg-primary text-white hover:bg-turquoise-600 focus-visible:ring-turquoise-500");
+    case "destructive":
+      return cn(
+        "inline-flex items-center justify-center rounded-md font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "bg-white text-red-500 border border-red-500 focus-visible:ring-red-500"
+      );
     default:
       return baseClasses;
   }

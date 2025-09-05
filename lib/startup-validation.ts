@@ -7,6 +7,7 @@
 
 import { validateDatabaseEnvironment } from './db';
 import { validateEnv, formatValidationResults } from './env-validation';
+import { log, dbLog } from '@/lib/logger';
 
 /**
  * Validates all critical environment variables and system settings.
@@ -18,7 +19,7 @@ import { validateEnv, formatValidationResults } from './env-validation';
  * @throws Error if critical configuration is missing or insecure
  */
 export function validateStartupEnvironment(isProduction: boolean = process.env.NODE_ENV === 'production'): void {
-  console.log('🔍 Running startup environment validation...');
+  log.info('🔍 Running startup environment validation...');
   
   // Use the comprehensive environment validation
   const envResult = validateEnv();
@@ -54,8 +55,8 @@ export function validateStartupEnvironment(isProduction: boolean = process.env.N
         `Cannot start in production mode. Please check your environment configuration.`
       );
     } else {
-      console.warn('⚠️  Development mode: Continuing despite validation errors...');
-      console.warn('   Fix these issues before deploying to production!');
+      log.warn('Warning', { message: '⚠️  Development mode: Continuing despite validation errors...' });
+      log.warn('Warning', { message: '   Fix these issues before deploying to production!' });
     }
   }
 }

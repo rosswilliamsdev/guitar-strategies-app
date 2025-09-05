@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { canCancelLesson } from '@/lib/lesson-cleanup';
 import { sendEmail, createLessonCancellationEmailForStudent, createLessonCancellationEmailForTeacher } from '@/lib/email';
+import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
@@ -99,7 +100,10 @@ export async function POST(
           html: studentEmailContent
         });
       } catch (error) {
-        console.error('Failed to send cancellation email to student:', error);
+        apiLog.error('Failed to send cancellation email to student:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       }
     }
 
@@ -120,7 +124,10 @@ export async function POST(
           html: teacherEmailContent
         });
       } catch (error) {
-        console.error('Failed to send cancellation email to teacher:', error);
+        apiLog.error('Failed to send cancellation email to teacher:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       }
     }
 
@@ -131,7 +138,10 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Error cancelling lesson:', error);
+    apiLog.error('Error cancelling lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

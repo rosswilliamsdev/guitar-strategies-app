@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { log, emailLog } from '@/lib/logger';
 
 /**
  * Environment Variable Validation System
@@ -157,11 +158,11 @@ export function validateEnvOrThrow(): ValidatedEnv {
 
   // Log warnings if any
   if (result.warnings && result.warnings.length > 0) {
-    console.warn("⚠️  Environment Validation Warnings:");
-    result.warnings.forEach((warning) => console.warn(`  - ${warning}`));
+    log.warn('Warning', { message: "⚠️  Environment Validation Warnings:" });
+    result.warnings.forEach((warning) => log.warn('Warning', { message: `  - ${warning}` }));
   }
 
-  console.log("✅ Environment validation successful");
+  log.info('✅ Environment validation successful');
   return result.env!;
 }
 

@@ -18,6 +18,7 @@ import { prisma } from '@/lib/db';
 import { createLessonSchema } from '@/lib/validations';
 import { validateJsonSize } from '@/lib/request-validation';
 import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
+import { apiLog, dbLog } from '@/lib/logger';
 
 /**
  * GET /api/lessons
@@ -133,7 +134,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ lessons });
   } catch (error) {
-    console.error('Error fetching lessons:', error);
+    apiLog.error('Error fetching lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -240,7 +244,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ lesson }, { status: 201 });
   } catch (error) {
-    console.error('Error creating lesson:', error);
+    apiLog.error('Error creating lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     // Handle validation errors from Zod
     if (error instanceof Error) {

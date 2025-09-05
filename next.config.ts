@@ -1,28 +1,47 @@
 import type { NextConfig } from "next";
+import { generateCSP, defaultSecurityConfig } from './lib/security-headers';
 
 const nextConfig: NextConfig = {
-  // API route configuration
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb', // Maximum request body size (matches FILE_UPLOAD limit)
-    },
-  },
-  
   // Experimental features for enhanced security
   experimental: {
     // Enable strict CSP in development
     strictNextHead: true,
-    // Enable instrumentation for startup validation
-    instrumentationHook: true,
   },
   
-  // Security headers
+  // Webpack configuration for client-side exclusions
+  webpack: (config: any, { isServer }: any) => {
+    if (!isServer) {
+      // Exclude Winston from client-side bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        util: false,
+        winston: false,
+      };
+      
+      // Ignore Winston modules on client side
+      config.externals = config.externals || [];
+      config.externals.push('winston');
+    }
+    
+    return config;
+  },
+  
+  // Enhanced security headers with comprehensive CSP
   async headers() {
     return [
       {
-        // Apply security headers to all routes
+        // Apply comprehensive security headers to all routes
         source: '/(.*)',
         headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: generateCSP(defaultSecurityConfig),
+          },
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
@@ -32,19 +51,37 @@ const nextConfig: NextConfig = {
             value: 'DENY',
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            key: 'X-DNS-Prefetch-Control',
+            value: 'off',
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'X-Download-Options',
+            value: 'noopen',
+          },
+          {
+            key: 'X-Permitted-Cross-Domain-Policies',
+            value: 'none',
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()',
           },
         ],
       },
+      // Production-only HSTS header - conditionally include the entire config object
+      ...(process.env.NODE_ENV === 'production' ? [{
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          }
+        ],
+      }] : []),
       {
         // API-specific headers
         source: '/api/(.*)',

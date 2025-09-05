@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { apiLog, dbLog } from '@/lib/logger';
 
 export async function DELETE(
   request: NextRequest,
@@ -46,7 +47,10 @@ export async function DELETE(
     return NextResponse.json({ success: true }, { status: 200 });
 
   } catch (error) {
-    console.error('Library item deletion error:', error);
+    apiLog.error('Library item deletion error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ 
       error: 'Internal server error' 
     }, { status: 500 });

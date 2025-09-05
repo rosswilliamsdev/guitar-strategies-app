@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateBillingSchema } from "@/lib/validations";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // Update billing record (mark as paid, update actual lessons, etc.)
 export async function PUT(
@@ -114,7 +115,10 @@ export async function PUT(
     });
 
   } catch (error) {
-    console.error("Error updating billing record:", error);
+    apiLog.error('Error updating billing record:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -190,7 +194,10 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error("Error fetching billing record:", error);
+    apiLog.error('Error fetching billing record:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

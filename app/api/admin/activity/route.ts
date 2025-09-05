@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getAllActivity } from '@/lib/dashboard-stats';
+import { apiLog, emailLog, invoiceLog } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +27,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching activity:', error);
+    apiLog.error('Error fetching activity:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Failed to fetch activity' },
       { status: 500 }

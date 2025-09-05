@@ -6,9 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfettiModal } from "@/components/ui/confetti-modal";
-import { fireItemConfetti, fireChecklistCompleteConfetti } from "@/lib/confetti";
-import { Edit, ArrowLeft, Trophy } from "lucide-react";
+import {
+  fireItemConfetti,
+  fireChecklistCompleteConfetti,
+} from "@/lib/confetti";
+import { Edit, ArrowLeft, Trophy, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { log } from "@/lib/logger";
 
 interface CurriculumItem {
   id: string;
@@ -62,6 +66,8 @@ export function CurriculumDetail({
   const [curriculum, setCurriculum] = useState<Curriculum | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCelebrationModal, setShowCelebrationModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [previousCompletedCount, setPreviousCompletedCount] = useState(0);
   const checkboxRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
@@ -72,21 +78,25 @@ export function CurriculumDetail({
   // Track completion changes for celebrations (students only)
   useEffect(() => {
     if (!curriculum || userRole !== "STUDENT") return;
-    
+
     const progress = getStudentProgress();
     if (!progress) return;
-    
+
     const currentCompletedCount = progress.completedItems;
     const totalItems = progress.totalItems;
-    
+
     // If we just completed the entire checklist
-    if (currentCompletedCount === totalItems && totalItems > 0 && previousCompletedCount < totalItems) {
+    if (
+      currentCompletedCount === totalItems &&
+      totalItems > 0 &&
+      previousCompletedCount < totalItems
+    ) {
       setTimeout(() => {
         fireChecklistCompleteConfetti();
         setShowCelebrationModal(true);
       }, 300); // Small delay for smoother experience
     }
-    
+
     setPreviousCompletedCount(currentCompletedCount);
   }, [curriculum, userRole, previousCompletedCount]);
 
@@ -98,9 +108,52 @@ export function CurriculumDetail({
         setCurriculum(data);
       }
     } catch (error) {
-      console.error("Error fetching curriculum:", error);
+      log.error("Error fetching curriculum:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteCurriculum = async () => {
+    if (!curriculum) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/curriculums/${curriculumId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        log.info("Curriculum deleted successfully", {
+          curriculumId,
+          curriculumTitle: curriculum.title,
+        });
+        // Redirect back to curriculums list
+        router.push("/curriculums");
+      } else {
+        const errorData = await response.json();
+        log.error("Failed to delete curriculum", {
+          status: response.status,
+          error: errorData.error,
+          curriculumId,
+        });
+        alert("Failed to delete curriculum. Please try again.");
+      }
+    } catch (error) {
+      log.error("Error deleting curriculum:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        curriculumId,
+      });
+      alert(
+        "An error occurred while deleting the curriculum. Please try again."
+      );
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -139,7 +192,10 @@ export function CurriculumDetail({
         fetchCurriculum();
       }
     } catch (error) {
-      console.error("Error updating progress:", error);
+      log.error("Error updating progress:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   };
 
@@ -176,15 +232,20 @@ export function CurriculumDetail({
             <h1 className="text-2xl font-semibold text-foreground">
               {curriculum.title}
             </h1>
-            {userRole === "STUDENT" && (() => {
-              const progress = getStudentProgress();
-              return progress && progress.progressPercent === 100 && progress.totalItems > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-medium">
-                  <Trophy className="h-3 w-3" />
-                  <span>COMPLETED</span>
-                </div>
-              );
-            })()}
+            {userRole === "STUDENT" &&
+              (() => {
+                const progress = getStudentProgress();
+                return (
+                  progress &&
+                  progress.progressPercent === 100 &&
+                  progress.totalItems > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-medium">
+                      <Trophy className="h-3 w-3" />
+                      <span>COMPLETED</span>
+                    </div>
+                  )
+                );
+              })()}
           </div>
           {curriculum.description && (
             <p className="text-muted-foreground ml-11">
@@ -193,45 +254,58 @@ export function CurriculumDetail({
           )}
         </div>
         {userRole === "TEACHER" && (
-          <Button
-            variant="secondary"
-            onClick={() => router.push(`/curriculums/${curriculumId}/edit`)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Checklist
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => router.push(`/curriculums/${curriculumId}/edit`)}
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Checklist
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteModal(true)}
+              disabled={isDeleting}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </div>
         )}
       </div>
 
       {/* Progress Overview for Students */}
-      {userRole === "STUDENT" && (() => {
-        const progress = getStudentProgress();
-        if (!progress) return null;
+      {userRole === "STUDENT" &&
+        (() => {
+          const progress = getStudentProgress();
+          if (!progress) return null;
 
-        return (
-          <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Progress</span>
-                <span className="font-medium">
-                  {progress.completedItems} / {progress.totalItems} completed
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="h-2 rounded-full bg-turquoise-500 transition-all"
-                  style={{ width: `${progress.progressPercent}%` }}
-                />
+          return (
+            <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium">
+                    {progress.completedItems} / {progress.totalItems} completed
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full bg-turquoise-500 transition-all"
+                    style={{ width: `${progress.progressPercent}%` }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
 
       {/* Checklist Items - directly without separate heading */}
       {allItems.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">No items in this checklist yet.</p>
+          <p className="text-muted-foreground">
+            No items in this checklist yet.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -259,7 +333,11 @@ export function CurriculumDetail({
                     <div className="mt-2 w-4 h-4 border-2 border-gray-300 rounded bg-white" />
                   )}
                   <div className="flex-1">
-                    <p className={`font-medium ${isCompleted ? "line-through text-muted-foreground" : ""}`}>
+                    <p
+                      className={`font-medium ${
+                        isCompleted ? "line-through text-muted-foreground" : ""
+                      }`}
+                    >
                       {item.title}
                     </p>
                     {item.description && (
@@ -275,18 +353,63 @@ export function CurriculumDetail({
       )}
 
       {/* Celebration Modal */}
-      {userRole === "STUDENT" && curriculum && (() => {
-        const progress = getStudentProgress();
-        return progress && (
-          <ConfettiModal
-            isOpen={showCelebrationModal}
-            onClose={() => setShowCelebrationModal(false)}
-            checklistTitle={curriculum.title}
-            completedItems={progress.completedItems}
-            totalItems={progress.totalItems}
-          />
-        );
-      })()}
+      {userRole === "STUDENT" &&
+        curriculum &&
+        (() => {
+          const progress = getStudentProgress();
+          return (
+            progress && (
+              <ConfettiModal
+                isOpen={showCelebrationModal}
+                onClose={() => setShowCelebrationModal(false)}
+                checklistTitle={curriculum.title}
+                completedItems={progress.completedItems}
+                totalItems={progress.totalItems}
+              />
+            )
+          );
+        })()}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 space-y-4">
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Delete Checklist
+              </h3>
+              <p className="text-gray-600">
+                Are you sure you want to delete "{curriculum?.title}"? This
+                action cannot be undone.
+                {curriculum?.studentProgress &&
+                  curriculum.studentProgress.length > 0 && (
+                    <span className="block mt-2 text-amber-600 font-medium">
+                      Warning: This checklist has student progress data that
+                      will be lost.
+                    </span>
+                  )}
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteCurriculum}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete Checklist"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

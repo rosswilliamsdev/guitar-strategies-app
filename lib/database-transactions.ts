@@ -7,6 +7,7 @@
 
 import { prisma } from '@/lib/db';
 import type { Prisma } from '@prisma/client';
+import { log, dbLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 /**
  * Transaction timeout in milliseconds
@@ -36,24 +37,27 @@ export async function executeTransaction<T>(
 
   while (attempt < maxAttempts) {
     try {
-      console.log(`🔄 Starting ${description} (attempt ${attempt + 1}/${maxAttempts})`);
+      log.info('🔄 Starting ${description} (attempt ${attempt + 1}/${maxAttempts})');
       
       const result = await prisma.$transaction(operation, {
         timeout,
         isolationLevel: 'ReadCommitted' // Prevents most race conditions
       });
       
-      console.log(`✅ Completed ${description} successfully`);
+      log.info('✅ Completed ${description} successfully');
       return result;
       
     } catch (error) {
       attempt++;
-      console.error(`❌ ${description} failed (attempt ${attempt}/${maxAttempts}):`, error);
+      log.error('❌ ${description} failed (attempt ${attempt}/${maxAttempts}):', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // Check if this is a retryable error
       if (attempt < maxAttempts && isRetryableError(error)) {
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff, max 5s
-        console.log(`⏳ Retrying in ${delay}ms...`);
+        log.info('⏳ Retrying in ${delay}ms...');
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }

@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, CreditCard } from 'lucide-react';
+import { log, invoiceLog } from '@/lib/logger';
 
 interface MarkPaidModalProps {
   isOpen: boolean;
@@ -53,7 +54,10 @@ export function MarkPaidModal({
       await onConfirm(method, paymentNotes || undefined);
       handleClose();
     } catch (error) {
-      console.error('Error marking invoice as paid:', error);
+      log.error('Error marking invoice as paid:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setIsProcessing(false);
     }

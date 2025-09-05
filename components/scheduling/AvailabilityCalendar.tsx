@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/design";
 import { Skeleton, SkeletonCalendar } from "@/components/ui/skeleton";
 import { InlineLoading } from "@/components/ui/loading-spinner";
+import { log, schedulerLog } from '@/lib/logger';
 
 // Helper function to format timezone names for display
 const formatTimezone = (timezone: string): string => {
@@ -229,17 +230,20 @@ export function AvailabilityCalendar({
           `endDate=${endDate.toISOString()}&` +
           `timezone=${studentTimezone}`;
       
-      console.log('🔗 Fetching availability from:', url);
+      log.info('🔗 Fetching availability from:', url);
       const response = await fetch(url);
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('❌ Availability API error:', errorData);
+        log.error('❌ Availability API error:', {
+        error: errorData instanceof Error ? errorData.message : String(errorData),
+        stack: errorData instanceof Error ? errorData.stack : undefined
+      });
         throw new Error(errorData.error || "Failed to load available slots");
       }
 
       const data = await response.json();
-      console.log('✅ Availability data received:', data);
+      log.info('✅ Availability data received:', data);
       console.log('🔍 Data structure:', {
         hasSlots: 'slots' in data,
         slotsType: typeof data.slots,
@@ -256,9 +260,9 @@ export function AvailabilityCalendar({
         end: new Date(slot.end),
       }));
 
-      console.log('🔍 Parsed slots:', parsedSlots.length, 'total');
-      console.log('🔍 Available slots:', parsedSlots.filter(s => s.available).length);
-      console.log('🔍 Sample slots:', parsedSlots.slice(0, 3));
+      log.info('🔍 Parsed slots:', parsedSlots.length, 'total');
+      log.info('🔍 Available slots:', parsedSlots.filter(s => s.available).length);
+      log.info('🔍 Sample slots:', parsedSlots.slice(0, 3));
 
       setSlots(parsedSlots);
     } catch (error: unknown) {
@@ -395,7 +399,7 @@ export function AvailabilityCalendar({
     
     // Debug logging for specific days
     if (daySlots.length > 0 || date.getDate() === 1) { // Sep 1st or any day with slots
-      console.log(`🔍 Slots for ${date.toDateString()}:`, daySlots.length, daySlots.slice(0, 2));
+      log.info('🔍 Slots for ${date.toDateString()}:', daySlots.length, daySlots.slice(0, 2));
     }
     
     return daySlots;

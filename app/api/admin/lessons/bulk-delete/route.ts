@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
+import { apiLog, dbLog } from '@/lib/logger';
 
 const bulkDeleteSchema = z.object({
   lessonIds: z.array(z.string()).min(1, 'At least one lesson ID is required'),
@@ -105,7 +106,10 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error bulk deleting lessons:', error);
+    apiLog.error('Error bulk deleting lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     return NextResponse.json(
       { error: 'Internal server error' },

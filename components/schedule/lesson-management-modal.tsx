@@ -9,6 +9,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { User, Calendar, Clock, FileText, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import { log, emailLog } from '@/lib/logger';
 
 interface UpcomingLesson {
   id: string;
@@ -63,7 +64,10 @@ export function LessonManagementModal({
       onUpdate();
       onClose();
     } catch (error) {
-      console.error("Error updating lesson:", error);
+      log.error('Error updating lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast.error("Failed to save notes. Please try again.");
     } finally {
       setIsLoading(false);
@@ -90,7 +94,10 @@ export function LessonManagementModal({
       onUpdate();
       onClose();
     } catch (error) {
-      console.error("Error cancelling lesson:", error);
+      log.error('Error cancelling lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       const errorMessage = error instanceof Error ? error.message : "Failed to cancel lesson. Please try again.";
       toast.error(errorMessage);
     } finally {

@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { log, emailLog } from '@/lib/logger';
 
 interface Teacher {
   id: string;
@@ -85,7 +86,10 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
 
       router.push("/admin/students");
     } catch (error) {
-      console.error("Error creating student:", error);
+      log.error('Error creating student:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrors({
         submit: error instanceof Error ? error.message : "Failed to create student",
       });

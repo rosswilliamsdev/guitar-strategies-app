@@ -25,6 +25,7 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
+import { log, emailLog } from '@/lib/logger';
 
 interface LessonFormProps {
   teacherId: string;
@@ -86,6 +87,7 @@ export function LessonForm({
     notes: initialData?.notes || "",
     duration: initialData?.duration || 30,
     status: initialData?.status || "COMPLETED",
+    version: initialData?.version || 1,
   });
 
   // File and link management
@@ -117,7 +119,10 @@ export function LessonForm({
           setSelectedCurriculumItems(items);
         }
       } catch (error) {
-        console.error("Error parsing checklist items:", error);
+        log.error('Error parsing checklist items:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       }
     }
   }, [initialData]);
@@ -132,7 +137,10 @@ export function LessonForm({
           setStudents(data.students || []);
         }
       } catch (error) {
-        console.error("Error fetching students:", error);
+        log.error('Error fetching students:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       }
     };
 
@@ -183,10 +191,16 @@ export function LessonForm({
           setStudentCurriculums(transformedChecklists);
         } else {
           const errorData = await response.json();
-          console.error("API error:", errorData);
+          log.error('API error:', {
+        error: errorData instanceof Error ? errorData.message : String(errorData),
+        stack: errorData instanceof Error ? errorData.stack : undefined
+      });
         }
       } catch (error) {
-        console.error("Error fetching student checklists:", error);
+        log.error('Error fetching student checklists:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       }
     };
 
@@ -302,6 +316,7 @@ export function LessonForm({
         notes: formData.notes || "",
         status: formData.status,
         checklistItems: selectedCurriculumItems.length > 0 ? JSON.stringify(selectedCurriculumItems) : null,
+        version: lessonId ? formData.version : undefined, // Only include version for updates
       };
 
       const url = lessonId ? `/api/lessons/${lessonId}` : "/api/lessons";
@@ -329,11 +344,11 @@ export function LessonForm({
 
       // Upload files if any
       if (selectedFiles.length > 0) {
-        console.log(`Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`);
+        log.info('Uploading ${selectedFiles.length} files for lesson ${currentLessonId}');
         const fileFormData = new FormData();
         selectedFiles.forEach((file, index) => {
           fileFormData.append(`files`, file);
-          console.log(`Added file: ${file.name}, size: ${file.size}`);
+          log.info('Added file: ${file.name}, size: ${file.size}');
         });
         fileFormData.append("lessonId", currentLessonId);
 
@@ -345,14 +360,20 @@ export function LessonForm({
 
           if (!fileResponse.ok) {
             const errorData = await fileResponse.json();
-            console.error("File upload failed:", errorData);
+            log.error('File upload failed:', {
+        error: errorData instanceof Error ? errorData.message : String(errorData),
+        stack: errorData instanceof Error ? errorData.stack : undefined
+      });
             throw new Error(`File upload failed: ${errorData.error || 'Unknown error'}`);
           }
 
           const fileResult = await fileResponse.json();
-          console.log("Files uploaded successfully:", fileResult);
+          log.info('Files uploaded successfully:', fileResult);
         } catch (fileError) {
-          console.error("File upload error:", fileError);
+          log.error('File upload error:', {
+        error: fileError instanceof Error ? fileError.message : String(fileError),
+        stack: fileError instanceof Error ? fileError.stack : undefined
+      });
           // Don't fail the entire save, but show a warning
           setError(`Lesson saved but file upload failed: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
         }
@@ -360,7 +381,7 @@ export function LessonForm({
 
       // Handle removed attachments when editing
       if (lessonId && removedAttachmentIds.length > 0) {
-        console.log(`Removing ${removedAttachmentIds.length} attachments`);
+        log.info('Removing ${removedAttachmentIds.length} attachments');
         try {
           const removeResponse = await fetch("/api/lessons/attachments", {
             method: "PUT",
@@ -375,12 +396,18 @@ export function LessonForm({
 
           if (!removeResponse.ok) {
             const errorData = await removeResponse.json();
-            console.error("Failed to remove attachments:", errorData);
+            log.error('Failed to remove attachments:', {
+        error: errorData instanceof Error ? errorData.message : String(errorData),
+        stack: errorData instanceof Error ? errorData.stack : undefined
+      });
           } else {
-            console.log("Attachments removed successfully");
+            log.info('Attachments removed successfully');
           }
         } catch (removeError) {
-          console.error("Error removing attachments:", removeError);
+          log.error('Error removing attachments:', {
+        error: removeError instanceof Error ? removeError.message : String(removeError),
+        stack: removeError instanceof Error ? removeError.stack : undefined
+      });
         }
       }
 
@@ -407,7 +434,10 @@ export function LessonForm({
 
         if (!linksResponse.ok) {
           const errorData = await linksResponse.json();
-          console.error("Failed to update links:", errorData);
+          log.error('Failed to update links:', {
+        error: errorData instanceof Error ? errorData.message : String(errorData),
+        stack: errorData instanceof Error ? errorData.stack : undefined
+      });
         }
       } else if (links.length > 0) {
         // Creating new lesson - add all links
@@ -429,7 +459,10 @@ export function LessonForm({
 
         if (!linksResponse.ok) {
           const errorData = await linksResponse.json();
-          console.error("Failed to save links:", errorData);
+          log.error('Failed to save links:', {
+        error: errorData instanceof Error ? errorData.message : String(errorData),
+        stack: errorData instanceof Error ? errorData.stack : undefined
+      });
         }
       }
 
@@ -457,7 +490,10 @@ export function LessonForm({
             }
           }
         } catch (progressError) {
-          console.error("Error updating checklist progress:", progressError);
+          log.error('Error updating checklist progress:', {
+        error: progressError instanceof Error ? progressError.message : String(progressError),
+        stack: progressError instanceof Error ? progressError.stack : undefined
+      });
           // Don't fail the lesson submission if checklist update fails
         }
       }
@@ -732,9 +768,10 @@ export function LessonForm({
                       </Button>
                       <Button
                         type="button"
-                        variant="secondary"
+                        variant="destructive"
                         size="sm"
                         onClick={() => removeLink(index)}
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -803,9 +840,10 @@ export function LessonForm({
                       </Button>
                       <Button
                         type="button"
-                        variant="secondary"
+                        variant="destructive"
                         size="sm"
                         onClick={() => removeExistingAttachment(attachment.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -837,9 +875,10 @@ export function LessonForm({
                     </div>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="destructive"
                       size="sm"
                       onClick={() => removeFile(index)}
+                      className="bg-red-600 hover:bg-red-700 text-white"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

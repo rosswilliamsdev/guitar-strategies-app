@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createCurriculumSectionSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // POST /api/curriculums/sections - Create a new section
 export async function POST(request: NextRequest) {
@@ -58,7 +59,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error creating section:", error);
+    apiLog.error('Error creating section:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to create section" },
       { status: 500 }
@@ -103,7 +107,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ message: "Sections reordered successfully" });
   } catch (error) {
-    console.error("Error updating sections:", error);
+    apiLog.error('Error updating sections:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update sections" },
       { status: 500 }

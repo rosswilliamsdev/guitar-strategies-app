@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { apiLog, dbLog } from '@/lib/logger';
 
 interface Params {
   params: Promise<{
@@ -65,7 +66,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     });
 
   } catch (error) {
-    console.error('Error deleting lesson:', error);
+    apiLog.error('Error deleting lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     return NextResponse.json(
       { error: 'Internal server error' },

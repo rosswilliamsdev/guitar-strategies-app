@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Plus, X } from "lucide-react";
 import Link from "next/link";
+import { log } from '@/lib/logger';
 
 interface ChecklistItem {
   title: string;
@@ -155,7 +156,10 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
 
       router.push(`/curriculums/${savedChecklist.id}`);
     } catch (error) {
-      console.error("Error saving checklist:", error);
+      log.error('Error saving checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrors({
         submit:
           error instanceof Error ? error.message : "Failed to save checklist",
@@ -288,9 +292,10 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
                       </div>
                       <Button
                         type="button"
-                        variant="secondary"
+                        variant="destructive"
                         size="sm"
                         onClick={() => removeItem(index)}
+                        className="bg-red-600 hover:bg-red-700 text-white"
                       >
                         <X className="h-4 w-4" />
                       </Button>

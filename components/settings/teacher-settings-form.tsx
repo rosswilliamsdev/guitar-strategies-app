@@ -14,6 +14,7 @@ import { teacherProfileSchema, passwordChangeSchema, timezoneSchema } from "@/li
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { BlockedTimeManager } from "@/components/teacher/BlockedTimeManager";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
+import { log, emailLog, invoiceLog } from '@/lib/logger';
 
 // Common US timezones
 const TIMEZONE_OPTIONS = [
@@ -83,7 +84,10 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
         setZelleEmail(data.zelleEmail || "");
       }
     } catch (error) {
-      console.error('Error loading profile data:', error);
+      log.error('Error loading profile data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -125,7 +129,12 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
         const availabilityData = await availabilityResponse.json();
         setAvailability(availabilityData.data?.availability || []);
       } else {
-        console.error('Failed to load availability:', availabilityResponse.status, await availabilityResponse.text());
+        const errorText = await availabilityResponse.text();
+        log.error('Failed to load availability:', {
+          status: availabilityResponse.status,
+          error: errorText,
+          statusText: availabilityResponse.statusText
+        });
         setError('Failed to load availability data');
       }
 
@@ -143,7 +152,10 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
         setBlockedTimes(blockedData.blockedTimes || []);
       }
     } catch (error) {
-      console.error('Error loading scheduling data:', error);
+      log.error('Error loading scheduling data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setSchedulingLoading(false);
     }

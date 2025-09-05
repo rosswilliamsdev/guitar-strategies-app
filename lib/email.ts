@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { withRetry, emailRetryOptions } from './retry';
+import { emailLog } from './logger';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -35,11 +36,21 @@ export async function sendEmail(data: EmailData): Promise<boolean> {
       return emailResult;
     }, emailRetryOptions);
 
-    console.log('Email sent successfully:', result.data?.id);
+    emailLog.info('Email sent successfully', {
+      emailId: result.data?.id,
+      to: data.to,
+      subject: data.subject
+    });
     return true;
   } catch (error) {
     // After all retry attempts failed
-    console.error('Email sending failed after retries:', error);
+    emailLog.error('Email sending failed after retries', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      to: data.to,
+      subject: data.subject,
+      attempts: emailRetryOptions.maxAttempts
+    });
     
     // Log additional context for debugging
     logEmailError('sendEmail', error, {
@@ -65,14 +76,27 @@ export async function sendEmailNoRetry(data: EmailData): Promise<boolean> {
     });
 
     if (result.error) {
-      console.error('Failed to send email:', result.error);
+      emailLog.error('Failed to send email', {
+        error: result.error instanceof Error ? result.error.message : String(result.error),
+        to: data.to,
+        subject: data.subject
+      });
       return false;
     }
 
-    console.log('Email sent successfully:', result.data?.id);
+    emailLog.info('Email sent successfully', {
+      emailId: result.data?.id,
+      to: data.to,
+      subject: data.subject
+    });
     return true;
   } catch (error) {
-    console.error('Email sending error:', error);
+    emailLog.error('Email sending error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      to: data.to,
+      subject: data.subject
+    });
     return false;
   }
 }
@@ -133,11 +157,17 @@ function logEmailError(
   };
   
   if (process.env.NODE_ENV === 'production') {
-    // In production, log to monitoring service
-    console.error('[Email Error]', JSON.stringify(errorInfo));
+    // In production, log structured data for monitoring
+    emailLog.error('Email service error', {
+      ...errorInfo,
+      environment: 'production'
+    });
   } else {
     // In development, log more verbosely
-    console.error('[Email Error]', errorInfo);
+    emailLog.error('Email service error', {
+      ...errorInfo,
+      environment: 'development'
+    });
   }
 }
 

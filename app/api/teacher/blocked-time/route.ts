@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { blockedTimeSchema } from '@/lib/validations';
 import { validateBlockedTime } from '@/lib/scheduler';
 import { toZonedTime } from 'date-fns-tz';
+import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -47,7 +48,10 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Error fetching blocked times:', error);
+    apiLog.error('Error fetching blocked times:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Failed to fetch blocked times' },
       { status: 500 }
@@ -108,7 +112,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error creating blocked time:', error);
+    apiLog.error('Error creating blocked time:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(

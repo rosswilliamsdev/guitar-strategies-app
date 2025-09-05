@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createCurriculumSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // GET /api/curriculums - Get all curriculums for a teacher or student
 export async function GET(request: NextRequest) {
@@ -110,7 +111,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(curriculums);
   } catch (error) {
-    console.error("Error fetching curriculums:", error);
+    apiLog.error('Error fetching curriculums:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to fetch curriculums" },
       { status: 500 }
@@ -160,7 +164,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error creating curriculum:", error);
+    apiLog.error('Error creating curriculum:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to create curriculum" },
       { status: 500 }

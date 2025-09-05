@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcrypt";
+import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,7 +71,10 @@ export async function POST(request: NextRequest) {
       email: teacher.user.email,
     });
   } catch (error) {
-    console.error("Error creating teacher:", error);
+    apiLog.error('Error creating teacher:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to create teacher" },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { apiLog, dbLog } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
@@ -28,7 +29,10 @@ export async function POST(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error toggling student status:", error);
+    apiLog.error('Error toggling student status:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update student status" },
       { status: 500 }

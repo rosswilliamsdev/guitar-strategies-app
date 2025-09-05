@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createStudentChecklistSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // GET /api/student-checklists - Get all checklists for a student
 export async function GET(request: NextRequest) {
@@ -216,7 +217,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ checklists: allChecklists });
   } catch (error) {
-    console.error("Error fetching student checklists:", error);
+    apiLog.error('Error fetching student checklists:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to fetch checklists" },
       { status: 500 }
@@ -309,7 +313,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error creating checklist:", error);
+    apiLog.error('Error creating checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to create checklist" },
       { status: 500 }

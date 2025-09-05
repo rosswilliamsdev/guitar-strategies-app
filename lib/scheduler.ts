@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/db'
+import { atomicBookingUpdate, retryOptimisticUpdate, OptimisticLockingError } from '@/lib/optimistic-locking'
+import { schedulerLog, dbLog } from '@/lib/logger'
 import { 
   format, 
   addDays, 
@@ -110,12 +112,15 @@ export async function getAvailableSlots(
 
 
   if (!teacher || !teacher.lessonSettings) {
-    console.log('⚠️ Teacher not found or missing lesson settings:', { teacherId, hasTeacher: !!teacher, hasSettings: !!teacher?.lessonSettings });
+    schedulerLog.warn('Teacher not found or missing lesson settings', { 
+      teacherId, 
+      hasTeacher: !!teacher, 
+      hasSettings: !!teacher?.lessonSettings 
+    });
     return []
   }
 
-  // Debug logging (can be removed in production)
-  console.log('🔍 Scheduler debug:', {
+  schedulerLog.debug('Generating available slots', {
     teacherId,
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
@@ -145,7 +150,11 @@ export async function getAvailableSlots(
     
     // Debug: Log days with availability
     if (dayAvailability.length > 0) {
-      console.log(`📅 Day ${dayOfWeek} (${currentDate.toDateString()}): ${dayAvailability.length} availability slots found`)
+      schedulerLog.debug('Day availability found', {
+        dayOfWeek,
+        date: currentDate.toDateString(),
+        slotsFound: dayAvailability.length
+      })
     }
     
 
@@ -191,7 +200,12 @@ export async function getAvailableSlots(
     currentDate = addDays(currentDate, 1)
   }
 
-  console.log(`✅ Generated ${slots.length} total slots (${slots.filter(s => s.available).length} available)`)
+  schedulerLog.info('Slots generation completed', {
+    totalSlots: slots.length,
+    availableSlots: slots.filter(s => s.available).length,
+    teacherId,
+    dateRange: `${startDate.toISOString()} to ${endDate.toISOString()}`
+  })
   return slots
 }
 
@@ -231,7 +245,7 @@ async function isSlotAvailable(
   
   if (now > cutoffTime) {
     // Uncomment for debugging past slot filtering:
-    // console.log(`⏰ Slot filtered as past: current ${now.toISOString()} > cutoff ${cutoffTime.toISOString()} (slot: ${slotStart.toISOString()})`)
+    // schedulerLog.debug('Slot filtered as past', { current: now.toISOString(), cutoff: cutoffTime.toISOString(), slot: slotStart.toISOString() })
     return false
   }
 
@@ -298,7 +312,7 @@ export async function validateBooking(data: BookingData): Promise<{
   const dayStart = startOfDay(data.date)
   const dayEnd = endOfDay(data.date)
   
-  console.log('🔍 Validating booking:', {
+  schedulerLog.debug('Validating booking request', {
     requestedDate: data.date.toISOString(),
     duration: data.duration,
     dayStart: dayStart.toISOString(),
@@ -333,7 +347,7 @@ export async function validateBooking(data: BookingData): Promise<{
     })
     
     if (!requestedSlot) {
-      console.log('❌ 30-min slot validation failed:', {
+      schedulerLog.warn('30-min slot validation failed', {
         requestedTime: requestedDateTime.toISOString(),
         availableSlots: slots.filter(s => s.available).map(s => ({
           start: normalizeDate(s.start).toISOString(),
@@ -352,7 +366,7 @@ export async function validateBooking(data: BookingData): Promise<{
     })
     
     if (!firstSlot) {
-      console.log('❌ 60-min first slot not found:', {
+      schedulerLog.warn('60-min first slot not found', {
         requestedTime: requestedDateTime.toISOString()
       })
       return { success: false, error: 'This time slot is not available' }
@@ -368,7 +382,7 @@ export async function validateBooking(data: BookingData): Promise<{
     })
     
     if (!secondSlot) {
-      console.log('❌ 60-min second slot not found:', {
+      schedulerLog.warn('60-min second slot not found', {
         firstSlotTime: requestedDateTime.toISOString(),
         expectedSecondSlotTime: secondSlotTime.toISOString(),
         availableSlots: slots.filter(s => s.available && 
@@ -381,7 +395,7 @@ export async function validateBooking(data: BookingData): Promise<{
       return { success: false, error: 'Both consecutive time slots must be available for a 60-minute lesson' }
     }
     
-    console.log('✅ 60-min booking validated:', {
+    schedulerLog.debug('60-min booking validated', {
       firstSlot: requestedDateTime.toISOString(),
       secondSlot: secondSlotTime.toISOString()
     })
@@ -393,73 +407,78 @@ export async function validateBooking(data: BookingData): Promise<{
 }
 
 export async function bookSingleLesson(data: BookingData) {
-  // Use a database transaction to ensure atomicity
-  return await prisma.$transaction(async (tx) => {
-    const validation = await validateBooking(data)
-    if (!validation.success) {
-      throw new Error(validation.error)
-    }
-
-    const teacher = await tx.teacherProfile.findUnique({
-      where: { id: data.teacherId },
-      include: { lessonSettings: true }
-    })
-
-    if (!teacher?.lessonSettings) {
-      throw new Error('Teacher settings not found')
-    }
-
-    const price = data.duration === 30 
-      ? teacher.lessonSettings.price30Min 
-      : teacher.lessonSettings.price60Min
-
-    // Normalize the date (remove milliseconds) before saving
-    const normalizedDate = new Date(data.date)
-    normalizedDate.setSeconds(0, 0)
-
-    console.log('🎯 Creating lesson with duration:', {
-      teacherId: data.teacherId,
-      duration: data.duration,
-      price,
-      date: normalizedDate.toISOString()
-    })
-
-    // Check for conflicts again within the transaction to prevent race conditions
-    const existingLesson = await tx.lesson.findFirst({
-      where: {
-        teacherId: data.teacherId,
-        date: normalizedDate,
-        status: {
-          not: 'CANCELLED'
+  // Use enhanced atomic booking with optimistic locking and serializable isolation
+  return await retryOptimisticUpdate(async () => {
+    const results = await atomicBookingUpdate([
+      async () => {
+        const validation = await validateBooking(data)
+        if (!validation.success) {
+          throw new Error(validation.error)
         }
+
+        const teacher = await prisma.teacherProfile.findUnique({
+          where: { id: data.teacherId },
+          include: { lessonSettings: true }
+        })
+
+        if (!teacher?.lessonSettings) {
+          throw new Error('Teacher settings not found')
+        }
+
+        const price = data.duration === 30 
+          ? teacher.lessonSettings.price30Min 
+          : teacher.lessonSettings.price60Min
+
+        // Normalize the date (remove milliseconds) before saving
+        const normalizedDate = new Date(data.date)
+        normalizedDate.setSeconds(0, 0)
+
+        dbLog.debug('Creating lesson with optimistic locking', {
+          teacherId: data.teacherId,
+          duration: data.duration,
+          price,
+          date: normalizedDate.toISOString()
+        })
+
+        // Check for conflicts with SELECT FOR UPDATE to prevent race conditions
+        const existingLesson = await prisma.$queryRaw`
+          SELECT id, version FROM "public"."Lesson" 
+          WHERE "teacherId" = ${data.teacherId} 
+            AND "date" = ${normalizedDate} 
+            AND "status" != 'CANCELLED'
+          FOR UPDATE
+        ` as any[]
+
+        if (existingLesson.length > 0) {
+          throw new Error('This time slot has been booked by another student')
+        }
+
+        const lesson = await prisma.lesson.create({
+          data: {
+            teacherId: data.teacherId,
+            studentId: data.studentId,
+            date: normalizedDate,
+            duration: data.duration,
+            timezone: data.timezone,
+            price,
+            status: 'SCHEDULED',
+            isRecurring: data.isRecurring || false,
+            version: 1 // Initial version for optimistic locking
+          }
+        })
+
+        dbLog.info('Lesson created with version control', {
+          id: lesson.id,
+          duration: lesson.duration,
+          price: lesson.price,
+          date: lesson.date.toISOString(),
+          version: lesson.version
+        })
+
+        return lesson
       }
-    })
-
-    if (existingLesson) {
-      throw new Error('This time slot has been booked by another student')
-    }
-
-    const lesson = await tx.lesson.create({
-      data: {
-        teacherId: data.teacherId,
-        studentId: data.studentId,
-        date: normalizedDate,
-        duration: data.duration,
-        timezone: data.timezone,
-        price,
-        status: 'SCHEDULED',
-        isRecurring: data.isRecurring || false
-      }
-    })
-
-    console.log('✅ Lesson created:', {
-      id: lesson.id,
-      duration: lesson.duration,
-      price: lesson.price,
-      date: lesson.date.toISOString()
-    })
-
-    return lesson
+    ])
+    return results[0] // Return the lesson from the first (and only) operation
   })
 }
 

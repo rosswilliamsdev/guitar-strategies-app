@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { log, schedulerLog } from '@/lib/logger';
 
 interface SlotWithDetails {
   id: string;
@@ -99,7 +100,10 @@ export function WeeklyLessonDisplay({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.error('Cancel recurring lessons error response:', errorData)
+        log.error('Cancel recurring lessons error response:', {
+        error: errorData instanceof Error ? errorData.message : String(errorData),
+        stack: errorData instanceof Error ? errorData.stack : undefined
+      });
         throw new Error(errorData.error || 'Failed to cancel recurring lessons')
       }
 
@@ -107,7 +111,10 @@ export function WeeklyLessonDisplay({
       router.refresh()
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to cancel recurring lessons'
-      console.error('Error cancelling recurring lessons:', errorMessage)
+      log.error('Error cancelling recurring lessons:', {
+        error: errorMessage instanceof Error ? errorMessage.message : String(errorMessage),
+        stack: errorMessage instanceof Error ? errorMessage.stack : undefined
+      });
       setErrorMessage(errorMessage || 'Failed to cancel recurring lessons. Please try again.')
     } finally {
       setIsCancelling(false)

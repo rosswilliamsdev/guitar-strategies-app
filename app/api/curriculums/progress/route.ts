@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateProgressSchema, teacherProgressUpdateSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // GET /api/curriculums/progress - Get student's progress
 export async function GET(request: NextRequest) {
@@ -82,7 +83,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   } catch (error) {
-    console.error("Error fetching progress:", error);
+    apiLog.error('Error fetching progress:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to fetch progress" },
       { status: 500 }
@@ -295,7 +299,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error updating progress:", error);
+    apiLog.error('Error updating progress:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update progress" },
       { status: 500 }

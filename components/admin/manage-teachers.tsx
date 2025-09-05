@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   GraduationCap,
 } from "lucide-react";
+import { log, emailLog, invoiceLog } from '@/lib/logger';
 
 export interface Teacher {
   id: string;
@@ -92,7 +93,10 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
         window.location.reload();
       }
     } catch (error) {
-      console.error("Error toggling teacher status:", error);
+      log.error('Error toggling teacher status:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -132,7 +136,10 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
         toast.error(error.message || "Failed to delete teacher");
       }
     } catch (error) {
-      console.error("Error deleting teacher:", error);
+      log.error('Error deleting teacher:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast.error("An unexpected error occurred while deleting the teacher");
     } finally {
       setIsDeleting(false);

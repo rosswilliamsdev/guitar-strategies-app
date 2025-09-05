@@ -10,6 +10,7 @@ import { prisma } from '@/lib/db';
 import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
 import { withRetry, databaseRetryOptions, emailRetryOptions } from '@/lib/retry';
 import { sendEmail } from '@/lib/email';
+import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 // Track attempts for testing
 let testAttempts: Record<string, number> = {};
@@ -86,7 +87,10 @@ export async function GET(request: NextRequest) {
     }
     
   } catch (error: any) {
-    console.error('Test endpoint error:', error);
+    apiLog.error('Test endpoint error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ 
       error: error.message || 'Test failed',
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -219,7 +223,10 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error: any) {
-    console.error('Email test error:', error);
+    apiLog.error('Email test error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ 
       error: error.message || 'Email test failed'
     }, { status: 500 });

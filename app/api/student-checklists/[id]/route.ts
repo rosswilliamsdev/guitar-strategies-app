@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateStudentChecklistSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // GET /api/student-checklists/[id] - Get a specific checklist
 export async function GET(
@@ -63,7 +64,10 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Error fetching checklist:", error);
+    apiLog.error('Error fetching checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to fetch checklist" },
       { status: 500 }
@@ -135,7 +139,10 @@ export async function PUT(
       );
     }
 
-    console.error("Error updating checklist:", error);
+    apiLog.error('Error updating checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update checklist" },
       { status: 500 }
@@ -186,7 +193,10 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Checklist deleted successfully" });
   } catch (error) {
-    console.error("Error deleting checklist:", error);
+    apiLog.error('Error deleting checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to delete checklist" },
       { status: 500 }

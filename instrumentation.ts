@@ -10,7 +10,14 @@
 export async function register() {
   // Only run on server-side
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    console.log('🚀 Starting Guitar Strategies App...');
+    // Import logger for system startup
+    const { logSystemEvent } = await import('./lib/logger');
+    
+    logSystemEvent('Application startup initiated', {
+      nodeVersion: process.version,
+      runtime: process.env.NEXT_RUNTIME,
+      environment: process.env.NODE_ENV || 'development'
+    });
     
     // Import and run startup validation
     const { validateStartupEnvironment } = await import('./lib/startup-validation');
@@ -19,36 +26,36 @@ export async function register() {
       // Run comprehensive environment validation
       validateStartupEnvironment();
       
-      console.log('✅ Application startup validation completed successfully');
+      logSystemEvent('Application startup validation completed successfully');
     } catch (error) {
-      console.error('❌ Application startup validation failed:', error);
+      const { log } = await import('./lib/logger');
+      log.error('Application startup validation failed', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // In production, fail fast to prevent running with bad configuration
       if (process.env.NODE_ENV === 'production') {
-        console.error('🛑 Shutting down due to configuration errors in production mode');
+        log.error('Shutting down due to configuration errors in production mode');
         process.exit(1);
       }
       
       // In development, allow continuation but with warnings
-      console.warn('⚠️  Continuing in development mode despite validation errors');
-      console.warn('   Please fix these issues before deploying to production!');
+      log.warn('Continuing in development mode despite validation errors');
+      log.warn('Please fix these issues before deploying to production!');
     }
-    
-    // Log application information
-    console.log('📋 Application Information:');
-    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`   Node Version: ${process.version}`);
-    console.log(`   Next.js Runtime: ${process.env.NEXT_RUNTIME}`);
     
     // Check for optional services
     const { isEmailServiceConfigured, isFileStorageConfigured } = await import('./lib/env-validation');
     
-    console.log('🔌 Service Status:');
-    console.log(`   Email Service: ${isEmailServiceConfigured() ? '✅ Configured' : '⚠️  Not configured'}`);
-    console.log(`   File Storage: ${isFileStorageConfigured() ? '✅ Configured' : '⚠️  Not configured'}`);
+    logSystemEvent('Service configuration check completed', {
+      emailService: isEmailServiceConfigured(),
+      fileStorage: isFileStorageConfigured()
+    });
     
-    console.log('='.repeat(60));
-    console.log('🎸 Guitar Strategies App is ready!');
-    console.log('='.repeat(60));
+    logSystemEvent('Guitar Strategies App is ready', {
+      status: 'ready',
+      timestamp: new Date().toISOString()
+    });
   }
 }

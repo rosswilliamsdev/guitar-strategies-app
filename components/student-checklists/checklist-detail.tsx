@@ -25,6 +25,7 @@ import {
   Trophy,
 } from "lucide-react";
 import Link from "next/link";
+import { log } from '@/lib/logger';
 
 interface ChecklistItem {
   id: string;
@@ -102,7 +103,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         setChecklist(data);
       }
     } catch (error) {
-      console.error("Error fetching checklist:", error);
+      log.error('Error fetching checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setLoading(false);
     }
@@ -125,7 +129,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         fetchChecklist();
       }
     } catch (error) {
-      console.error("Error toggling item:", error);
+      log.error('Error toggling item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -157,7 +164,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         fetchChecklist();
       }
     } catch (error) {
-      console.error("Error adding item:", error);
+      log.error('Error adding item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -198,7 +208,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       setShowAddItem(false);
       fetchChecklist();
     } catch (error) {
-      console.error("Error adding items:", error);
+      log.error('Error adding items:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -215,7 +228,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         fetchChecklist();
       }
     } catch (error) {
-      console.error("Error deleting item:", error);
+      log.error('Error deleting item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -233,7 +249,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         fetchChecklist();
       }
     } catch (error) {
-      console.error("Error toggling archive:", error);
+      log.error('Error toggling archive:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -249,7 +268,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         router.push("/curriculums");
       }
     } catch (error) {
-      console.error("Error deleting checklist:", error);
+      log.error('Error deleting checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -331,10 +353,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
               </Button>
             </Link>
             <Button
-              variant="secondary"
+              variant="destructive"
               size="sm"
               onClick={deleteChecklist}
-              className="text-red-600 hover:text-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -500,10 +522,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                           </div>
                         </div>
                         <Button
-                          variant="secondary"
+                          variant="destructive"
                           size="sm"
                           onClick={() => deleteItem(item.id)}
-                          className="ml-2"
+                          className="ml-2 bg-red-600 hover:bg-red-700 text-white"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -538,10 +560,10 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                       <p className="font-medium line-through">{item.title}</p>
                     </div>
                     <Button
-                      variant="secondary"
+                      variant="destructive"
                       size="sm"
                       onClick={() => deleteItem(item.id)}
-                      className="ml-2"
+                      className="ml-2 bg-red-600 hover:bg-red-700 text-white"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

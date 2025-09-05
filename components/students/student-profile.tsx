@@ -28,6 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 interface StudentData {
   student: {
@@ -201,7 +202,10 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         setData(newData);
       }
     } catch (error) {
-      console.error('Error cancelling slot:', error);
+      log.error('Error cancelling slot:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrorMessage('Failed to cancel the time slot. Please try again.');
     } finally {
       setCancellingSlot(null);
@@ -234,7 +238,10 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         setData(newData);
       }
     } catch (error: any) {
-      console.error('Error cancelling lesson:', error);
+      log.error('Error cancelling lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrorMessage(`Failed to cancel the lesson: ${error.message}`);
     } finally {
       setCancellingLesson(null);

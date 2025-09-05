@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus, ChevronRight, CheckCircle2, Clock, Archive, Trophy, Star } from "lucide-react";
+import { log } from '@/lib/logger';
 
 interface ChecklistItem {
   id: string;
@@ -48,10 +49,29 @@ export function StudentChecklistList() {
       const response = await fetch(`/api/student-checklists?${params}`);
       if (response.ok) {
         const data = await response.json();
-        setChecklists(data);
+        // Handle the correct response structure: { checklists: [...] }
+        if (data && Array.isArray(data.checklists)) {
+          setChecklists(data.checklists);
+        } else if (Array.isArray(data)) {
+          // Fallback for direct array response
+          setChecklists(data);
+        } else {
+          log.warn('API returned unexpected data structure for checklists:', { data });
+          setChecklists([]);
+        }
+      } else {
+        log.error('Failed to fetch checklists:', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        setChecklists([]);
       }
     } catch (error) {
-      console.error("Error fetching checklists:", error);
+      log.error('Error fetching checklists:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      setChecklists([]); // Ensure we have an array on error
     } finally {
       setLoading(false);
     }
@@ -74,8 +94,10 @@ export function StudentChecklistList() {
     );
   }
 
-  const activeChecklists = checklists.filter(c => !c.isArchived);
-  const archivedChecklists = checklists.filter(c => c.isArchived);
+  // Ensure checklists is always an array to prevent runtime errors
+  const checklistsArray = Array.isArray(checklists) ? checklists : [];
+  const activeChecklists = checklistsArray.filter(c => !c.isArchived);
+  const archivedChecklists = checklistsArray.filter(c => c.isArchived);
 
   if (activeChecklists.length === 0 && !showArchived) {
     return (

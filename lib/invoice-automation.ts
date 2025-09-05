@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { addDays, format, startOfMonth, endOfMonth } from 'date-fns';
 import { sendEmail, createInvoiceEmail } from '@/lib/email';
 import { getSystemSettings, isEmailTypeEnabled } from '@/lib/admin-settings';
+import { invoiceLog, emailLog } from '@/lib/logger';
 
 export interface InvoiceItem {
   description: string;
@@ -168,7 +169,12 @@ export async function createSingleLessonInvoice(lessonId: string) {
         html: emailContent,
       });
     } catch (error) {
-      console.error('Failed to send single lesson invoice email:', error);
+      emailLog.error('Failed to send single lesson invoice email', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        invoiceId: invoice.id,
+        studentEmail: invoice.student.user.email
+      });
     }
   }
 
@@ -184,7 +190,11 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
   const startDate = startOfMonth(targetMonth);
   const endDate = endOfMonth(targetMonth);
 
-  console.log(`Generating monthly invoices for ${monthString}...`);
+  invoiceLog.info('Starting monthly invoice generation', {
+    month: monthString,
+    year,
+    month: month
+  });
 
   // Get all active recurring slots
   const recurringSlots = await prisma.recurringSlot.findMany({
@@ -237,17 +247,28 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
       });
 
       if (existingInvoice) {
-        console.log(`Invoice already exists for ${slot.student.user.name} - ${monthString}`);
+        invoiceLog.debug('Invoice already exists', {
+          studentName: slot.student.user.name,
+          month: monthString,
+          studentId: slot.student.id
+        });
         continue;
       }
 
       if (slot.lessons.length === 0) {
-        console.log(`No lessons found for ${slot.student.user.name} in ${monthString}`);
+        invoiceLog.debug('No lessons found for student in month', {
+          studentName: slot.student.user.name,
+          month: monthString,
+          studentId: slot.student.id
+        });
         continue;
       }
 
       if (!slot.teacher.lessonSettings) {
-        console.log(`No lesson settings for teacher ${slot.teacher.user.name}`);
+        invoiceLog.warn('No lesson settings for teacher', {
+          teacherName: slot.teacher.user.name,
+          teacherId: slot.teacher.id
+        });
         continue;
       }
 
@@ -299,25 +320,51 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
             html: emailContent,
           });
 
-          console.log(`Created and sent invoice ${invoice.invoiceNumber} for ${slot.student.user.name}`);
+          invoiceLog.info('Invoice created and sent', {
+            invoiceNumber: invoice.invoiceNumber,
+            studentName: slot.student.user.name,
+            studentId: slot.student.id,
+            total: invoice.total
+          });
         } catch (emailError) {
-          console.error(`Failed to send monthly invoice email for ${slot.student.user.name}:`, emailError);
+          emailLog.error('Failed to send monthly invoice email', {
+            studentName: slot.student.user.name,
+            studentId: slot.student.id,
+            error: emailError instanceof Error ? emailError.message : String(emailError),
+            stack: emailError instanceof Error ? emailError.stack : undefined,
+            invoiceNumber: invoice.invoiceNumber
+          });
           results.errors.push(`Failed to send email for ${slot.student.user.name}: ${emailError instanceof Error ? emailError.message : 'Unknown error'}`);
         }
       } else {
-        console.log(`Created invoice ${invoice.invoiceNumber} for ${slot.student.user.name} (email disabled)`);
+        invoiceLog.info('Invoice created (email disabled)', {
+          invoiceNumber: invoice.invoiceNumber,
+          studentName: slot.student.user.name,
+          studentId: slot.student.id,
+          total: invoice.total
+        });
       }
 
       results.invoicesCreated++;
 
     } catch (error) {
       const errorMessage = `Failed to create invoice for ${slot.student.user.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      console.error(errorMessage);
+      invoiceLog.error('Failed to create invoice', {
+        studentName: slot.student.user.name,
+        studentId: slot.student.id,
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       results.errors.push(errorMessage);
     }
   }
 
-  console.log(`Monthly invoice generation completed. Created ${results.invoicesCreated} invoices. Errors: ${results.errors.length}`);
+  invoiceLog.info('Monthly invoice generation completed', {
+    invoicesCreated: results.invoicesCreated,
+    errorsCount: results.errors.length,
+    success: results.errors.length === 0,
+    month: monthString
+  });
   return results;
 }
 

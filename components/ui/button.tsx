@@ -17,7 +17,7 @@ import type { Role } from "@prisma/client";
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual variant of the button */
-  variant?: "primary" | "secondary" | "role";
+  variant?: "primary" | "secondary" | "role" | "destructive";
   /** Size of the button */
   size?: "sm" | "md" | "lg";
   /** User role for role-based styling (when variant="role") */

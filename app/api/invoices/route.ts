@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
 import { createInvoiceSchema } from '@/lib/validations';
+import { apiLog, dbLog, invoiceLog } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -85,7 +86,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching invoices:', error);
+    apiLog.error('Error fetching invoices:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -223,7 +227,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {
-    console.error('Error creating invoice:', error);
+    apiLog.error('Error creating invoice:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

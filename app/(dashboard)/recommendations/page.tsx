@@ -7,6 +7,7 @@ import { StudentRecommendationsList } from '@/components/recommendations/student
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { log, dbLog } from '@/lib/logger';
 
 export const metadata = {
   title: 'Recommendations - Guitar Strategies',
@@ -42,7 +43,10 @@ async function getRecommendationsData(teacherId: string) {
       teacherName: rec.teacher.user.name,
     }));
   } catch (error) {
-    console.error('Error fetching recommendations data:', error);
+    log.error('Error fetching recommendations data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return [];
   }
 }
@@ -87,7 +91,10 @@ async function getStudentRecommendationsData(studentId: string) {
       teacherName: studentProfile.teacher.user.name,
     };
   } catch (error) {
-    console.error('Error fetching student recommendations data:', error);
+    log.error('Error fetching student recommendations data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return { recommendations: [], teacherName: 'Unknown Teacher' };
   }
 }

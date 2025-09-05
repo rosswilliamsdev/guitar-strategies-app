@@ -22,6 +22,7 @@ import {
 import { TeacherValidationResult, SetupStep } from "@/lib/teacher-validation";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
+import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 interface TeacherSetupWizardProps {
   teacherId: string;
@@ -72,7 +73,10 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
         setValidation(data);
       }
     } catch (error) {
-      console.error("Failed to fetch validation:", error);
+      log.error('Failed to fetch validation:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -94,7 +98,10 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
         });
       }
     } catch (error) {
-      console.error("Failed to fetch current data:", error);
+      log.error('Failed to fetch current data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -116,7 +123,10 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
       }
       return false;
     } catch (error) {
-      console.error("Failed to save profile:", error);
+      log.error('Failed to save profile:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return false;
     } finally {
       setSaving(false);
@@ -138,7 +148,10 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
       }
       return false;
     } catch (error) {
-      console.error("Failed to save payment methods:", error);
+      log.error('Failed to save payment methods:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return false;
     } finally {
       setSaving(false);

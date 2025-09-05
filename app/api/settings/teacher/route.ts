@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { teacherProfileSchema } from '@/lib/validations';
 import { sanitizeRichText, sanitizePlainText, sanitizeEmail } from '@/lib/sanitize';
+import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -43,7 +44,10 @@ export async function GET() {
 
     return NextResponse.json(profileData);
   } catch (error) {
-    console.error('Error fetching teacher profile:', error);
+    apiLog.error('Error fetching teacher profile:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -109,7 +113,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('Error updating teacher profile:', error);
+    apiLog.error('Error updating teacher profile:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

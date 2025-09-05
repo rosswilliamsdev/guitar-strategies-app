@@ -3,11 +3,12 @@
 // ========================================
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { log, dbLog, emailLog } from '@/lib/logger';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  log.info('🌱 Starting database seed...');
 
   // User configurations
   const adminEmail = 'admin@guitarstrategies.com';
@@ -21,7 +22,7 @@ async function main() {
 
   try {
     // Hash the password once (same salt rounds as auth.ts)
-    console.log('🔐 Hashing passwords...');
+    log.info('🔐 Hashing passwords...');
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Check if admin user already exists
@@ -31,11 +32,11 @@ async function main() {
 
     let adminUser;
     if (existingAdmin) {
-      console.log('✅ Admin user already exists:', adminEmail);
+      log.info('✅ Admin user already exists:', adminEmail);
       adminUser = existingAdmin;
     } else {
       // Create admin user
-      console.log('👤 Creating admin user...');
+      log.info('👤 Creating admin user...');
       adminUser = await prisma.user.create({
         data: {
           email: adminEmail,
@@ -44,7 +45,7 @@ async function main() {
           role: 'ADMIN'
         }
       });
-      console.log('🎉 Admin user created successfully!');
+      log.info('🎉 Admin user created successfully!');
     }
 
     // Check if teacher user already exists
@@ -55,11 +56,11 @@ async function main() {
 
     let teacherUser;
     if (existingTeacher) {
-      console.log('✅ Teacher user already exists:', teacherEmail);
+      log.info('✅ Teacher user already exists:', teacherEmail);
       teacherUser = existingTeacher;
     } else {
       // Create teacher user with profile
-      console.log('👨‍🏫 Creating teacher user...');
+      log.info('👨‍🏫 Creating teacher user...');
       teacherUser = await prisma.user.create({
         data: {
           email: teacherEmail,
@@ -79,7 +80,7 @@ async function main() {
           teacherProfile: true
         }
       });
-      console.log('🎉 Teacher user created successfully!');
+      log.info('🎉 Teacher user created successfully!');
     }
 
     // Check if student user already exists
@@ -90,11 +91,11 @@ async function main() {
 
     let studentUser;
     if (existingStudent) {
-      console.log('✅ Student user already exists:', studentEmail);
+      log.info('✅ Student user already exists:', studentEmail);
       studentUser = existingStudent;
     } else {
       // Create student user with profile assigned to teacher
-      console.log('🎓 Creating student user...');
+      log.info('🎓 Creating student user...');
       studentUser = await prisma.user.create({
         data: {
           email: studentEmail,
@@ -115,50 +116,56 @@ async function main() {
           studentProfile: true
         }
       });
-      console.log('🎉 Student user created successfully!');
+      log.info('🎉 Student user created successfully!');
     }
 
     // Display credentials
-    console.log('\n📋 Development Accounts:');
-    console.log('┌─────────────────────────────────────────┐');
-    console.log('│ ADMIN ACCOUNT                           │');
-    console.log('├─────────────────────────────────────────┤');
-    console.log(`│ 📧 Email: ${adminUser.email.padEnd(25)} │`);
-    console.log(`│ 🔑 Password: admin123                   │`);
-    console.log(`│ 👑 Role: ${adminUser.role.padEnd(28)} │`);
-    console.log('└─────────────────────────────────────────┘');
+    log.info('\n📋 Development Accounts:');
+    log.info('┌─────────────────────────────────────────┐');
+    log.info('│ ADMIN ACCOUNT                           │');
+    log.info('├─────────────────────────────────────────┤');
+    log.info('│ 📧 Email: ${adminUser.email.padEnd(25)} │');
+    log.info('│ 🔑 Password: admin123                   │');
+    log.info('│ 👑 Role: ${adminUser.role.padEnd(28)} │');
+    log.info('└─────────────────────────────────────────┘');
     
-    console.log('┌─────────────────────────────────────────┐');
-    console.log('│ TEACHER ACCOUNT                         │');
-    console.log('├─────────────────────────────────────────┤');
-    console.log(`│ 📧 Email: ${teacherUser.email.padEnd(24)} │`);
-    console.log(`│ 🔑 Password: admin123                   │`);
-    console.log(`│ 👨‍🏫 Role: ${teacherUser.role.padEnd(28)} │`);
+    log.info('┌─────────────────────────────────────────┐');
+    log.info('│ TEACHER ACCOUNT                         │');
+    log.info('├─────────────────────────────────────────┤');
+    log.info('│ 📧 Email: ${teacherUser.email.padEnd(24)} │');
+    log.info('│ 🔑 Password: admin123                   │');
+    log.info('│ 👨‍🏫 Role: ${teacherUser.role.padEnd(28)} │');
     if (teacherUser.teacherProfile) {
-      console.log(`│ 💰 Rate: $${(teacherUser.teacherProfile.hourlyRate! / 100).toFixed(2)}/hour${' '.repeat(18)} │`);
+      log.info('│ 💰 Rate: $/hour │', { data: `│ 💰 Rate: $${(teacherUser.teacherProfile.hourlyRate! / 100).toFixed(2)}/hour${' '.repeat(18)} │` });
     }
-    console.log('└─────────────────────────────────────────┘');
+    log.info('└─────────────────────────────────────────┘');
 
-    console.log('┌─────────────────────────────────────────┐');
-    console.log('│ STUDENT ACCOUNT                         │');
-    console.log('├─────────────────────────────────────────┤');
-    console.log(`│ 📧 Email: ${studentUser.email.padEnd(24)} │`);
-    console.log(`│ 🔑 Password: admin123                   │`);
-    console.log(`│ 🎓 Role: ${studentUser.role.padEnd(28)} │`);
+    log.info('┌─────────────────────────────────────────┐');
+    log.info('│ STUDENT ACCOUNT                         │');
+    log.info('├─────────────────────────────────────────┤');
+    log.info('│ 📧 Email: ${studentUser.email.padEnd(24)} │');
+    log.info('│ 🔑 Password: admin123                   │');
+    log.info('│ 🎓 Role: ${studentUser.role.padEnd(28)} │');
     if (studentUser.studentProfile) {
-      console.log(`│ 👨‍🏫 Teacher: ${teacherName.padEnd(23)} │`);
+      log.info('│ 👨‍🏫 Teacher: ${teacherName.padEnd(23)} │');
     }
-    console.log('└─────────────────────────────────────────┘');
+    log.info('└─────────────────────────────────────────┘');
 
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    log.error('❌ Error creating admin user:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     throw error;
   }
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    log.error('❌ Seed failed:', {
+        error: e instanceof Error ? e.message : String(e),
+        stack: e instanceof Error ? e.stack : undefined
+      });
     process.exit(1);
   })
   .finally(async () => {

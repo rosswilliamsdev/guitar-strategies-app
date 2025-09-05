@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 /**
  * GET /api/students
@@ -119,7 +120,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
   } catch (error) {
-    console.error('Error fetching students:', error);
+    apiLog.error('Error fetching students:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

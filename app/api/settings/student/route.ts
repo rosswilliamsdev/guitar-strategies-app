@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { studentProfileSchema } from '@/lib/validations';
+import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -54,7 +55,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Profile updated successfully' });
   } catch (error) {
-    console.error('Error updating student profile:', error);
+    apiLog.error('Error updating student profile:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

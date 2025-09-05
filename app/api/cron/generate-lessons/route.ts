@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateFutureLessons, cleanupJobLogs } from "@/lib/background-jobs";
+import { apiLog, schedulerLog } from '@/lib/logger';
 
 /**
  * GET /api/cron/generate-lessons
@@ -17,14 +18,14 @@ export async function GET(request: NextRequest) {
 
     // If CRON_SECRET is set, verify it matches
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.log("Unauthorized cron request - invalid secret");
+      apiLog.info('Unauthorized cron request - invalid secret');
       return NextResponse.json(
         { error: "Unauthorized - Invalid cron secret" },
         { status: 401 }
       );
     }
 
-    console.log("Starting scheduled lesson generation job...");
+    apiLog.info('Starting scheduled lesson generation job...');
 
     // Run the main job
     const result = await generateFutureLessons();
@@ -34,9 +35,17 @@ export async function GET(request: NextRequest) {
 
     // Log the result
     if (result.success) {
-      console.log(`Cron job completed successfully: ${result.lessonsGenerated} lessons generated for ${result.teachersProcessed} teachers`);
+      apiLog.info('Cron job completed successfully', {
+        lessonsGenerated: result.lessonsGenerated,
+        teachersProcessed: result.teachersProcessed,
+        success: true
+      });
     } else {
-      console.error(`Cron job completed with errors: ${result.errors.join(", ")}`);
+      apiLog.error('Cron job completed with errors', {
+        errors: result.errors,
+        success: false,
+        teachersProcessed: result.teachersProcessed
+      });
     }
 
     return NextResponse.json({
@@ -50,7 +59,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     const errorMessage = `Cron job failed: ${error instanceof Error ? error.message : "Unknown error"}`;
-    console.error(errorMessage);
+    apiLog.error('Error occurred', {
+        error: errorMessage instanceof Error ? errorMessage.message : String(errorMessage),
+        stack: errorMessage instanceof Error ? errorMessage.stack : undefined
+      });
     
     return NextResponse.json(
       { 

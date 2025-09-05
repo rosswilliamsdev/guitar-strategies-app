@@ -2,31 +2,44 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { apiLog, dbLog } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   try {
-    console.log('Starting cancel all recurring lessons request')
+    apiLog.info('Starting cancel all recurring lessons request', {
+      endpoint: '/api/lessons/cancel-all-recurring',
+      method: 'POST'
+    })
     
     // Test database connection first
     try {
       await prisma.$queryRaw`SELECT 1`;
-      console.log('Database connection successful')
+      dbLog.debug('Database connection test successful')
     } catch (dbError) {
-      console.error('Database connection failed:', dbError)
+      dbLog.error('Database connection failed', {
+        error: dbError instanceof Error ? dbError.message : String(dbError),
+        stack: dbError instanceof Error ? dbError.stack : undefined
+      })
       throw new Error('Database connection failed')
     }
     
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== 'STUDENT') {
-      console.log('Unauthorized request - not a student')
+      apiLog.warn('Unauthorized request - not a student', {
+        role: session?.user?.role || 'none',
+        endpoint: '/api/lessons/cancel-all-recurring'
+      })
       return NextResponse.json(
         { error: 'Unauthorized - must be logged in as a student' },
         { status: 401 }
       )
     }
 
-    console.log('Student authenticated:', session.user.email)
+    apiLog.info('Student authenticated for recurring cancellation', {
+      email: session.user.email,
+      userId: session.user.id
+    })
 
     // Get the student profile
     const studentProfile = await prisma.studentProfile.findUnique({
@@ -34,14 +47,20 @@ export async function POST(req: NextRequest) {
     })
 
     if (!studentProfile) {
-      console.log('Student profile not found for user:', session.user.id)
+      apiLog.error('Student profile not found', {
+        userId: session.user.id,
+        email: session.user.email
+      })
       return NextResponse.json(
         { error: 'Student profile not found' },
         { status: 404 }
       )
     }
 
-    console.log('Found student profile:', studentProfile.id)
+    apiLog.debug('Student profile found', {
+      studentId: studentProfile.id,
+      teacherId: studentProfile.teacherId
+    })
 
     // First, check what active recurring data exists
     const existingSlots = await prisma.recurringSlot.findMany({
@@ -50,7 +69,10 @@ export async function POST(req: NextRequest) {
         status: 'ACTIVE'
       }
     })
-    console.log('Found active recurring slots:', existingSlots.length)
+    dbLog.info('Found active recurring slots', {
+      count: existingSlots.length,
+      studentId: studentProfile.id
+    })
 
     // Also check for any cancelled slots that might conflict
     const cancelledSlots = await prisma.recurringSlot.findMany({
@@ -59,7 +81,10 @@ export async function POST(req: NextRequest) {
         status: 'CANCELLED'
       }
     })
-    console.log('Found cancelled recurring slots:', cancelledSlots.length)
+    dbLog.debug('Found cancelled recurring slots', {
+      count: cancelledSlots.length,
+      studentId: studentProfile.id
+    })
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
@@ -72,11 +97,19 @@ export async function POST(req: NextRequest) {
         date: { gte: today }
       }
     })
-    console.log('Found future recurring lessons:', existingLessons.length)
+    dbLog.info('Found future recurring lessons', {
+      count: existingLessons.length,
+      studentId: studentProfile.id,
+      fromDate: today.toISOString()
+    })
 
     // Check if there's anything to cancel
     if (existingSlots.length === 0 && existingLessons.length === 0) {
-      console.log('No active recurring data found to cancel')
+      apiLog.info('No active recurring data found to cancel', {
+        studentId: studentProfile.id,
+        slotsFound: 0,
+        lessonsFound: 0
+      })
       return NextResponse.json({ 
         success: true, 
         message: 'No active recurring lessons to cancel',
@@ -87,7 +120,11 @@ export async function POST(req: NextRequest) {
 
     // Cancel all recurring slots for this student
     await prisma.$transaction(async (tx) => {
-      console.log('Starting transaction to cancel recurring data')
+      dbLog.info('Starting transaction to cancel recurring data', {
+        studentId: studentProfile.id,
+        slotsToDelete: existingSlots.length,
+        lessonsToCancel: existingLessons.length
+      })
 
       let slotsUpdated = { count: 0 }
       let lessonsUpdated = { count: 0 }
@@ -100,7 +137,10 @@ export async function POST(req: NextRequest) {
             status: 'ACTIVE'
           }
         })
-        console.log('Deleted recurring slots:', slotsUpdated.count)
+        dbLog.info('Deleted recurring slots', {
+          count: slotsUpdated.count,
+          studentId: studentProfile.id
+        })
       }
 
       // Cancel all future recurring lessons (only if they exist)
@@ -116,21 +156,31 @@ export async function POST(req: NextRequest) {
             status: 'CANCELLED'
           }
         })
-        console.log('Cancelled future lessons:', lessonsUpdated.count)
+        dbLog.info('Cancelled future lessons', {
+          count: lessonsUpdated.count,
+          studentId: studentProfile.id
+        })
       }
 
       // Return counts for confirmation
       return { slotsDeleted: slotsUpdated.count, lessonsCancelled: lessonsUpdated.count }
     })
 
-    console.log('Successfully cancelled all recurring data')
+    apiLog.info('Successfully cancelled all recurring data', {
+      studentId: studentProfile.id,
+      email: session.user.email
+    })
     return NextResponse.json({ 
       success: true,
       message: 'All recurring lessons have been cancelled successfully' 
     })
   } catch (error) {
-    console.error('Error cancelling all recurring lessons:', error)
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    apiLog.error('Error cancelling all recurring lessons', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      studentId: session?.user?.id,
+      endpoint: '/api/lessons/cancel-all-recurring'
+    })
     return NextResponse.json(
       { 
         error: 'Failed to cancel recurring lessons',

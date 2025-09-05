@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { monthlyBillingSchema, updateBillingSchema } from "@/lib/validations";
 import { calculateMonthlyBilling, calculateMonthlyOccurrences } from "@/lib/slot-helpers";
 import { format } from 'date-fns';
+import { apiLog, dbLog } from '@/lib/logger';
 
 // Generate monthly billing for all active subscriptions
 export async function POST(request: NextRequest) {
@@ -100,7 +101,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Error generating monthly billing:", error);
+    apiLog.error('Error generating monthly billing:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
@@ -192,7 +196,10 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Error fetching monthly billing:", error);
+    apiLog.error('Error fetching monthly billing:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import { log, emailLog, invoiceLog } from '@/lib/logger';
 
 interface InvoiceData {
   id: string;
@@ -155,7 +156,10 @@ export function InvoiceTemplate({
       // Download the PDF
       pdf.save(`${invoice.invoiceNumber}.pdf`);
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      log.error('Error generating PDF:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       // Fallback to print dialog if PDF generation fails
       window.print();
     } finally {
@@ -177,7 +181,10 @@ export function InvoiceTemplate({
         alert(result.error || 'Failed to send invoice');
       }
     } catch (error) {
-      console.error("Error sending invoice:", error);
+      log.error('Error sending invoice:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       alert('Failed to send invoice. Please try again.');
     } finally {
       setIsLoading(false);

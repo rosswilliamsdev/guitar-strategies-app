@@ -10,6 +10,7 @@ import {
   isSafeContent,
   stripHtml,
 } from "@/lib/sanitize";
+import { apiLog, emailLog } from '@/lib/logger';
 
 /**
  * Test endpoint for XSS sanitization
@@ -127,7 +128,10 @@ export async function POST(request: NextRequest) {
       results: testResults,
     });
   } catch (error) {
-    console.error("XSS test error:", error);
+    apiLog.error('XSS test error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     return NextResponse.json(
       {

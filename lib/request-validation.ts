@@ -3,6 +3,7 @@
 // ========================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { log, invoiceLog } from '@/lib/logger';
 
 // Request size limits (in bytes) - should match middleware.ts
 export const REQUEST_LIMITS = {
@@ -57,7 +58,7 @@ export function validateRequestSize(
   }
   
   if (size > limit) {
-    console.warn(`Request size limit exceeded: ${size} bytes (limit: ${limit}) for ${limitType}`);
+    log.warn('Warning', { message: `Request size limit exceeded: ${size} bytes (limit: ${limit}) for ${limitType}` });
     
     return NextResponse.json(
       {
@@ -94,7 +95,7 @@ export function validateJsonSize(
   const limit = REQUEST_LIMITS[limitType];
   
   if (size > limit) {
-    console.warn(`JSON payload size limit exceeded: ${size} bytes (limit: ${limit}) for ${limitType}`);
+    log.warn('Warning', { message: `JSON payload size limit exceeded: ${size} bytes (limit: ${limit}) for ${limitType}` });
     
     return NextResponse.json(
       {

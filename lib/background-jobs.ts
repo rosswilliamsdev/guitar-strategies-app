@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { addWeeks, addMonths, startOfDay, endOfDay } from "date-fns";
 import { generateRecurringLessons } from "@/lib/recurring-lessons";
 import { generateMonthlyRecurringInvoices } from "@/lib/invoice-automation";
+import { log, schedulerLog } from "@/lib/logger";
 
 export interface JobResult {
   success: boolean;
@@ -29,7 +30,7 @@ export async function generateFutureLessons(): Promise<JobResult> {
   };
 
   try {
-    console.log("Starting automatic lesson generation job...");
+    schedulerLog.info('Starting automatic lesson generation job');
 
     // Get all active teachers with recurring slots
     const teachers = await prisma.teacherProfile.findMany({
@@ -61,7 +62,7 @@ export async function generateFutureLessons(): Promise<JobResult> {
       },
     });
 
-    console.log(`Found ${teachers.length} teachers with active recurring slots`);
+    schedulerLog.info('Found teachers with active recurring slots', { count: teachers.length });
 
     // Generate lessons for the next 12 weeks from today
     const startDate = startOfDay(new Date());
@@ -79,24 +80,33 @@ export async function generateFutureLessons(): Promise<JobResult> {
         result.teachersProcessed++;
 
         if (lessonsCreated > 0) {
-          console.log(
-            `Generated ${lessonsCreated} lessons for teacher ${teacher.user.name} (${teacher.user.email})`
-          );
+          schedulerLog.info('Generated lessons for teacher', {
+            teacherName: teacher.user.name,
+            teacherEmail: teacher.user.email,
+            lessonsCreated
+          });
         }
       } catch (error) {
         const errorMessage = `Failed to generate lessons for teacher ${teacher.user.name}: ${
           error instanceof Error ? error.message : "Unknown error"
         }`;
-        console.error(errorMessage);
+        schedulerLog.error('Error generating lessons for teacher', {
+          teacherId: teacher.id,
+          teacherName: teacher.user.name,
+          error: errorMessage
+        });
         result.errors.push(errorMessage);
       }
     }
 
     result.success = result.errors.length === 0;
 
-    console.log(
-      `Lesson generation job completed. Generated ${result.lessonsGenerated} lessons for ${result.teachersProcessed} teachers. Errors: ${result.errors.length}`
-    );
+    schedulerLog.info('Lesson generation job completed', {
+      lessonsGenerated: result.lessonsGenerated,
+      teachersProcessed: result.teachersProcessed,
+      errors: result.errors.length,
+      success: result.errors.length === 0
+    });
 
     // Log job execution to database for monitoring
     await logJobExecution(result);
@@ -106,7 +116,10 @@ export async function generateFutureLessons(): Promise<JobResult> {
     const errorMessage = `Fatal error in lesson generation job: ${
       error instanceof Error ? error.message : "Unknown error"
     }`;
-    console.error(errorMessage);
+    schedulerLog.error('Fatal error in lesson generation job', {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    });
     result.errors.push(errorMessage);
     result.success = false;
 
@@ -114,7 +127,10 @@ export async function generateFutureLessons(): Promise<JobResult> {
     try {
       await logJobExecution(result);
     } catch (logError) {
-      console.error("Failed to log job execution:", logError);
+      log.error('Failed to log job execution', {
+        error: logError instanceof Error ? logError.message : String(logError),
+        stack: logError instanceof Error ? logError.stack : undefined
+      });
     }
 
     return result;
@@ -136,9 +152,12 @@ export async function cleanupJobLogs(): Promise<void> {
       },
     });
 
-    console.log(`Cleaned up ${deleted.count} old job logs`);
+    log.info('Cleaned up old job logs', { count: deleted.count });
   } catch (error) {
-    console.error("Failed to clean up job logs:", error);
+    log.error('Failed to clean up job logs', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
   }
 }
 
@@ -154,7 +173,7 @@ export async function generateMonthlyInvoices(): Promise<InvoiceJobResult> {
   };
 
   try {
-    console.log("Starting monthly invoice generation job...");
+    schedulerLog.info('Starting monthly invoice generation job');
 
     // Generate invoices for the current month
     const invoiceResult = await generateMonthlyRecurringInvoices();
@@ -163,9 +182,11 @@ export async function generateMonthlyInvoices(): Promise<InvoiceJobResult> {
     result.errors = invoiceResult.errors;
     result.success = invoiceResult.errors.length === 0;
 
-    console.log(
-      `Monthly invoice generation job completed. Generated ${result.invoicesCreated} invoices. Errors: ${result.errors.length}`
-    );
+    schedulerLog.info('Monthly invoice generation job completed', {
+      invoicesCreated: result.invoicesCreated,
+      errors: result.errors.length,
+      success: result.errors.length === 0
+    });
 
     // Log job execution to database for monitoring
     await logInvoiceJobExecution(result);
@@ -175,7 +196,10 @@ export async function generateMonthlyInvoices(): Promise<InvoiceJobResult> {
     const errorMessage = `Fatal error in monthly invoice generation job: ${
       error instanceof Error ? error.message : "Unknown error"
     }`;
-    console.error(errorMessage);
+    schedulerLog.error('Fatal error in monthly invoice generation job', {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    });
     result.errors.push(errorMessage);
     result.success = false;
 
@@ -183,7 +207,10 @@ export async function generateMonthlyInvoices(): Promise<InvoiceJobResult> {
     try {
       await logInvoiceJobExecution(result);
     } catch (logError) {
-      console.error("Failed to log invoice job execution:", logError);
+      log.error('Failed to log invoice job execution', {
+        error: logError instanceof Error ? logError.message : String(logError),
+        stack: logError instanceof Error ? logError.stack : undefined
+      });
     }
 
     return result;
@@ -206,7 +233,11 @@ async function logJobExecution(result: JobResult): Promise<void> {
       },
     });
   } catch (error) {
-    console.error("Failed to log job execution:", error);
+    log.error('Failed to log job execution', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      jobName: 'generate-future-lessons'
+    });
     // Don't throw here - logging failure shouldn't break the main job
   }
 }
@@ -227,7 +258,11 @@ async function logInvoiceJobExecution(result: InvoiceJobResult): Promise<void> {
       },
     });
   } catch (error) {
-    console.error("Failed to log invoice job execution:", error);
+    log.error('Failed to log invoice job execution', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      jobName: 'generate-monthly-invoices'
+    });
     // Don't throw here - logging failure shouldn't break the main job
   }
 }
@@ -244,7 +279,10 @@ export async function getJobHistory(limit: number = 10) {
       take: limit,
     });
   } catch (error) {
-    console.error("Failed to fetch job history:", error);
+    log.error('Failed to fetch job history', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return [];
   }
 }
@@ -383,7 +421,10 @@ export async function validateSystemHealth(): Promise<{
       indicators,
     };
   } catch (error) {
-    console.error("Failed to validate system health:", error);
+    log.error('Failed to validate system health', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return {
       isHealthy: false,
       issues: ["Failed to perform system health check"],

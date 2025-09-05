@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createCurriculumItemSchema, updateCurriculumItemSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // POST /api/curriculums/items - Create a new item
 export async function POST(request: NextRequest) {
@@ -58,7 +59,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error creating item:", error);
+    apiLog.error('Error creating item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to create item" },
       { status: 500 }
@@ -152,7 +156,10 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    console.error("Error updating item:", error);
+    apiLog.error('Error updating item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update item" },
       { status: 500 }
@@ -207,7 +214,10 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: "Item deleted successfully" });
   } catch (error) {
-    console.error("Error deleting item:", error);
+    apiLog.error('Error deleting item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to delete item" },
       { status: 500 }

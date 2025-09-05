@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { apiLog, dbLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 interface Params {
   params: Promise<{
@@ -124,7 +125,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     });
 
   } catch (error) {
-    console.error('Error deleting student:', error);
+    apiLog.error('Error deleting student:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     // Check for specific Prisma errors
     if (error instanceof Error && error.message.includes('Foreign key constraint')) {

@@ -26,6 +26,7 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 - **Scheduling**: Internal availability management and booking system
 - **Validation**: Zod 4.0.15
 - **Styling Utils**: clsx + tailwind-merge
+- **Logging**: Winston 3.x with structured logging and domain-specific loggers
 
 ## Design System Colors (OpenAI-Inspired)
 
@@ -351,6 +352,94 @@ This architecture provides a template for implementing email notifications in an
 4. Admin testing interface
 5. Graceful error handling
 
+## Structured Logging System
+
+The application uses Winston-based structured logging with comprehensive context tracking and domain-specific loggers for production-ready observability.
+
+### Logging Architecture
+
+```typescript
+// Basic usage
+import { log } from '@/lib/logger';
+log.info('User action completed', { userId, action: 'profile_update' });
+log.error('Database connection failed', { error: error.message, stack: error.stack });
+
+// Domain-specific loggers
+import { apiLog, dbLog, emailLog, schedulerLog, invoiceLog } from '@/lib/logger';
+apiLog.info('API request completed', { method: 'POST', endpoint: '/api/lessons', statusCode: 200 });
+dbLog.error('Query timeout', { query: 'SELECT * FROM lessons', duration: 5000 });
+```
+
+### Log Levels & Usage
+
+- **`error`**: Errors, exceptions, critical failures that need immediate attention
+- **`warn`**: Warnings, deprecated usage, recoverable errors
+- **`info`**: General application flow, business events, API requests/responses
+- **`http`**: HTTP request/response details (middleware, API routes)
+- **`debug`**: Detailed debugging information, development-only logs
+
+### Domain-Specific Loggers
+
+- **`apiLog`**: API routes, HTTP requests/responses, middleware events
+- **`dbLog`**: Database operations, query performance, connection issues
+- **`emailLog`**: Email sending, delivery status, email service events
+- **`schedulerLog`**: Lesson scheduling, background jobs, recurring tasks
+- **`invoiceLog`**: Invoice generation, payment tracking, billing events
+- **`authLog`**: Authentication events, login/logout, session management
+
+### Structured Context Pattern
+
+Always include relevant structured data for better searchability and debugging:
+
+```typescript
+// Good - Structured context
+log.info('Lesson booking completed', {
+  studentId: student.id,
+  teacherId: teacher.id,
+  lessonDate: lesson.date.toISOString(),
+  duration: lesson.duration,
+  bookingType: 'single' // or 'recurring'
+});
+
+// Avoid - Unstructured string interpolation
+console.log(`Lesson booked for ${student.name} with ${teacher.name}`);
+```
+
+### Production Configuration
+
+- **Development**: Colorized console output with debug level
+- **Production**: JSON structured logs with info level, file rotation
+- **File Output**: `/logs/error.log` (errors only), `/logs/combined.log` (all levels)
+- **Log Rotation**: 5MB max file size, 5 error logs, 10 combined logs
+
+### Utility Functions
+
+```typescript
+import { logAPIRequest, logAPIResponse, logAPIError } from '@/lib/logger';
+
+// API request logging
+logAPIRequest('POST', '/api/lessons', { userId, teacherId });
+logAPIResponse('POST', '/api/lessons', 201, 150, { lessonId });
+logAPIError('POST', '/api/lessons', error, { userId });
+```
+
+### Migration from console.log
+
+1. **Import the logger**: `import { log } from '@/lib/logger';`
+2. **Replace console methods**:
+   - `console.log()` → `log.info()`
+   - `console.error()` → `log.error()`
+   - `console.warn()` → `log.warn()`
+3. **Add structured context**: Include relevant data objects
+4. **Use appropriate levels**: Choose error/warn/info/debug based on severity
+5. **Use domain loggers**: Import `apiLog`, `dbLog`, etc. for specific domains
+
+### Testing & Debugging
+
+- **Test Endpoint**: `/api/test/logger` - Demonstrates all logging features
+- **Migration Tool**: `node scripts/migrate-logging.js` - Analyze console.log usage
+- **Log Analysis**: Use structured data for filtering and searching in production
+
 ## Key File Locations
 
 ### Configuration Files
@@ -358,6 +447,7 @@ This architecture provides a template for implementing email notifications in an
 - `tailwind.config.js` - Complete design system configuration
 - `lib/auth.ts` - NextAuth.js configuration
 - `lib/db.ts` - Prisma client
+- `lib/logger.ts` - Structured logging system with Winston
 - `middleware.ts` - Route protection
 - `types/index.ts` - All TypeScript definitions
 
@@ -577,6 +667,7 @@ Always use Zod schemas from `lib/validations.ts`:
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "tailwind-merge": "^3.3.1",
+    "winston": "^3.x.x",
     "zod": "^4.0.15"
   },
   "devDependencies": {

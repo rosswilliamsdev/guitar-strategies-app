@@ -33,6 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { log, schedulerLog } from '@/lib/logger';
 
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
@@ -98,7 +99,10 @@ export function LessonList({ userRole }: LessonListProps) {
         setLessons(sortedLessons);
       } catch (error) {
         setError("Failed to load lessons");
-        console.error("Error fetching lessons:", error);
+        log.error('Error fetching lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       } finally {
         setLoading(false);
       }
@@ -125,7 +129,10 @@ export function LessonList({ userRole }: LessonListProps) {
       setLessons(prev => prev.filter(lesson => lesson.id !== lessonId));
       
     } catch (error: any) {
-      console.error('Error cancelling lesson:', error);
+      log.error('Error cancelling lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrorMessage(error.message || 'Failed to cancel lesson');
     } finally {
       setCancellingLessons(prev => {

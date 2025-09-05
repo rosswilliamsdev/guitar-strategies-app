@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { apiLog, dbLog, invoiceLog } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -89,7 +90,10 @@ export async function GET(
      */
 
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    apiLog.error('Error generating PDF:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

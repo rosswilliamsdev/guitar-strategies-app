@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { StudentSettingsForm } from '@/components/settings/student-settings-form';
 import { TeacherSettingsForm } from '@/components/settings/teacher-settings-form';
 import { Card } from '@/components/ui/card';
+import { log, dbLog } from '@/lib/logger';
 
 export const metadata = {
   title: 'Settings - Guitar Strategies',
@@ -38,7 +39,10 @@ async function getUserData(userId: string, role: string) {
     }
     return null;
   } catch (error) {
-    console.error('Error fetching user data:', error);
+    log.error('Error fetching user data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return null;
   }
 }

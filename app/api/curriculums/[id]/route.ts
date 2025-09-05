@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateCurriculumSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // GET /api/curriculums/[id] - Get a specific curriculum
 export async function GET(
@@ -88,7 +89,10 @@ export async function GET(
 
     return NextResponse.json(curriculum);
   } catch (error) {
-    console.error("Error fetching curriculum:", error);
+    apiLog.error('Error fetching curriculum:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to fetch curriculum" },
       { status: 500 }
@@ -152,7 +156,10 @@ export async function PUT(
       );
     }
 
-    console.error("Error updating curriculum:", error);
+    apiLog.error('Error updating curriculum:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update curriculum" },
       { status: 500 }
@@ -194,7 +201,10 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Curriculum deleted successfully" });
   } catch (error) {
-    console.error("Error deleting curriculum:", error);
+    apiLog.error('Error deleting curriculum:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to delete curriculum" },
       { status: 500 }

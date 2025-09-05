@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { put } from '@vercel/blob';
+import { apiLog, dbLog } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,13 +59,16 @@ export async function POST(request: NextRequest) {
           });
           fileUrl = blob.url;
         } catch (blobError) {
-          console.error('Vercel Blob upload failed:', blobError);
+          apiLog.error('Vercel Blob upload failed:', {
+        error: blobError instanceof Error ? blobError.message : String(blobError),
+        stack: blobError instanceof Error ? blobError.stack : undefined
+      });
           // Fallback to placeholder URL for development
           fileUrl = `#file-placeholder-${file.name}`;
         }
       } else {
         // Development fallback - just use a placeholder URL
-        console.log('Using development fallback for file upload (no valid BLOB_READ_WRITE_TOKEN)');
+        apiLog.info('Using development fallback for file upload (no valid BLOB_READ_WRITE_TOKEN)');
         fileUrl = `#file-placeholder-${file.name}`;
       }
 
@@ -85,7 +89,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ attachments });
   } catch (error) {
-    console.error('Error uploading files:', error);
+    apiLog.error('Error uploading files:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Failed to upload files' }, { status: 500 });
   }
 }
@@ -137,7 +144,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error managing attachments:', error);
+    apiLog.error('Error managing attachments:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Failed to manage attachments' }, { status: 500 });
   }
 }

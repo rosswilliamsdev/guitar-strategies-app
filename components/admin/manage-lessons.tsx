@@ -36,6 +36,7 @@ import {
   Square
 } from "lucide-react";
 import Link from "next/link";
+import { log, emailLog } from '@/lib/logger';
 
 interface Lesson {
   id: string;
@@ -193,7 +194,10 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
         toast.error(error.message || "Failed to delete lesson");
       }
     } catch (error) {
-      console.error("Error deleting lesson:", error);
+      log.error('Error deleting lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast.error("An unexpected error occurred while deleting the lesson");
     } finally {
       setIsDeleting(false);
@@ -226,7 +230,10 @@ export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
         toast.error(error.message || "Failed to delete lessons");
       }
     } catch (error) {
-      console.error("Error deleting lessons:", error);
+      log.error('Error deleting lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast.error("An unexpected error occurred while deleting the lessons");
     } finally {
       setIsDeleting(false);

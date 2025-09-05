@@ -4,6 +4,7 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { applySecurityHeaders, defaultSecurityConfig } from "@/lib/security-headers";
 
 // Request size limits (in bytes)
 const LIMITS = {
@@ -48,7 +49,8 @@ function checkRequestSizeLimit(req: NextRequest): NextResponse | null {
   
   // Check if request exceeds limit
   if (size > limit) {
-    console.warn(`Request size limit exceeded: ${size} bytes (limit: ${limit}) for ${pathname}`);
+    // Note: Using console.warn in middleware since Winston doesn't work in Edge Runtime
+    console.warn(`⚠️ Request size limit exceeded: ${pathname} (${Math.round(size / 1024)}KB > ${Math.round(limit / 1024)}KB)`);
     
     return NextResponse.json(
       { 
@@ -83,7 +85,8 @@ export default withAuth(
     // Admin-only routes
     if (pathname.startsWith("/admin")) {
       if (token?.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        const response = NextResponse.redirect(new URL("/dashboard", req.url));
+        return applySecurityHeaders(response, defaultSecurityConfig);
       }
     }
 
@@ -96,43 +99,50 @@ export default withAuth(
       pathname.startsWith("/scheduling")
     ) {
       if (token?.role !== "TEACHER" && token?.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        const response = NextResponse.redirect(new URL("/dashboard", req.url));
+        return applySecurityHeaders(response, defaultSecurityConfig);
       }
     }
 
     // Student-specific restrictions (if any)
     if (pathname.startsWith("/dashboard/teacher")) {
       if (token?.role !== "TEACHER" && token?.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        const response = NextResponse.redirect(new URL("/dashboard", req.url));
+        return applySecurityHeaders(response, defaultSecurityConfig);
       }
     }
 
     if (pathname.startsWith("/dashboard/student")) {
       if (token?.role !== "STUDENT" && token?.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        const response = NextResponse.redirect(new URL("/dashboard", req.url));
+        return applySecurityHeaders(response, defaultSecurityConfig);
       }
     }
 
     // API route protection
     if (pathname.startsWith("/api/admin")) {
       if (token?.role !== "ADMIN") {
-        return NextResponse.json(
+        const response = NextResponse.json(
           { error: "Admin access required" },
           { status: 403 }
         );
+        return applySecurityHeaders(response, defaultSecurityConfig);
       }
     }
 
     if (pathname.startsWith("/api/teacher")) {
       if (token?.role !== "TEACHER" && token?.role !== "ADMIN") {
-        return NextResponse.json(
+        const response = NextResponse.json(
           { error: "Teacher access required" },
           { status: 403 }
         );
+        return applySecurityHeaders(response, defaultSecurityConfig);
       }
     }
 
-    return NextResponse.next();
+    // Create response and apply security headers
+    const response = NextResponse.next();
+    return applySecurityHeaders(response, defaultSecurityConfig);
   },
   {
     callbacks: {

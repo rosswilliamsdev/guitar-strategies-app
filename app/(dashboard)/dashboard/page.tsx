@@ -6,6 +6,7 @@ import { MainDashboard } from './main-dashboard';
 import { TeacherDashboard } from '@/components/dashboard/teacher-dashboard';
 import { StudentDashboard } from '@/components/dashboard/student-dashboard';
 import { getUserStats, getAdminStats } from '@/lib/dashboard-stats';
+import { log, dbLog, emailLog } from '@/lib/logger';
 
 export const metadata = {
   title: 'Dashboard',
@@ -102,14 +103,17 @@ export async function getTeacherData(userId: string) {
       },
     };
   } catch (error) {
-    console.error('Error fetching teacher data:', error);
+    log.error('Error fetching teacher data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return null;
   }
 }
 
 export async function getStudentData(userId: string) {
   try {
-    console.log('Looking for student with userId:', userId);
+    log.info('Looking for student with userId:', userId);
     
     // Get student profile
     const studentProfile = await prisma.studentProfile.findUnique({
@@ -125,7 +129,7 @@ export async function getStudentData(userId: string) {
       }
     });
 
-    console.log('Student profile found:', !!studentProfile);
+    log.info('Student profile found:', !!studentProfile);
 
     if (!studentProfile) {
       return null;
@@ -193,7 +197,10 @@ export async function getStudentData(userId: string) {
       upcomingAssignments,
     };
   } catch (error) {
-    console.error('Error fetching student data:', error);
+    log.error('Error fetching student data:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return null;
   }
 }
@@ -221,7 +228,7 @@ export default async function DashboardPage() {
     if (studentData) {
       return <StudentDashboard {...studentData} />;
     } else {
-      console.log('Student data not found for user:', session.user.id);
+      log.info('Student data not found for user:', session.user.id);
     }
   }
 

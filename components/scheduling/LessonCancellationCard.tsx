@@ -17,6 +17,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { format } from "date-fns";
+import { log, schedulerLog } from '@/lib/logger';
 
 interface UpcomingLesson {
   id: string;
@@ -67,7 +68,10 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
       
       setUpcomingLessons(upcomingLessons);
     } catch (error) {
-      console.error('Error fetching lessons:', error);
+      log.error('Error fetching lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setError('Failed to load upcoming lessons');
     } finally {
       setLoading(false);
@@ -105,7 +109,10 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
       setError('');
       
     } catch (error: any) {
-      console.error('Cancellation error:', error);
+      log.error('Cancellation error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrorMessage(error.message || 'Failed to cancel lesson. Please try again.');
     } finally {
       setCancellingId(null);

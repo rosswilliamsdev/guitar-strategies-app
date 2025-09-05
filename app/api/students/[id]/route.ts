@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { getUpcomingLessonsWithCleanup } from '@/lib/lesson-cleanup';
+import { apiLog, dbLog, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -147,7 +148,10 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error('Error fetching student:', error);
+    apiLog.error('Error fetching student:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

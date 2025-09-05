@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
+import { log } from '@/lib/logger';
 
 export default function Error({
   error,

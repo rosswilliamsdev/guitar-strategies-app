@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateFutureLessons } from "@/lib/background-jobs";
+import { apiLog, emailLog } from '@/lib/logger';
 
 /**
  * POST /api/admin/background-jobs/generate-lessons
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`Admin ${session.user.email} manually triggered lesson generation job`);
+    apiLog.info('Admin ${session.user.email} manually triggered lesson generation job');
 
     // Run the background job
     const result = await generateFutureLessons();
@@ -36,7 +37,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error in manual job trigger:", error);
+    apiLog.error('Error in manual job trigger:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { 
         error: "Failed to execute background job",

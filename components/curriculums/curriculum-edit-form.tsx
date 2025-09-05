@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Plus, X } from "lucide-react";
 import Link from "next/link";
+import { log } from '@/lib/logger';
 
 interface ChecklistItem {
   id?: string;
@@ -184,7 +185,10 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
 
       router.push(`/curriculums/${curriculum.id}`);
     } catch (error) {
-      console.error("Error updating checklist:", error);
+      log.error('Error updating checklist:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrors({
         submit:
           error instanceof Error ? error.message : "Failed to update checklist",
@@ -307,9 +311,10 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
                     </div>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="destructive"
                       size="sm"
                       onClick={() => removeItem(index)}
+                      className="bg-red-600 hover:bg-red-700 text-white"
                     >
                       <X className="h-4 w-4" />
                     </Button>

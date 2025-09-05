@@ -5,6 +5,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
+import { log, dbLog } from '@/lib/logger';
 
 /**
  * Global type definition for Prisma client to prevent multiple instances
@@ -79,7 +80,10 @@ export async function checkDatabaseConnection(): Promise<boolean> {
     await prisma.$queryRaw`SELECT 1`;
     return true;
   } catch (error) {
-    console.error("Database connection failed:", error);
+    log.error('Database connection failed:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return false;
   }
 }
@@ -95,7 +99,7 @@ export async function checkDatabaseConnection(): Promise<boolean> {
  * @example
  * ```typescript
  * const poolStatus = await getConnectionPoolStatus();
- * console.log('Pool status:', poolStatus);
+ * log.info('Pool status:', poolStatus);
  * ```
  */
 export async function getConnectionPoolStatus() {
@@ -123,7 +127,10 @@ export async function getConnectionPoolStatus() {
       timestamp: new Date().toISOString()
     };
   } catch (error) {
-    console.error("Failed to get connection pool status:", error);
+    log.error('Failed to get connection pool status:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return {
       isHealthy: false,
       connectionTest: {
@@ -158,5 +165,5 @@ export function validateDatabaseEnvironment(): void {
     throw new Error('DATABASE_URL must be a valid PostgreSQL connection string');
   }
   
-  console.log('✅ Database environment variables validated successfully');
+  log.info('✅ Database environment variables validated successfully');
 }

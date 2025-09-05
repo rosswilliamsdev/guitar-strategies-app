@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { createInvoiceSchema } from "@/lib/validations";
 import type { StudentProfile, User, Lesson } from "@/types";
+import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 interface InvoiceFormProps {
   teacherId: string;
@@ -103,7 +104,10 @@ export function InvoiceForm({
           }
         }
       } catch (error) {
-        console.error("Error loading teacher rate:", error);
+        log.error('Error loading teacher rate:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       }
     };
 
@@ -165,7 +169,10 @@ export function InvoiceForm({
         setItems(invoiceItems);
       }
     } catch (error) {
-      console.error("Error loading lessons:", error);
+      log.error('Error loading lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setLoadingLessons(false);
     }

@@ -17,6 +17,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import { YouTubeEmbed } from "@/components/ui/youtube-embed";
+import { log } from '@/lib/logger';
 
 interface Lesson {
   id: string;
@@ -117,7 +118,10 @@ export function LessonDetails({
                       return itemData.item;
                     }
                   } catch (err) {
-                    console.error(`Error fetching checklist item ${itemId}:`, err);
+                    log.error('Error fetching checklist item ${itemId}:', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined
+      });
                     return null;
                   }
                 })
@@ -128,12 +132,18 @@ export function LessonDetails({
               setChecklistItems(validItems);
             }
           } catch (parseError) {
-            console.error("Error parsing checklist items:", parseError);
+            log.error('Error parsing checklist items:', {
+        error: parseError instanceof Error ? parseError.message : String(parseError),
+        stack: parseError instanceof Error ? parseError.stack : undefined
+      });
           }
         }
       } catch (error) {
         setError("Failed to load lesson details");
-        console.error("Error fetching lesson:", error);
+        log.error('Error fetching lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       } finally {
         setLoading(false);
       }

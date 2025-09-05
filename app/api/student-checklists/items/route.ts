@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createStudentChecklistItemSchema } from "@/lib/validations";
 import { z } from "zod";
+import { apiLog, dbLog } from '@/lib/logger';
 
 // POST /api/student-checklists/items - Create a new checklist item
 export async function POST(request: NextRequest) {
@@ -55,7 +56,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error creating checklist item:", error);
+    apiLog.error('Error creating checklist item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to create checklist item" },
       { status: 500 }

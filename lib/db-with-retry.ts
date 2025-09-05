@@ -4,6 +4,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { withRetry, databaseRetryOptions, criticalRetryOptions } from './retry';
+import { log, dbLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 // Import the existing database client configuration
 const globalForPrisma = globalThis as unknown as {
@@ -179,9 +180,15 @@ export function logDatabaseError(
   
   if (process.env.NODE_ENV === 'production') {
     // In production, log to monitoring service
-    console.error('[Database Error]', JSON.stringify(errorInfo));
+    log.error('[Database Error]', {
+        error: JSON.stringify(errorInfo) instanceof Error ? JSON.stringify(errorInfo).message : String(JSON.stringify(errorInfo)),
+        stack: JSON.stringify(errorInfo) instanceof Error ? JSON.stringify(errorInfo).stack : undefined
+      });
   } else {
     // In development, log more verbosely
-    console.error('[Database Error]', errorInfo);
+    log.error('[Database Error]', {
+        error: errorInfo instanceof Error ? errorInfo.message : String(errorInfo),
+        stack: errorInfo instanceof Error ? errorInfo.stack : undefined
+      });
   }
 }

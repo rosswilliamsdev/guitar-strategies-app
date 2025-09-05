@@ -9,6 +9,7 @@ import {
   getEnvironmentMode,
   isProduction 
 } from "@/lib/env-validation";
+import { apiLog, emailLog } from '@/lib/logger';
 
 /**
  * Admin endpoint for checking environment validation status
@@ -62,7 +63,10 @@ export async function GET() {
       { status: httpStatus }
     );
   } catch (error) {
-    console.error("Environment validation check error:", error);
+    apiLog.error('Environment validation check error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     return NextResponse.json(
       {

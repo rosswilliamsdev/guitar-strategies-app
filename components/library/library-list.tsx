@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { FilePreviewModal } from "./file-preview-modal";
+import { log } from '@/lib/logger';
 
 interface LibraryItem {
   id: string;
@@ -111,7 +112,10 @@ async function handleDownload(item: LibraryItem) {
     link.download = item.fileName;
     link.click();
   } catch (error) {
-    console.error('Error downloading file:', error);
+    log.error('Error downloading file:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
   }
 }
 
@@ -350,7 +354,11 @@ export function LibraryList({ items }: LibraryListProps) {
         // Small delay between downloads to avoid overwhelming the browser
         await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
-        console.error('Error downloading file:', item.title, error);
+        log.error('Error downloading file:', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          fileName: item.title
+        });
       }
     }
     
@@ -370,7 +378,10 @@ export function LibraryList({ items }: LibraryListProps) {
       // Refresh the page to update the list
       window.location.reload();
     } catch (error) {
-      console.error('Error deleting files:', error);
+      log.error('Error deleting files:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
@@ -633,6 +644,7 @@ export function LibraryList({ items }: LibraryListProps) {
               variant="destructive"
               onClick={handleBulkDelete}
               disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {isDeleting ? (
                 <>

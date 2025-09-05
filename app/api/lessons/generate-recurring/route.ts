@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateRecurringLessons } from "@/lib/recurring-lessons";
 import { z } from "zod";
+import { apiLog, schedulerLog } from '@/lib/logger';
 
 const generateRecurringSchema = z.object({
   startDate: z.string().datetime(),
@@ -45,7 +46,10 @@ export async function POST(request: NextRequest) {
       message: `Generated ${lessonsCreated} recurring lessons`,
     });
   } catch (error) {
-    console.error("Error generating recurring lessons:", error);
+    apiLog.error('Error generating recurring lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

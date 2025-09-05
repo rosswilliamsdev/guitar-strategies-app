@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { lessonSettingsSchema } from '@/lib/validations';
 import { validateLessonSettings } from '@/lib/scheduler';
+import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -46,7 +47,10 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Error fetching lesson settings:', error);
+    apiLog.error('Error fetching lesson settings:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Failed to fetch lesson settings' },
       { status: 500 }
@@ -107,7 +111,10 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error updating lesson settings:', error);
+    apiLog.error('Error updating lesson settings:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(

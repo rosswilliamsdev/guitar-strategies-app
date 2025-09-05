@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdminActivityView } from "@/components/admin/admin-activity-view";
 import { AdminStats } from "@/lib/dashboard-stats";
 import { Loader2, Filter } from "lucide-react";
+import { log, emailLog, invoiceLog } from '@/lib/logger';
 
 interface ActivityFilters {
   dateRange: 'today' | 'week' | 'month' | 'all';
@@ -41,7 +42,10 @@ export function AdminActivityPage() {
       setActivities(data.activities);
       setTotalCount(data.totalCount);
     } catch (error) {
-      console.error('Error fetching activity:', error);
+      log.error('Error fetching activity:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setLoading(false);
     }

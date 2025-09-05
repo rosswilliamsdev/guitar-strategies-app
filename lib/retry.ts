@@ -3,6 +3,8 @@
  * in database and external service operations
  */
 
+import { log, dbLog, emailLog } from '@/lib/logger';
+
 export interface RetryOptions {
   maxAttempts?: number;
   initialDelay?: number;
@@ -45,7 +47,11 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
     return false;
   },
   onRetry: (error, attempt) => {
-    console.log(`[Retry] Attempt ${attempt} after error:`, error?.message || error);
+    log.debug('Retry attempt', {
+      attempt,
+      error: error?.message || String(error),
+      stack: error?.stack
+    });
   }
 };
 
@@ -116,19 +122,28 @@ export const databaseRetryOptions: RetryOptions = {
   shouldRetry: (error) => {
     // Retry on connection pool exhaustion
     if (error?.code === 'P2024') {
-      console.warn('[Database] Connection pool exhausted, retrying...');
+      dbLog.warn('Database connection pool exhausted, retrying', {
+        errorCode: 'P2024',
+        message: error?.message
+      });
       return true;
     }
     
     // Retry on transaction timeouts
     if (error?.code === 'P2034' || error?.code === 'P2025') {
-      console.warn('[Database] Transaction timeout, retrying...');
+      dbLog.warn('Database transaction timeout, retrying', {
+        errorCode: error?.code,
+        message: error?.message
+      });
       return true;
     }
     
     // Retry on deadlocks
     if (error?.code === 'P2023') {
-      console.warn('[Database] Deadlock detected, retrying...');
+      dbLog.warn('Database deadlock detected, retrying', {
+        errorCode: 'P2023',
+        message: error?.message
+      });
       return true;
     }
     
@@ -143,7 +158,12 @@ export const databaseRetryOptions: RetryOptions = {
     return DEFAULT_OPTIONS.shouldRetry(error);
   },
   onRetry: (error, attempt) => {
-    console.log(`[Database Retry] Attempt ${attempt} after error: ${error?.code || error?.message}`);
+    dbLog.debug('Database retry attempt', {
+      attempt,
+      errorCode: error?.code,
+      error: error?.message || String(error),
+      stack: error?.stack
+    });
   }
 };
 
@@ -158,13 +178,19 @@ export const emailRetryOptions: RetryOptions = {
   shouldRetry: (error) => {
     // Retry on rate limiting
     if (error?.status === 429) {
-      console.warn('[Email] Rate limited, retrying...');
+      emailLog.warn('Email service rate limited, retrying', {
+        status: 429,
+        message: error?.message
+      });
       return true;
     }
     
     // Retry on temporary email service failures
     if (error?.status >= 500 && error?.status < 600) {
-      console.warn('[Email] Service error, retrying...');
+      emailLog.warn('Email service error, retrying', {
+        status: error?.status,
+        message: error?.message
+      });
       return true;
     }
     
@@ -172,7 +198,9 @@ export const emailRetryOptions: RetryOptions = {
     if (error?.code === 'ETIMEDOUT' || 
         error?.code === 'ECONNREFUSED' ||
         error?.message?.includes('network')) {
-      console.warn('[Email] Network error, retrying...');
+      emailLog.warn('Email network error, retrying', {
+        error: error?.message || String(error)
+      });
       return true;
     }
     
@@ -184,7 +212,12 @@ export const emailRetryOptions: RetryOptions = {
     return true;
   },
   onRetry: (error, attempt) => {
-    console.log(`[Email Retry] Attempt ${attempt} after error: ${error?.message || error?.status}`);
+    emailLog.debug('Email retry attempt', {
+      attempt,
+      status: error?.status,
+      error: error?.message || String(error),
+      stack: error?.stack
+    });
   }
 };
 
@@ -219,7 +252,9 @@ export const criticalRetryOptions: RetryOptions = {
     return false;
   },
   onRetry: (error, attempt) => {
-    console.warn(`[Critical Operation Retry] Attempt ${attempt}/${5}:`, {
+    log.warn('Critical operation retry attempt', {
+      attempt,
+      maxAttempts: 5,
       error: error?.message || error?.code || error,
       timestamp: new Date().toISOString()
     });

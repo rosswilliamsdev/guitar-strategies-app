@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
 
 // Admin settings validation schema
 const adminSettingsSchema = z.object({
@@ -58,7 +59,10 @@ export async function GET(request: NextRequest) {
       settings
     });
   } catch (error) {
-    console.error("Error fetching admin settings:", error);
+    apiLog.error('Error fetching admin settings:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to fetch admin settings" },
       { status: 500 }
@@ -104,7 +108,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    console.log(`Admin ${session.user.email} updated system settings`);
+    apiLog.info('Admin ${session.user.email} updated system settings');
 
     return NextResponse.json({
       success: true,
@@ -122,7 +126,10 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    console.error("Error updating admin settings:", error);
+    apiLog.error('Error updating admin settings:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update admin settings" },
       { status: 500 }

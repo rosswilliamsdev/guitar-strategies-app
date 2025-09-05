@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { validateTeacherProfile } from '@/lib/teacher-validation';
+import { apiLog, dbLog } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
@@ -36,7 +37,10 @@ export async function GET(
     return NextResponse.json(validation);
 
   } catch (error) {
-    console.error('Error validating teacher profile:', error);
+    apiLog.error('Error validating teacher profile:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Failed to validate teacher profile' },
       { status: 500 }

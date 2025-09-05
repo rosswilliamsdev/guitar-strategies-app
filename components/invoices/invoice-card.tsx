@@ -18,6 +18,7 @@ import {
 import { MarkPaidModal } from './mark-paid-modal';
 import { DeleteInvoiceModal } from './delete-invoice-modal';
 import type { InvoiceStatus } from '@/types';
+import { log, invoiceLog } from '@/lib/logger';
 
 interface InvoiceCardProps {
   invoice: {
@@ -88,7 +89,10 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error marking invoice as paid:', error);
+      log.error('Error marking invoice as paid:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   };
@@ -106,7 +110,10 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
 
       router.refresh();
     } catch (error) {
-      console.error('Error deleting invoice:', error);
+      log.error('Error deleting invoice:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   };

@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/db";
 import { TeacherProfile, TeacherLessonSettings, TeacherAvailability } from "@prisma/client";
+import { log, dbLog } from '@/lib/logger';
 
 export interface TeacherValidationResult {
   isComplete: boolean;
@@ -236,7 +237,10 @@ export async function validateTeacherProfile(teacherId: string): Promise<Teacher
       setupSteps,
     };
   } catch (error) {
-    console.error("Error validating teacher profile:", error);
+    log.error('Error validating teacher profile:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     errors.push("Failed to validate teacher profile");
     return {
       isComplete: false,
@@ -294,7 +298,10 @@ export async function canTeacherAcceptBookings(teacherId: string): Promise<boole
       hasAvailability
     );
   } catch (error) {
-    console.error("Error checking teacher booking capability:", error);
+    log.error('Error checking teacher booking capability:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return false;
   }
 }

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, UserPlus } from "lucide-react";
 import Link from "next/link";
+import { log, emailLog } from '@/lib/logger';
 
 export function CreateTeacherForm() {
   const router = useRouter();
@@ -67,7 +68,10 @@ export function CreateTeacherForm() {
 
       router.push("/admin/teachers");
     } catch (error) {
-      console.error("Error creating teacher:", error);
+      log.error('Error creating teacher:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrors({
         submit: error instanceof Error ? error.message : "Failed to create teacher",
       });

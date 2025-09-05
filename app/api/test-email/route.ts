@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendEmail, createBaseTemplate } from '@/lib/email';
+import { apiLog, emailLog, invoiceLog } from '@/lib/logger';
 
 // POST /api/test-email - Send a test email to verify the system is working
 export async function POST(request: NextRequest) {
@@ -208,7 +209,10 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Error sending test email:', error);
+    apiLog.error('Error sending test email:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

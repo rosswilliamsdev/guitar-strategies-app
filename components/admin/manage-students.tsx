@@ -26,6 +26,7 @@ import {
   Loader2,
   AlertTriangle
 } from "lucide-react";
+import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
 
 export interface Student {
   id: string;
@@ -82,7 +83,10 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         window.location.reload();
       }
     } catch (error) {
-      console.error("Error toggling student status:", error);
+      log.error('Error toggling student status:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   };
 
@@ -122,7 +126,10 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         toast.error(error.message || "Failed to delete student");
       }
     } catch (error) {
-      console.error("Error deleting student:", error);
+      log.error('Error deleting student:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       toast.error("An unexpected error occurred while deleting the student");
     } finally {
       setIsDeleting(false);

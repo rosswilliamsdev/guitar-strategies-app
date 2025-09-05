@@ -12,6 +12,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getConnectionPoolStatus } from '@/lib/db';
 import { validateConnectionPooling } from '@/lib/startup-validation';
+import { apiLog, dbLog } from '@/lib/logger';
 
 /**
  * GET /api/admin/database/pool-status
@@ -60,7 +61,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
     
   } catch (error) {
-    console.error('Failed to get database pool status:', error);
+    apiLog.error('Failed to get database pool status:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     return NextResponse.json(
       {
@@ -98,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = await request.json().catch(() => ({}));
     const concurrentTests = Math.min(body.concurrentTests || 3, 10); // Limit to prevent overload
     
-    console.log(`🧪 Starting database connection pool stress test with ${concurrentTests} concurrent connections...`);
+    apiLog.info('🧪 Starting database connection pool stress test with ${concurrentTests} concurrent connections...');
     
     // Run concurrent connection tests
     const startTime = Date.now();
@@ -134,7 +138,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const failedTests = results.filter(r => !r.success);
     const avgResponseTime = successfulTests.reduce((sum, r) => sum + r.responseTime, 0) / successfulTests.length;
     
-    console.log(`✅ Connection pool stress test completed: ${successfulTests.length}/${concurrentTests} successful in ${totalTime}ms`);
+    apiLog.info('✅ Connection pool stress test completed: ${successfulTests.length}/${concurrentTests} successful in ${totalTime}ms');
     
     return NextResponse.json({
       success: true,
@@ -163,7 +167,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
     
   } catch (error) {
-    console.error('Database pool stress test failed:', error);
+    apiLog.error('Database pool stress test failed:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     return NextResponse.json(
       {

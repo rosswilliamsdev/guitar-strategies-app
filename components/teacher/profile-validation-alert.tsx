@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { TeacherValidationResult, SetupStep } from "@/lib/teacher-validation";
+import { log } from '@/lib/logger';
 
 interface ProfileValidationAlertProps {
   teacherId: string;
@@ -31,7 +32,10 @@ export function ProfileValidationAlert({ teacherId }: ProfileValidationAlertProp
         setValidation(data);
       } else {
         // Handle error response - create a default validation object
-        console.error("Failed to fetch validation, status:", response.status);
+        log.error('Failed to fetch validation, status:', {
+        error: response.status instanceof Error ? response.status.message : String(response.status),
+        stack: response.status instanceof Error ? response.status.stack : undefined
+      });
         setValidation({
           isComplete: false,
           missingFields: [],
@@ -43,7 +47,10 @@ export function ProfileValidationAlert({ teacherId }: ProfileValidationAlertProp
         });
       }
     } catch (error) {
-      console.error("Failed to fetch validation:", error);
+      log.error('Failed to fetch validation:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       // Set error state
       setValidation({
         isComplete: false,
@@ -233,7 +240,10 @@ export function ProfileValidationBadge({ teacherId }: ProfileValidationAlertProp
         setValidation(data);
       }
     } catch (error) {
-      console.error("Failed to fetch validation:", error);
+      log.error('Failed to fetch validation:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setLoading(false);
     }

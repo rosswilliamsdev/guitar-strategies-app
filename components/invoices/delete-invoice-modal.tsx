@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
+import { log, invoiceLog } from '@/lib/logger';
 
 interface DeleteInvoiceModalProps {
   isOpen: boolean;
@@ -37,7 +38,10 @@ export function DeleteInvoiceModal({
       await onConfirm();
       onClose();
     } catch (error) {
-      console.error('Error deleting invoice:', error);
+      log.error('Error deleting invoice:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setIsDeleting(false);
     }

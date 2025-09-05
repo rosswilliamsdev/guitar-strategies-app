@@ -11,6 +11,7 @@
 
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { log } from '@/lib/logger';
 
 /**
  * Utility function to merge Tailwind CSS classes with proper precedence.
@@ -101,7 +102,7 @@ export function generateId(): string {
  * @example
  * ```tsx
  * await sleep(1000); // Wait 1 second
- * console.log('This runs after 1 second');
+ * log.info('This runs after 1 second');
  * ```
  */
 export function sleep(ms: number): Promise<void> {

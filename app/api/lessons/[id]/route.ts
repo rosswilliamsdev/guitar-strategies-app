@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
+import { updateLessonOptimistic, OptimisticLockingError, retryOptimisticUpdate } from '@/lib/optimistic-locking';
+import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 
 interface RouteContext {
   params: {
@@ -67,7 +69,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
     return NextResponse.json({ lesson });
   } catch (error) {
-    console.error('Error fetching lesson:', error);
+    apiLog.error('Error fetching lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
@@ -139,10 +144,29 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     }
     // Don't update date when editing existing lesson
 
-    // Update lesson with validation
-    const lesson = await prisma.lesson.update({
+    // Validate version for optimistic locking
+    const expectedVersion = body.version;
+    if (typeof expectedVersion !== 'number') {
+      return NextResponse.json({ 
+        error: 'Version required for optimistic locking. Please refresh and try again.' 
+      }, { status: 400 });
+    }
+
+    // Update lesson with optimistic locking
+    const lesson = await retryOptimisticUpdate(async () => {
+      try {
+        return await updateLessonOptimistic(params.id, expectedVersion, updateData);
+      } catch (error) {
+        if (error instanceof OptimisticLockingError) {
+          throw new Error(`Lesson was modified by another user. Current version: ${error.currentVersion}, your version: ${error.attemptedVersion}. Please refresh and try again.`);
+        }
+        throw error;
+      }
+    });
+
+    // Fetch full lesson data for response
+    const fullLesson = await prisma.lesson.findUnique({
       where: { id: params.id },
-      data: updateData,
       include: {
         student: {
           include: { user: true }
@@ -155,9 +179,12 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       },
     });
 
-    return NextResponse.json({ lesson });
+    return NextResponse.json({ lesson: fullLesson });
   } catch (error) {
-    console.error('Error updating lesson:', error);
+    apiLog.error('Error updating lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Failed to update lesson' }, { status: 500 });
   }
 }
@@ -225,7 +252,10 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
     return NextResponse.json({ message: 'Lesson cancelled successfully' });
   } catch (error) {
-    console.error('Error cancelling lesson:', error);
+    apiLog.error('Error cancelling lesson:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ error: 'Failed to cancel lesson' }, { status: 500 });
   }
 }

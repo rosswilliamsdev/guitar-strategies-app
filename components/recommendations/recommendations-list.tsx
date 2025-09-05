@@ -35,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { log } from '@/lib/logger';
 
 interface Recommendation {
   id: string;
@@ -129,7 +130,10 @@ export function RecommendationsList({
         throw new Error("Failed to delete recommendation");
       }
     } catch (error) {
-      console.error("Error deleting recommendation:", error);
+      log.error('Error deleting recommendation:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       setErrorMessage("Failed to delete the recommendation. Please try again.");
     } finally {
       setIsDeleting(false);
@@ -290,9 +294,10 @@ export function RecommendationsList({
                             </Button>
                             <Button
                               size="sm"
-                              variant="secondary"
+                              variant="destructive"
                               onClick={() => setConfirmDeleteId(item.id)}
                               disabled={isDeleting}
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

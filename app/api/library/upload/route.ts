@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { put } from '@vercel/blob';
+import { apiLog, dbLog } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
         fileUrl = blob.url;
       } else {
         // For development/testing: use a mock URL
-        console.log('Vercel Blob not configured, using mock file URL');
+        apiLog.info('Vercel Blob not configured, using mock file URL');
         fileUrl = `https://mock-storage.example.com/files/${file.name}`;
       }
 
@@ -108,14 +109,20 @@ export async function POST(request: NextRequest) {
       }, { status: 201 });
 
     } catch (blobError) {
-      console.error('Error uploading file:', blobError);
+      apiLog.error('Error uploading file:', {
+        error: blobError instanceof Error ? blobError.message : String(blobError),
+        stack: blobError instanceof Error ? blobError.stack : undefined
+      });
       return NextResponse.json({ 
         error: 'Failed to upload file. Please check your file storage configuration.' 
       }, { status: 500 });
     }
 
   } catch (error) {
-    console.error('Library upload error:', error);
+    apiLog.error('Library upload error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ 
       error: 'Internal server error' 
     }, { status: 500 });

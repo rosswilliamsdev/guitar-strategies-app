@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getJobHistory, validateSystemHealth } from "@/lib/background-jobs";
+import { apiLog } from '@/lib/logger';
 
 /**
  * GET /api/admin/background-jobs/history
@@ -42,7 +43,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching job history:", error);
+    apiLog.error('Error fetching job history:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { 
         error: "Failed to fetch job history",

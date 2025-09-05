@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { log } from '@/lib/logger';
 
 export default function GlobalError({
   error,

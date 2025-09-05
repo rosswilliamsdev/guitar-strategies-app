@@ -168,6 +168,7 @@ model Lesson {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  version   Int      @default(1) // Optimistic locking version
 
   // Relations
   teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
@@ -515,6 +516,7 @@ model TeacherAvailability {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  version   Int      @default(1) // Optimistic locking version
   
   teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   
@@ -560,6 +562,7 @@ model RecurringSlot {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  version     Int      @default(1) // Optimistic locking version
   
   // Relations
   teacher     TeacherProfile @relation("TeacherSlots", fields: [teacherId], references: [id], onDelete: Cascade)

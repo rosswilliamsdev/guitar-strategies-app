@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -69,7 +70,12 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Error fetching student's recurring slots:", error);
+    apiLog.error("Error fetching student's recurring slots", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      userId: session?.user?.id,
+      role: session?.user?.role
+    });
     return NextResponse.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

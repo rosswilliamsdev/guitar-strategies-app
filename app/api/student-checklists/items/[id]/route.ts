@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { updateStudentChecklistItemSchema, toggleChecklistItemSchema } from "@/lib/validations";
 import { sendEmail, createChecklistCompletionEmail } from "@/lib/email";
 import { z } from "zod";
+import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 // GET /api/student-checklists/items/[id] - Get a single checklist item
 export async function GET(
@@ -67,7 +68,10 @@ export async function GET(
 
     return NextResponse.json({ item });
   } catch (error) {
-    console.error("Error fetching checklist item:", error);
+    apiLog.error('Error fetching checklist item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to fetch checklist item" },
       { status: 500 }
@@ -157,7 +161,10 @@ export async function PUT(
       );
     }
 
-    console.error("Error updating checklist item:", error);
+    apiLog.error('Error updating checklist item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to update checklist item" },
       { status: 500 }
@@ -208,7 +215,10 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Item deleted successfully" });
   } catch (error) {
-    console.error("Error deleting checklist item:", error);
+    apiLog.error('Error deleting checklist item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to delete checklist item" },
       { status: 500 }
@@ -310,7 +320,10 @@ export async function PATCH(
               html: emailContent
             });
           } catch (error) {
-            console.error('Failed to send checklist completion email:', error);
+            apiLog.error('Failed to send checklist completion email:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
           }
         }
       }
@@ -325,7 +338,10 @@ export async function PATCH(
       );
     }
 
-    console.error("Error toggling checklist item:", error);
+    apiLog.error('Error toggling checklist item:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: "Failed to toggle checklist item" },
       { status: 500 }

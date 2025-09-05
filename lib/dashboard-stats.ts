@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { startOfMonth, startOfWeek, startOfDay, subDays } from "date-fns";
+import { log, dbLog, emailLog, invoiceLog } from '@/lib/logger';
 
 export interface AdminStats {
   totalUsers: number;
@@ -269,7 +270,10 @@ export async function getAdminStats(): Promise<AdminStats> {
       recentActivity: limitedActivity
     };
   } catch (error) {
-    console.error('Error fetching admin stats:', error);
+    log.error('Error fetching admin stats:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     // Return safe defaults on error
     return {
@@ -456,7 +460,10 @@ export async function getAllActivity(filters?: {
     };
 
   } catch (error) {
-    console.error('Error fetching all activity:', error);
+    log.error('Error fetching all activity:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return {
       activities: [],
       totalCount: 0
@@ -477,7 +484,10 @@ export async function getUserStats(): Promise<UserStats> {
       systemStatus: 'Operational'
     };
   } catch (error) {
-    console.error('Error fetching user stats:', error);
+    log.error('Error fetching user stats:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return {
       totalUsers: 0,
       platformActivity: 'Unknown',

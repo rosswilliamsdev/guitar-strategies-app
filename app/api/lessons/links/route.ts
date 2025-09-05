@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { apiLog, dbLog } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,22 +14,28 @@ export async function POST(request: NextRequest) {
     }
 
     const requestBody = await request.json();
-    console.log('Links API request body:', JSON.stringify(requestBody, null, 2));
+    apiLog.info('Links API request body:', JSON.stringify(requestBody, null, 2));
     
     const { links } = requestBody;
 
     if (!links || !Array.isArray(links) || links.length === 0) {
-      console.error('Invalid links array:', links);
+      apiLog.error('Invalid links array:', {
+        error: links instanceof Error ? links.message : String(links),
+        stack: links instanceof Error ? links.stack : undefined
+      });
       return NextResponse.json({ error: 'Links array is required' }, { status: 400 });
     }
 
     const lessonId = links[0]?.lessonId;
     if (!lessonId) {
-      console.error('Missing lesson ID in links:', links[0]);
+      apiLog.error('Missing lesson ID in links:', {
+        error: links[0] instanceof Error ? links[0].message : String(links[0]),
+        stack: links[0] instanceof Error ? links[0].stack : undefined
+      });
       return NextResponse.json({ error: 'Lesson ID is required' }, { status: 400 });
     }
 
-    console.log('Processing links for lesson:', lessonId);
+    apiLog.info('Processing links for lesson:', lessonId);
 
     // Verify the teacher owns this lesson
     const teacherProfile = await prisma.teacherProfile.findUnique({
@@ -51,13 +58,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Create all links
-    console.log('Creating links with data:', links.map(link => ({
-      lessonId: link.lessonId,
-      title: link.title,
-      url: link.url,
-      description: link.description || null,
-      linkType: link.linkType || 'WEBSITE',
-    })));
+    apiLog.info('Creating lesson links', {
+      linkCount: links.length,
+      lessonId: lessonId,
+      links: links.map(link => ({
+        lessonId: link.lessonId,
+        title: link.title,
+        url: link.url,
+        description: link.description || null,
+        linkType: link.linkType || 'WEBSITE',
+      }))
+    });
 
     const createdLinks = await Promise.all(
       links.map(async (link) => {
@@ -69,16 +80,20 @@ export async function POST(request: NextRequest) {
             description: link.description || null,
             linkType: link.linkType || 'WEBSITE',
           };
-          console.log('Creating link:', linkData);
+          apiLog.info('Creating link:', linkData);
           
           const createdLink = await prisma.lessonLink.create({
             data: linkData
           });
           
-          console.log('Successfully created link:', createdLink);
+          apiLog.info('Successfully created link:', createdLink);
           return createdLink;
         } catch (linkError) {
-          console.error('Error creating individual link:', linkError, 'Link data:', link);
+          apiLog.error('Error creating individual link', {
+            error: linkError instanceof Error ? linkError.message : String(linkError),
+            stack: linkError instanceof Error ? linkError.stack : undefined,
+            linkData: link
+          });
           throw linkError;
         }
       })
@@ -86,7 +101,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ links: createdLinks });
   } catch (error) {
-    console.error('Error creating links:', error);
+    apiLog.error('Error creating links:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ 
       error: 'Failed to create links', 
       details: error instanceof Error ? error.message : 'Unknown error' 
@@ -156,7 +174,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ links: createdLinks });
   } catch (error) {
-    console.error('Error updating links:', error);
+    apiLog.error('Error updating links:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json({ 
       error: 'Failed to update links', 
       details: error instanceof Error ? error.message : 'Unknown error' 

@@ -6,6 +6,7 @@
  */
 
 import { prisma } from '@/lib/db';
+import { log, dbLog, schedulerLog } from '@/lib/logger';
 
 /**
  * Updates past scheduled lessons to appropriate status.
@@ -39,7 +40,7 @@ export async function cleanupPastLessons(): Promise<{
 
     updatedCount = result.count;
 
-    console.log(`Cleaned up ${updatedCount} past lessons`);
+    log.info('Cleaned up ${updatedCount} past lessons');
     
     return {
       updatedCount,
@@ -48,7 +49,10 @@ export async function cleanupPastLessons(): Promise<{
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     errors.push(`Failed to cleanup lessons: ${errorMessage}`);
-    console.error('Error cleaning up past lessons:', error);
+    log.error('Error cleaning up past lessons:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     return {
       updatedCount,

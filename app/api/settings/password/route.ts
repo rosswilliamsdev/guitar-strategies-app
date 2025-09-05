@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
+import { apiLog, dbLog } from '@/lib/logger';
 
 const passwordUpdateSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -56,7 +57,10 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
-    console.error('Error updating password:', error);
+    apiLog.error('Error updating password:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

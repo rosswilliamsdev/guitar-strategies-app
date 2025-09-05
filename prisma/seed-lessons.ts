@@ -1,9 +1,10 @@
 import { PrismaClient } from "@prisma/client";
+import { log, dbLog } from '@/lib/logger';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🎸 Creating sample lessons...");
+  log.info('🎸 Creating sample lessons...');
 
   // Find teacher and student
   const teacher = await prisma.user.findFirst({
@@ -84,12 +85,15 @@ async function main() {
     });
   }
 
-  console.log(`✅ Created ${lessons.length} sample lessons`);
+  log.info('✅ Created ${lessons.length} sample lessons');
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error creating lessons:", e);
+    log.error('❌ Error creating lessons:', {
+        error: e instanceof Error ? e.message : String(e),
+        stack: e instanceof Error ? e.stack : undefined
+      });
     process.exit(1);
   })
   .finally(async () => {

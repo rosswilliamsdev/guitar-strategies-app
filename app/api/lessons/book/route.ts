@@ -16,6 +16,7 @@ import {
   createBadRequestResponse,
   handleApiError
 } from '@/lib/api-responses';
+import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,21 +32,25 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch (error) {
-      console.error('Failed to parse JSON body:', error);
+      apiLog.error('Failed to parse JSON body', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return createBadRequestResponse('Invalid JSON in request body');
     }
     
-    console.log('Received booking data:', {
+    apiLog.info('Received booking request', {
       ...body,
       date: body.date,
       dateType: typeof body.date,
-      dateString: new Date(body.date).toISOString()
+      dateString: new Date(body.date).toISOString(),
+      endpoint: '/api/lessons/book'
     });
     
     // Validate input
     const validatedData = bookingSchema.parse(body);
     
-    console.log('Validated booking data:', {
+    apiLog.debug('Booking data validated', {
       ...validatedData,
       date: validatedData.date,
       dateString: new Date(validatedData.date).toISOString()
@@ -127,7 +132,12 @@ export async function POST(request: NextRequest) {
             html: emailContent
           });
         } catch (error) {
-          console.error('Failed to send recurring booking email:', error);
+          emailLog.error('Failed to send recurring booking email', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            studentEmail: student.user.email,
+            teacherId: bookingData.teacherId
+          });
         }
       }
       
@@ -161,9 +171,17 @@ export async function POST(request: NextRequest) {
       try {
         await createSingleLessonInvoice(result.id);
         invoiceGenerated = true;
-        console.log(`✅ Created invoice for single lesson ${result.id}`);
+        invoiceLog.info('Created invoice for single lesson', {
+          lessonId: result.id,
+          invoiceId: invoice.id,
+          total: invoice.total
+        });
       } catch (error) {
-        console.error('❌ Failed to create invoice for single lesson:', error);
+        invoiceLog.error('Failed to create invoice for single lesson', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          lessonId: result.id
+        });
         // Don't fail the booking if invoice creation fails
       }
 
@@ -186,11 +204,16 @@ export async function POST(request: NextRequest) {
             html: emailContent
           });
         } catch (error) {
-          console.error('Failed to send single lesson booking email:', error);
+          emailLog.error('Failed to send single lesson booking email', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            studentEmail: student.user.email,
+            lessonId: result.id
+          });
         }
       }
       
-      console.log('📤 Sending lesson booking response:', {
+      apiLog.info('Lesson booking completed successfully', {
         lessonId: result.id,
         duration: result.duration,
         date: result.date.toISOString()

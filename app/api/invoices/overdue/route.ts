@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sendEmail, createOverdueInvoiceEmail } from '@/lib/email';
+import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
 
 // POST /api/invoices/overdue - Send overdue invoice notifications
 export async function POST(request: NextRequest) {
@@ -145,7 +146,10 @@ export async function POST(request: NextRequest) {
         }
 
       } catch (error) {
-        console.error(`Error processing invoice ${invoiceId}:`, error);
+        apiLog.error('Error processing invoice ${invoiceId}:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
         results.push({
           invoiceId,
           success: false,
@@ -164,7 +168,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error sending overdue notifications:', error);
+    apiLog.error('Error sending overdue notifications:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -225,7 +232,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(overdueInvoices);
 
   } catch (error) {
-    console.error('Error fetching overdue invoices:', error);
+    apiLog.error('Error fetching overdue invoices:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

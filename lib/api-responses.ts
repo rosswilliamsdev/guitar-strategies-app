@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import { log } from '@/lib/logger';
 
 // Standardized error response structure
 export interface ApiErrorResponse {
@@ -121,9 +122,15 @@ export function createInternalErrorResponse(
 ): NextResponse<ApiErrorResponse> {
   // Log the original error for debugging but don't expose it
   if (originalError) {
-    console.error('Internal server error:', originalError);
+    log.error('Internal server error:', {
+        error: originalError instanceof Error ? originalError.message : String(originalError),
+        stack: originalError instanceof Error ? originalError.stack : undefined
+      });
     if (originalError instanceof Error && originalError.stack) {
-      console.error('Stack trace:', originalError.stack);
+      log.error('Stack trace:', {
+        error: originalError.stack instanceof Error ? originalError.stack.message : String(originalError.stack),
+        stack: originalError.stack instanceof Error ? originalError.stack.stack : undefined
+      });
     }
   }
   
@@ -134,7 +141,10 @@ export function createInternalErrorResponse(
  * Centralized error handler that maps common error types to appropriate responses
  */
 export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
-  console.error('API Error:', error);
+  log.error('API Error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
   
   // Zod validation errors
   if (error instanceof ZodError) {
