@@ -45,7 +45,7 @@ export function Modal({
             {title}
           </h2>
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             className="h-6 w-6 p-0"

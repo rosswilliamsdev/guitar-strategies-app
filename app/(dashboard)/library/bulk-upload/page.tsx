@@ -62,7 +62,7 @@ export default async function BulkUploadPage() {
       {/* Header with back button */}
       <div className="flex items-center gap-4">
         <Link href="/library">
-          <Button variant="ghost" size="sm">
+          <Button variant="secondary" size="sm">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to Library
           </Button>

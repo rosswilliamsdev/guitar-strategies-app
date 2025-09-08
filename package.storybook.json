@@ -1,0 +1,21 @@
+{
+  "name": "storybook-dependencies",
+  "description": "Additional dependencies for Storybook",
+  "devDependencies": {
+    "@storybook/addon-a11y": "^8.0.0",
+    "@storybook/addon-docs": "^8.0.0",
+    "@storybook/addon-essentials": "^8.0.0",
+    "@storybook/addon-interactions": "^8.0.0",
+    "@storybook/addon-links": "^8.0.0",
+    "@storybook/addon-viewport": "^8.0.0",
+    "@storybook/blocks": "^8.0.0",
+    "@storybook/nextjs": "^8.0.0",
+    "@storybook/react": "^8.0.0",
+    "storybook": "^8.0.0"
+  },
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "storybook-serve": "npx serve storybook-static"
+  }
+}

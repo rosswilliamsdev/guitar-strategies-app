@@ -1,0 +1,1210 @@
+{
+  "meta": {
+    "projectName": "Guitar Strategies",
+    "totalComponents": 128,
+    "analyzedDate": "2025-09-08",
+    "framework": "Next.js 15.4.6",
+    "typescript": true,
+    "componentArchitecture": "App Router"
+  },
+  "statistics": {
+    "byCategory": {
+      "ui": 20,
+      "feature": 52,
+      "page": 47,
+      "layout": 3,
+      "auth": 2,
+      "provider": 1,
+      "admin": 10
+    },
+    "byRenderType": {
+      "server": 77,
+      "client": 51
+    },
+    "coverage": {
+      "typescript": "100%",
+      "propInterfaces": "100%"
+    }
+  },
+  "components": {
+    "ui": [
+      {
+        "name": "Button",
+        "path": "/components/ui/button.tsx",
+        "type": "server",
+        "props": {
+          "interface": "ButtonProps",
+          "extends": "React.ButtonHTMLAttributes<HTMLButtonElement>",
+          "customProps": ["variant", "size", "loading", "loadingText"]
+        },
+        "dependencies": ["@/lib/utils", "lucide-react"],
+        "usageCount": 80,
+        "description": "Multi-variant button with loading states and role-based styling"
+      },
+      {
+        "name": "Card",
+        "path": "/components/ui/card.tsx",
+        "type": "server",
+        "props": {
+          "interface": "CardProps",
+          "subComponents": ["CardHeader", "CardTitle", "CardDescription", "CardContent", "CardFooter"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "usageCount": 60,
+        "description": "Container component with header, content, and footer sections"
+      },
+      {
+        "name": "Input",
+        "path": "/components/ui/input.tsx",
+        "type": "server",
+        "props": {
+          "interface": "InputProps",
+          "extends": "React.InputHTMLAttributes<HTMLInputElement>",
+          "customProps": ["label", "error", "helperText"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "usageCount": 40,
+        "description": "Form input with integrated label, error, and helper text"
+      },
+      {
+        "name": "Select",
+        "path": "/components/ui/select.tsx",
+        "type": "client",
+        "props": {
+          "interface": "SelectProps",
+          "radixUI": true,
+          "subComponents": ["SelectTrigger", "SelectContent", "SelectItem", "SelectValue"]
+        },
+        "dependencies": ["@radix-ui/react-select", "@/lib/utils"],
+        "usageCount": 25,
+        "description": "Radix UI-based dropdown selector with custom styling"
+      },
+      {
+        "name": "Modal",
+        "path": "/components/ui/modal.tsx",
+        "type": "client",
+        "props": {
+          "interface": "ModalProps",
+          "customProps": ["isOpen", "onClose", "title", "children", "size"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "usageCount": 25,
+        "description": "Overlay modal with backdrop and sizing options"
+      },
+      {
+        "name": "RichTextEditor",
+        "path": "/components/ui/rich-text-editor.tsx",
+        "type": "client",
+        "props": {
+          "interface": "RichTextEditorProps",
+          "customProps": ["content", "onChange", "editable", "placeholder", "className"]
+        },
+        "dependencies": ["@tiptap/react", "@tiptap/starter-kit", "@tiptap/extension-placeholder"],
+        "usageCount": 8,
+        "description": "Tiptap-based WYSIWYG editor with formatting toolbar"
+      },
+      {
+        "name": "LoadingSpinner",
+        "path": "/components/ui/loading-spinner.tsx",
+        "type": "server",
+        "props": {
+          "interface": "LoadingSpinnerProps",
+          "variants": ["LoadingSpinner", "LoadingOverlay", "LoadingPage", "InlineLoading"]
+        },
+        "dependencies": [],
+        "usageCount": 30,
+        "description": "Multiple loading state components"
+      },
+      {
+        "name": "Skeleton",
+        "path": "/components/ui/skeleton.tsx",
+        "type": "server",
+        "props": {
+          "variants": 11,
+          "types": ["SkeletonCard", "SkeletonDashboard", "SkeletonList", "SkeletonForm", "SkeletonCalendar"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "usageCount": 20,
+        "description": "Comprehensive skeleton loading states for different UI patterns"
+      },
+      {
+        "name": "Dialog",
+        "path": "/components/ui/dialog.tsx",
+        "type": "client",
+        "props": {
+          "radixUI": true,
+          "subComponents": ["DialogTrigger", "DialogContent", "DialogHeader", "DialogTitle", "DialogDescription"]
+        },
+        "dependencies": ["@radix-ui/react-dialog", "@/lib/utils", "lucide-react"],
+        "usageCount": 15,
+        "description": "Radix UI-based modal dialogs"
+      },
+      {
+        "name": "Badge",
+        "path": "/components/ui/badge.tsx",
+        "type": "server",
+        "props": {
+          "interface": "BadgeProps",
+          "variants": ["default", "secondary", "outline", "destructive"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "usageCount": 12,
+        "description": "Status and category badges with variants"
+      }
+    ],
+    "auth": [
+      {
+        "name": "LoginForm",
+        "path": "/components/auth/login-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LoginFormProps",
+          "customProps": ["onSuccess"]
+        },
+        "dependencies": ["next-auth/react", "next/navigation", "@/lib/validations"],
+        "description": "Email/password login with NextAuth integration"
+      },
+      {
+        "name": "RegisterForm",
+        "path": "/components/auth/register-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "RegisterFormProps",
+          "customProps": ["userType", "teacherName", "teacherId"]
+        },
+        "dependencies": ["next-auth/react", "next/navigation", "@/lib/validations"],
+        "description": "User registration with role selection and teacher assignment"
+      }
+    ],
+    "layout": [
+      {
+        "name": "Header",
+        "path": "/components/layout/header.tsx",
+        "type": "server",
+        "props": null,
+        "dependencies": ["next/link"],
+        "description": "Marketing site header with navigation"
+      },
+      {
+        "name": "Footer",
+        "path": "/components/layout/footer.tsx",
+        "type": "server",
+        "props": null,
+        "dependencies": [],
+        "description": "Site footer component"
+      },
+      {
+        "name": "DashboardSidebar",
+        "path": "/components/layout/dashboard-sidebar.tsx",
+        "type": "client",
+        "props": {
+          "interface": "DashboardSidebarProps",
+          "customProps": ["user"]
+        },
+        "dependencies": ["next-auth/react", "next/navigation", "lucide-react"],
+        "usageCount": 42,
+        "description": "Role-based navigation sidebar for dashboard"
+      }
+    ],
+    "dashboard": [
+      {
+        "name": "TeacherDashboard",
+        "path": "/components/dashboard/teacher-dashboard.tsx",
+        "type": "client",
+        "props": {
+          "interface": "TeacherDashboardProps",
+          "customProps": ["user", "data"]
+        },
+        "dependencies": ["next/navigation", "@/components/ui/*"],
+        "description": "Teacher overview with stats, recent lessons, and quick actions"
+      },
+      {
+        "name": "StudentDashboard",
+        "path": "/components/dashboard/student-dashboard.tsx",
+        "type": "client",
+        "props": {
+          "interface": "StudentDashboardProps",
+          "customProps": ["user", "data"]
+        },
+        "dependencies": ["next/navigation", "@/components/ui/*"],
+        "description": "Student overview with progress tracking and assigned teacher"
+      }
+    ],
+    "scheduling": [
+      {
+        "name": "AvailabilityCalendar",
+        "path": "/components/scheduling/AvailabilityCalendar.tsx",
+        "type": "client",
+        "props": {
+          "interface": "AvailabilityCalendarProps",
+          "customProps": ["teacherId", "onBookingComplete", "allowRecurring", "timezone"]
+        },
+        "dependencies": ["@/lib/utils", "@/lib/logger"],
+        "complexity": "high",
+        "description": "Complex calendar component for booking single or recurring lessons"
+      },
+      {
+        "name": "SchedulingClient",
+        "path": "/components/scheduling/SchedulingClient.tsx",
+        "type": "client",
+        "props": {
+          "interface": "SchedulingClientProps",
+          "customProps": ["teacherId", "studentId", "timezone", "isStudent"]
+        },
+        "dependencies": ["@/components/scheduling/*"],
+        "description": "Main scheduling interface wrapper component"
+      },
+      {
+        "name": "BookingSection",
+        "path": "/components/scheduling/BookingSection.tsx",
+        "type": "client",
+        "props": {
+          "interface": "BookingSectionProps",
+          "customProps": ["selectedSlots", "bookingMode", "recurringWeeks", "onBook"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "description": "Time slot selection and booking logic component"
+      },
+      {
+        "name": "WeeklyLessonDisplay",
+        "path": "/components/scheduling/WeeklyLessonDisplay.tsx",
+        "type": "client",
+        "props": {
+          "interface": "WeeklyLessonDisplayProps",
+          "customProps": ["lessons", "teacherId", "onCancellation"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "description": "Display component for recurring weekly lessons"
+      },
+      {
+        "name": "TeacherRecurringSlots",
+        "path": "/components/scheduling/TeacherRecurringSlots.tsx",
+        "type": "client",
+        "props": {
+          "interface": "TeacherRecurringSlotsProps",
+          "customProps": ["teacherId", "slots", "onDelete"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "description": "Manages teacher's recurring time slots"
+      },
+      {
+        "name": "LessonCancellationCard",
+        "path": "/components/scheduling/LessonCancellationCard.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LessonCancellationCardProps",
+          "customProps": ["lesson", "onCancellation", "userRole"]
+        },
+        "dependencies": ["@/lib/email"],
+        "description": "Handles lesson cancellation with email notifications"
+      }
+    ],
+    "lessons": [
+      {
+        "name": "LessonForm",
+        "path": "/components/lessons/lesson-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LessonFormProps",
+          "customProps": ["lesson", "studentId", "onSuccess", "onCancel"]
+        },
+        "dependencies": ["@/components/ui/rich-text-editor", "@/lib/validations", "@/lib/logger"],
+        "complexity": "high",
+        "features": ["Rich text editing", "File uploads", "URL links", "Curriculum integration"],
+        "description": "Complex form for creating/editing lessons with multiple features"
+      },
+      {
+        "name": "LessonList",
+        "path": "/components/lessons/lesson-list.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LessonListProps",
+          "customProps": ["lessons", "isTeacher", "onEdit", "onDelete"]
+        },
+        "dependencies": ["@/components/ui/*", "@/lib/utils"],
+        "features": ["Pagination", "Search", "Filters", "Sorting"],
+        "description": "Paginated lesson list with search and filters"
+      },
+      {
+        "name": "LessonDetails",
+        "path": "/components/lessons/lesson-details.tsx",
+        "type": "server",
+        "props": {
+          "interface": "LessonDetailsProps",
+          "customProps": ["lesson", "isTeacher"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Lesson detail view with notes, attachments, and links"
+      }
+    ],
+    "teacher": [
+      {
+        "name": "WeeklyScheduleGrid",
+        "path": "/components/teacher/WeeklyScheduleGrid.tsx",
+        "type": "client",
+        "props": {
+          "interface": "WeeklyScheduleGridProps",
+          "customProps": ["availability", "onChange", "timezone"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "features": ["Drag-and-drop", "Multi-slot support", "Timezone handling"],
+        "description": "Teacher availability setup with interactive grid"
+      },
+      {
+        "name": "LessonSettingsForm",
+        "path": "/components/teacher/LessonSettingsForm.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LessonSettingsFormProps",
+          "customProps": ["settings", "onUpdate"]
+        },
+        "dependencies": ["@/lib/validations"],
+        "description": "Configure lesson durations, pricing, and booking limits"
+      },
+      {
+        "name": "BlockedTimeManager",
+        "path": "/components/teacher/BlockedTimeManager.tsx",
+        "type": "client",
+        "props": {
+          "interface": "BlockedTimeManagerProps",
+          "customProps": ["blockedTimes", "onAdd", "onDelete"]
+        },
+        "dependencies": ["@/lib/utils"],
+        "description": "Manage vacation and blocked time periods"
+      },
+      {
+        "name": "SetupWizard",
+        "path": "/components/teacher/setup-wizard.tsx",
+        "type": "client",
+        "props": {
+          "interface": "SetupWizardProps",
+          "customProps": ["currentStep", "onComplete"]
+        },
+        "dependencies": ["@/components/settings/*", "@/components/teacher/*"],
+        "features": ["Multi-step", "Progress tracking", "Validation"],
+        "description": "Multi-step onboarding wizard for new teachers"
+      },
+      {
+        "name": "ProfileValidationAlert",
+        "path": "/components/teacher/profile-validation-alert.tsx",
+        "type": "client",
+        "props": {
+          "interface": "ProfileValidationAlertProps",
+          "customProps": ["missingFields", "onDismiss"]
+        },
+        "dependencies": ["@/components/ui/alert"],
+        "description": "Alert component for incomplete teacher profiles"
+      }
+    ],
+    "students": [
+      {
+        "name": "StudentList",
+        "path": "/components/students/student-list.tsx",
+        "type": "client",
+        "props": {
+          "interface": "StudentListProps",
+          "customProps": ["students", "onEdit", "onDelete"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Search", "Filter", "Sorting"],
+        "description": "Teacher's student roster with management features"
+      },
+      {
+        "name": "StudentProfile",
+        "path": "/components/students/student-profile.tsx",
+        "type": "server",
+        "props": {
+          "interface": "StudentProfileProps",
+          "customProps": ["student", "lessons", "progress"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Individual student profile view with lesson history"
+      }
+    ],
+    "settings": [
+      {
+        "name": "TeacherSettingsForm",
+        "path": "/components/settings/teacher-settings-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "TeacherSettingsFormProps",
+          "customProps": ["teacher", "onUpdate"]
+        },
+        "dependencies": ["@/components/teacher/*", "@/lib/validations"],
+        "features": ["Multi-tab", "Availability management", "Payment methods"],
+        "description": "Comprehensive teacher settings with profile, rates, and availability"
+      },
+      {
+        "name": "StudentSettingsForm",
+        "path": "/components/settings/student-settings-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "StudentSettingsFormProps",
+          "customProps": ["student", "onUpdate"]
+        },
+        "dependencies": ["@/lib/validations"],
+        "description": "Student profile settings with goals and contact info"
+      }
+    ],
+    "admin": [
+      {
+        "name": "ManageTeachers",
+        "path": "/components/admin/manage-teachers.tsx",
+        "type": "client",
+        "props": null,
+        "dependencies": ["@/components/ui/*"],
+        "features": ["CRUD operations", "Modal details", "Search"],
+        "description": "Teacher management interface for admins"
+      },
+      {
+        "name": "ManageStudents",
+        "path": "/components/admin/manage-students.tsx",
+        "type": "client",
+        "props": null,
+        "dependencies": ["@/components/ui/*"],
+        "features": ["CRUD operations", "Modal details", "Search"],
+        "description": "Student management interface for admins"
+      },
+      {
+        "name": "ManageLessons",
+        "path": "/components/admin/manage-lessons.tsx",
+        "type": "client",
+        "props": null,
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Bulk selection", "Delete operations", "Filters"],
+        "description": "System-wide lesson management"
+      },
+      {
+        "name": "AdminSettingsForm",
+        "path": "/components/admin/admin-settings-form.tsx",
+        "type": "client",
+        "props": null,
+        "dependencies": ["@/lib/validations"],
+        "description": "Platform configuration settings"
+      },
+      {
+        "name": "AdminActivityView",
+        "path": "/components/admin/admin-activity-view.tsx",
+        "type": "client",
+        "props": {
+          "interface": "AdminActivityViewProps",
+          "customProps": ["activities", "filters"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Real-time updates", "Filtering", "Pagination"],
+        "description": "Real-time activity monitoring dashboard"
+      },
+      {
+        "name": "EmailTestInterface",
+        "path": "/components/admin/email-test-interface.tsx",
+        "type": "client",
+        "props": null,
+        "dependencies": ["@/lib/email"],
+        "features": ["Template preview", "Test delivery", "Multiple templates"],
+        "description": "Email template testing and delivery interface"
+      },
+      {
+        "name": "BackgroundJobsMonitor",
+        "path": "/components/admin/background-jobs-monitor.tsx",
+        "type": "client",
+        "props": null,
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Job status", "Manual triggers", "Logs"],
+        "description": "System background job monitoring"
+      }
+    ],
+    "invoices": [
+      {
+        "name": "InvoiceForm",
+        "path": "/components/invoices/invoice-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "InvoiceFormProps",
+          "customProps": ["invoice", "students", "onSubmit"]
+        },
+        "dependencies": ["@/lib/validations"],
+        "features": ["Line items", "Custom students", "Auto-calculation"],
+        "description": "Create/edit invoices with lesson items"
+      },
+      {
+        "name": "InvoiceTemplate",
+        "path": "/components/invoices/invoice-template.tsx",
+        "type": "server",
+        "props": {
+          "interface": "InvoiceTemplateProps",
+          "customProps": ["invoice", "teacher", "student"]
+        },
+        "dependencies": [],
+        "description": "Professional invoice layout for PDF generation"
+      },
+      {
+        "name": "InvoiceCard",
+        "path": "/components/invoices/invoice-card.tsx",
+        "type": "server",
+        "props": {
+          "interface": "InvoiceCardProps",
+          "customProps": ["invoice", "onView", "onMarkPaid", "onDelete"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Invoice summary card in lists"
+      },
+      {
+        "name": "InvoiceFilters",
+        "path": "/components/invoices/invoice-filters.tsx",
+        "type": "client",
+        "props": {
+          "interface": "InvoiceFiltersProps",
+          "customProps": ["filters", "onFilterChange"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Filter invoices by status, date, and student"
+      },
+      {
+        "name": "MarkPaidModal",
+        "path": "/components/invoices/mark-paid-modal.tsx",
+        "type": "client",
+        "props": {
+          "interface": "MarkPaidModalProps",
+          "customProps": ["invoice", "onConfirm", "onClose"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Mark invoices as paid with payment details"
+      }
+    ],
+    "library": [
+      {
+        "name": "LibraryList",
+        "path": "/components/library/library-list.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LibraryListProps",
+          "customProps": ["items", "onDownload", "onDelete"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["macOS-style interface", "Multi-select", "Preview", "Bulk operations"],
+        "complexity": "high",
+        "description": "File library with Finder-style interface"
+      },
+      {
+        "name": "LibraryUpload",
+        "path": "/components/library/library-upload.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LibraryUploadProps",
+          "customProps": ["onUploadComplete"]
+        },
+        "dependencies": ["@vercel/blob"],
+        "description": "Single file upload with preview"
+      },
+      {
+        "name": "LibraryBulkUpload",
+        "path": "/components/library/library-bulk-upload.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LibraryBulkUploadProps",
+          "customProps": ["onUploadComplete"]
+        },
+        "dependencies": ["@vercel/blob"],
+        "features": ["Multiple files", "Progress tracking", "Category assignment"],
+        "description": "Multiple file upload interface"
+      },
+      {
+        "name": "FilePreviewModal",
+        "path": "/components/library/file-preview-modal.tsx",
+        "type": "client",
+        "props": {
+          "interface": "FilePreviewModalProps",
+          "customProps": ["file", "isOpen", "onClose"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Preview files before download"
+      }
+    ],
+    "curriculums": [
+      {
+        "name": "CurriculumForm",
+        "path": "/components/curriculums/curriculum-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "CurriculumFormProps",
+          "customProps": ["onSubmit", "initialData"]
+        },
+        "dependencies": ["@/lib/validations"],
+        "features": ["Sections", "Items", "Drag-and-drop ordering"],
+        "description": "Create curriculum with sections and items"
+      },
+      {
+        "name": "CurriculumEditForm",
+        "path": "/components/curriculums/curriculum-edit-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "CurriculumEditFormProps",
+          "customProps": ["curriculum", "onUpdate"]
+        },
+        "dependencies": ["@/lib/validations"],
+        "description": "Edit existing curriculum structure"
+      },
+      {
+        "name": "CurriculumList",
+        "path": "/components/curriculums/curriculum-list.tsx",
+        "type": "client",
+        "props": {
+          "interface": "CurriculumListProps",
+          "customProps": ["curriculums", "onEdit", "onDelete", "onDuplicate"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Search", "Categories", "Progress tracking"],
+        "description": "Browse available curriculums with progress"
+      },
+      {
+        "name": "CurriculumDetail",
+        "path": "/components/curriculums/curriculum-detail.tsx",
+        "type": "server",
+        "props": {
+          "interface": "CurriculumDetailProps",
+          "customProps": ["curriculum", "progress", "isTeacher"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "View curriculum details and student progress"
+      }
+    ],
+    "student-checklists": [
+      {
+        "name": "ChecklistForm",
+        "path": "/components/student-checklists/checklist-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "ChecklistFormProps",
+          "customProps": ["curriculum", "studentId", "onSubmit"]
+        },
+        "dependencies": ["@/lib/validations"],
+        "description": "Create student checklist from curriculum"
+      },
+      {
+        "name": "ChecklistList",
+        "path": "/components/student-checklists/checklist-list.tsx",
+        "type": "client",
+        "props": {
+          "interface": "ChecklistListProps",
+          "customProps": ["checklists", "onView", "onDelete"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Progress bars", "Completion badges", "Confetti"],
+        "description": "Student's personal checklists with progress"
+      },
+      {
+        "name": "ChecklistDetail",
+        "path": "/components/student-checklists/checklist-detail.tsx",
+        "type": "server",
+        "props": {
+          "interface": "ChecklistDetailProps",
+          "customProps": ["checklist", "onItemToggle", "isTeacher"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Item completion", "Strikethrough logic", "Achievement celebration"],
+        "description": "Individual checklist with progress tracking"
+      }
+    ],
+    "recommendations": [
+      {
+        "name": "RecommendationForm",
+        "path": "/components/recommendations/recommendation-form.tsx",
+        "type": "client",
+        "props": {
+          "interface": "RecommendationFormProps",
+          "customProps": ["recommendation", "onSubmit"]
+        },
+        "dependencies": ["@/lib/validations"],
+        "description": "Create gear/book/software recommendations"
+      },
+      {
+        "name": "RecommendationsList",
+        "path": "/components/recommendations/recommendations-list.tsx",
+        "type": "client",
+        "props": {
+          "interface": "RecommendationsListProps",
+          "customProps": ["recommendations", "onEdit", "onDelete", "onArchive"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Categories", "Priority", "Filtering"],
+        "description": "Teacher's recommendation management"
+      },
+      {
+        "name": "StudentRecommendationsList",
+        "path": "/components/recommendations/student-recommendations-list.tsx",
+        "type": "client",
+        "props": {
+          "interface": "StudentRecommendationsListProps",
+          "customProps": ["recommendations"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Student view of teacher recommendations"
+      }
+    ],
+    "booking": [
+      {
+        "name": "BookingInterface",
+        "path": "/components/booking/BookingInterface.tsx",
+        "type": "client",
+        "props": {
+          "interface": "BookingInterfaceProps",
+          "customProps": ["teacherId", "studentId"]
+        },
+        "dependencies": ["@/components/scheduling/*"],
+        "description": "Main student booking interface"
+      },
+      {
+        "name": "BookingSuccessModal",
+        "path": "/components/booking/BookingSuccessModal.tsx",
+        "type": "client",
+        "props": {
+          "interface": "BookingSuccessModalProps",
+          "customProps": ["bookingDetails", "onClose"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Confirmation details", "Investment messaging", "Next steps"],
+        "description": "Booking confirmation modal with investment philosophy"
+      }
+    ],
+    "schedule": [
+      {
+        "name": "TeacherScheduleView",
+        "path": "/components/schedule/teacher-schedule-view.tsx",
+        "type": "client",
+        "props": {
+          "interface": "TeacherScheduleViewProps",
+          "customProps": ["schedule", "onLessonClick"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "features": ["Weekly view", "Timezone display", "Quick actions"],
+        "description": "Teacher's weekly schedule overview"
+      },
+      {
+        "name": "LessonManagementModal",
+        "path": "/components/schedule/lesson-management-modal.tsx",
+        "type": "client",
+        "props": {
+          "interface": "LessonManagementModalProps",
+          "customProps": ["lesson", "onComplete", "onCancel", "onReschedule"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Quick lesson actions from schedule"
+      },
+      {
+        "name": "BookStudentModal",
+        "path": "/components/schedule/book-student-modal.tsx",
+        "type": "client",
+        "props": {
+          "interface": "BookStudentModalProps",
+          "customProps": ["slot", "students", "onBook"]
+        },
+        "dependencies": ["@/components/ui/*"],
+        "description": "Teacher books time for specific student"
+      }
+    ],
+    "marketing": [
+      {
+        "name": "HeroSection",
+        "path": "/components/marketing/hero-section.tsx",
+        "type": "server",
+        "props": null,
+        "dependencies": ["next/link"],
+        "description": "Homepage hero with CTA buttons"
+      },
+      {
+        "name": "FeaturesSection",
+        "path": "/components/marketing/features-section.tsx",
+        "type": "server",
+        "props": null,
+        "dependencies": ["lucide-react"],
+        "description": "Feature highlights grid"
+      },
+      {
+        "name": "CTASection",
+        "path": "/components/marketing/cta-section.tsx",
+        "type": "server",
+        "props": null,
+        "dependencies": ["next/link"],
+        "description": "Bottom call-to-action section"
+      }
+    ]
+  },
+  "pages": {
+    "root": [
+      {
+        "name": "HomePage",
+        "path": "/app/page.tsx",
+        "type": "server",
+        "description": "Marketing homepage with auth redirects"
+      },
+      {
+        "name": "RootLayout",
+        "path": "/app/layout.tsx",
+        "type": "server",
+        "description": "Global layout with providers, fonts, metadata"
+      },
+      {
+        "name": "LoadingPage",
+        "path": "/app/loading.tsx",
+        "type": "server",
+        "description": "Global loading fallback"
+      },
+      {
+        "name": "ErrorPage",
+        "path": "/app/error.tsx",
+        "type": "client",
+        "description": "Global error boundary"
+      },
+      {
+        "name": "GlobalErrorPage",
+        "path": "/app/global-error.tsx",
+        "type": "client",
+        "description": "Root error boundary"
+      },
+      {
+        "name": "NotFoundPage",
+        "path": "/app/not-found.tsx",
+        "type": "server",
+        "description": "404 page"
+      }
+    ],
+    "auth": [
+      {
+        "name": "AuthLayout",
+        "path": "/app/(auth)/layout.tsx",
+        "type": "server",
+        "description": "Centered auth layout"
+      },
+      {
+        "name": "LoginPage",
+        "path": "/app/(auth)/login/page.tsx",
+        "type": "server",
+        "description": "Login page with form"
+      },
+      {
+        "name": "RegisterPage",
+        "path": "/app/(auth)/register/page.tsx",
+        "type": "server",
+        "description": "Registration page"
+      },
+      {
+        "name": "AuthErrorPage",
+        "path": "/app/(auth)/error/page.tsx",
+        "type": "server",
+        "description": "Auth error page"
+      }
+    ],
+    "dashboard": {
+      "main": [
+        {
+          "name": "DashboardLayout",
+          "path": "/app/(dashboard)/layout.tsx",
+          "type": "server",
+          "description": "Dashboard layout with sidebar"
+        },
+        {
+          "name": "DashboardPage",
+          "path": "/app/(dashboard)/dashboard/page.tsx",
+          "type": "server",
+          "description": "Role-based dashboard router"
+        },
+        {
+          "name": "TeacherDashboardPage",
+          "path": "/app/(dashboard)/dashboard/teacher/page.tsx",
+          "type": "server",
+          "description": "Teacher dashboard page"
+        },
+        {
+          "name": "StudentDashboardPage",
+          "path": "/app/(dashboard)/dashboard/student/page.tsx",
+          "type": "server",
+          "description": "Student dashboard page"
+        }
+      ],
+      "lessons": [
+        {
+          "name": "LessonsPage",
+          "path": "/app/(dashboard)/lessons/page.tsx",
+          "type": "server",
+          "description": "Lessons list page"
+        },
+        {
+          "name": "NewLessonPage",
+          "path": "/app/(dashboard)/lessons/new/page.tsx",
+          "type": "server",
+          "description": "Create new lesson page"
+        },
+        {
+          "name": "LessonDetailPage",
+          "path": "/app/(dashboard)/lessons/[id]/page.tsx",
+          "type": "server",
+          "description": "View lesson details"
+        },
+        {
+          "name": "EditLessonPage",
+          "path": "/app/(dashboard)/lessons/[id]/edit/page.tsx",
+          "type": "server",
+          "description": "Edit lesson page"
+        }
+      ],
+      "students": [
+        {
+          "name": "StudentsPage",
+          "path": "/app/(dashboard)/students/page.tsx",
+          "type": "server",
+          "description": "Students list page"
+        },
+        {
+          "name": "StudentDetailPage",
+          "path": "/app/(dashboard)/students/[id]/page.tsx",
+          "type": "server",
+          "description": "Student profile page"
+        }
+      ],
+      "library": [
+        {
+          "name": "LibraryPage",
+          "path": "/app/(dashboard)/library/page.tsx",
+          "type": "server",
+          "description": "File library page"
+        },
+        {
+          "name": "LibraryUploadPage",
+          "path": "/app/(dashboard)/library/upload/page.tsx",
+          "type": "server",
+          "description": "File upload page"
+        },
+        {
+          "name": "LibraryBulkUploadPage",
+          "path": "/app/(dashboard)/library/bulk-upload/page.tsx",
+          "type": "server",
+          "description": "Bulk file upload page"
+        }
+      ],
+      "curriculums": [
+        {
+          "name": "CurriculumsPage",
+          "path": "/app/(dashboard)/curriculums/page.tsx",
+          "type": "server",
+          "description": "Curriculums list page"
+        },
+        {
+          "name": "NewCurriculumPage",
+          "path": "/app/(dashboard)/curriculums/new/page.tsx",
+          "type": "server",
+          "description": "Create curriculum page"
+        },
+        {
+          "name": "CurriculumDetailPage",
+          "path": "/app/(dashboard)/curriculums/[id]/page.tsx",
+          "type": "server",
+          "description": "View curriculum details"
+        },
+        {
+          "name": "EditCurriculumPage",
+          "path": "/app/(dashboard)/curriculums/[id]/edit/page.tsx",
+          "type": "server",
+          "description": "Edit curriculum page"
+        },
+        {
+          "name": "MyChecklistsPage",
+          "path": "/app/(dashboard)/curriculums/my/page.tsx",
+          "type": "server",
+          "description": "Student's personal checklists"
+        },
+        {
+          "name": "MyChecklistDetailPage",
+          "path": "/app/(dashboard)/curriculums/my/[id]/page.tsx",
+          "type": "server",
+          "description": "View personal checklist"
+        }
+      ],
+      "recommendations": [
+        {
+          "name": "RecommendationsPage",
+          "path": "/app/(dashboard)/recommendations/page.tsx",
+          "type": "server",
+          "description": "Recommendations list page"
+        },
+        {
+          "name": "NewRecommendationPage",
+          "path": "/app/(dashboard)/recommendations/new/page.tsx",
+          "type": "server",
+          "description": "Create recommendation page"
+        },
+        {
+          "name": "EditRecommendationPage",
+          "path": "/app/(dashboard)/recommendations/[id]/edit/page.tsx",
+          "type": "server",
+          "description": "Edit recommendation page"
+        }
+      ],
+      "invoices": [
+        {
+          "name": "InvoicesPage",
+          "path": "/app/(dashboard)/invoices/page.tsx",
+          "type": "server",
+          "description": "Invoices list page"
+        },
+        {
+          "name": "NewInvoicePage",
+          "path": "/app/(dashboard)/invoices/new/page.tsx",
+          "type": "server",
+          "description": "Create invoice page"
+        },
+        {
+          "name": "InvoiceDetailPage",
+          "path": "/app/(dashboard)/invoices/[id]/page.tsx",
+          "type": "server",
+          "description": "View invoice details"
+        }
+      ],
+      "admin": [
+        {
+          "name": "AdminSettingsPage",
+          "path": "/app/(dashboard)/admin/settings/page.tsx",
+          "type": "server",
+          "description": "Admin settings page"
+        },
+        {
+          "name": "AdminActivityPage",
+          "path": "/app/(dashboard)/admin/activity/page.tsx",
+          "type": "server",
+          "description": "Activity monitoring page"
+        },
+        {
+          "name": "AdminBackgroundJobsPage",
+          "path": "/app/(dashboard)/admin/background-jobs/page.tsx",
+          "type": "server",
+          "description": "Background jobs page"
+        },
+        {
+          "name": "ManageTeachersPage",
+          "path": "/app/(dashboard)/admin/teachers/page.tsx",
+          "type": "server",
+          "description": "Manage teachers page"
+        },
+        {
+          "name": "CreateTeacherPage",
+          "path": "/app/(dashboard)/admin/teachers/new/page.tsx",
+          "type": "server",
+          "description": "Create teacher page"
+        },
+        {
+          "name": "ManageStudentsPage",
+          "path": "/app/(dashboard)/admin/students/page.tsx",
+          "type": "server",
+          "description": "Manage students page"
+        },
+        {
+          "name": "CreateStudentPage",
+          "path": "/app/(dashboard)/admin/students/new/page.tsx",
+          "type": "server",
+          "description": "Create student page"
+        },
+        {
+          "name": "ManageLessonsPage",
+          "path": "/app/(dashboard)/admin/lessons/page.tsx",
+          "type": "server",
+          "description": "Manage lessons page"
+        },
+        {
+          "name": "EmailTestPage",
+          "path": "/app/(dashboard)/admin/email-test/page.tsx",
+          "type": "server",
+          "description": "Email testing page"
+        }
+      ],
+      "other": [
+        {
+          "name": "SettingsPage",
+          "path": "/app/(dashboard)/settings/page.tsx",
+          "type": "server",
+          "description": "User settings page"
+        },
+        {
+          "name": "SchedulePage",
+          "path": "/app/(dashboard)/schedule/page.tsx",
+          "type": "server",
+          "description": "Teacher schedule page"
+        },
+        {
+          "name": "SchedulingPage",
+          "path": "/app/(dashboard)/scheduling/page.tsx",
+          "type": "server",
+          "description": "Scheduling interface page"
+        },
+        {
+          "name": "BookLessonPage",
+          "path": "/app/(dashboard)/book-lesson/page.tsx",
+          "type": "server",
+          "description": "Student booking page"
+        },
+        {
+          "name": "SetupPage",
+          "path": "/app/(dashboard)/setup/page.tsx",
+          "type": "server",
+          "description": "Teacher setup wizard page"
+        },
+        {
+          "name": "TestErrorPage",
+          "path": "/app/(dashboard)/test-error/page.tsx",
+          "type": "client",
+          "description": "Error testing page"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "mostUsed": [
+      "@/lib/utils",
+      "@/lib/logger",
+      "@/lib/validations",
+      "next/navigation",
+      "next-auth/react",
+      "lucide-react"
+    ],
+    "external": {
+      "ui": [
+        "@radix-ui/react-select",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-checkbox",
+        "@radix-ui/react-label",
+        "@radix-ui/react-separator"
+      ],
+      "editor": [
+        "@tiptap/react",
+        "@tiptap/starter-kit",
+        "@tiptap/extension-placeholder",
+        "@tiptap/extension-text-style",
+        "@tiptap/extension-color"
+      ],
+      "storage": ["@vercel/blob"],
+      "auth": ["next-auth", "@next-auth/prisma-adapter"],
+      "validation": ["zod"],
+      "utilities": ["clsx", "tailwind-merge"]
+    }
+  },
+  "patterns": {
+    "forms": {
+      "validation": "Zod schemas",
+      "state": "React useState/useReducer",
+      "submission": "API routes with loading states",
+      "errors": "Inline error messages"
+    },
+    "lists": {
+      "features": ["Search", "Filters", "Pagination", "Sorting"],
+      "states": ["Loading skeletons", "Empty states", "Error handling"]
+    },
+    "modals": {
+      "implementation": "Dialog/Modal components",
+      "features": ["Backdrop click", "ESC key", "Focus trap"],
+      "variants": ["Confirmation", "Forms", "Details"]
+    },
+    "dataFetching": {
+      "server": "Server Components with Prisma",
+      "client": "fetch with useEffect/SWR patterns",
+      "caching": "Next.js built-in caching"
+    }
+  }
+}

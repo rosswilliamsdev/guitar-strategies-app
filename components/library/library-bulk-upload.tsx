@@ -323,7 +323,7 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
                   </div>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="secondary"
                     size="sm"
                     onClick={() => removeFile(fileData.id)}
                     disabled={fileData.status === 'uploading'}
