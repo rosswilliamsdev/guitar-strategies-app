@@ -2,7 +2,7 @@
 // FILE: components/ui/loading-spinner.tsx
 // ========================================
 import React from "react";
-import { cn } from "@/lib/design";
+import { cn } from "@/lib/utils";
 
 export interface LoadingSpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: "sm" | "md" | "lg" | "xl";

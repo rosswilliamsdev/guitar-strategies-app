@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ChevronUp, ChevronDown, Clock } from "lucide-react"
-import { cn } from "@/lib/design"
+import { cn } from "@/lib/utils"
 
 interface TimePickerProps {
   value?: string // Format: "HH:MM"

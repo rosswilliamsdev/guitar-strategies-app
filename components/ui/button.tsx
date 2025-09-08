@@ -1,98 +1,93 @@
-/**
- * @fileoverview Reusable Button component with variants and role-based styling.
- * 
- * A flexible button component that supports different variants, sizes, and
- * role-based styling. Includes loading states and accessibility features.
- */
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
+import type { Role } from "@prisma/client"
 
-import React from "react";
-import { cn } from "@/lib/utils";
-import { getButtonVariant } from "@/lib/design";
-import type { Role } from "@prisma/client";
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+        // Custom variants for backwards compatibility
+        primary:
+          "bg-primary text-white shadow hover:bg-turquoise-600 focus-visible:ring-turquoise-500",
+        role:
+          "bg-primary text-white shadow hover:bg-turquoise-600 focus-visible:ring-turquoise-500",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-10 rounded-md px-8",
+        icon: "h-9 w-9",
+        // Map our existing sizes
+        md: "h-9 px-4 py-2", // Same as default
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
 
-/**
- * Props for the Button component.
- * Extends standard HTML button attributes with custom styling options.
- */
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  /** Visual variant of the button */
-  variant?: "primary" | "secondary" | "role" | "destructive";
-  /** Size of the button */
-  size?: "sm" | "md" | "lg";
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
   /** User role for role-based styling (when variant="role") */
-  role?: Role;
+  role?: Role
   /** Whether the button is in a loading state */
-  loading?: boolean;
-  /** Button content */
-  children: React.ReactNode;
+  loading?: boolean
 }
 
-/**
- * Button component with variant styling and loading states.
- * 
- * Features:
- * - Multiple visual variants (primary, secondary, role-based)
- * - Three sizes (sm, md, lg)
- * - Loading state with spinner
- * - Automatic disabled state when loading
- * - Role-based styling for user-specific actions
- * - Full accessibility support
- * 
- * @example
- * ```tsx
- * // Primary button
- * <Button variant="primary" onClick={handleClick}>
- *   Save Changes
- * </Button>
- * 
- * // Loading button
- * <Button loading={isSubmitting}>
- *   Submit Form
- * </Button>
- * 
- * // Role-specific styling
- * <Button variant="role" role="TEACHER">
- *   Teacher Action
- * </Button>
- * ```
- */
-export function Button({
-  variant = "primary",
-  size = "md",
-  role,
-  loading = false,
-  className,
-  disabled,
-  children,
-  ...props
-}: ButtonProps) {
-  // Size-specific styling classes
-  const sizeClasses = {
-    sm: "px-3 py-1.5 text-sm font-medium",
-    md: "px-4 py-2 text-sm font-medium", 
-    lg: "px-6 py-3 text-base font-medium",
-  };
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, loading = false, disabled, children, role, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    
+    // For destructive variant, use custom styling for backwards compatibility
+    const finalVariant = variant === 'destructive' 
+      ? undefined 
+      : variant;
+    
+    const destructiveClasses = variant === 'destructive' 
+      ? "bg-white text-red-500 border border-red-500 hover:bg-red-50 focus-visible:ring-red-500"
+      : "";
+    
+    return (
+      <Comp
+        className={cn(
+          finalVariant ? buttonVariants({ variant: finalVariant, size, className }) : "",
+          destructiveClasses,
+          variant === 'destructive' && "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+          className
+        )}
+        ref={ref}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {loading ? (
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            <span>Loading...</span>
+          </div>
+        ) : (
+          children
+        )}
+      </Comp>
+    )
+  }
+)
+Button.displayName = "Button"
 
-  return (
-    <button
-      className={cn(
-        getButtonVariant(variant, role),
-        sizeClasses[size],
-        (disabled || loading) && "opacity-50 cursor-not-allowed",
-        className
-      )}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {loading ? (
-        <div className="flex items-center space-x-2">
-          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-          <span>Loading...</span>
-        </div>
-      ) : (
-        children
-      )}
-    </button>
-  );
-}
+export { Button, buttonVariants }

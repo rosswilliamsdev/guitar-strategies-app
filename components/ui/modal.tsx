@@ -1,8 +1,13 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Button } from "./button";
-import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./dialog";
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,9 +15,13 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   footer?: ReactNode;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
+/**
+ * Modal component that wraps shadcn/ui Dialog for backward compatibility.
+ * Maintains the same API as the original Modal component while using Dialog under the hood.
+ */
 export function Modal({ 
   isOpen, 
   onClose, 
@@ -21,51 +30,29 @@ export function Modal({
   footer,
   size = "md" 
 }: ModalProps) {
-  if (!isOpen) return null;
-
+  // Map size prop to Dialog className
   const sizeClasses = {
-    sm: "max-w-md",
-    md: "max-w-lg", 
-    lg: "max-w-2xl"
+    sm: "sm:max-w-md",
+    md: "sm:max-w-lg", 
+    lg: "sm:max-w-2xl",
+    xl: "sm:max-w-4xl"
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm" 
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className={`relative bg-background border border-border rounded-lg shadow-lg w-full mx-4 ${sizeClasses[size]}`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">
-            {title}
-          </h2>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onClose}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        {/* Content */}
-        <div className="p-6">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className={sizeClasses[size]}>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
           {children}
         </div>
-        
-        {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-2 p-6 border-t border-border">
+          <DialogFooter>
             {footer}
-          </div>
+          </DialogFooter>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
