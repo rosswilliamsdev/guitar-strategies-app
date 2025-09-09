@@ -1,9 +1,7 @@
 import { getServerSession } from 'next-auth';
-import { redirect, notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { LessonDetails } from '@/components/lessons/lesson-details';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
 interface LessonPageProps {
   params: {

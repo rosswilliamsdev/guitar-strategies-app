@@ -3,11 +3,10 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { LibraryList } from '@/components/library/library-list';
-import { LibraryUpload } from '@/components/library/library-upload';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { log, dbLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 export const metadata = {
   title: 'Library - Guitar Strategies',

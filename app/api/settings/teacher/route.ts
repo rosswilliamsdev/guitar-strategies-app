@@ -5,8 +5,9 @@ import { prisma } from '@/lib/db';
 import { teacherProfileSchema } from '@/lib/validations';
 import { sanitizeRichText, sanitizePlainText, sanitizeEmail } from '@/lib/sanitize';
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
+import { withRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -52,7 +53,7 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: NextRequest) {
+async function handlePUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -125,3 +126,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// Export rate-limited handlers
+export const GET = withRateLimit(handleGET, 'read');
+export const PUT = withRateLimit(handlePUT, 'API');

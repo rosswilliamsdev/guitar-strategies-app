@@ -6,7 +6,7 @@ import { AvailabilityCalendar } from "@/components/scheduling/AvailabilityCalend
 import { BookingSuccessModal } from "@/components/booking/BookingSuccessModal"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle } from "lucide-react"
-import toast from "react-hot-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface TimeSlot {
   start: Date
@@ -29,6 +29,7 @@ export function BookingInterface({
   studentTimezone = "America/Chicago",
   onSelectionChange
 }: BookingInterfaceProps) {
+  const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState<string>("")
   const [error, setError] = useState<string>("")

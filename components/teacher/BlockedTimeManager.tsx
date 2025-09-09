@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TimePicker } from "@/components/ui/time-picker"
-import { cn } from "@/lib/design"
+import { cn } from "@/lib/utils"
 import { blockedTimeSchema } from "@/lib/validations"
 import type { z } from "zod"
 

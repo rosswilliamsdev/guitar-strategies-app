@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { startOfMonth, startOfWeek, startOfDay, subDays } from "date-fns";
 import { log, dbLog, emailLog, invoiceLog } from '@/lib/logger';
+import { dashboardCache, CacheKeys } from '@/lib/cache';
 
 export interface AdminStats {
   totalUsers: number;
@@ -33,6 +34,13 @@ export interface UserStats {
  * Get comprehensive admin statistics
  */
 export async function getAdminStats(): Promise<AdminStats> {
+  // Check cache first
+  const cacheKey = 'admin:dashboard:stats';
+  const cached = dashboardCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  
   try {
     const now = new Date();
     const startOfThisMonth = startOfMonth(now);
@@ -256,7 +264,7 @@ export async function getAdminStats(): Promise<AdminStats> {
     });
     const limitedActivity = recentActivity.slice(0, 10);
 
-    return {
+    const stats = {
       totalUsers,
       activeTeachers,
       activeStudents,
@@ -269,6 +277,11 @@ export async function getAdminStats(): Promise<AdminStats> {
       },
       recentActivity: limitedActivity
     };
+    
+    // Cache the result for 2 minutes
+    dashboardCache.set(cacheKey, stats, 1000 * 60 * 2);
+    
+    return stats;
   } catch (error) {
     log.error('Error fetching admin stats:', {
         error: error instanceof Error ? error.message : String(error),

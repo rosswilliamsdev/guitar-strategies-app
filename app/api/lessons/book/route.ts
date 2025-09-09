@@ -17,8 +17,9 @@ import {
   handleApiError
 } from '@/lib/api-responses';
 import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
+import { withRateLimit } from '@/lib/rate-limit';
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -232,3 +233,5 @@ export async function POST(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+export const POST = withRateLimit(handlePOST, 'BOOKING');

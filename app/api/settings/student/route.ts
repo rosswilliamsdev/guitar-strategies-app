@@ -4,8 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { studentProfileSchema } from '@/lib/validations';
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
+import { withRateLimit } from '@/lib/rate-limit';
 
-export async function PUT(request: NextRequest) {
+async function handlePUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -67,3 +68,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// Export rate-limited handler
+export const PUT = withRateLimit(handlePUT, 'API');

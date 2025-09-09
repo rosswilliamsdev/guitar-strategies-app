@@ -4,6 +4,47 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { InvoiceTemplate } from '@/components/invoices/invoice-template';
 
+type InvoiceWithRelations = {
+  id: string;
+  invoiceNumber: string;
+  status: string;
+  createdAt: Date;
+  dueDate: Date;
+  month: string;
+  subtotal: number;
+  total: number;
+  paidAt: Date | null;
+  paymentMethod: string | null;
+  paymentNotes: string | null;
+  customFullName: string | null;
+  customEmail: string | null;
+  teacher: {
+    user: {
+      name: string;
+      email: string;
+    };
+    phoneNumber: string | null;
+    venmoHandle: string | null;
+    paypalEmail: string | null;
+    zelleEmail: string | null;
+  };
+  student: {
+    user: {
+      name: string;
+      email: string;
+    };
+    phoneNumber: string | null;
+  } | null;
+  items: Array<{
+    id: string;
+    description: string;
+    lessonDate: Date | null;
+    quantity: number;
+    rate: number;
+    amount: number;
+  }>;
+};
+
 interface InvoicePageProps {
   params: Promise<{ id: string }>;
 }
@@ -48,7 +89,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <InvoiceTemplate invoice={invoice as any} showActions={isTeacher} />
+      <InvoiceTemplate invoice={invoice as InvoiceWithRelations} showActions={isTeacher} />
     </div>
   );
 }

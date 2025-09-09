@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/design";
+import { cn } from "@/lib/utils";
 import { Skeleton, SkeletonCalendar } from "@/components/ui/skeleton";
 import { InlineLoading } from "@/components/ui/loading-spinner";
 import { log, schedulerLog } from '@/lib/logger';

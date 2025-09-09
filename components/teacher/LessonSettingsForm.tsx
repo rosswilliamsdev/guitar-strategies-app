@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { cn } from "@/lib/design"
+import { cn } from "@/lib/utils"
 import { lessonSettingsSchema } from "@/lib/validations"
 import type { z } from "zod"
 

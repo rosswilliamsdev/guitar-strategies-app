@@ -16,7 +16,7 @@ export default async function EmailTestPage() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Email System Test</h1>
           <p className="text-muted-foreground">
-            Test the email notification system to ensure it's working properly.
+            Test the email notification system to ensure it&apos;s working properly.
           </p>
         </div>
       </div>

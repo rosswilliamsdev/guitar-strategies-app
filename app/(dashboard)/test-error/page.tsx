@@ -162,7 +162,7 @@ export default function TestErrorPage() {
               <Button
                 onClick={() => {
                   // This will cause an unhandled error
-                  const obj: any = null;
+                  const obj: Record<string, unknown> | null = null;
                   obj.someMethod();
                 }}
                 variant="secondary"
@@ -180,8 +180,8 @@ export default function TestErrorPage() {
           <ol className="text-sm text-neutral-600 space-y-1 list-decimal list-inside">
             <li>Click any error button to trigger that specific error type</li>
             <li>The global error boundary should catch the error and display a friendly error page</li>
-            <li>You should see options to "Try Again" or "Go to Homepage"</li>
-            <li>In development, you'll see the error message details</li>
+            <li>You should see options to &quot;Try Again&quot; or &quot;Go to Homepage&quot;</li>
+            <li>In development, you&apos;ll see the error message details</li>
             <li>In production, error details would be hidden from users</li>
           </ol>
         </div>

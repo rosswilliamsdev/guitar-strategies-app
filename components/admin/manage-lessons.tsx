@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import toast from "react-hot-toast";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Search,
   Calendar,
@@ -76,6 +76,7 @@ interface ManageLessonsProps {
 }
 
 export function ManageLessons({ lessons, stats }: ManageLessonsProps) {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [teacherFilter, setTeacherFilter] = useState("all");

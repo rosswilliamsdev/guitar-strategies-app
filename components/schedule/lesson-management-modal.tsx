@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { User, Calendar, Clock, FileText, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
-import toast from "react-hot-toast";
+import { useToast } from "@/hooks/use-toast";
 import { log, emailLog } from '@/lib/logger';
 
 interface UpcomingLesson {
@@ -39,6 +39,7 @@ export function LessonManagementModal({
   lesson,
   onUpdate,
 }: LessonManagementModalProps) {
+  const { toast } = useToast();
   const [mode, setMode] = useState<"view" | "notes" | "cancel">("view");
   const [notes, setNotes] = useState(lesson.notes || "");
   const [isLoading, setIsLoading] = useState(false);

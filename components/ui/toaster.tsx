@@ -1,19 +1,35 @@
-// ========================================
-// FILE: components/ui/toaster.tsx
-// ========================================
-"use client";
+"use client"
 
-import React from "react";
-import { cn } from "@/lib/utils";
+import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/components/ui/toast"
+import { useToast } from "@/hooks/use-toast"
 
-// Simple toast implementation - can be replaced with react-hot-toast or similar
 export function Toaster() {
-  // This is a placeholder component
-  // In a real implementation, you'd use a toast library like react-hot-toast
+  const { toasts } = useToast()
+
   return (
-    <div
-      id="toast-container"
-      className="fixed top-4 right-4 z-50 flex flex-col space-y-2"
-    />
-  );
+    <ToastProvider>
+      {toasts.map(function ({ id, title, description, action, ...props }) {
+        return (
+          <Toast key={id} {...props}>
+            <div className="grid gap-1">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
+            </div>
+            {action}
+            <ToastClose />
+          </Toast>
+        )
+      })}
+      <ToastViewport />
+    </ToastProvider>
+  )
 }

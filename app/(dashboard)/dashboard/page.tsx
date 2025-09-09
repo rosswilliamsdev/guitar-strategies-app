@@ -6,7 +6,7 @@ import { MainDashboard } from './main-dashboard';
 import { TeacherDashboard } from '@/components/dashboard/teacher-dashboard';
 import { StudentDashboard } from '@/components/dashboard/student-dashboard';
 import { getUserStats, getAdminStats } from '@/lib/dashboard-stats';
-import { log, dbLog, emailLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 export const metadata = {
   title: 'Dashboard',

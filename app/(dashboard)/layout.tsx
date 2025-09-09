@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 export default async function DashboardLayout({
   children,
@@ -26,25 +26,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#ffffff',
-            color: '#0a0a0a',
-            borderRadius: '8px',
-            border: '1px solid #e5e5e5',
-            padding: '16px',
-          },
-          success: {
-            iconTheme: {
-              primary: '#14b8b3',
-              secondary: '#ffffff',
-            },
-          },
-        }}
-      />
+      <Toaster />
     </div>
   );
 }

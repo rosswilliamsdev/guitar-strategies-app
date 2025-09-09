@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Plus, Trash2, Copy, Save } from "lucide-react"
 import { TimePicker } from "@/components/ui/time-picker"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/design"
+import { cn } from "@/lib/utils"
 import { availabilitySchema } from "@/lib/validations"
 import type { z } from "zod"
 

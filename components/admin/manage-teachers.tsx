@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import toast from "react-hot-toast";
+import { useToast } from "@/hooks/use-toast";
 import {
   Search,
   Users,
@@ -60,6 +60,7 @@ interface ManageTeachersProps {
 }
 
 export function ManageTeachers({ teachers }: ManageTeachersProps) {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);

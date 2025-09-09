@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
 import { apiLog, dbLog } from '@/lib/logger';
+import { withRateLimit } from '@/lib/rate-limit';
 
 const passwordUpdateSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
@@ -15,7 +16,7 @@ const passwordUpdateSchema = z.object({
     ),
 });
 
-export async function PUT(request: NextRequest) {
+async function handlePUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -69,3 +70,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// Export rate-limited handler
+export const PUT = withRateLimit(handlePUT, 'AUTH');

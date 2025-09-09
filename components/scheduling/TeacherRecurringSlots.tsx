@@ -19,7 +19,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/design";
+import { cn } from "@/lib/utils";
 import { SlotStatus, BillingStatus } from "@/types";
 import { getDayName, formatSlotTime } from "@/lib/slot-helpers";
 

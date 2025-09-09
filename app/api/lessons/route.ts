@@ -19,6 +19,8 @@ import { createLessonSchema } from '@/lib/validations';
 import { validateJsonSize } from '@/lib/request-validation';
 import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
 import { apiLog, dbLog } from '@/lib/logger';
+import { createCachedResponse, generateETag, isCacheValid, createNotModifiedResponse, CacheKeys, lessonCache } from '@/lib/cache';
+import { withRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/lessons
@@ -41,7 +43,7 @@ import { apiLog, dbLog } from '@/lib/logger';
  * @param request - Next.js request object with query parameters
  * @returns JSON response with lessons array or error
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -132,7 +134,30 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ lessons });
+    // Generate cache key and check cache
+    const cacheKey = session.user.role === 'TEACHER' 
+      ? CacheKeys.teacherLessons(session.user.teacherProfile!.id) 
+      : CacheKeys.studentLessons(session.user.studentProfile!.id);
+    
+    // Generate ETag for cache validation
+    const etag = generateETag({ lessons, timestamp: Date.now() });
+    const lastModified = lessons.length > 0 
+      ? new Date(Math.max(...lessons.map(l => new Date(l.updatedAt || l.createdAt).getTime())))
+      : new Date();
+
+    // Check if client has valid cache
+    if (isCacheValid(request, etag, lastModified)) {
+      return createNotModifiedResponse();
+    }
+
+    // Cache the result in memory for subsequent requests
+    lessonCache.set(cacheKey, lessons);
+
+    // Return cached response with appropriate headers
+    return createCachedResponse({ lessons }, 'LESSONS', {
+      etag,
+      lastModified,
+    });
   } catch (error) {
     apiLog.error('Error fetching lessons:', {
         error: error instanceof Error ? error.message : String(error),
@@ -167,7 +192,7 @@ export async function GET(request: NextRequest) {
  * @param request - Next.js request object with lesson data
  * @returns JSON response with created lesson or error
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -257,3 +282,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+// Export rate-limited handlers
+export const GET = withRateLimit(handleGET, 'READ');
+export const POST = withRateLimit(handlePOST, 'API');

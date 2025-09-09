@@ -5,8 +5,9 @@ import { prisma } from '@/lib/db';
 import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
 import { createInvoiceSchema } from '@/lib/validations';
 import { apiLog, dbLog, invoiceLog } from '@/lib/logger';
+import { withRateLimit } from '@/lib/rate-limit';
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -239,3 +240,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// Export rate-limited handlers
+export const GET = withRateLimit(handleGET, 'read');
+export const POST = withRateLimit(handlePOST, 'API');
