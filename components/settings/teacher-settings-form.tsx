@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Save, Key, User, Calendar, Clock, Settings2, CalendarDays, DollarSign } from "lucide-react";
+import { AlertCircle, Save, Key, User, Calendar, Clock, Settings2, CalendarDays, DollarSign, Mail } from "lucide-react";
 import { teacherProfileSchema, passwordChangeSchema, timezoneSchema } from "@/lib/validations";
+import { EmailPreferences, type EmailPreference } from "@/components/settings/email-preferences";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { BlockedTimeManager } from "@/components/teacher/BlockedTimeManager";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
@@ -45,14 +46,15 @@ interface TeacherSettingsFormProps {
     paypalEmail?: string;
     zelleEmail?: string;
   };
+  emailPreferences?: EmailPreference[];
 }
 
-export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFormProps) {
+export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [] }: TeacherSettingsFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<'profile' | 'availability' | 'lesson-settings' | 'blocked-time' | 'password'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'availability' | 'lesson-settings' | 'blocked-time' | 'password' | 'email'>('profile');
 
   // Profile form state
   const [name, setName] = useState(user.name);
@@ -95,6 +97,32 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Email preferences handler
+  const handleEmailPreferencesUpdate = async (preferences: EmailPreference[]): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/settings/email-preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ preferences }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update email preferences');
+      }
+
+      setSuccess("Email preferences updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+      return true;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to update email preferences");
+      setTimeout(() => setError(""), 5000);
+      return false;
+    }
+  };
 
   // Scheduling data state
   const [availability, setAvailability] = useState<any[]>([]);
@@ -420,6 +448,17 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
           <Key className="h-4 w-4" />
           <span className="hidden sm:inline">Password</span>
         </button>
+        <button
+          onClick={() => setActiveTab('email')}
+          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'email'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Mail className="h-4 w-4" />
+          <span className="hidden sm:inline">Email</span>
+        </button>
       </div>
 
       {/* Messages */}
@@ -701,6 +740,14 @@ export function TeacherSettingsForm({ user, teacherProfile }: TeacherSettingsFor
             loading={schedulingLoading}
           />
         </Card>
+      )}
+
+      {/* Email Preferences Tab */}
+      {activeTab === 'email' && (
+        <EmailPreferences
+          preferences={emailPreferences}
+          onUpdate={handleEmailPreferencesUpdate}
+        />
       )}
     </div>
   );

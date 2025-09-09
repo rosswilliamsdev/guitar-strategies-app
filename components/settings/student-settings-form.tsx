@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle, Save, Key, User, GraduationCap, Phone, Mail } from "lucide-react";
 import { studentProfileSchema, passwordChangeSchema } from "@/lib/validations";
+import { EmailPreferences, type EmailPreference } from "@/components/settings/email-preferences";
 
 interface StudentSettingsFormProps {
   user: {
@@ -38,15 +39,16 @@ interface StudentSettingsFormProps {
       };
     };
   };
+  emailPreferences?: EmailPreference[];
 }
 
 
-export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFormProps) {
+export function StudentSettingsForm({ user, studentProfile, emailPreferences = [] }: StudentSettingsFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'email'>('profile');
 
   // Profile form state
   const [name, setName] = useState(user.name);
@@ -59,6 +61,32 @@ export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFor
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Email preferences handler
+  const handleEmailPreferencesUpdate = async (preferences: EmailPreference[]): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/settings/email-preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ preferences }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update email preferences');
+      }
+
+      setSuccess("Email preferences updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+      return true;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Failed to update email preferences");
+      setTimeout(() => setError(""), 5000);
+      return false;
+    }
+  };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,6 +204,17 @@ export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFor
         >
           <Key className="h-4 w-4" />
           <span>Change Password</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('email')}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'email'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Mail className="h-4 w-4" />
+          <span>Email Preferences</span>
         </button>
       </div>
 
@@ -354,6 +393,14 @@ export function StudentSettingsForm({ user, studentProfile }: StudentSettingsFor
             </Button>
           </form>
         </Card>
+      )}
+
+      {/* Email Preferences Tab */}
+      {activeTab === 'email' && (
+        <EmailPreferences
+          preferences={emailPreferences}
+          onUpdate={handleEmailPreferencesUpdate}
+        />
       )}
     </div>
   );

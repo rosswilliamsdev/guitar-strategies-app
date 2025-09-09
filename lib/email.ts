@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { withRetry, emailRetryOptions } from './retry';
 import { emailLog } from './logger';
+import { prisma } from './db';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -9,6 +10,76 @@ export interface EmailData {
   subject: string;
   html: string;
   from?: string;
+}
+
+export type EmailType = 
+  | 'LESSON_BOOKING'
+  | 'LESSON_CANCELLATION' 
+  | 'LESSON_REMINDER'
+  | 'INVOICE_GENERATED'
+  | 'INVOICE_OVERDUE'
+  | 'CHECKLIST_COMPLETION'
+  | 'SYSTEM_UPDATES';
+
+/**
+ * Check if user has opted-in to receive emails of a specific type
+ */
+export async function checkEmailPreference(userId: string, emailType: EmailType): Promise<boolean> {
+  try {
+    const preference = await prisma.emailPreference.findUnique({
+      where: {
+        userId_type: {
+          userId,
+          type: emailType
+        }
+      }
+    });
+
+    // If no preference exists, default to enabled (opt-in by default)
+    return preference?.enabled ?? true;
+  } catch (error) {
+    emailLog.error('Error checking email preferences', {
+      userId,
+      emailType,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    
+    // Fail safely - send email if we can't check preferences
+    return true;
+  }
+}
+
+/**
+ * Send email with preference checking
+ */
+export async function sendEmailWithPreferences(
+  userId: string,
+  emailType: EmailType,
+  emailData: EmailData
+): Promise<boolean> {
+  try {
+    // Check if user has opted-in to this email type
+    const hasOptedIn = await checkEmailPreference(userId, emailType);
+    
+    if (!hasOptedIn) {
+      emailLog.info('Email not sent - user has opted out', {
+        userId,
+        emailType,
+        to: emailData.to
+      });
+      return true; // Return true as this is not an error
+    }
+
+    // User has opted-in, send the email
+    return await sendEmail(emailData);
+  } catch (error) {
+    emailLog.error('Error in sendEmailWithPreferences', {
+      userId,
+      emailType,
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return false;
+  }
 }
 
 /**

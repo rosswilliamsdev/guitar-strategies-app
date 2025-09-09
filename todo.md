@@ -166,10 +166,6 @@
 - [ ] **Add distributed locking** - For multi-instance deployments
 - [ ] **Implement custom metrics** - Track business KPIs and performance
 
-### Technical Debt & Code Quality
-
-- [ ] **Remaining TypeScript Issues**: Address remaining API route type issues and legacy code (reduced from 50+ to ~15 non-critical errors)
-
 ## Email Notification System ✅ COMPLETED
 
 - [x] Create an email notification system
@@ -180,7 +176,7 @@
   - [x] Create email templates for lesson cancellation notifications
   - [x] Add email sending functionality to lesson cancellation API endpoint
   - [x] Handle email delivery failures gracefully
-  - [ ] Add email preferences to user settings (opt-in/opt-out)
+  - [x] Add email preferences to user settings (opt-in/opt-out)
   - [x] Send congratulatory and encouraging email when checklists are completed
   - [x] Send email when invoice is overdue
   - [x] Send email when single lesson is booked

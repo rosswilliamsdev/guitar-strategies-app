@@ -12,11 +12,11 @@ const buttonVariants = cva(
         default:
           "bg-turquoise-500 text-white shadow hover:bg-turquoise-600 focus-visible:ring-turquoise-500",
         destructive:
-          "bg-white text-red-500 border border-red-500 hover:bg-red-50 focus-visible:ring-red-500",
+          "relative !text-red-600 bg-transparent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[1px] after:bg-red-500 hover:bg-red-500/10 hover:!text-red-700 focus-visible:ring-red-500",
         outline:
           "border border-neutral-300 bg-white shadow-sm hover:bg-neutral-50 hover:text-foreground",
         secondary:
-          "bg-neutral-100 text-foreground shadow-sm hover:bg-neutral-200",
+          "relative text-black bg-transparent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[1px] after:bg-turquoise-500 hover:bg-turquoise-500/10 hover:text-black focus-visible:ring-turquoise-500",
         ghost: "hover:bg-neutral-100 hover:text-foreground",
         link: "text-turquoise-500 underline-offset-4 hover:underline",
         // Custom variants for backwards compatibility

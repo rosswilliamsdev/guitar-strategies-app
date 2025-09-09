@@ -33,7 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log, schedulerLog } from '@/lib/logger';
+import { log, schedulerLog } from "@/lib/logger";
 
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
@@ -78,10 +78,16 @@ export function LessonList({ userRole }: LessonListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<string>("all");
   // Default to 'thisMonth' for teachers, 'all' for students
-  const [dateFilter, setDateFilter] = useState<string>(userRole === "TEACHER" ? "thisMonth" : "all");
+  const [dateFilter, setDateFilter] = useState<string>(
+    userRole === "TEACHER" ? "thisMonth" : "all"
+  );
   const [sortOrder, setSortOrder] = useState<"latest" | "earliest">("latest");
-  const [cancellingLessons, setCancellingLessons] = useState<Set<string>>(new Set());
-  const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(null);
+  const [cancellingLessons, setCancellingLessons] = useState<Set<string>>(
+    new Set()
+  );
+  const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(
+    null
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -93,16 +99,18 @@ export function LessonList({ userRole }: LessonListProps) {
         }
         const data = await response.json();
         // Sort lessons by date in descending order (most recent first)
-        const sortedLessons = (data.lessons || []).sort((a: Lesson, b: Lesson) => {
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-        });
+        const sortedLessons = (data.lessons || []).sort(
+          (a: Lesson, b: Lesson) => {
+            return new Date(b.date).getTime() - new Date(a.date).getTime();
+          }
+        );
         setLessons(sortedLessons);
       } catch (error) {
         setError("Failed to load lessons");
-        log.error('Error fetching lessons:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        log.error("Error fetching lessons:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       } finally {
         setLoading(false);
       }
@@ -113,29 +121,28 @@ export function LessonList({ userRole }: LessonListProps) {
 
   const handleCancelLesson = async (lessonId: string) => {
     setConfirmCancelLesson(null);
-    setCancellingLessons(prev => new Set(prev).add(lessonId));
+    setCancellingLessons((prev) => new Set(prev).add(lessonId));
 
     try {
       const response = await fetch(`/api/lessons/${lessonId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to cancel lesson');
+        throw new Error(errorData.error || "Failed to cancel lesson");
       }
 
       // Remove the cancelled lesson from the local state
-      setLessons(prev => prev.filter(lesson => lesson.id !== lessonId));
-      
+      setLessons((prev) => prev.filter((lesson) => lesson.id !== lessonId));
     } catch (error: any) {
-      log.error('Error cancelling lesson:', {
+      log.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      setErrorMessage(error.message || 'Failed to cancel lesson');
+      setErrorMessage(error.message || "Failed to cancel lesson");
     } finally {
-      setCancellingLessons(prev => {
+      setCancellingLessons((prev) => {
         const newSet = new Set(prev);
         newSet.delete(lessonId);
         return newSet;
@@ -160,12 +167,12 @@ export function LessonList({ userRole }: LessonListProps) {
   const filteredLessons = useMemo(() => {
     const filtered = lessons.filter((lesson) => {
       // Exclude cancelled lessons
-      if (lesson.status === 'CANCELLED') {
+      if (lesson.status === "CANCELLED") {
         return false;
       }
 
       // For students, only show completed lessons
-      if (userRole === 'STUDENT' && lesson.status !== 'COMPLETED') {
+      if (userRole === "STUDENT" && lesson.status !== "COMPLETED") {
         return false;
       }
 
@@ -234,7 +241,7 @@ export function LessonList({ userRole }: LessonListProps) {
 
       return matchesSearch && matchesStudent && matchesDate;
     });
-    
+
     // Sort filtered lessons by date based on sortOrder
     return filtered.sort((a, b) => {
       const dateA = new Date(a.date).getTime();
@@ -253,9 +260,7 @@ export function LessonList({ userRole }: LessonListProps) {
               <Skeleton className="h-10 w-full" />
             </div>
             <div className="flex gap-4">
-              {userRole === "TEACHER" && (
-                <Skeleton className="h-10 w-48" />
-              )}
+              {userRole === "TEACHER" && <Skeleton className="h-10 w-48" />}
               <Skeleton className="h-10 w-48" />
             </div>
           </div>
@@ -371,9 +376,11 @@ export function LessonList({ userRole }: LessonListProps) {
             {filteredLessons.length === 1 ? "Lesson" : "Lessons"}
             {searchTerm && ` matching "${searchTerm}"`}
           </h2>
-          <Select 
-            value={sortOrder} 
-            onValueChange={(value) => setSortOrder(value as "latest" | "earliest")}
+          <Select
+            value={sortOrder}
+            onValueChange={(value) =>
+              setSortOrder(value as "latest" | "earliest")
+            }
           >
             <SelectTrigger className="w-40">
               <ArrowUpDown className="h-4 w-4 mr-2" />
@@ -436,17 +443,20 @@ export function LessonList({ userRole }: LessonListProps) {
                     </span>
                     <div className="flex items-center space-x-1">
                       {/* Cancel button - only show for future lessons and scheduled status */}
-                      {lesson.status === 'SCHEDULED' && new Date(lesson.date) > new Date() && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => setConfirmCancelLesson(lesson.id)}
-                          disabled={cancellingLessons.has(lesson.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 h-6"
-                        >
-                          {cancellingLessons.has(lesson.id) ? '...' : 'Cancel'}
-                        </Button>
-                      )}
+                      {lesson.status === "SCHEDULED" &&
+                        new Date(lesson.date) > new Date() && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => setConfirmCancelLesson(lesson.id)}
+                            disabled={cancellingLessons.has(lesson.id)}
+                            className="text-xs px-2 py-1 h-6"
+                          >
+                            {cancellingLessons.has(lesson.id)
+                              ? "..."
+                              : "Cancel"}
+                          </Button>
+                        )}
                       <Link href={`/lessons/${lesson.id}`}>
                         <Button
                           size="sm"
@@ -474,21 +484,30 @@ export function LessonList({ userRole }: LessonListProps) {
       </div>
 
       {/* Cancel Lesson Confirmation Dialog */}
-      <Dialog open={!!confirmCancelLesson} onOpenChange={() => setConfirmCancelLesson(null)}>
+      <Dialog
+        open={!!confirmCancelLesson}
+        onOpenChange={() => setConfirmCancelLesson(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel Lesson</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this lesson? This action cannot be undone.
+              Are you sure you want to cancel this lesson? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setConfirmCancelLesson(null)}>
+            <Button
+              variant="destructive"
+              onClick={() => setConfirmCancelLesson(null)}
+            >
               Keep Lesson
             </Button>
-            <Button 
+            <Button
               className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => confirmCancelLesson && handleCancelLesson(confirmCancelLesson)}
+              onClick={() =>
+                confirmCancelLesson && handleCancelLesson(confirmCancelLesson)
+              }
             >
               Cancel Lesson
             </Button>
@@ -509,9 +528,7 @@ export function LessonList({ userRole }: LessonListProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setErrorMessage(null)}>
-              OK
-            </Button>
+            <Button onClick={() => setErrorMessage(null)}>OK</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

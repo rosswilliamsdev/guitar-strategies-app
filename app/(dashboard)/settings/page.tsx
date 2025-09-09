@@ -24,7 +24,8 @@ async function getUserData(userId: string, role: string) {
                 include: { user: true }
               }
             }
-          }
+          },
+          emailPreferences: true
         }
       });
       return studentData;
@@ -32,7 +33,8 @@ async function getUserData(userId: string, role: string) {
       const teacherData = await prisma.user.findUnique({
         where: { id: userId },
         include: {
-          teacherProfile: true
+          teacherProfile: true,
+          emailPreferences: true
         }
       });
       return teacherData;
@@ -84,11 +86,13 @@ export default async function SettingsPage() {
         <StudentSettingsForm 
           user={userData}
           studentProfile={userData.studentProfile}
+          emailPreferences={userData.emailPreferences || []}
         />
       ) : session.user.role === 'TEACHER' && userData.teacherProfile ? (
         <TeacherSettingsForm 
           user={userData}
           teacherProfile={userData.teacherProfile}
+          emailPreferences={userData.emailPreferences || []}
         />
       ) : (
         <Card className="p-6">

@@ -64,6 +64,7 @@ model User {
   teacherProfile TeacherProfile?
   studentProfile StudentProfile?
   createdChecklists StudentChecklist[] // Checklists created by this user
+  emailPreferences EmailPreference[] // User's email notification preferences
 
   @@index([email])
   @@index([role])
@@ -776,6 +777,32 @@ enum BillingStatus {
   PAID        // Student has paid
   OVERDUE     // Payment past due
   CANCELLED   // Billing cancelled
+}
+
+enum EmailType {
+  LESSON_BOOKING        // Lesson booking confirmations
+  LESSON_CANCELLATION   // Lesson cancellation notifications
+  LESSON_REMINDER       // Lesson reminders (24h before)
+  INVOICE_GENERATED     // New invoice notifications
+  INVOICE_OVERDUE       // Overdue invoice reminders
+  CHECKLIST_COMPLETION  // Achievement celebration emails
+  SYSTEM_UPDATES        // System announcements
+}
+
+// Email preferences for notification opt-in/opt-out
+model EmailPreference {
+  id        String   @id @default(cuid())
+  userId    String
+  type      EmailType
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, type]) // One preference per user per email type
+  @@index([userId])
 }
 
 // Background job logging for monitoring automatic lesson generation

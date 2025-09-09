@@ -4,9 +4,27 @@
 
 ---
 
-## 🚀 [Current Version] - September 9, 2025
+## 🚀 [Current Version] - September 9, 2025 (Evening)
 
-### **Production Readiness & Performance** (Sep 9, 2025)
+### **Email Preferences & UI Enhancements** (Sep 9, 2025 - Evening)
+- **Email Preferences System**: Complete opt-in/opt-out functionality for all email notifications
+  - Database schema with EmailPreference model and EmailType enum
+  - 7 notification categories: Lesson bookings, cancellations, reminders, invoices, achievements, system updates
+  - User interface with organized categories and toggle switches
+  - Integrated into Student and Teacher settings with dedicated "Email Preferences" tab
+  - API endpoints for fetching and updating preferences
+  - Email sending logic updated to check user preferences before sending
+  - Default preferences populated for all existing users
+  - **Files**: `components/settings/email-preferences.tsx`, `app/api/settings/email-preferences/`, `components/ui/switch.tsx`
+
+- **UI Component Refinements**: Enhanced button and switch components for better UX
+  - **Switch Component**: Updated off-state styling with better contrast (neutral-300 background with white thumb)
+  - **Secondary Buttons**: Redesigned with 1px teal underline, transparent background, 10% teal hover
+  - **Destructive Buttons**: Red text with 1px red underline, 10% red hover for cancel/delete actions
+  - Consistent underline approach using pseudo-elements for clean edges
+  - **Files**: `components/ui/button.tsx`, `components/ui/switch.tsx`
+
+### **Production Readiness & Performance** (Sep 9, 2025 - Morning)
 - **Rate Limiting System**: Comprehensive rate limiting with Redis fallback and memory store
   - IP and user-based limits with different configurations per endpoint type
   - Smart blocking for excessive requests with automatic recovery

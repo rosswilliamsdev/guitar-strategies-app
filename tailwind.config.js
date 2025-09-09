@@ -20,7 +20,7 @@ module.exports = {
     "focus-visible:ring-turquoise-500",
     "focus-visible:border-turquoise-500",
     "border-neutral-300",
-    "border-neutral-400", 
+    "border-neutral-400",
     "bg-neutral-100",
     "bg-neutral-200",
     "bg-neutral-300",
@@ -80,10 +80,10 @@ module.exports = {
         accent: "#f5f5f5", // muted for select component
         "accent-foreground": "#0a0a0a",
         background: "#fafafa", // neutral-50
-        foreground: "#0a0a0a", // neutral-950
+        foreground: "#000000", // neutral-950
         muted: "#f5f5f5", // neutral-100
-        "muted-foreground": `hsl(0, 0%, 25%)`, // neutral-500
-        border: `hsl(0, 0%, 90%)
+        "muted-foreground": `hsl(0, 0%, 5%)`, // neutral-500
+        border: `hsl(0, 0%, 80%)
 `, // neutral-200
         input: "#ffffff",
         ring: "#14b8b3", // primary focus ring

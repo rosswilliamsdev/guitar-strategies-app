@@ -564,7 +564,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setConfirmCancelSlot(null)}>
+            <Button variant="destructive" onClick={() => setConfirmCancelSlot(null)}>
               Keep Slot
             </Button>
             <Button 
@@ -587,7 +587,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setConfirmCancelLesson(null)}>
+            <Button variant="destructive" onClick={() => setConfirmCancelLesson(null)}>
               Keep Lesson
             </Button>
             <Button 

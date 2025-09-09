@@ -202,7 +202,7 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="secondary" onClick={() => setConfirmCancelLesson(null)}>
+          <Button variant="destructive" onClick={() => setConfirmCancelLesson(null)}>
             Keep Lesson
           </Button>
           <Button 
