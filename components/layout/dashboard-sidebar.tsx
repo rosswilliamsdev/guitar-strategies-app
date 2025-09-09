@@ -59,7 +59,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
       <div className="p-6">
         <Link
           href="/dashboard"
-          className="text-xl font-semibold text-foreground"
+          className="text-xl font-semibold text-black"
         >
           Guitar Strategies
         </Link>
@@ -73,8 +73,8 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
             className={cn(
               "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
               pathname === item.href || pathname.startsWith(item.href + "/")
-                ? "bg-turquoise-100 text-foreground font-medium"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                ? "bg-turquoise-100 text-black font-medium"
+                : "text-black hover:bg-muted hover:text-black"
             )}
           >
             {item.label}
@@ -87,7 +87,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           <Button
             variant="secondary"
             size="sm"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
+            className="w-full justify-start text-black hover:text-black"
             onClick={() =>
               signOut({
                 callbackUrl: "/login",
