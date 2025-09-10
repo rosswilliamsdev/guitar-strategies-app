@@ -4,7 +4,26 @@
 
 ---
 
-## 🚀 [Current Version] - September 9, 2025 (Evening)
+## 🚀 [Current Version] - September 10, 2025 (Morning)
+
+### **Table Zebra Striping & UI Improvements** (Sep 10, 2025 - Morning)
+- **Zebra Striping Implementation**: Added subtle alternating row colors to improve table readability
+  - **Invoice Tables**: Added zebra striping to invoice line items with `bg-neutral-50/50` background
+  - **Library File List**: Enhanced file grid with alternating row backgrounds for better scanning
+  - **Weekly Schedule Grid**: Added zebra striping to availability day cards
+  - **Availability Calendar**: Subtle alternating backgrounds for time slot lists
+  - **Teacher Schedule View**: Added very subtle zebra striping to time columns with `bg-neutral-200/40`
+  - **Files**: `components/invoices/invoice-template.tsx`, `components/library/library-list.tsx`, `components/teacher/WeeklyScheduleGrid.tsx`, `components/scheduling/AvailabilityCalendar.tsx`, `components/schedule/teacher-schedule-view.tsx`
+
+- **Navigation Button Styling**: Simplified teacher schedule navigation buttons
+  - **Ghost Buttons**: Updated previous/next week and "Today" buttons to use ghost variant
+  - **Clean Styling**: Removed teal backgrounds and underlines for cleaner appearance
+  - **Transparent Hover**: Added `hover:bg-transparent` for minimal visual feedback
+  - **Files**: `components/schedule/teacher-schedule-view.tsx`
+
+---
+
+## 📋 [Previous Version] - September 9, 2025 (Evening)
 
 ### **Email Preferences & UI Enhancements** (Sep 9, 2025 - Evening)
 - **Email Preferences System**: Complete opt-in/opt-out functionality for all email notifications

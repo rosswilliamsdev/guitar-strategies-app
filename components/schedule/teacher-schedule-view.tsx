@@ -9,6 +9,7 @@ import Link from "next/link";
 import { BookStudentModal } from "./book-student-modal";
 import { LessonManagementModal } from "./lesson-management-modal";
 import { Skeleton, SkeletonSchedule } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
   Calendar,
   Clock,
@@ -33,15 +34,15 @@ import {
 const formatTimezone = (timezone: string): string => {
   const timezoneMap: Record<string, string> = {
     "America/New_York": "Eastern Time (ET)",
-    "America/Chicago": "Central Time (CT)", 
+    "America/Chicago": "Central Time (CT)",
     "America/Denver": "Mountain Time (MT)",
     "America/Los_Angeles": "Pacific Time (PT)",
     "America/Anchorage": "Alaska Time (AKT)",
     "Pacific/Honolulu": "Hawaii Time (HST)",
     "America/Phoenix": "Arizona Time (MST)",
-    "UTC": "UTC",
+    UTC: "UTC",
   };
-  
+
   return timezoneMap[timezone] || timezone;
 };
 
@@ -300,9 +301,9 @@ const getSlotStatus = (
 
 // Render content for a time slot based on its status
 const renderSlotContent = (
-  status: SlotStatus, 
-  day: Date, 
-  timeSlot: string, 
+  status: SlotStatus,
+  day: Date,
+  timeSlot: string,
   onOpenSlotClick?: () => void,
   onLessonClick?: (lesson: UpcomingLesson) => void
 ): React.ReactNode => {
@@ -328,7 +329,7 @@ const renderSlotContent = (
 
     case "booked":
       // Check if the lesson is cancelled
-      if (status.lesson.status === 'CANCELLED') {
+      if (status.lesson.status === "CANCELLED") {
         return (
           <button
             onClick={() => onLessonClick?.(status.lesson)}
@@ -341,7 +342,7 @@ const renderSlotContent = (
           </button>
         );
       }
-      
+
       return (
         <button
           onClick={() => onLessonClick?.(status.lesson)}
@@ -402,7 +403,10 @@ export function TeacherScheduleView({
     lesson: null,
   });
 
-  const handleBookStudent = async (studentId: string, type: "single" | "recurring") => {
+  const handleBookStudent = async (
+    studentId: string,
+    type: "single" | "recurring"
+  ) => {
     if (!bookingModal.date || !bookingModal.time) return;
 
     // Convert time string to proper format
@@ -451,7 +455,7 @@ export function TeacherScheduleView({
   const currentWeek = currentDate;
   const startDate = startOfWeek(currentWeek, { weekStartsOn: 1 });
   const endDate = endOfWeek(currentWeek, { weekStartsOn: 1 });
-  
+
   // Generate array of days for the week
   const weekDays: Date[] = [];
   let currentDay = new Date(startDate);
@@ -538,19 +542,26 @@ export function TeacherScheduleView({
 
             {/* Navigation */}
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
               onClick={viewMode === "day" ? goToPreviousDay : goToPreviousWeek}
+              className="hover:bg-transparent hover:text-foreground p-1"
             >
               <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="secondary" size="sm" onClick={goToToday}>
-              Today
             </Button>
             <Button
               variant="secondary"
               size="sm"
+              onClick={goToToday}
+              className="hover:bg-transparent hover:text-foreground"
+            >
+              Today
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={viewMode === "day" ? goToNextDay : goToNextWeek}
+              className="hover:bg-transparent hover:text-foreground p-1"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -574,9 +585,10 @@ export function TeacherScheduleView({
               const dayBlockedTimes = getBlockedTimesForDay(currentDate);
 
               // Generate time slots for this specific day's availability
-              const dayTimeSlots = dayAvailability.length > 0 
-                ? generateTimeSlots(dayAvailability)
-                : [];
+              const dayTimeSlots =
+                dayAvailability.length > 0
+                  ? generateTimeSlots(dayAvailability)
+                  : [];
 
               // Check if there are any lessons booked for this day or if teacher has availability set
               if (dayLessons.length === 0 && dayTimeSlots.length === 0) {
@@ -588,7 +600,8 @@ export function TeacherScheduleView({
                         No availability set
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        You haven&apos;t set your availability for {format(currentDate, "EEEE")}s
+                        You haven&apos;t set your availability for{" "}
+                        {format(currentDate, "EEEE")}s
                       </p>
                       <Link href="/settings">
                         <Button variant="primary" size="sm" className="mt-2">
@@ -603,7 +616,7 @@ export function TeacherScheduleView({
 
               return (
                 <div className="space-y-3">
-                  {dayTimeSlots.map((timeSlot) => {
+                  {dayTimeSlots.map((timeSlot, index) => {
                     const slotStatus = getSlotStatus(
                       currentDate,
                       timeSlot,
@@ -618,17 +631,27 @@ export function TeacherScheduleView({
                         className="flex items-center justify-start gap-4"
                       >
                         {/* Time label */}
-                        <div className="w-24 text-sm font-medium text-muted-foreground text-left">
+                        <div
+                          className={cn(
+                            "w-24 text-sm font-medium text-foreground text-left py-2 px-3 -ml-3 rounded-l",
+                            index % 2 === 1 && "bg-neutral-200/40"
+                          )}
+                        >
                           {timeSlot}
                         </div>
 
                         {/* Slot content */}
-                        <div className="flex items-center flex-1">
+                        <div className={cn("flex items-center flex-1")}>
                           {renderSlotContent(
                             slotStatus,
                             currentDate,
                             timeSlot,
-                            () => setBookingModal({ isOpen: true, date: currentDate, time: timeSlot }),
+                            () =>
+                              setBookingModal({
+                                isOpen: true,
+                                date: currentDate,
+                                time: timeSlot,
+                              }),
                             (lesson) => setLessonModal({ isOpen: true, lesson })
                           )}
                         </div>
@@ -689,8 +712,10 @@ export function TeacherScheduleView({
               <div className="grid grid-cols-8 gap-px bg-border">
                 {(() => {
                   // Check if teacher has any availability set
-                  const hasAvailability = availability.some(slot => slot.isActive);
-                  
+                  const hasAvailability = availability.some(
+                    (slot) => slot.isActive
+                  );
+
                   if (!hasAvailability) {
                     return (
                       <div className="col-span-8 bg-background p-12">
@@ -703,7 +728,11 @@ export function TeacherScheduleView({
                             You haven&apos;t set your weekly availability yet
                           </p>
                           <Link href="/settings">
-                            <Button variant="primary" size="sm" className="mt-2">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="mt-2"
+                            >
                               <Settings className="h-4 w-4 mr-2" />
                               Set Availability
                             </Button>
@@ -713,46 +742,62 @@ export function TeacherScheduleView({
                     );
                   }
 
-                  return generateTimeSlots(availability).map((timeSlot) => (
-                    <React.Fragment key={timeSlot}>
-                      {/* Time column */}
-                      <div className="bg-background p-2 text-center border-r">
-                        <span className="text-xs text-muted-foreground">
-                          {timeSlot}
-                        </span>
-                      </div>
+                  return generateTimeSlots(availability).map(
+                    (timeSlot, slotIndex) => (
+                      <React.Fragment key={timeSlot}>
+                        {/* Time column */}
+                        <div
+                          className={cn(
+                            "p-2 text-center border-r",
+                            slotIndex % 2 === 1
+                              ? "bg-neutral-100/90"
+                              : "bg-background"
+                          )}
+                        >
+                          <span className="text-xs text-muted-foreground">
+                            {timeSlot}
+                          </span>
+                        </div>
 
-                      {/* Day columns */}
-                      {weekDays.map((day: Date, dayIndex: number) => {
-                        const dayAvailability = getAvailabilityForDay(dayIndex);
-                        const dayLessons = getLessonsForDay(day);
-                        const dayBlockedTimes = getBlockedTimesForDay(day);
-                        
-                        const slotStatus = getSlotStatus(
-                          day,
-                          timeSlot,
-                          dayAvailability,
-                          dayLessons,
-                          dayBlockedTimes
-                        );
+                        {/* Day columns */}
+                        {weekDays.map((day: Date, dayIndex: number) => {
+                          const dayAvailability =
+                            getAvailabilityForDay(dayIndex);
+                          const dayLessons = getLessonsForDay(day);
+                          const dayBlockedTimes = getBlockedTimesForDay(day);
 
-                        return (
-                          <div
-                            key={`${day.toISOString()}-${timeSlot}`}
-                            className="bg-background min-h-[40px] p-1 flex items-center"
-                          >
-                            {renderSlotContent(
-                              slotStatus,
-                              day,
-                              timeSlot,
-                              () => setBookingModal({ isOpen: true, date: day, time: timeSlot }),
-                              (lesson) => setLessonModal({ isOpen: true, lesson })
-                            )}
-                          </div>
-                        );
-                      })}
-                    </React.Fragment>
-                  ));
+                          const slotStatus = getSlotStatus(
+                            day,
+                            timeSlot,
+                            dayAvailability,
+                            dayLessons,
+                            dayBlockedTimes
+                          );
+
+                          return (
+                            <div
+                              key={`${day.toISOString()}-${timeSlot}`}
+                              className="bg-background min-h-[40px] p-1 flex items-center"
+                            >
+                              {renderSlotContent(
+                                slotStatus,
+                                day,
+                                timeSlot,
+                                () =>
+                                  setBookingModal({
+                                    isOpen: true,
+                                    date: day,
+                                    time: timeSlot,
+                                  }),
+                                (lesson) =>
+                                  setLessonModal({ isOpen: true, lesson })
+                              )}
+                            </div>
+                          );
+                        })}
+                      </React.Fragment>
+                    )
+                  );
                 })()}
               </div>
             </div>
@@ -764,7 +809,9 @@ export function TeacherScheduleView({
       {bookingModal.date && bookingModal.time && (
         <BookStudentModal
           isOpen={bookingModal.isOpen}
-          onClose={() => setBookingModal({ isOpen: false, date: null, time: null })}
+          onClose={() =>
+            setBookingModal({ isOpen: false, date: null, time: null })
+          }
           date={bookingModal.date}
           time={bookingModal.time}
           students={students}

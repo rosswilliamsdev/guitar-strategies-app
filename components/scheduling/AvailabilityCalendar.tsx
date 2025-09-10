@@ -612,7 +612,8 @@ export function AvailabilityCalendar({
                             "w-full p-2 text-left border rounded transition-colors",
                             "hover:bg-primary/5 hover:border-primary",
                             isSelected && "bg-primary/10 border-primary",
-                            isPast && "cursor-not-allowed"
+                            isPast && "cursor-not-allowed",
+                            slotIndex % 2 === 1 && !isSelected && "bg-neutral-50/50"
                           )}
                         >
                           <div className="flex items-center justify-between">

@@ -538,7 +538,7 @@ export function LibraryList({ items }: LibraryListProps) {
 
             {/* Table Body */}
             <div className="divide-y divide-border">
-              {filteredItems.map((item) => {
+              {filteredItems.map((item, index) => {
                 const categoryInfo = categoryConfig[item.category as keyof typeof categoryConfig];
                 const IconComponent = categoryInfo.icon;
                 const fileSize = (item.fileSize / 1024 / 1024).toFixed(1);
@@ -555,7 +555,9 @@ export function LibraryList({ items }: LibraryListProps) {
                     className={`px-4 py-3 transition-colors cursor-pointer ${
                       selectedItems.includes(item.id) 
                         ? 'bg-primary/10 border-l-2 border-l-primary' 
-                        : 'hover:bg-muted/30'
+                        : index % 2 === 1 
+                          ? 'bg-neutral-50/50 hover:bg-muted/30'
+                          : 'hover:bg-muted/30'
                     }`}
                     onClick={(e) => handleItemClick(item.id, e)}
                     onDoubleClick={() => handleDoubleClick(item)}

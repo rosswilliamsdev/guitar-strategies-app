@@ -171,7 +171,7 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
             
             {invoice.status !== 'PAID' && (
               <Button 
-                variant="secondary" 
+                variant="ghost" 
                 size="sm"
                 onClick={() => setShowPayModal(true)}
                 className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
@@ -182,7 +182,7 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
             )}
             
             <Button 
-              variant="secondary" 
+              variant="ghost" 
               size="sm"
               onClick={() => setShowDeleteModal(true)}
               className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"

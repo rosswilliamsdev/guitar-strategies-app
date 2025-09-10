@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log } from '@/lib/logger';
+import { log } from "@/lib/logger";
 
 interface Recommendation {
   id: string;
@@ -118,7 +118,7 @@ export function RecommendationsList({
   const handleDelete = async (id: string) => {
     setConfirmDeleteId(null);
     setIsDeleting(true);
-    
+
     try {
       const response = await fetch(`/api/recommendations/${id}`, {
         method: "DELETE",
@@ -130,9 +130,9 @@ export function RecommendationsList({
         throw new Error("Failed to delete recommendation");
       }
     } catch (error) {
-      log.error('Error deleting recommendation:', {
+      log.error("Error deleting recommendation:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       setErrorMessage("Failed to delete the recommendation. Please try again.");
     } finally {
@@ -297,7 +297,6 @@ export function RecommendationsList({
                               variant="destructive"
                               onClick={() => setConfirmDeleteId(item.id)}
                               disabled={isDeleting}
-                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -341,23 +340,27 @@ export function RecommendationsList({
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!confirmDeleteId} onOpenChange={() => setConfirmDeleteId(null)}>
+      <Dialog
+        open={!!confirmDeleteId}
+        onOpenChange={() => setConfirmDeleteId(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Recommendation</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this recommendation? This action cannot be undone.
+              Are you sure you want to delete this recommendation? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => setConfirmDeleteId(null)}
               disabled={isDeleting}
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               className="bg-red-600 hover:bg-red-700 text-white"
               onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
               disabled={isDeleting}
@@ -381,9 +384,7 @@ export function RecommendationsList({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setErrorMessage(null)}>
-              OK
-            </Button>
+            <Button onClick={() => setErrorMessage(null)}>OK</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -13,6 +13,7 @@ import {
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { log, emailLog, invoiceLog } from '@/lib/logger';
+import { cn } from "@/lib/utils";
 
 interface InvoiceData {
   id: string;
@@ -349,8 +350,11 @@ export function InvoiceTemplate({
               </tr>
             </thead>
             <tbody>
-              {invoice.items?.map((item: InvoiceData["items"][0]) => (
-                <tr key={item.id} className="border-b border-border/50">
+              {invoice.items?.map((item: InvoiceData["items"][0], index) => (
+                <tr key={item.id} className={cn(
+                  "border-b border-border/50",
+                  index % 2 === 1 && "bg-neutral-50/50"
+                )}>
                   <td className="py-3 text-foreground">{item.description}</td>
                   <td className="py-3 text-center text-muted-foreground">
                     {item.lessonDate && formatDate(item.lessonDate)}

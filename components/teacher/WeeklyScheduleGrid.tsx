@@ -147,12 +147,13 @@ export function WeeklyScheduleGrid({
       </div>
 
       <div className="grid gap-4">
-        {DAYS_OF_WEEK.map((day) => (
+        {DAYS_OF_WEEK.map((day, dayIndex) => (
           <div
             key={day.value}
             className={cn(
               "border rounded-lg p-4",
-              !hasSlots(day.value) && "bg-muted/50"
+              !hasSlots(day.value) && "bg-muted/50",
+              dayIndex % 2 === 1 && "bg-neutral-50/50"
             )}
           >
             <div className="flex items-center justify-between mb-3">
