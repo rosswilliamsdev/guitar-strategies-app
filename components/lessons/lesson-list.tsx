@@ -498,7 +498,7 @@ export function LessonList({ userRole }: LessonListProps) {
           </DialogHeader>
           <DialogFooter>
             <Button
-              variant="destructive"
+              variant="secondary"
               onClick={() => setConfirmCancelLesson(null)}
             >
               Keep Lesson

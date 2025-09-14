@@ -212,12 +212,27 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // If user is a teacher, render the teacher-specific dashboard
+  // If user is a teacher, check if they have admin privileges
   if (session.user.role === 'TEACHER') {
     const teacherData = await getTeacherData(session.user.id);
-    
+
     if (teacherData) {
-      return <TeacherDashboard {...teacherData} />;
+      // Check if teacher has admin privileges
+      const isTeacherAdmin = session.user.teacherProfile?.isAdmin === true;
+
+      if (isTeacherAdmin) {
+        // For teacher-admins, import and render the dual-role dashboard
+        const { DualRoleDashboard } = await import('./dual-role-dashboard');
+        const adminStats = await getAdminStats();
+        return <DualRoleDashboard
+          user={session.user}
+          teacherData={teacherData}
+          adminStats={adminStats}
+        />;
+      } else {
+        // Regular teacher dashboard
+        return <TeacherDashboard {...teacherData} />;
+      }
     }
   }
 

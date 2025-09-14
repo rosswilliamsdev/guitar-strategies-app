@@ -32,8 +32,10 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
 
       if (result?.error) {
         setError('Invalid credentials');
-      } else {
+      } else if (result?.ok) {
         router.push(callbackUrl || '/dashboard');
+      } else {
+        setError('Login failed. Please try again.');
       }
     } catch (error) {
       setError('An error occurred. Please try again.');

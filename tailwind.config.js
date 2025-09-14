@@ -134,6 +134,15 @@ module.exports = {
       minWidth: {
         touch: "44px", // Minimum touch target size for accessibility
       },
+      keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(200%)' },
+        },
+      },
+      animation: {
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
+      },
     },
   },
   plugins: [require("@tailwindcss/typography")],

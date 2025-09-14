@@ -12,6 +12,7 @@ import {
 
 interface TeacherDashboardProps {
   teacherId: string;
+  hideTitle?: boolean;
   stats: {
     activeStudents: number;
     lessonsThisWeek: number;
@@ -81,6 +82,7 @@ function StatCard({
 
 export function TeacherDashboard({
   teacherId,
+  hideTitle = false,
   stats,
   recentLessons,
   teacherProfile,
@@ -194,14 +196,16 @@ export function TeacherDashboard({
       <ProfileValidationAlert teacherId={teacherId} />
 
       {/* Welcome Section */}
-      <div>
-        <h1 className="text-3xl font-semibold text-foreground">
-          Teacher Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Ready to teach? Here&apos;s what&apos;s happening today.
-        </p>
-      </div>
+      {!hideTitle && (
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground">
+            Teacher Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Ready to teach? Here&apos;s what&apos;s happening today.
+          </p>
+        </div>
+      )}
 
       {/* Quick Actions & Recent Lessons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

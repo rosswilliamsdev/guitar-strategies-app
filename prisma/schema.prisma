@@ -76,12 +76,13 @@ model TeacherProfile {
   bio             String? @db.Text
   hourlyRate      Int?    // stored in cents
   isActive        Boolean @default(true)
-  
+  isAdmin         Boolean @default(false) // For solo teachers with admin privileges
+
   // Payment methods for invoice generation
   venmoHandle     String? // @username
   paypalEmail     String? // email@example.com
   zelleEmail      String? // email@example.com or phone number
-  
+
   // Profile settings
   timezone        String  @default("America/New_York") // Teacher's timezone (no longer optional)
   phoneNumber     String?

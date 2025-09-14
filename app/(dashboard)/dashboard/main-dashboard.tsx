@@ -16,6 +16,7 @@ import {
 
 interface DashboardProps {
   user: User;
+  hideTitle?: boolean;
   userStats?: UserStats;
   adminStats?: AdminStats;
 }
@@ -88,20 +89,22 @@ function QuickAction({
   );
 }
 
-export function MainDashboard({ user, userStats, adminStats }: DashboardProps) {
+export function MainDashboard({ user, hideTitle = false, userStats, adminStats }: DashboardProps) {
   // If admin user with admin stats, show only recent activity
   if (user.role === 'ADMIN' && adminStats) {
     return (
       <div className="space-y-8">
         {/* Welcome Section */}
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">
-            Welcome back, {user.name}!
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Here&apos;s the latest platform activity.
-          </p>
-        </div>
+        {!hideTitle && (
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground">
+              Welcome back, {user.name}!
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Here&apos;s the latest platform activity.
+            </p>
+          </div>
+        )}
 
         {/* Recent Activity */}
         <Card className="p-6">
@@ -249,15 +252,17 @@ export function MainDashboard({ user, userStats, adminStats }: DashboardProps) {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div>
-        <h1 className="text-3xl font-semibold text-foreground">
-          Welcome back, {user.name}!
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Here&apos;s what&apos;s happening with your {user.role.toLowerCase()} account
-          today.
-        </p>
-      </div>
+      {!hideTitle && (
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground">
+            Welcome back, {user.name}!
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Here&apos;s what&apos;s happening with your {user.role.toLowerCase()} account
+            today.
+          </p>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

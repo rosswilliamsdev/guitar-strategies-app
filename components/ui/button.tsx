@@ -12,7 +12,7 @@ const buttonVariants = cva(
         default:
           "bg-turquoise-500 text-white shadow hover:bg-turquoise-600 focus-visible:ring-turquoise-500",
         destructive:
-          "relative !text-red-600 bg-transparent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[1px] after:bg-red-500 hover:bg-red-500/10 hover:!text-red-700 focus-visible:ring-red-500",
+          "!text-red-600 bg-transparent hover:bg-red-500/10 hover:!text-red-700 focus-visible:ring-red-500",
         outline:
           "border border-neutral-300 bg-white shadow-sm hover:bg-neutral-50 hover:text-foreground",
         secondary:

@@ -82,9 +82,9 @@ export default withAuth(
       return sizeCheck;
     }
 
-    // Admin-only routes
+    // Admin routes (allow both ADMIN and TEACHER - teachers will be checked for isAdmin flag in the route)
     if (pathname.startsWith("/admin")) {
-      if (token?.role !== "ADMIN") {
+      if (token?.role !== "ADMIN" && token?.role !== "TEACHER") {
         const response = NextResponse.redirect(new URL("/dashboard", req.url));
         return applySecurityHeaders(response, defaultSecurityConfig);
       }
@@ -119,9 +119,9 @@ export default withAuth(
       }
     }
 
-    // API route protection
+    // API route protection (allow both ADMIN and TEACHER - teachers will be checked for isAdmin flag in the route)
     if (pathname.startsWith("/api/admin")) {
-      if (token?.role !== "ADMIN") {
+      if (token?.role !== "ADMIN" && token?.role !== "TEACHER") {
         const response = NextResponse.json(
           { error: "Admin access required" },
           { status: 403 }
