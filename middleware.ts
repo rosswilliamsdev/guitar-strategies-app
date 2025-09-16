@@ -75,7 +75,13 @@ export default withAuth(
   function middleware(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
-    
+
+    console.log('Middleware check:', {
+      pathname,
+      hasToken: !!token,
+      tokenRole: token?.role
+    });
+
     // Check request size limits first (security check)
     const sizeCheck = checkRequestSizeLimit(req);
     if (sizeCheck) {
@@ -147,6 +153,11 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
+        console.log('Middleware authorized check:', {
+          pathname: req.nextUrl.pathname,
+          hasToken: !!token,
+          tokenRole: token?.role
+        });
         const { pathname } = req.nextUrl;
 
         // Public routes that don't require authentication

@@ -15,11 +15,15 @@ declare module "next-auth" {
 
   interface User {
     role: Role;
+    teacherProfile?: TeacherProfile | null;
+    studentProfile?: StudentProfile | null;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     role: Role;
+    teacherProfile?: TeacherProfile | null;
+    studentProfile?: StudentProfile | null;
   }
 }

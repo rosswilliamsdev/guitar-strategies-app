@@ -9,6 +9,7 @@ import Link from "next/link";
 import { BookStudentModal } from "./book-student-modal";
 import { LessonManagementModal } from "./lesson-management-modal";
 import { Skeleton, SkeletonSchedule } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
@@ -18,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  ChevronDown,
 } from "lucide-react";
 import {
   format,
@@ -384,6 +386,20 @@ export function TeacherScheduleView({
 }: TeacherScheduleViewProps) {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"day" | "week">("day");
+
+  // Mobile detection hook
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookingModal, setBookingModal] = useState<{
     isOpen: boolean;
@@ -662,8 +678,102 @@ export function TeacherScheduleView({
               );
             })()}
           </div>
+        ) : isMobile && viewMode === "week" ? (
+          /* Mobile Weekly view - Accordion style */
+          <div className="space-y-2">
+            {weekDays.map((day: Date, dayIndex: number) => {
+              const isToday = isSameDay(day, new Date());
+              const dayAvailability = getAvailabilityForDay(dayIndex);
+              const dayLessons = getLessonsForDay(day);
+              const dayBlockedTimes = getBlockedTimesForDay(day);
+              const isAvailable = dayAvailability.length > 0;
+
+              // Generate time slots for this day
+              const dayTimeSlots = dayAvailability.length > 0
+                ? generateTimeSlots(dayAvailability)
+                : [];
+
+              return (
+                <Collapsible key={day.toISOString()}>
+                  <CollapsibleTrigger className="w-full p-3 bg-background border rounded-md hover:bg-muted/50 transition-colors">
+                    <div className="flex justify-between items-center">
+                      <div className="text-left">
+                        <h3 className={`font-medium text-sm ${
+                          isToday ? "text-primary" : "text-foreground"
+                        }`}>
+                          {format(day, "EEEE, MMM d")}
+                        </h3>
+                        {isToday && (
+                          <Badge className="text-xs bg-primary/10 text-primary border-primary/20 mt-1">
+                            Today
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {dayLessons.length} lesson{dayLessons.length !== 1 ? 's' : ''}
+                        </Badge>
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-2 p-3 bg-muted/20 rounded-md">
+                      {!isAvailable ? (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground">No availability set</p>
+                        </div>
+                      ) : dayTimeSlots.length === 0 ? (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground">No time slots available</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {dayTimeSlots.map((timeSlot, slotIndex) => {
+                            const slotStatus = getSlotStatus(
+                              day,
+                              timeSlot,
+                              dayAvailability,
+                              dayLessons,
+                              dayBlockedTimes
+                            );
+
+                            return (
+                              <div
+                                key={timeSlot}
+                                className="flex items-center justify-between gap-3 p-2 rounded border bg-background"
+                              >
+                                <div className="text-sm font-medium text-foreground">
+                                  {timeSlot}
+                                </div>
+                                <div className="flex-1">
+                                  {renderSlotContent(
+                                    slotStatus,
+                                    day,
+                                    timeSlot,
+                                    () =>
+                                      setBookingModal({
+                                        isOpen: true,
+                                        date: day,
+                                        time: timeSlot,
+                                      }),
+                                    (lesson) =>
+                                      setLessonModal({ isOpen: true, lesson })
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
+          </div>
         ) : (
-          /* Weekly view */
+          /* Desktop Weekly view */
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               {/* Header row with days */}

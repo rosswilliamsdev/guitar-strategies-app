@@ -24,21 +24,28 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
     setError(null);
 
     try {
+      console.log('Attempting login with:', { email });
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
       });
 
+      console.log('SignIn result:', result);
+
       if (result?.error) {
+        console.error('SignIn error:', result.error);
         setError('Invalid credentials');
       } else if (result?.ok) {
+        console.log('SignIn successful, redirecting to:', callbackUrl || '/dashboard');
         // Use window.location for a hard redirect to ensure session is properly established
         window.location.href = callbackUrl || '/dashboard';
       } else {
+        console.log('SignIn failed with unknown result:', result);
         setError('Login failed. Please try again.');
       }
     } catch (error) {
+      console.error('SignIn exception:', error);
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

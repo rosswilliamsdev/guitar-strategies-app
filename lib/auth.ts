@@ -11,13 +11,12 @@ import { prisma } from "./db";
 
 /**
  * NextAuth.js configuration options.
- * 
+ *
  * Configures authentication with:
- * - Prisma adapter for database sessions
  * - JWT strategy for session handling
  * - Credentials provider for email/password authentication
  * - Custom callbacks for role-based access and profile data
- * 
+ *
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
@@ -38,87 +37,135 @@ export const authOptions: NextAuthOptions = {
        * @returns User object if authentication successful, null otherwise
        */
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-
-        // Find user with associated profiles
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          },
-          include: {
-            teacherProfile: true,
-            studentProfile: true,
-          }
+        console.log('🔐 Authorization attempt:', {
+          email: credentials?.email,
+          hasPassword: !!credentials?.password
         });
 
-        if (!user || !user.password) {
+        if (!credentials?.email || !credentials?.password) {
+          console.log('❌ Missing credentials');
           return null;
         }
 
-        // Verify password using bcrypt
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        try {
+          // Find user with associated profiles
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email
+            },
+            include: {
+              teacherProfile: true,
+              studentProfile: true,
+            }
+          });
 
-        if (!isPasswordValid) {
+          console.log('👤 User lookup result:', {
+            found: !!user,
+            email: user?.email,
+            role: user?.role,
+            hasPassword: !!user?.password
+          });
+
+          if (!user || !user.password) {
+            console.log('❌ User not found or no password');
+            return null;
+          }
+
+          // Verify password using bcrypt
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          console.log('🔑 Password validation:', { isValid: isPasswordValid });
+
+          if (!isPasswordValid) {
+            console.log('❌ Invalid password');
+            return null;
+          }
+
+          const authResult = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            teacherProfile: user.teacherProfile,
+            studentProfile: user.studentProfile,
+          };
+
+          console.log('✅ Authorization successful:', {
+            id: authResult.id,
+            email: authResult.email,
+            role: authResult.role
+          });
+
+          return authResult;
+        } catch (error) {
+          console.error('💥 Authorization error:', error);
           return null;
         }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       }
     })
   ],
   callbacks: {
     /**
      * JWT callback - runs whenever a JWT is created, updated, or accessed.
-     * Adds user role to the token for session use.
-     * 
-     * @param token - The JWT token
-     * @param user - User object (only available on signin)
-     * @returns Updated token
+     * Adds user role and profile data to the token for session use.
      */
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      console.log('🎫 JWT Callback:', {
+        trigger,
+        hasUser: !!user,
+        tokenSub: token.sub,
+        tokenRole: token.role
+      });
+
       if (user) {
+        console.log('🆕 Adding user data to token:', {
+          id: user.id,
+          role: user.role,
+          hasTeacherProfile: !!user.teacherProfile,
+          hasStudentProfile: !!user.studentProfile
+        });
         token.role = user.role;
+        token.teacherProfile = user.teacherProfile;
+        token.studentProfile = user.studentProfile;
       }
+
+      console.log('🎫 JWT token result:', {
+        sub: token.sub,
+        role: token.role,
+        email: token.email
+      });
+
       return token;
     },
-    
+
     /**
-     * Session callback - runs whenever a session is accessed.
-     * Enriches session with user ID, role, and profile information.
-     * 
-     * @param session - The session object
-     * @param token - The JWT token
-     * @returns Enhanced session with profile data
+     * Session callback - runs whenever a session is accessed with JWT strategy.
+     * Enriches session with user role and profile information from token.
      */
     async session({ session, token }) {
+      console.log('📋 Session Callback:', {
+        hasToken: !!token,
+        tokenSub: token.sub,
+        tokenRole: token.role,
+        sessionUserEmail: session.user?.email
+      });
+
       if (token && session.user) {
         session.user.id = token.sub!;
         session.user.role = token.role;
-        
-        // Fetch current profile information for the session
-        const userWithProfiles = await prisma.user.findUnique({
-          where: { id: token.sub! },
-          include: {
-            teacherProfile: true,
-            studentProfile: true,
-          },
+        session.user.teacherProfile = token.teacherProfile;
+        session.user.studentProfile = token.studentProfile;
+
+        console.log('📋 Session enriched:', {
+          id: session.user.id,
+          role: session.user.role,
+          email: session.user.email
         });
-        
-        if (userWithProfiles) {
-          session.user.teacherProfile = userWithProfiles.teacherProfile;
-          session.user.studentProfile = userWithProfiles.studentProfile;
-        }
       }
+
       return session;
     },
   },
