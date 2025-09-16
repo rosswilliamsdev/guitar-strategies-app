@@ -6,11 +6,13 @@ import { cn } from "@/lib/utils";
 import { User } from "next-auth";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
-import { LogOut } from "lucide-react";
+import { LogOut, X } from "lucide-react";
 import { useViewMode } from "@/app/(dashboard)/dashboard/view-mode-context";
 
 interface DashboardSidebarProps {
   user: User;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 interface NavItem {
@@ -48,7 +50,7 @@ const navItems: NavItem[] = [
   { label: "Settings", href: "/settings", roles: ["TEACHER", "STUDENT"] },
 ];
 
-export function DashboardSidebar({ user }: DashboardSidebarProps) {
+export function DashboardSidebar({ user, isOpen = false, onClose }: DashboardSidebarProps) {
   const pathname = usePathname();
 
   // Check if user is a teacher-admin (teacher with admin privileges)
@@ -81,52 +83,99 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     return item.roles.includes(user.role);
   });
 
+  // Handle navigation clicks (close mobile menu)
+  const handleNavClick = () => {
+    onClose?.();
+  };
+
   return (
-    <aside className="w-64 bg-background border-r border-border min-h-screen">
-      <div className="p-6">
-        <Link
-          href="/dashboard"
-          className="text-xl font-semibold text-black"
-        >
-          Guitar Strategies
-        </Link>
-      </div>
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      <nav className="px-4 space-y-2">
-        {filteredNavItems.map((item) => (
+      <aside
+        className={cn(
+          "bg-background border-r border-border min-h-screen transition-all duration-300 ease-in-out",
+          // Desktop: always visible, fixed width
+          "lg:w-64 lg:translate-x-0",
+          // Mobile: slide in/out from left
+          "lg:relative fixed inset-y-0 left-0 z-50 w-64",
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        {/* Mobile close button */}
+        <div className="lg:hidden flex justify-between items-center p-4 border-b border-border">
           <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
-              pathname === item.href || pathname.startsWith(item.href + "/")
-                ? "bg-turquoise-100 text-black font-medium"
-                : "text-black hover:bg-muted hover:text-black"
-            )}
+            href="/dashboard"
+            className="text-xl font-semibold text-black"
+            onClick={handleNavClick}
           >
-            {item.label}
+            Guitar Strategies
           </Link>
-        ))}
-      </nav>
-
-      <div className="absolute bottom-0 w-64 p-4 border-t border-border">
-        <div className="space-y-3">
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            className="w-full justify-start text-black hover:text-black"
-            onClick={() =>
-              signOut({
-                callbackUrl: "/login",
-                redirect: true,
-              })
-            }
+            onClick={onClose}
+            className="p-2"
+            aria-label="Close menu"
           >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
+            <X className="h-4 w-4" />
           </Button>
         </div>
-      </div>
-    </aside>
+
+        {/* Desktop header */}
+        <div className="hidden lg:block p-6">
+          <Link
+            href="/dashboard"
+            className="text-xl font-semibold text-black"
+          >
+            Guitar Strategies
+          </Link>
+        </div>
+
+        <nav className="px-4 space-y-2 pb-20">
+          {filteredNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={handleNavClick}
+              className={cn(
+                "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
+                pathname === item.href || pathname.startsWith(item.href + "/")
+                  ? "bg-turquoise-100 text-black font-medium"
+                  : "text-black hover:bg-muted hover:text-black"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="absolute bottom-0 w-64 p-4 border-t border-border">
+          <div className="space-y-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="w-full justify-start text-black hover:text-black"
+              onClick={() =>
+                signOut({
+                  callbackUrl: "/login",
+                  redirect: true,
+                })
+              }
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

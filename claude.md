@@ -108,6 +108,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 - **Subtle Shadows**: Minimal shadows for depth (`shadow-sm`, `shadow-md`)
 - **Focus States**: Clean `focus-visible` rings using turquoise
 - **All Roles**: Unified design with turquoise as primary accent (no role-specific colors)
+- **No Icon Underlines**: Icons and icon buttons should never have underlines or decorative lines
 
 ## Component Patterns (Updated for OpenAI Style)
 

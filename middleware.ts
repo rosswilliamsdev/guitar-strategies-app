@@ -156,6 +156,7 @@ export default withAuth(
           pathname === "/login" ||
           pathname === "/register" ||
           pathname.startsWith("/_next") ||
+          pathname.startsWith("/.well-known") ||
           pathname.startsWith("/favicon.ico") ||
           pathname.startsWith("/api/auth") ||
           pathname.startsWith("/api/cron") ||

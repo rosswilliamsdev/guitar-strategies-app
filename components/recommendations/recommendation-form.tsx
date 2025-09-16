@@ -240,16 +240,6 @@ export function RecommendationForm({
           </p>
         </div>
 
-        {/* Priority Visual */}
-        {priority && (
-          <div className="p-4 bg-muted rounded-lg">
-            <Label className="text-sm font-medium">Priority Preview:</Label>
-            <div className="mt-2">
-              <PriorityBadge priority={parseInt(priority)} />
-            </div>
-          </div>
-        )}
-
         {/* Submit */}
         <div className="flex space-x-4">
           <Button type="submit" disabled={isLoading} className="flex-1">

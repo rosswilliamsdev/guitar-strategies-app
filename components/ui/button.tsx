@@ -16,7 +16,7 @@ const buttonVariants = cva(
         outline:
           "border border-neutral-300 bg-white shadow-sm hover:bg-neutral-50 hover:text-foreground",
         secondary:
-          "relative text-black bg-transparent after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[1px] after:bg-turquoise-500 hover:bg-turquoise-500/10 hover:text-black focus-visible:ring-turquoise-500",
+          "text-black bg-transparent hover:bg-neutral-100 hover:text-black focus-visible:ring-neutral-400",
         ghost: "hover:bg-neutral-100 hover:text-foreground",
         link: "text-turquoise-500 underline-offset-4 hover:underline",
         // Custom variants for backwards compatibility

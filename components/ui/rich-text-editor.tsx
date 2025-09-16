@@ -1,10 +1,10 @@
 /**
  * @fileoverview Rich text editor component using Tiptap.
- * 
+ *
  * A WYSIWYG rich text editor with formatting toolbar for lesson notes,
  * homework assignments, and other text content. Built with Tiptap and
  * integrated with the application's design system.
- * 
+ *
  * Features:
  * - Bold, italic text formatting
  * - Bullet and numbered lists
@@ -50,18 +50,18 @@ interface RichTextEditorProps {
 
 /**
  * Rich text editor component with formatting toolbar.
- * 
+ *
  * Provides a complete WYSIWYG editing experience with:
  * - Formatting options (bold, italic, lists, quotes)
  * - Undo/redo functionality
  * - Live content updates
  * - Consistent styling with design system
  * - Focus management and accessibility
- * 
+ *
  * @example
  * ```tsx
  * const [content, setContent] = useState('<p>Initial content</p>');
- * 
+ *
  * <RichTextEditor
  *   content={content}
  *   onChange={setContent}
@@ -116,7 +116,7 @@ export function RichTextEditor({
           type="button"
           variant="secondary"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-accent data-[active=true]:bg-turquoise-100 data-[active=true]:text-turquoise-700"
+          className="h-8 w-8 p-0 data-[active=true]:bg-neutral-100"
           onClick={() => editor.chain().focus().toggleBold().run()}
           data-active={editor.isActive("bold")}
           aria-label="Bold"
@@ -128,7 +128,7 @@ export function RichTextEditor({
           type="button"
           variant="secondary"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-accent data-[active=true]:bg-turquoise-100 data-[active=true]:text-turquoise-700"
+          className="h-8 w-8 p-0 data-[active=true]:bg-neutral-100"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           data-active={editor.isActive("italic")}
           aria-label="Italic"
@@ -143,7 +143,7 @@ export function RichTextEditor({
           type="button"
           variant="secondary"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-accent data-[active=true]:bg-turquoise-100 data-[active=true]:text-turquoise-700"
+          className="h-8 w-8 p-0 data-[active=true]:bg-neutral-100"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           data-active={editor.isActive("bulletList")}
           aria-label="Bullet List"
@@ -155,7 +155,7 @@ export function RichTextEditor({
           type="button"
           variant="secondary"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-accent data-[active=true]:bg-turquoise-100 data-[active=true]:text-turquoise-700"
+          className="h-8 w-8 p-0 data-[active=true]:bg-neutral-100"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           data-active={editor.isActive("orderedList")}
           aria-label="Numbered List"
@@ -167,7 +167,7 @@ export function RichTextEditor({
           type="button"
           variant="secondary"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-accent data-[active=true]:bg-turquoise-100 data-[active=true]:text-turquoise-700"
+          className="h-8 w-8 p-0 data-[active=true]:bg-neutral-100"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           data-active={editor.isActive("blockquote")}
           aria-label="Quote"
@@ -182,7 +182,7 @@ export function RichTextEditor({
           type="button"
           variant="secondary"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-accent disabled:opacity-50"
+          className="h-8 w-8 p-0 disabled:opacity-50"
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
           aria-label="Undo"
@@ -194,7 +194,7 @@ export function RichTextEditor({
           type="button"
           variant="secondary"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-accent disabled:opacity-50"
+          className="h-8 w-8 p-0 disabled:opacity-50"
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
           aria-label="Redo"

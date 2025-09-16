@@ -33,7 +33,8 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
       if (result?.error) {
         setError('Invalid credentials');
       } else if (result?.ok) {
-        router.push(callbackUrl || '/dashboard');
+        // Use window.location for a hard redirect to ensure session is properly established
+        window.location.href = callbackUrl || '/dashboard';
       } else {
         setError('Login failed. Please try again.');
       }
