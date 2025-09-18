@@ -149,9 +149,9 @@ export function StudentRecommendationsList({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card className="p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <div className="w-full">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -162,12 +162,12 @@ export function StudentRecommendationsList({
               />
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
@@ -188,7 +188,7 @@ export function StudentRecommendationsList({
               value={selectedPriority}
               onValueChange={setSelectedPriority}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent>
@@ -240,32 +240,34 @@ export function StudentRecommendationsList({
               return (
                 <Card
                   key={item.id}
-                  className="p-6 hover:shadow-md transition-shadow"
+                  className="p-4 sm:p-6 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-muted rounded-lg">
-                      <IconComponent className="h-6 w-6 text-muted-foreground" />
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                    <div className="flex items-start gap-3 sm:gap-0 sm:flex-col">
+                      <div className="p-2 sm:p-3 bg-muted rounded-lg shrink-0">
+                        <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
+                      </div>
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-foreground">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-foreground">
                             {item.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                             {item.description}
                           </p>
                         </div>
 
-                        <div className="flex items-center space-x-2 ml-4">
+                        <div className="flex items-center">
                           {item.link && (
                             <Button
                               size="sm"
                               onClick={() => window.open(item.link, "_blank")}
-                              className="flex items-center space-x-2"
+                              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
                             >
-                              <ShoppingCart className="h-4 w-4" />
+                              <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
                               <span>View/Buy</span>
                             </Button>
                           )}
@@ -275,7 +277,7 @@ export function StudentRecommendationsList({
                       <div className="flex flex-wrap items-center gap-2 mb-3">
                         <Badge
                           variant="secondary"
-                          className={categoryInfo.color}
+                          className={`${categoryInfo.color} text-xs`}
                           title={categoryInfo.description}
                         >
                           {categoryInfo.label}
@@ -288,8 +290,8 @@ export function StudentRecommendationsList({
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center space-x-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                           <PriorityBadge priority={item.priority} />
                           <span className="text-muted-foreground">
                             {
@@ -299,7 +301,7 @@ export function StudentRecommendationsList({
                             }
                           </span>
                         </div>
-                        <span className="text-muted-foreground">
+                        <span className="text-muted-foreground text-xs">
                           Added {item.createdAt}
                         </span>
                       </div>
@@ -314,11 +316,11 @@ export function StudentRecommendationsList({
 
       {/* Legend */}
       {sortedItems.length > 0 && (
-        <Card className="p-6">
+        <Card className="p-4 sm:p-6">
           <h3 className="font-semibold text-foreground mb-4">
             Priority Levels
           </h3>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {[5, 4, 3, 2, 1].map((level) => (
               <PriorityBadge key={level} priority={level} />
             ))}

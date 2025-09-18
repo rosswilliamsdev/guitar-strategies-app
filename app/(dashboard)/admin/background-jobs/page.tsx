@@ -15,7 +15,11 @@ export default async function BackgroundJobsPage() {
     redirect("/login");
   }
 
-  if (session.user.role !== "ADMIN") {
+  // Check if user has admin access (either ADMIN role or TEACHER with admin flag)
+  const hasAdminAccess = session.user.role === "ADMIN" ||
+    (session.user.role === "TEACHER" && session.user.teacherProfile?.isAdmin === true);
+
+  if (!hasAdminAccess) {
     redirect("/dashboard");
   }
 

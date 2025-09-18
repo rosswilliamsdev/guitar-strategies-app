@@ -26,6 +26,7 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react";
+import Link from "next/link";
 import { PriorityBadge } from "@/components/ui/priority-badge";
 import {
   Dialog,
@@ -161,9 +162,9 @@ export function RecommendationsList({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card className="p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4">
+          <div className="w-full">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -174,12 +175,12 @@ export function RecommendationsList({
               />
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
@@ -200,7 +201,7 @@ export function RecommendationsList({
               value={selectedPriority}
               onValueChange={setSelectedPriority}
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
               <SelectContent>
@@ -223,6 +224,9 @@ export function RecommendationsList({
             {filteredItems.length}{" "}
             {filteredItems.length === 1 ? "Recommendation" : "Recommendations"}
           </h2>
+          <Link href="/recommendations/new">
+            <Button size="sm">+ Create</Button>
+          </Link>
         </div>
 
         {filteredItems.length === 0 ? (
@@ -231,56 +235,51 @@ export function RecommendationsList({
             <h3 className="text-lg font-semibold text-foreground mb-2">
               No recommendations found
             </h3>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground">
               {items.length === 0
                 ? "You haven't created any recommendations yet."
                 : "Try adjusting your search or filter criteria."}
             </p>
-            <a href="/recommendations/new">
-              <Button>Add First Recommendation</Button>
-            </a>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredItems.map((item) => {
               const categoryInfo =
                 categoryConfig[item.category as keyof typeof categoryConfig];
-              const priorityInfo =
-                priorityConfig[item.priority as keyof typeof priorityConfig];
               const IconComponent = categoryInfo.icon;
 
               return (
                 <Card
                   key={item.id}
-                  className="p-6 hover:shadow-md transition-shadow"
+                  className="p-4 sm:p-6 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
-                      <div className="p-2 bg-muted rounded-lg">
-                        <IconComponent className="h-6 w-6 text-muted-foreground" />
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                      <div className="p-2 bg-muted rounded-lg shrink-0 w-fit">
+                        <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
                       </div>
 
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-foreground">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-base sm:text-lg font-semibold text-foreground">
                               {item.title}
                             </h3>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                               {item.description}
                             </p>
                           </div>
 
-                          <div className="flex items-center space-x-2 ml-4">
+                          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                             {item.link && (
                               <Button
                                 size="sm"
                                 variant="secondary"
                                 onClick={() => window.open(item.link, "_blank")}
-                                className="flex items-center space-x-2"
+                                className="flex items-center gap-1 px-2 sm:px-3"
                               >
-                                <ExternalLink className="h-4 w-4" />
-                                <span>View</span>
+                                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
+                                <span className="hidden sm:inline">View</span>
                               </Button>
                             )}
                             <Button
@@ -289,16 +288,18 @@ export function RecommendationsList({
                               onClick={() =>
                                 (window.location.href = `/recommendations/${item.id}/edit`)
                               }
+                              className="px-2 sm:px-3"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
                               onClick={() => setConfirmDeleteId(item.id)}
                               disabled={isDeleting}
+                              className="px-2 sm:px-3"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
                           </div>
                         </div>
@@ -306,23 +307,20 @@ export function RecommendationsList({
                         <div className="flex flex-wrap items-center gap-2 mt-3">
                           <Badge
                             variant="secondary"
-                            className={categoryInfo.color}
+                            className={`${categoryInfo.color} text-xs`}
                           >
                             {categoryInfo.label}
                           </Badge>
 
                           {item.price && (
-                            <Badge
-                              variant="secondary"
-                              className={categoryInfo.color}
-                            >
+                            <Badge variant="secondary" className="text-xs">
                               {item.price}
                             </Badge>
                           )}
                         </div>
 
-                        <div className="flex items-center justify-between mt-4">
-                          <div className="flex items-center space-x-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+                          <div className="flex items-center">
                             <PriorityBadge priority={item.priority} size="sm" />
                           </div>
                           <span className="text-xs text-muted-foreground">

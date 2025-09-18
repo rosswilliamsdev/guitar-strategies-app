@@ -1,49 +1,32 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 export function LoadingIndicator() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Start loading when navigation begins
-    const handleStart = () => setIsLoading(true);
-    // Stop loading when navigation completes
-    const handleComplete = () => setIsLoading(false);
+    // Show loading indicator briefly on route change
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
 
-    // Listen for browser navigation events
-    const originalPush = router.push;
-    const originalReplace = router.replace;
+    return () => clearTimeout(timer);
+  }, [pathname]);
 
-    router.push = (...args) => {
-      setIsLoading(true);
-      return originalPush.apply(router, args).finally(() => {
-        setTimeout(() => setIsLoading(false), 100);
-      });
-    };
-
-    router.replace = (...args) => {
-      setIsLoading(true);
-      return originalReplace.apply(router, args).finally(() => {
-        setTimeout(() => setIsLoading(false), 100);
-      });
-    };
-
+  useEffect(() => {
     // Initial load detection
     const handleLoad = () => setIsLoading(false);
-    if (document.readyState === 'loading') {
+
+    if (typeof document !== 'undefined' && document.readyState === 'loading') {
       setIsLoading(true);
       window.addEventListener('load', handleLoad);
+      return () => window.removeEventListener('load', handleLoad);
     }
-
-    return () => {
-      window.removeEventListener('load', handleLoad);
-      router.push = originalPush;
-      router.replace = originalReplace;
-    };
-  }, [router]);
+  }, []);
 
   return (
     <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-turquoise-300 via-turquoise-500 to-turquoise-600 z-[100] overflow-hidden">

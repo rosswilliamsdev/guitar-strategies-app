@@ -7,8 +7,16 @@ import { CreateStudentForm } from "@/components/admin/create-student-form";
 export default async function CreateStudentPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== "ADMIN") {
+  if (!session?.user) {
     redirect("/login");
+  }
+
+  // Check if user has admin access (either ADMIN role or TEACHER with admin flag)
+  const hasAdminAccess = session.user.role === "ADMIN" ||
+    (session.user.role === "TEACHER" && session.user.teacherProfile?.isAdmin === true);
+
+  if (!hasAdminAccess) {
+    redirect("/dashboard");
   }
 
   // Get all active teachers for the dropdown

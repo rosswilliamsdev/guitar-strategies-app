@@ -312,7 +312,7 @@ const renderSlotContent = (
   switch (status.type) {
     case "not-available":
       return (
-        <div className="w-full h-8 bg-gray-50 rounded flex items-center justify-center mx-1">
+        <div className="w-full h-8 bg-gray-50 rounded flex items-center justify-center">
           <span className="text-xs text-gray-400">—</span>
         </div>
       );
@@ -321,7 +321,7 @@ const renderSlotContent = (
       return (
         <button
           onClick={onOpenSlotClick}
-          className="w-full h-8 bg-green-50 border border-green-200 rounded flex items-center justify-center hover:bg-green-100 transition-colors cursor-pointer group mx-1"
+          className="w-full h-8 bg-green-50 border border-green-200 rounded flex items-center justify-center hover:bg-green-100 transition-colors cursor-pointer group"
           title="Click to book a student"
         >
           <Plus className="h-3 w-3 text-green-700 mr-1 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -335,7 +335,7 @@ const renderSlotContent = (
         return (
           <button
             onClick={() => onLessonClick?.(status.lesson)}
-            className="w-full h-8 bg-red-100 border border-red-300 rounded px-2 hover:bg-red-200 transition-colors cursor-pointer flex items-center justify-center mx-1"
+            className="w-full h-8 bg-red-100 border border-red-300 rounded px-1 sm:px-2 hover:bg-red-200 transition-colors cursor-pointer flex items-center justify-center"
             title="Click to manage cancelled lesson"
           >
             <p className="text-xs font-medium text-red-900 truncate">
@@ -348,7 +348,7 @@ const renderSlotContent = (
       return (
         <button
           onClick={() => onLessonClick?.(status.lesson)}
-          className="w-full h-8 bg-blue-100 border border-blue-300 rounded px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-center mx-1"
+          className="w-full h-8 bg-blue-100 border border-blue-300 rounded px-1 sm:px-2 cursor-pointer hover:bg-blue-200 transition-colors flex items-center justify-center"
           title="Click to manage lesson"
         >
           <p className="text-xs font-medium text-blue-900 truncate">
@@ -359,7 +359,7 @@ const renderSlotContent = (
 
     case "blocked":
       return (
-        <div className="w-full h-8 bg-red-50 border border-red-200 rounded flex items-center justify-center mx-1">
+        <div className="w-full h-8 bg-red-50 border border-red-200 rounded flex items-center justify-center">
           <span
             className="text-xs text-red-700"
             title={status.reason || "Blocked"}
@@ -510,40 +510,41 @@ export function TeacherScheduleView({
   return (
     <div className="space-y-6">
       {/* Schedule View */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
+      <Card className="p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           {/* Date display (only for day view) */}
           <div className="flex-1">
             {viewMode === "day" && (
               <div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  {format(currentDate, "EEEE, MMMM d, yyyy")}
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">
+                  {format(currentDate, isMobile ? "EEE, MMM d" : "EEEE, MMMM d, yyyy")}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  All times shown in {formatTimezone(timezone)}
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                  All times in {isMobile ? timezone.split('/')[1] : formatTimezone(timezone)}
                 </p>
               </div>
             )}
             {viewMode === "week" && (
               <div>
-                <h3 className="text-lg font-semibold text-foreground">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">
                   Weekly Schedule
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  All times shown in {formatTimezone(timezone)}
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                  All times in {isMobile ? timezone.split('/')[1] : formatTimezone(timezone)}
                 </p>
               </div>
             )}
           </div>
 
           {/* Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {/* View mode toggle */}
-            <div className="flex items-center gap-1 mr-4">
+            <div className="flex items-center gap-1 mr-2 sm:mr-4">
               <Button
                 variant={viewMode === "day" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => setViewMode("day")}
+                className="text-xs sm:text-sm px-2 sm:px-3"
               >
                 Day
               </Button>
@@ -551,6 +552,7 @@ export function TeacherScheduleView({
                 variant={viewMode === "week" ? "primary" : "secondary"}
                 size="sm"
                 onClick={() => setViewMode("week")}
+                className="text-xs sm:text-sm px-2 sm:px-3"
               >
                 Week
               </Button>
@@ -569,7 +571,7 @@ export function TeacherScheduleView({
               variant="secondary"
               size="sm"
               onClick={goToToday}
-              className="hover:bg-transparent hover:text-foreground"
+              className="hover:bg-transparent hover:text-foreground text-xs sm:text-sm px-2 sm:px-3"
             >
               Today
             </Button>
@@ -591,7 +593,7 @@ export function TeacherScheduleView({
           </div>
         ) : viewMode === "day" ? (
           /* Daily view */
-          <div className="max-w-2xl">
+          <div className="w-full lg:max-w-2xl">
             {(() => {
               // Convert JavaScript day (0=Sunday, 1=Monday, ...) to our Monday-first system (0=Monday, 1=Tuesday, ...)
               const currentDayIndex =
@@ -644,12 +646,12 @@ export function TeacherScheduleView({
                     return (
                       <div
                         key={timeSlot}
-                        className="flex items-center justify-start gap-4"
+                        className="flex items-center justify-start gap-2 sm:gap-4"
                       >
                         {/* Time label */}
                         <div
                           className={cn(
-                            "w-24 text-sm font-medium text-foreground text-left py-2 px-3 -ml-3 rounded-l",
+                            "w-20 sm:w-24 text-xs sm:text-sm font-medium text-foreground text-left py-2 px-2 sm:px-3 -ml-2 sm:-ml-3 rounded-l",
                             index % 2 === 1 && "bg-neutral-200/40"
                           )}
                         >
@@ -657,7 +659,7 @@ export function TeacherScheduleView({
                         </div>
 
                         {/* Slot content */}
-                        <div className={cn("flex items-center flex-1")}>
+                        <div className={cn("flex items-center flex-1 pr-2")}>
                           {renderSlotContent(
                             slotStatus,
                             currentDate,
@@ -729,7 +731,7 @@ export function TeacherScheduleView({
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {dayTimeSlots.map((timeSlot, slotIndex) => {
+                          {dayTimeSlots.map((timeSlot) => {
                             const slotStatus = getSlotStatus(
                               day,
                               timeSlot,
@@ -741,12 +743,12 @@ export function TeacherScheduleView({
                             return (
                               <div
                                 key={timeSlot}
-                                className="flex items-center justify-between gap-3 p-2 rounded border bg-background"
+                                className="flex items-center justify-between gap-2 p-2 rounded border bg-background"
                               >
-                                <div className="text-sm font-medium text-foreground">
+                                <div className="text-xs font-medium text-foreground whitespace-nowrap">
                                   {timeSlot}
                                 </div>
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                   {renderSlotContent(
                                     slotStatus,
                                     day,
