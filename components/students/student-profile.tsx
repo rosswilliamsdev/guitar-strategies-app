@@ -613,7 +613,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
               Keep Slot
             </Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              variant={"destructive"}
               onClick={() =>
                 confirmCancelSlot && handleCancelSlot(confirmCancelSlot)
               }
@@ -645,7 +645,8 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
               Keep Lesson
             </Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              variant={"destructive"}
+              
               onClick={() =>
                 confirmCancelLesson && handleCancelLesson(confirmCancelLesson)
               }

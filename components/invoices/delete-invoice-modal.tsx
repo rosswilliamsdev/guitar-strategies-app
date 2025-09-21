@@ -86,9 +86,10 @@ export function DeleteInvoiceModal({
               Cancel
             </Button>
             <Button
+            variant={'destructive'}
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              
             >
               {isDeleting ? 'Deleting...' : 'Delete Invoice'}
             </Button>

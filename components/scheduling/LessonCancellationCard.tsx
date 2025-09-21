@@ -145,95 +145,99 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
 
   return (
     <>
-    <Card className="p-6">
-      <div className="flex items-center space-x-2 mb-4">
-        <AlertTriangle className="h-5 w-5 text-orange-600" />
-        <h3 className="text-lg font-semibold">Need to cancel?</h3>
-      </div>
-      
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-red-600 text-sm">{error}</p>
+      <Card className="p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <AlertTriangle className="h-5 w-5 text-orange-600" />
+          <h3 className="text-lg font-semibold">Need to cancel?</h3>
         </div>
-      )}
 
-      <div className="space-y-3">
-        <p className="text-sm text-muted-foreground mb-3">
-          Select a lesson to cancel from your upcoming schedule:
-        </p>
-        
-        {upcomingLessons.map((lesson) => (
-          <div
-            key={lesson.id}
-            className="flex items-center justify-between p-3 bg-muted/30 rounded-md border"
-          >
-            <div className="flex-1">
-              <span className="text-sm font-medium">
-                {format(new Date(lesson.date), "EEE, MMM d 'at' h:mm a")} • {lesson.duration} min
-              </span>
-            </div>
-            
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setConfirmCancelLesson(lesson.id)}
-              disabled={cancellingId === lesson.id}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              {cancellingId === lesson.id ? (
-                "Cancelling..."
-              ) : (
-                "Cancel"
-              )}
-            </Button>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
-        ))}
+        )}
 
-      </div>
-    </Card>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground mb-3">
+            Select a lesson to cancel from your upcoming schedule:
+          </p>
 
-    {/* Cancel Lesson Confirmation Dialog */}
-    <Dialog open={!!confirmCancelLesson} onOpenChange={() => setConfirmCancelLesson(null)}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Cancel Lesson</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to cancel this lesson? This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="destructive" onClick={() => setConfirmCancelLesson(null)}>
-            Keep Lesson
-          </Button>
-          <Button 
-            className="bg-red-600 hover:bg-red-700 text-white"
-            onClick={() => confirmCancelLesson && handleCancelLesson(confirmCancelLesson)}
-          >
-            Cancel Lesson
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          {upcomingLessons.map((lesson) => (
+            <div
+              key={lesson.id}
+              className="flex items-center justify-between p-3 bg-muted/30 rounded-md border"
+            >
+              <div className="flex-1">
+                <span className="text-sm font-medium">
+                  {format(new Date(lesson.date), "EEE, MMM d 'at' h:mm a")} •{" "}
+                  {lesson.duration} min
+                </span>
+              </div>
 
-    {/* Error Dialog */}
-    <Dialog open={!!errorMessage} onOpenChange={() => setErrorMessage(null)}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            Error
-          </DialogTitle>
-          <DialogDescription className="text-foreground">
-            {errorMessage}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button onClick={() => setErrorMessage(null)}>
-            OK
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setConfirmCancelLesson(lesson.id)}
+                disabled={cancellingId === lesson.id}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                {cancellingId === lesson.id ? "Cancelling..." : "Cancel"}
+              </Button>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Cancel Lesson Confirmation Dialog */}
+      <Dialog
+        open={!!confirmCancelLesson}
+        onOpenChange={() => setConfirmCancelLesson(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Lesson</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this lesson? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="destructive"
+              onClick={() => setConfirmCancelLesson(null)}
+            >
+              Keep Lesson
+            </Button>
+            <Button
+              variant={"destructive"}
+              
+              onClick={() =>
+                confirmCancelLesson && handleCancelLesson(confirmCancelLesson)
+              }
+            >
+              Cancel Lesson
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={!!errorMessage} onOpenChange={() => setErrorMessage(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              Error
+            </DialogTitle>
+            <DialogDescription className="text-foreground">
+              {errorMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setErrorMessage(null)}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

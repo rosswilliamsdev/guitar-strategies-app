@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import toast from "react-hot-toast";
-import { 
+import {
   Search,
   Users,
   Eye,
@@ -24,9 +24,9 @@ import {
   GraduationCap,
   Trash2,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
-import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
+import { log, emailLog, invoiceLog, schedulerLog } from "@/lib/logger";
 
 export interface Student {
   id: string;
@@ -57,18 +57,24 @@ export function ManageStudents({ students }: ManageStudentsProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Student details modal state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [studentToView, setStudentToView] = useState<Student | null>(null);
 
-  const filteredStudents = students.filter(student =>
-    student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.studentProfile?.teacher?.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStudents = students.filter(
+    (student) =>
+      student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.studentProfile?.teacher?.user?.name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
   );
 
-  const toggleStudentStatus = async (studentId: string, currentStatus: boolean) => {
+  const toggleStudentStatus = async (
+    studentId: string,
+    currentStatus: boolean
+  ) => {
     try {
       const response = await fetch(`/api/admin/students/${studentId}/toggle`, {
         method: "POST",
@@ -83,9 +89,9 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         window.location.reload();
       }
     } catch (error) {
-      log.error('Error toggling student status:', {
+      log.error("Error toggling student status:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     }
   };
@@ -126,9 +132,9 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         toast.error(error.message || "Failed to delete student");
       }
     } catch (error) {
-      log.error('Error deleting student:', {
+      log.error("Error deleting student:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       toast.error("An unexpected error occurred while deleting the student");
     } finally {
@@ -137,7 +143,6 @@ export function ManageStudents({ students }: ManageStudentsProps) {
       setStudentToDelete(null);
     }
   };
-
 
   return (
     <div className="space-y-6">
@@ -155,7 +160,13 @@ export function ManageStudents({ students }: ManageStudentsProps) {
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <span>{filteredStudents.length} students</span>
-            <span>{filteredStudents.filter(s => s.studentProfile?.isActive).length} active</span>
+            <span>
+              {
+                filteredStudents.filter((s) => s.studentProfile?.isActive)
+                  .length
+              }{" "}
+              active
+            </span>
           </div>
         </div>
       </Card>
@@ -167,8 +178,11 @@ export function ManageStudents({ students }: ManageStudentsProps) {
           const isActive = profile?.isActive ?? true;
 
           return (
-            <Card key={student.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow">
-              <div 
+            <Card
+              key={student.id}
+              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div
                 className="space-y-3"
                 onClick={() => handleViewDetails(student)}
               >
@@ -176,19 +190,26 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{student.name}</h3>
+                      <h3 className="font-semibold text-foreground">
+                        {student.name}
+                      </h3>
                       {isActive ? (
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       ) : (
                         <XCircle className="h-4 w-4 text-red-600" />
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{student.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {student.email}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       Joined {new Date(student.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="flex gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button
                       size="sm"
                       variant={isActive ? "secondary" : "primary"}
@@ -208,8 +229,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                     </Button>
                     <Button
                       size="sm"
-                      variant="secondary"
-                      className="bg-red-500 hover:bg-red-700 text-white border-red-600"
+                      variant="destructive"
                       onClick={() => handleDeleteClick(student)}
                     >
                       <Trash2 className="h-3 w-3" />
@@ -223,8 +243,12 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                     <div className="flex items-center gap-2">
                       <GraduationCap className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">{profile.teacher.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{profile.teacher.user.email}</p>
+                        <p className="text-sm font-medium">
+                          {profile.teacher.user.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {profile.teacher.user.email}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -233,7 +257,9 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                 {/* Student Details */}
                 {profile?.instrument && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Instrument:</span>
+                    <span className="text-xs text-muted-foreground">
+                      Instrument:
+                    </span>
                     <Badge className="text-xs bg-background border">
                       {profile.instrument}
                     </Badge>
@@ -243,7 +269,9 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                 {/* Goals */}
                 {profile?.goals && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Goals:</p>
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      Goals:
+                    </p>
                     <p className="text-xs text-muted-foreground line-clamp-2">
                       {profile.goals}
                     </p>
@@ -262,10 +290,9 @@ export function ManageStudents({ students }: ManageStudentsProps) {
             No students found
           </h3>
           <p className="text-muted-foreground">
-            {students.length === 0 
+            {students.length === 0
               ? "No students have registered yet."
-              : "Try adjusting your search criteria."
-            }
+              : "Try adjusting your search criteria."}
           </p>
         </Card>
       )}
@@ -279,26 +306,35 @@ export function ManageStudents({ students }: ManageStudentsProps) {
               Student Details: {studentToView?.name}
             </DialogTitle>
             <DialogDescription>
-              Complete information about this student&apos;s profile and learning journey
+              Complete information about this student&apos;s profile and
+              learning journey
             </DialogDescription>
           </DialogHeader>
-          
+
           {studentToView && (
             <div className="space-y-6 py-4">
               {/* Basic Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+                <h3 className="text-lg font-semibold border-b pb-2">
+                  Basic Information
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Full Name
+                    </label>
                     <p className="text-sm">{studentToView.name}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Email</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Email
+                    </label>
                     <p className="text-sm">{studentToView.email}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Status
+                    </label>
                     <div className="flex items-center gap-2">
                       {studentToView.studentProfile?.isActive ? (
                         <>
@@ -314,8 +350,12 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Joined</label>
-                    <p className="text-sm">{new Date(studentToView.createdAt).toLocaleDateString()}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Joined
+                    </label>
+                    <p className="text-sm">
+                      {new Date(studentToView.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -323,10 +363,14 @@ export function ManageStudents({ students }: ManageStudentsProps) {
               {/* Learning Information */}
               {studentToView.studentProfile && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold border-b pb-2">Learning Information</h3>
+                  <h3 className="text-lg font-semibold border-b pb-2">
+                    Learning Information
+                  </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Instrument</label>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Instrument
+                      </label>
                       <div className="flex items-center gap-2">
                         <Badge className="bg-background border">
                           {studentToView.studentProfile.instrument}
@@ -334,18 +378,22 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Assigned Teacher</label>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Assigned Teacher
+                      </label>
                       <p className="text-sm">
-                        {studentToView.studentProfile.teacher 
+                        {studentToView.studentProfile.teacher
                           ? studentToView.studentProfile.teacher.user.name
-                          : 'No teacher assigned'
-                        }
+                          : "No teacher assigned"}
                       </p>
                     </div>
                     <div className="col-span-2">
-                      <label className="text-sm font-medium text-muted-foreground">Learning Goals</label>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Learning Goals
+                      </label>
                       <p className="text-sm mt-1 p-3 bg-muted rounded-lg">
-                        {studentToView.studentProfile.goals || 'No goals specified'}
+                        {studentToView.studentProfile.goals ||
+                          "No goals specified"}
                       </p>
                     </div>
                   </div>
@@ -355,13 +403,19 @@ export function ManageStudents({ students }: ManageStudentsProps) {
               {/* Teacher Information */}
               {studentToView.studentProfile?.teacher && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold border-b pb-2">Assigned Teacher</h3>
+                  <h3 className="text-lg font-semibold border-b pb-2">
+                    Assigned Teacher
+                  </h3>
                   <div className="bg-muted/50 rounded-lg p-4">
                     <div className="flex items-center gap-3">
                       <Users className="h-5 w-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">{studentToView.studentProfile.teacher.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{studentToView.studentProfile.teacher.user.email}</p>
+                        <p className="text-sm font-medium">
+                          {studentToView.studentProfile.teacher.user.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {studentToView.studentProfile.teacher.user.email}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -394,7 +448,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
               <strong>{studentToDelete?.name}</strong>&apos;s account?
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-sm text-red-800 font-medium mb-2">
@@ -408,17 +462,19 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                 <li>• All recurring lesson bookings</li>
               </ul>
             </div>
-            
+
             {studentToDelete?.studentProfile?.teacher && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800 font-medium">
-                  📚 Currently assigned to teacher: {studentToDelete.studentProfile.teacher.user.name}
+                  📚 Currently assigned to teacher:{" "}
+                  {studentToDelete.studentProfile.teacher.user.name}
                 </p>
               </div>
             )}
-            
+
             <p className="text-sm text-muted-foreground">
-              <strong>This action cannot be undone.</strong> Please ensure you have backed up any necessary data before proceeding.
+              <strong>This action cannot be undone.</strong> Please ensure you
+              have backed up any necessary data before proceeding.
             </p>
           </div>
 
@@ -431,8 +487,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
               Cancel
             </Button>
             <Button
-              variant="secondary"
-              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              variant={"destructive"}
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
             >

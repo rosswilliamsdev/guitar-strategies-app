@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +8,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { AlertTriangle } from 'lucide-react';
-import { log, invoiceLog } from '@/lib/logger';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
+import { log, invoiceLog } from "@/lib/logger";
 
 interface DeleteInvoiceModalProps {
   isOpen: boolean;
@@ -38,9 +38,9 @@ export function DeleteInvoiceModal({
       await onConfirm();
       onClose();
     } catch (error) {
-      log.error('Error deleting invoice:', {
+      log.error("Error deleting invoice:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
       setIsDeleting(false);
@@ -55,24 +55,25 @@ export function DeleteInvoiceModal({
             <AlertTriangle className="h-5 w-5 mr-2" />
             Delete Invoice
           </DialogTitle>
-          <DialogDescription>
-            This action cannot be undone.
-          </DialogDescription>
+          <DialogDescription>This action cannot be undone.</DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-red-800">
-              Are you sure you want to delete invoice <strong>{invoiceNumber}</strong> for{' '}
+              Are you sure you want to delete invoice{" "}
+              <strong>{invoiceNumber}</strong> for{" "}
               <strong>{studentName}</strong>?
             </p>
             {isPaid && (
               <p className="text-xs text-red-600 mt-2">
-                <strong>Warning:</strong> This invoice has been marked as paid. Deleting it will remove all payment records.
+                <strong>Warning:</strong> This invoice has been marked as paid.
+                Deleting it will remove all payment records.
               </p>
             )}
             <p className="text-xs text-red-600 mt-2">
-              This action cannot be undone and will permanently remove the invoice and all its items.
+              This action cannot be undone and will permanently remove the
+              invoice and all its items.
             </p>
           </div>
 
@@ -88,9 +89,9 @@ export function DeleteInvoiceModal({
             <Button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600  text-white"
             >
-              {isDeleting ? 'Deleting...' : 'Delete Invoice'}
+              {isDeleting ? "Deleting..." : "Delete Invoice"}
             </Button>
           </DialogFooter>
         </div>

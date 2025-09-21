@@ -646,7 +646,6 @@ export function LibraryList({ items }: LibraryListProps) {
               variant="destructive"
               onClick={handleBulkDelete}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {isDeleting ? (
                 <>

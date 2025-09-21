@@ -236,8 +236,7 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
                     </Button>
                     <Button
                       size="sm"
-                      variant="secondary"
-                      className="bg-red-500 hover:bg-red-700 text-white border-red-600"
+                      variant="destructive"
                       onClick={() => handleDeleteClick(teacher)}
                     >
                       <Trash2 className="h-3 w-3" />
@@ -537,8 +536,7 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
               Cancel
             </Button>
             <Button
-              variant="secondary"
-              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              variant="destructive"
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
             >

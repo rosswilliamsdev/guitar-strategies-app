@@ -28,7 +28,7 @@ import {
   AlertTriangle,
   GraduationCap,
 } from "lucide-react";
-import { log, emailLog, invoiceLog } from '@/lib/logger';
+import { log, emailLog, invoiceLog } from "@/lib/logger";
 
 export interface Teacher {
   id: string;
@@ -64,7 +64,7 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Teacher details modal state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [teacherToView, setTeacherToView] = useState<Teacher | null>(null);
@@ -93,9 +93,9 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
         window.location.reload();
       }
     } catch (error) {
-      log.error('Error toggling teacher status:', {
+      log.error("Error toggling teacher status:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     }
   };
@@ -136,9 +136,9 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
         toast.error(error.message || "Failed to delete teacher");
       }
     } catch (error) {
-      log.error('Error deleting teacher:', {
+      log.error("Error deleting teacher:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       toast.error("An unexpected error occurred while deleting the teacher");
     } finally {
@@ -190,8 +190,11 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
           const isActive = profile?.isActive ?? true;
 
           return (
-            <Card key={teacher.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow">
-              <div 
+            <Card
+              key={teacher.id}
+              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div
                 className="space-y-3"
                 onClick={() => handleViewDetails(teacher)}
               >
@@ -215,7 +218,10 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
                       Joined {new Date(teacher.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="flex gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button
                       size="sm"
                       variant={isActive ? "secondary" : "primary"}
@@ -235,8 +241,7 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
                     </Button>
                     <Button
                       size="sm"
-                      variant="secondary"
-                      className="bg-red-500 hover:bg-red-700 text-white border-red-600"
+                      variant="destructive"
                       onClick={() => handleDeleteClick(teacher)}
                     >
                       <Trash2 className="h-3 w-3" />
@@ -340,26 +345,35 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
               Teacher Details: {teacherToView?.name}
             </DialogTitle>
             <DialogDescription>
-              Complete information about this teacher&apos;s profile and activity
+              Complete information about this teacher&apos;s profile and
+              activity
             </DialogDescription>
           </DialogHeader>
-          
+
           {teacherToView && (
             <div className="space-y-6 py-4">
               {/* Basic Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+                <h3 className="text-lg font-semibold border-b pb-2">
+                  Basic Information
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Full Name
+                    </label>
                     <p className="text-sm">{teacherToView.name}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Email</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Email
+                    </label>
                     <p className="text-sm">{teacherToView.email}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Status
+                    </label>
                     <div className="flex items-center gap-2">
                       {teacherToView.teacherProfile?.isActive ? (
                         <>
@@ -375,8 +389,12 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Joined</label>
-                    <p className="text-sm">{new Date(teacherToView.createdAt).toLocaleDateString()}</p>
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Joined
+                    </label>
+                    <p className="text-sm">
+                      {new Date(teacherToView.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -384,86 +402,134 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
               {/* Teaching Information */}
               {teacherToView.teacherProfile && (
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold border-b pb-2">Teaching Information</h3>
+                  <h3 className="text-lg font-semibold border-b pb-2">
+                    Teaching Information
+                  </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Hourly Rate</label>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Hourly Rate
+                      </label>
                       <p className="text-sm">
-                        {teacherToView.teacherProfile.hourlyRate 
-                          ? `$${(teacherToView.teacherProfile.hourlyRate / 100).toFixed(0)}/hour`
-                          : 'Not set'
-                        }
+                        {teacherToView.teacherProfile.hourlyRate
+                          ? `$${(
+                              teacherToView.teacherProfile.hourlyRate / 100
+                            ).toFixed(0)}/hour`
+                          : "Not set"}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Total Students</label>
-                      <p className="text-sm">{teacherToView.teacherProfile.students?.length || 0}</p>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Total Students
+                      </label>
+                      <p className="text-sm">
+                        {teacherToView.teacherProfile.students?.length || 0}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Phone Number</label>
-                      <p className="text-sm">{teacherToView.teacherProfile.phoneNumber || 'Not provided'}</p>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Phone Number
+                      </label>
+                      <p className="text-sm">
+                        {teacherToView.teacherProfile.phoneNumber ||
+                          "Not provided"}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Timezone</label>
-                      <p className="text-sm">{teacherToView.teacherProfile.timezone || 'America/New_York'}</p>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Timezone
+                      </label>
+                      <p className="text-sm">
+                        {teacherToView.teacherProfile.timezone ||
+                          "America/New_York"}
+                      </p>
                     </div>
                   </div>
-                  
+
                   {teacherToView.teacherProfile.bio && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Bio</label>
-                      <p className="text-sm mt-1 p-3 bg-muted rounded-lg">{teacherToView.teacherProfile.bio}</p>
+                      <label className="text-sm font-medium text-muted-foreground">
+                        Bio
+                      </label>
+                      <p className="text-sm mt-1 p-3 bg-muted rounded-lg">
+                        {teacherToView.teacherProfile.bio}
+                      </p>
                     </div>
                   )}
                 </div>
               )}
 
               {/* Payment Methods */}
-              {teacherToView.teacherProfile && (teacherToView.teacherProfile.venmoHandle || teacherToView.teacherProfile.paypalEmail || teacherToView.teacherProfile.zelleEmail) && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold border-b pb-2">Payment Methods</h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    {teacherToView.teacherProfile.venmoHandle && (
-                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                        <Badge className="bg-blue-100 text-blue-700 border-blue-200">Venmo</Badge>
-                        <span className="text-sm">{teacherToView.teacherProfile.venmoHandle}</span>
-                      </div>
-                    )}
-                    {teacherToView.teacherProfile.paypalEmail && (
-                      <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                        <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">PayPal</Badge>
-                        <span className="text-sm">{teacherToView.teacherProfile.paypalEmail}</span>
-                      </div>
-                    )}
-                    {teacherToView.teacherProfile.zelleEmail && (
-                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                        <Badge className="bg-green-100 text-green-700 border-green-200">Zelle</Badge>
-                        <span className="text-sm">{teacherToView.teacherProfile.zelleEmail}</span>
-                      </div>
-                    )}
+              {teacherToView.teacherProfile &&
+                (teacherToView.teacherProfile.venmoHandle ||
+                  teacherToView.teacherProfile.paypalEmail ||
+                  teacherToView.teacherProfile.zelleEmail) && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">
+                      Payment Methods
+                    </h3>
+                    <div className="grid grid-cols-1 gap-3">
+                      {teacherToView.teacherProfile.venmoHandle && (
+                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                          <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                            Venmo
+                          </Badge>
+                          <span className="text-sm">
+                            {teacherToView.teacherProfile.venmoHandle}
+                          </span>
+                        </div>
+                      )}
+                      {teacherToView.teacherProfile.paypalEmail && (
+                        <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                          <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
+                            PayPal
+                          </Badge>
+                          <span className="text-sm">
+                            {teacherToView.teacherProfile.paypalEmail}
+                          </span>
+                        </div>
+                      )}
+                      {teacherToView.teacherProfile.zelleEmail && (
+                        <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                            Zelle
+                          </Badge>
+                          <span className="text-sm">
+                            {teacherToView.teacherProfile.zelleEmail}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Students List */}
-              {teacherToView.teacherProfile?.students && teacherToView.teacherProfile.students.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold border-b pb-2">
-                    Students ({teacherToView.teacherProfile.students.length})
-                  </h3>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {teacherToView.teacherProfile.students.map((student) => (
-                      <div key={student.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-sm font-medium">{student.user.name}</p>
-                          <p className="text-xs text-muted-foreground">{student.user.email}</p>
+              {teacherToView.teacherProfile?.students &&
+                teacherToView.teacherProfile.students.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold border-b pb-2">
+                      Students ({teacherToView.teacherProfile.students.length})
+                    </h3>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {teacherToView.teacherProfile.students.map((student) => (
+                        <div
+                          key={student.id}
+                          className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
+                        >
+                          <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium">
+                              {student.user.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {student.user.email}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
 
@@ -536,8 +602,7 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
               Cancel
             </Button>
             <Button
-              variant="secondary"
-              className="bg-red-600 hover:bg-red-700 text-white border-red-600"
+              variant={"destructive"}
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
             >

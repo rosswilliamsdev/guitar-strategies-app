@@ -107,6 +107,21 @@ export async function POST(request: NextRequest) {
         throw new Error("This time slot was just booked by another lesson");
       }
 
+      // Get teacher's lesson settings for pricing
+      const teacher = await tx.teacherProfile.findUnique({
+        where: { id: validatedData.teacherId },
+        include: { lessonSettings: true }
+      });
+
+      if (!teacher?.lessonSettings) {
+        throw new Error("Teacher lesson settings not found");
+      }
+
+      // Calculate the price based on duration
+      const lessonPrice = validatedData.duration === 30
+        ? teacher.lessonSettings.price30Min
+        : teacher.lessonSettings.price60Min;
+
       if (validatedData.type === "single") {
         // Create single lesson
         const lesson = await tx.lesson.create({
@@ -143,7 +158,7 @@ export async function POST(request: NextRequest) {
           throw new Error("You already have a recurring slot at this time");
         }
 
-        // Create recurring slot
+        // Create recurring slot with the per-lesson price
         const recurringSlot = await tx.recurringSlot.create({
           data: {
             teacherId: validatedData.teacherId,
@@ -151,7 +166,7 @@ export async function POST(request: NextRequest) {
             dayOfWeek,
             startTime: timeString,
             duration: validatedData.duration,
-            monthlyRate: 0, // Set based on teacher's rate
+            perLessonPrice: lessonPrice, // Use the calculated price from teacher's settings
             status: "ACTIVE",
           },
         });

@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { format } from 'date-fns';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  Music, 
-  Target, 
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { format } from "date-fns";
+import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Music,
+  Target,
   DollarSign,
   Clock,
   ChevronRight,
   X,
   CalendarClock,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,8 +27,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
+} from "@/components/ui/dialog";
+import { log, emailLog, invoiceLog, schedulerLog } from "@/lib/logger";
 
 interface StudentData {
   student: {
@@ -105,15 +105,19 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
   const [error, setError] = useState<string | null>(null);
   const [cancellingSlot, setCancellingSlot] = useState<string | null>(null);
   const [cancellingLesson, setCancellingLesson] = useState<string | null>(null);
-  const [confirmCancelSlot, setConfirmCancelSlot] = useState<string | null>(null);
-  const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(null);
+  const [confirmCancelSlot, setConfirmCancelSlot] = useState<string | null>(
+    null
+  );
+  const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(
+    null
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/students/${studentId}`)
-      .then(res => {
+      .then((res) => {
         if (!res.ok) {
-          throw new Error('Failed to fetch student');
+          throw new Error("Failed to fetch student");
         }
         return res.json();
       })
@@ -141,7 +145,8 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
           Student not found
         </h3>
         <p className="text-gray-600 mb-4">
-          This student doesn&apos;t exist or you don&apos;t have access to their profile.
+          This student doesn&apos;t exist or you don&apos;t have access to their
+          profile.
         </p>
         <Link href="/students">
           <Button variant="secondary">Back to Students</Button>
@@ -150,29 +155,44 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
     );
   }
 
-  const { student, recentLessons, upcomingLessons, recurringSlots, invoices, paymentSummary } = data;
+  const {
+    student,
+    recentLessons,
+    upcomingLessons,
+    recurringSlots,
+    invoices,
+    paymentSummary,
+  } = data;
 
   const getDayName = (dayOfWeek: number): string => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
     return days[dayOfWeek];
   };
 
   const formatSlotTime = (startTime: string, duration: number): string => {
-    const [hours, minutes] = startTime.split(':').map(Number);
+    const [hours, minutes] = startTime.split(":").map(Number);
     const startDate = new Date();
     startDate.setHours(hours, minutes);
-    
+
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + duration);
-    
+
     const formatTime = (date: Date) => {
-      return date.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
+      return date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       });
     };
-    
+
     return `${formatTime(startDate)} - ${formatTime(endDate)}`;
   };
 
@@ -181,18 +201,18 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
     setCancellingSlot(slotId);
     try {
       const response = await fetch(`/api/slots/${slotId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           cancelDate: new Date().toISOString(),
-          reason: 'Cancelled from student profile',
+          reason: "Cancelled from student profile",
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to cancel slot');
+        throw new Error("Failed to cancel slot");
       }
 
       // Refresh the data
@@ -202,11 +222,11 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         setData(newData);
       }
     } catch (error) {
-      log.error('Error cancelling slot:', {
+      log.error("Error cancelling slot:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      setErrorMessage('Failed to cancel the time slot. Please try again.');
+      setErrorMessage("Failed to cancel the time slot. Please try again.");
     } finally {
       setCancellingSlot(null);
     }
@@ -217,18 +237,18 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
     setCancellingLesson(lessonId);
     try {
       const response = await fetch(`/api/lessons/${lessonId}/cancel`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          reason: 'Cancelled from student profile',
+          reason: "Cancelled from student profile",
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to cancel lesson');
+        throw new Error(errorData.error || "Failed to cancel lesson");
       }
 
       // Refresh the data
@@ -238,9 +258,9 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         setData(newData);
       }
     } catch (error: any) {
-      log.error('Error cancelling lesson:', {
+      log.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       setErrorMessage(`Failed to cancel the lesson: ${error.message}`);
     } finally {
@@ -249,24 +269,24 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
   };
 
   const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(cents / 100);
   };
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800',
-      INACTIVE: 'bg-gray-100 text-gray-800',
-      SCHEDULED: 'bg-blue-100 text-blue-800',
-      COMPLETED: 'bg-green-100 text-green-800',
-      CANCELLED: 'bg-red-100 text-red-800',
-      PAID: 'bg-green-100 text-green-800',
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      OVERDUE: 'bg-red-100 text-red-800',
+      ACTIVE: "bg-green-100 text-green-800",
+      INACTIVE: "bg-gray-100 text-gray-800",
+      SCHEDULED: "bg-blue-100 text-blue-800",
+      COMPLETED: "bg-green-100 text-green-800",
+      CANCELLED: "bg-red-100 text-red-800",
+      PAID: "bg-green-100 text-green-800",
+      PENDING: "bg-yellow-100 text-yellow-800",
+      OVERDUE: "bg-red-100 text-red-800",
     };
-    return variants[status] || 'bg-gray-100 text-gray-800';
+    return variants[status] || "bg-gray-100 text-gray-800";
   };
 
   return (
@@ -282,18 +302,24 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
             <p className="text-muted-foreground">Student Profile</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge className={getStatusBadge(student.isActive ? 'ACTIVE' : 'INACTIVE')}>
-              {student.isActive ? 'Active' : 'Inactive'}
+            <Badge
+              className={getStatusBadge(
+                student.isActive ? "ACTIVE" : "INACTIVE"
+              )}
+            >
+              {student.isActive ? "Active" : "Inactive"}
             </Badge>
             <Link href={`/lessons/new?studentId=${studentId}`}>
               <Button size="sm">New Lesson</Button>
             </Link>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <h3 className="font-medium text-gray-900 mb-3">Contact Information</h3>
+            <h3 className="font-medium text-gray-900 mb-3">
+              Contact Information
+            </h3>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Mail className="h-4 w-4 text-muted-foreground" />
@@ -301,7 +327,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{student.phoneNumber || 'Not provided'}</span>
+                <span>{student.phoneNumber || "Not provided"}</span>
               </div>
               {student.parentEmail && (
                 <div className="flex items-center gap-2 text-sm">
@@ -311,7 +337,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
               )}
             </div>
           </div>
-          
+
           <div>
             <h3 className="font-medium text-gray-900 mb-3">Learning Details</h3>
             <div className="space-y-2">
@@ -321,7 +347,9 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>Joined {format(new Date(student.joinedAt), 'MMMM d, yyyy')}</span>
+                <span>
+                  Joined {format(new Date(student.joinedAt), "MMMM d, yyyy")}
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-muted-foreground" />
@@ -399,22 +427,26 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
             <Clock className="h-8 w-8 text-muted-foreground" />
           </div>
         </Card>
-        
+
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Paid</p>
-              <p className="text-2xl font-semibold">{formatCurrency(paymentSummary.totalPaid)}</p>
+              <p className="text-2xl font-semibold">
+                {formatCurrency(paymentSummary.totalPaid)}
+              </p>
             </div>
             <DollarSign className="h-8 w-8 text-green-500" />
           </div>
         </Card>
-        
+
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Outstanding</p>
-              <p className="text-2xl font-semibold">{formatCurrency(paymentSummary.totalOwed)}</p>
+              <p className="text-2xl font-semibold">
+                {formatCurrency(paymentSummary.totalOwed)}
+              </p>
             </div>
             <DollarSign className="h-8 w-8 text-yellow-500" />
           </div>
@@ -435,20 +467,24 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
           </div>
           <div className="space-y-2">
             {upcomingLessons.map((lesson) => (
-              <div key={lesson.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div
+                key={lesson.id}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+              >
                 <div className="flex-1">
                   <p className="font-medium">
-                    {format(new Date(lesson.date), 'EEEE, MMMM d')}
+                    {format(new Date(lesson.date), "EEEE, MMMM d")}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {format(new Date(lesson.date), 'h:mm a')} • {lesson.duration} minutes
+                    {format(new Date(lesson.date), "h:mm a")} •{" "}
+                    {lesson.duration} minutes
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={getStatusBadge(lesson.status)}>
                     {lesson.status}
                   </Badge>
-                  {lesson.status === 'SCHEDULED' && (
+                  {lesson.status === "SCHEDULED" && (
                     <Button
                       variant="secondary"
                       size="sm"
@@ -489,17 +525,20 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         ) : (
           <div className="space-y-2">
             {recentLessons.map((lesson) => (
-              <div key={lesson.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div
+                key={lesson.id}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+              >
                 <div className="flex-1">
                   <p className="font-medium">
-                    {format(new Date(lesson.date), 'MMMM d, yyyy')}
+                    {format(new Date(lesson.date), "MMMM d, yyyy")}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {lesson.duration} minutes • {lesson.teacher.user.name}
                   </p>
                   {lesson.notes && (
                     <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                      {lesson.notes.replace(/<[^>]*>/g, '')}
+                      {lesson.notes.replace(/<[^>]*>/g, "")}
                     </p>
                   )}
                 </div>
@@ -535,15 +574,21 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         ) : (
           <div className="space-y-2">
             {invoices.map((invoice) => (
-              <div key={invoice.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div
+                key={invoice.id}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+              >
                 <div>
                   <p className="font-medium">{invoice.invoiceNumber}</p>
                   <p className="text-sm text-muted-foreground">
-                    {format(new Date(invoice.month + '-01'), 'MMMM yyyy')} • Due {format(new Date(invoice.dueDate), 'MMM d')}
+                    {format(new Date(invoice.month + "-01"), "MMMM yyyy")} • Due{" "}
+                    {format(new Date(invoice.dueDate), "MMM d")}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-medium">{formatCurrency(invoice.total)}</span>
+                  <span className="font-medium">
+                    {formatCurrency(invoice.total)}
+                  </span>
                   <Badge className={getStatusBadge(invoice.status)}>
                     {invoice.status}
                   </Badge>
@@ -555,21 +600,30 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
       </Card>
 
       {/* Cancel Slot Confirmation Dialog */}
-      <Dialog open={!!confirmCancelSlot} onOpenChange={() => setConfirmCancelSlot(null)}>
+      <Dialog
+        open={!!confirmCancelSlot}
+        onOpenChange={() => setConfirmCancelSlot(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel Weekly Time Slot</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this weekly time slot? This will free up the time for other students.
+              Are you sure you want to cancel this weekly time slot? This will
+              free up the time for other students.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setConfirmCancelSlot(null)}>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmCancelSlot(null)}
+            >
               Keep Slot
             </Button>
-            <Button 
-              className="bg-red-600 hover:bg-red-700 text-white" 
-              onClick={() => confirmCancelSlot && handleCancelSlot(confirmCancelSlot)}
+            <Button
+              variant={"destructive"}
+              onClick={() =>
+                confirmCancelSlot && handleCancelSlot(confirmCancelSlot)
+              }
             >
               Cancel Slot
             </Button>
@@ -578,21 +632,30 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
       </Dialog>
 
       {/* Cancel Lesson Confirmation Dialog */}
-      <Dialog open={!!confirmCancelLesson} onOpenChange={() => setConfirmCancelLesson(null)}>
+      <Dialog
+        open={!!confirmCancelLesson}
+        onOpenChange={() => setConfirmCancelLesson(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel Lesson</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this lesson? This action cannot be undone.
+              Are you sure you want to cancel this lesson? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setConfirmCancelLesson(null)}>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmCancelLesson(null)}
+            >
               Keep Lesson
             </Button>
-            <Button 
-              className="bg-red-600 hover:bg-red-700 text-white" 
-              onClick={() => confirmCancelLesson && handleCancelLesson(confirmCancelLesson)}
+            <Button
+              variant={"destructive"}
+              onClick={() =>
+                confirmCancelLesson && handleCancelLesson(confirmCancelLesson)
+              }
             >
               Cancel Lesson
             </Button>
@@ -613,9 +676,7 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setErrorMessage(null)}>
-              OK
-            </Button>
+            <Button onClick={() => setErrorMessage(null)}>OK</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

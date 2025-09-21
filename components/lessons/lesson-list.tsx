@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { log, schedulerLog } from "@/lib/logger";
+import { Destructive } from "@/stories/ui/Button.stories";
 
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
@@ -504,7 +505,7 @@ export function LessonList({ userRole }: LessonListProps) {
               Keep Lesson
             </Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              variant="destructive"
               onClick={() =>
                 confirmCancelLesson && handleCancelLesson(confirmCancelLesson)
               }

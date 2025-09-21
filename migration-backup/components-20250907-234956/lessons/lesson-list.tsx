@@ -371,9 +371,11 @@ export function LessonList({ userRole }: LessonListProps) {
             {filteredLessons.length === 1 ? "Lesson" : "Lessons"}
             {searchTerm && ` matching "${searchTerm}"`}
           </h2>
-          <Select 
-            value={sortOrder} 
-            onValueChange={(value) => setSortOrder(value as "latest" | "earliest")}
+          <Select
+            value={sortOrder}
+            onValueChange={(value) =>
+              setSortOrder(value as "latest" | "earliest")
+            }
           >
             <SelectTrigger className="w-40">
               <ArrowUpDown className="h-4 w-4 mr-2" />
@@ -436,17 +438,20 @@ export function LessonList({ userRole }: LessonListProps) {
                     </span>
                     <div className="flex items-center space-x-1">
                       {/* Cancel button - only show for future lessons and scheduled status */}
-                      {lesson.status === 'SCHEDULED' && new Date(lesson.date) > new Date() && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => setConfirmCancelLesson(lesson.id)}
-                          disabled={cancellingLessons.has(lesson.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 h-6"
-                        >
-                          {cancellingLessons.has(lesson.id) ? '...' : 'Cancel'}
-                        </Button>
-                      )}
+                      {lesson.status === "SCHEDULED" &&
+                        new Date(lesson.date) > new Date() && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => setConfirmCancelLesson(lesson.id)}
+                            disabled={cancellingLessons.has(lesson.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs px-2 py-1 h-6"
+                          >
+                            {cancellingLessons.has(lesson.id)
+                              ? "..."
+                              : "Cancel"}
+                          </Button>
+                        )}
                       <Link href={`/lessons/${lesson.id}`}>
                         <Button
                           size="sm"
@@ -474,21 +479,30 @@ export function LessonList({ userRole }: LessonListProps) {
       </div>
 
       {/* Cancel Lesson Confirmation Dialog */}
-      <Dialog open={!!confirmCancelLesson} onOpenChange={() => setConfirmCancelLesson(null)}>
+      <Dialog
+        open={!!confirmCancelLesson}
+        onOpenChange={() => setConfirmCancelLesson(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel Lesson</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this lesson? This action cannot be undone.
+              Are you sure you want to cancel this lesson? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setConfirmCancelLesson(null)}>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmCancelLesson(null)}
+            >
               Keep Lesson
             </Button>
-            <Button 
-              className="bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => confirmCancelLesson && handleCancelLesson(confirmCancelLesson)}
+            <Button
+              variant={"destructive"}
+              onClick={() =>
+                confirmCancelLesson && handleCancelLesson(confirmCancelLesson)
+              }
             >
               Cancel Lesson
             </Button>
@@ -509,9 +523,7 @@ export function LessonList({ userRole }: LessonListProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setErrorMessage(null)}>
-              OK
-            </Button>
+            <Button onClick={() => setErrorMessage(null)}>OK</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

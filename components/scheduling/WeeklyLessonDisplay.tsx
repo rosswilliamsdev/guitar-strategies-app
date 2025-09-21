@@ -214,7 +214,7 @@ export function WeeklyLessonDisplay({
                   {displayInfo.duration} minute lessons
                 </div>
               </div>
-              
+
               {displayInfo.monthlyRate && (
                 <div className="text-right">
                   <div className="flex items-center justify-end gap-2 mb-1">
@@ -234,13 +234,18 @@ export function WeeklyLessonDisplay({
             {displayInfo.recentBilling && (
               <div className="pt-2 border-t border-primary/20">
                 <div className="text-xs text-muted-foreground">
-                  Last billing: {displayInfo.recentBilling.month} • 
-                  {displayInfo.recentBilling.actualLessons} of {displayInfo.recentBilling.expectedLessons} lessons • 
-                  <span className={`ml-1 font-medium ${
-                    displayInfo.recentBilling.status === 'PAID' ? 'text-green-600' : 
-                    displayInfo.recentBilling.status === 'OVERDUE' ? 'text-red-600' : 
-                    'text-blue-600'
-                  }`}>
+                  Last billing: {displayInfo.recentBilling.month} •
+                  {displayInfo.recentBilling.actualLessons} of{" "}
+                  {displayInfo.recentBilling.expectedLessons} lessons •
+                  <span
+                    className={`ml-1 font-medium ${
+                      displayInfo.recentBilling.status === "PAID"
+                        ? "text-green-600"
+                        : displayInfo.recentBilling.status === "OVERDUE"
+                        ? "text-red-600"
+                        : "text-blue-600"
+                    }`}
+                  >
                     {displayInfo.recentBilling.status.toLowerCase()}
                   </span>
                 </div>
@@ -271,7 +276,9 @@ export function WeeklyLessonDisplay({
 
         {/* Quick tip */}
         <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
-          💡 <strong>Tip:</strong> Your weekly time slot is reserved every week. You can book additional lessons below for extra practice or makeup sessions.
+          💡 <strong>Tip:</strong> Your weekly time slot is reserved every week.
+          You can book additional lessons below for extra practice or makeup
+          sessions.
         </div>
       </div>
 
@@ -281,15 +288,20 @@ export function WeeklyLessonDisplay({
           <DialogHeader>
             <DialogTitle>Cancel Weekly Lesson Time</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel your weekly lesson time? This will cancel all future recurring lessons.
+              Are you sure you want to cancel your weekly lesson time? This will
+              cancel all future recurring lessons.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setShowCancelDialog(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowCancelDialog(false)}
+            >
               Keep Lessons
             </Button>
-            <Button 
-              className="bg-red-600 hover:bg-red-700 text-white"
+            <Button
+              variant={"destructive"}
+              
               onClick={handleCancelRecurring}
             >
               Cancel Recurring
@@ -311,12 +323,10 @@ export function WeeklyLessonDisplay({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setErrorMessage(null)}>
-              OK
-            </Button>
+            <Button onClick={() => setErrorMessage(null)}>OK</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

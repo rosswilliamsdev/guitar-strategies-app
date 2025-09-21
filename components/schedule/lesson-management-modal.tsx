@@ -292,10 +292,9 @@ export function LessonManagementModal({
                     Keep Lesson
                   </Button>
                   <Button
-                    variant="primary"
+                    variant="destructive"
                     onClick={handleCancelLesson}
                     disabled={isLoading}
-                    className="bg-red-600 hover:bg-red-700"
                   >
                     {isLoading ? "Cancelling..." : "Cancel Lesson"}
                   </Button>

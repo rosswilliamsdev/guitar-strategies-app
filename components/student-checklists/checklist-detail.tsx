@@ -113,6 +113,29 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
   };
 
   const toggleItemCompletion = async (itemId: string, isCompleted: boolean) => {
+    // Optimistically update the local state immediately for better UX
+    if (checklist) {
+      const updatedItems = checklist.items.map(item =>
+        item.id === itemId
+          ? { ...item, isCompleted, completedAt: isCompleted ? new Date().toISOString() : undefined }
+          : item
+      );
+
+      const completedCount = updatedItems.filter(item => item.isCompleted).length;
+      const totalCount = updatedItems.length;
+      const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      setChecklist({
+        ...checklist,
+        items: updatedItems,
+        stats: {
+          totalItems: totalCount,
+          completedItems: completedCount,
+          progressPercent
+        }
+      });
+    }
+
     try {
       const response = await fetch(`/api/student-checklists/items/${itemId}`, {
         method: "PATCH",
@@ -126,6 +149,11 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
           const checkboxElement = checkboxRefs.current[itemId];
           fireItemConfetti(checkboxElement || undefined);
         }
+        // Fetch the latest data from server to ensure consistency
+        // But the UI has already been updated optimistically
+        fetchChecklist();
+      } else {
+        // If the request failed, revert the optimistic update
         fetchChecklist();
       }
     } catch (error) {
@@ -133,6 +161,8 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
+      // Revert the optimistic update on error
+      fetchChecklist();
     }
   };
 
@@ -356,7 +386,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
               variant="destructive"
               size="sm"
               onClick={deleteChecklist}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -525,7 +555,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                           variant="destructive"
                           size="sm"
                           onClick={() => deleteItem(item.id)}
-                          className="ml-2 bg-red-600 hover:bg-red-700 text-white"
+                          
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -563,7 +593,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                       variant="destructive"
                       size="sm"
                       onClick={() => deleteItem(item.id)}
-                      className="ml-2 bg-red-600 hover:bg-red-700 text-white"
+                      className="ml-2"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

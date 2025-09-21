@@ -356,7 +356,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
               variant="destructive"
               size="sm"
               onClick={deleteChecklist}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -525,7 +525,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                           variant="destructive"
                           size="sm"
                           onClick={() => deleteItem(item.id)}
-                          className="ml-2 bg-red-600 hover:bg-red-700 text-white"
+                         
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -563,7 +563,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                       variant="destructive"
                       size="sm"
                       onClick={() => deleteItem(item.id)}
-                      className="ml-2 bg-red-600 hover:bg-red-700 text-white"
+                      className="ml-2"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

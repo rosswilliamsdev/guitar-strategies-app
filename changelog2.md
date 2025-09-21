@@ -4,7 +4,42 @@
 
 ---
 
-## 🚀 [Current Version] - September 17, 2025
+## 🚀 [Current Version] - September 21, 2025
+
+### **Design System Consistency Update** (Sep 21, 2025)
+- **Button Destructive Variant Standardization**: Replaced all custom red button styles with design system variant
+  - **Issue**: Multiple buttons using inline `bg-red-*` classes instead of `destructive` variant
+  - **Solution**: Replaced all occurrences with `variant="destructive"` for consistency
+  - **Components Updated**:
+    - Admin components: `manage-lessons.tsx`, `manage-students.tsx`, `manage-teachers.tsx`
+    - Schedule components: `lesson-management-modal.tsx`
+    - Library components: `library-list.tsx`
+    - Lesson components: `lesson-list.tsx`
+    - Recommendations: `recommendations-list.tsx`
+  - **Impact**: Consistent destructive action styling across the application
+  - **Design System**: Maintains turquoise-based OpenAI-inspired design with proper destructive variant
+
+---
+
+## 📅 [Previous Version] - September 19, 2025
+
+### **Bug Fixes & UX Improvements** (Sep 19, 2025)
+- **Weekly Lesson Booking Fix**: Resolved critical error when booking recurring lessons for students
+  - **Root Cause**: Missing `perLessonPrice` field in RecurringSlot creation
+  - **Solution**: Added teacher lesson settings retrieval and price calculation based on duration
+  - **Impact**: Teachers can now successfully book weekly recurring lessons for students
+  - **Files**: `app/api/lessons/book-for-student/route.ts`
+
+- **Student Checklist Checkbox Fix**: Fixed checkbox not updating visually when marking items complete
+  - **Issue**: Checkbox would reset briefly before updating due to async state refresh
+  - **Solution**: Implemented optimistic UI updates for immediate visual feedback
+  - **Enhancement**: Added proper error handling with state rollback on API failure
+  - **UX Improvement**: Checkboxes now respond instantly while API calls happen in background
+  - **Files**: `components/student-checklists/checklist-detail.tsx`
+
+---
+
+## 📅 [Previous Version] - September 17, 2025
 
 ### **Mobile Optimization & Navigation Fixes** (Sep 17, 2025)
 - **Complete Mobile Schedule Optimization**: Fixed critical mobile usability issues in Schedule page

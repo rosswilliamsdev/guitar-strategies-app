@@ -295,7 +295,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
                         variant="destructive"
                         size="sm"
                         onClick={() => removeItem(index)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        
                       >
                         <X className="h-4 w-4" />
                       </Button>

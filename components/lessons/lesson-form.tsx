@@ -771,7 +771,7 @@ export function LessonForm({
                         variant="destructive"
                         size="sm"
                         onClick={() => removeLink(index)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -843,7 +843,7 @@ export function LessonForm({
                         variant="destructive"
                         size="sm"
                         onClick={() => removeExistingAttachment(attachment.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -878,7 +878,7 @@ export function LessonForm({
                       variant="destructive"
                       size="sm"
                       onClick={() => removeFile(index)}
-                      className="bg-red-600 hover:bg-red-700 text-white"
+                     
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

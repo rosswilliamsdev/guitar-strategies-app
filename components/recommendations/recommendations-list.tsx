@@ -359,7 +359,7 @@ export function RecommendationsList({
               Cancel
             </Button>
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white"
+              variant={'destructive'}
               onClick={() => confirmDeleteId && handleDelete(confirmDeleteId)}
               disabled={isDeleting}
             >

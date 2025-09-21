@@ -581,7 +581,7 @@ export function TeacherRecurringSlots({
                 <Button
                   onClick={handleCancelSlot}
                   disabled={cancelling}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  variant={"destructive"}
                 >
                   {cancelling ? (
                     <>
