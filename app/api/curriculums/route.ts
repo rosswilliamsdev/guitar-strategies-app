@@ -5,9 +5,10 @@ import { prisma } from "@/lib/db";
 import { createCurriculumSchema } from "@/lib/validations";
 import { z } from "zod";
 import { apiLog, dbLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
 // GET /api/curriculums - Get all curriculums for a teacher or student
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -123,7 +124,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST /api/curriculums - Create a new curriculum (teachers only)
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== "TEACHER") {
@@ -174,3 +175,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Export wrapped handlers with appropriate rate limiting
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'READ' });
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'TEACHER' });

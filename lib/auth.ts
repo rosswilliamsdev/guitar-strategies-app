@@ -8,6 +8,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./db";
+import { authLog } from "@/lib/logger";
 
 /**
  * NextAuth.js configuration options.
@@ -22,6 +23,11 @@ import { prisma } from "./db";
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+    updateAge: 24 * 60 * 60, // Update session every 24 hours
+  },
+  jwt: {
+    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
   },
   providers: [
     CredentialsProvider({
@@ -37,13 +43,13 @@ export const authOptions: NextAuthOptions = {
        * @returns User object if authentication successful, null otherwise
        */
       async authorize(credentials) {
-        console.log('🔐 Authorization attempt:', {
+        authLog.info('Authorization attempt', {
           email: credentials?.email,
           hasPassword: !!credentials?.password
         });
 
         if (!credentials?.email || !credentials?.password) {
-          console.log('❌ Missing credentials');
+          authLog.warn('Missing credentials for login attempt');
           return null;
         }
 
@@ -59,7 +65,7 @@ export const authOptions: NextAuthOptions = {
             }
           });
 
-          console.log('👤 User lookup result:', {
+          authLog.info('User lookup completed', {
             found: !!user,
             email: user?.email,
             role: user?.role,
@@ -67,7 +73,7 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user || !user.password) {
-            console.log('❌ User not found or no password');
+            authLog.warn('User not found or no password', { email: credentials.email });
             return null;
           }
 
@@ -77,10 +83,10 @@ export const authOptions: NextAuthOptions = {
             user.password
           );
 
-          console.log('🔑 Password validation:', { isValid: isPasswordValid });
+          authLog.info('Password validation completed', { isValid: isPasswordValid, email: credentials.email });
 
           if (!isPasswordValid) {
-            console.log('❌ Invalid password');
+            authLog.warn('Invalid password provided', { email: credentials.email });
             return null;
           }
 
@@ -93,7 +99,7 @@ export const authOptions: NextAuthOptions = {
             studentProfile: user.studentProfile,
           };
 
-          console.log('✅ Authorization successful:', {
+          authLog.info('Authorization successful', {
             id: authResult.id,
             email: authResult.email,
             role: authResult.role
@@ -101,7 +107,10 @@ export const authOptions: NextAuthOptions = {
 
           return authResult;
         } catch (error) {
-          console.error('💥 Authorization error:', error);
+          authLog.error('Authorization error', {
+            error: error instanceof Error ? error.message : String(error),
+            email: credentials.email
+          });
           return null;
         }
       }
@@ -113,7 +122,7 @@ export const authOptions: NextAuthOptions = {
      * Adds user role and profile data to the token for session use.
      */
     async jwt({ token, user, trigger }) {
-      console.log('🎫 JWT Callback:', {
+      authLog.info('JWT callback triggered', {
         trigger,
         hasUser: !!user,
         tokenSub: token.sub,
@@ -121,7 +130,7 @@ export const authOptions: NextAuthOptions = {
       });
 
       if (user) {
-        console.log('🆕 Adding user data to token:', {
+        authLog.info('Adding user data to JWT token', {
           id: user.id,
           role: user.role,
           hasTeacherProfile: !!user.teacherProfile,
@@ -132,7 +141,7 @@ export const authOptions: NextAuthOptions = {
         token.studentProfile = user.studentProfile;
       }
 
-      console.log('🎫 JWT token result:', {
+      authLog.info('JWT token prepared', {
         sub: token.sub,
         role: token.role,
         email: token.email
@@ -146,7 +155,7 @@ export const authOptions: NextAuthOptions = {
      * Enriches session with user role and profile information from token.
      */
     async session({ session, token }) {
-      console.log('📋 Session Callback:', {
+      authLog.info('Session callback triggered', {
         hasToken: !!token,
         tokenSub: token.sub,
         tokenRole: token.role,
@@ -159,7 +168,7 @@ export const authOptions: NextAuthOptions = {
         session.user.teacherProfile = token.teacherProfile;
         session.user.studentProfile = token.studentProfile;
 
-        console.log('📋 Session enriched:', {
+        authLog.info('Session enriched with user data', {
           id: session.user.id,
           role: session.user.role,
           email: session.user.email

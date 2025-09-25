@@ -4,14 +4,23 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcrypt";
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
-import { withRateLimit } from '@/lib/rate-limit';
+import { withAdminValidation } from '@/lib/api-wrapper';
+import { createStudentSchema, paginationSchema } from '@/lib/validations';
+import {
+  createSuccessResponse,
+  createErrorResponse,
+  createValidationErrorResponse,
+  createConflictResponse,
+  handleApiError
+} from '@/lib/api-responses';
+import { getValidatedBody, getValidatedQuery } from '@/lib/validated-request';
 
 async function handlePOST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Get validated data from middleware
+    const validatedData = getValidatedBody(request, createStudentSchema);
+    if (!validatedData) {
+      return createErrorResponse('Request body validation failed', 400);
     }
 
     const {
@@ -23,7 +32,7 @@ async function handlePOST(request: NextRequest) {
       goals,
       parentEmail,
       phoneNumber,
-    } = await request.json();
+    } = validatedData;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -31,10 +40,7 @@ async function handlePOST(request: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Email already exists" },
-        { status: 400 }
-      );
+      return createConflictResponse('A user with this email address already exists');
     }
 
     // Verify teacher exists and is active
@@ -44,10 +50,7 @@ async function handlePOST(request: NextRequest) {
     });
 
     if (!teacher || !teacher.isActive) {
-      return NextResponse.json(
-        { error: "Selected teacher is not available" },
-        { status: 400 }
-      );
+      return createErrorResponse('Selected teacher is not available', 400);
     }
 
     // Hash password
@@ -79,23 +82,20 @@ async function handlePOST(request: NextRequest) {
       return { user, studentProfile };
     });
 
-    return NextResponse.json({
-      id: student.user.id,
-      name: student.user.name,
-      email: student.user.email,
-      teacherName: teacher.user.name,
-    });
-  } catch (error) {
-    apiLog.error('Error creating student:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    return NextResponse.json(
-      { error: "Failed to create student" },
-      { status: 500 }
+    return createSuccessResponse(
+      {
+        id: student.user.id,
+        name: student.user.name,
+        email: student.user.email,
+        teacherName: teacher.user.name,
+      },
+      'Student created successfully',
+      201
     );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 
-// Export rate-limited handler
-export const POST = withRateLimit(handlePOST, 'API');
+// Export with validation middleware
+export const POST = withAdminValidation(handlePOST, createStudentSchema);

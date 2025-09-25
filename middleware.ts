@@ -5,6 +5,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { applySecurityHeaders, defaultSecurityConfig } from "@/lib/security-headers";
+// import { getCSRFToken, addCSRFCookie, checkCSRF } from "@/lib/csrf"; // Temporarily disabled for Edge Runtime compatibility
 
 // Request size limits (in bytes)
 const LIMITS = {
@@ -72,7 +73,7 @@ function checkRequestSizeLimit(req: NextRequest): NextResponse | null {
 }
 
 export default withAuth(
-  function middleware(req) {
+  async function middleware(req) {
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
@@ -87,6 +88,22 @@ export default withAuth(
     if (sizeCheck) {
       return sizeCheck;
     }
+
+    // TODO: Re-enable CSRF protection after fixing Edge Runtime compatibility
+    // Check CSRF protection for API routes
+    // if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/')) {
+    //   const method = req.method || 'GET';
+    //   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    //     const isValidCSRF = await checkCSRF(req);
+    //     if (!isValidCSRF) {
+    //       console.warn(`CSRF token validation failed for ${pathname}`);
+    //       return NextResponse.json(
+    //         { error: 'Invalid security token. Please refresh and try again.' },
+    //         { status: 403 }
+    //       );
+    //     }
+    //   }
+    // }
 
     // Admin routes (allow both ADMIN and TEACHER - teachers will be checked for isAdmin flag in the route)
     if (pathname.startsWith("/admin")) {
@@ -147,7 +164,17 @@ export default withAuth(
     }
 
     // Create response and apply security headers
-    const response = NextResponse.next();
+    let response = NextResponse.next();
+
+    // TODO: Re-enable CSRF token generation after fixing Edge Runtime compatibility
+    // Generate and attach CSRF token for authenticated users
+    // if (token && !pathname.startsWith('/api/')) {
+    //   const csrfToken = await getCSRFToken(req);
+    //   if (csrfToken) {
+    //     addCSRFCookie(response, csrfToken);
+    //   }
+    // }
+
     return applySecurityHeaders(response, defaultSecurityConfig);
   },
   {

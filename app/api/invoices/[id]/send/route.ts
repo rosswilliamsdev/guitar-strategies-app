@@ -5,8 +5,9 @@ import { prisma } from '@/lib/db';
 import { sendEmail, createInvoiceEmail } from '@/lib/email';
 import { format } from 'date-fns';
 import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -115,3 +116,6 @@ export async function POST(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// Export wrapped handler with email rate limiting
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'EMAIL' });

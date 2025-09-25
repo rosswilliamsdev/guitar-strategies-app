@@ -16,6 +16,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { apiLog, dbLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
 /**
  * POST /api/recommendations
@@ -38,7 +39,7 @@ import { apiLog, dbLog } from '@/lib/logger';
  * @param request - Next.js request object with recommendation data
  * @returns JSON response with created recommendation or error
  */
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
  * @param request - Next.js request object
  * @returns JSON response with recommendations array or error
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -159,8 +160,12 @@ export async function GET(request: NextRequest) {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-    return NextResponse.json({ 
-      error: 'Internal server error' 
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 });
   }
 }
+
+// Export wrapped handlers with appropriate rate limiting
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'READ', requireRole: 'TEACHER' });
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'TEACHER' });

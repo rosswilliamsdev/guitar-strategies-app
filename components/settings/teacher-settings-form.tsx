@@ -15,6 +15,7 @@ import { EmailPreferences, type EmailPreference } from "@/components/settings/em
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { BlockedTimeManager } from "@/components/teacher/BlockedTimeManager";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
+import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
 import { log, emailLog, invoiceLog } from '@/lib/logger';
 
 // Common US timezones
@@ -681,9 +682,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
                 className="mt-2"
                 required
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Must be at least 8 characters with uppercase, lowercase, and number
-              </p>
+              <PasswordStrengthMeter password={newPassword} className="mt-2" />
             </div>
 
             <div>

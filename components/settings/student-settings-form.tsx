@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle, Save, Key, User, GraduationCap, Phone, Mail } from "lucide-react";
 import { studentProfileSchema, passwordChangeSchema } from "@/lib/validations";
+import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
 import { EmailPreferences, type EmailPreference } from "@/components/settings/email-preferences";
 
 interface StudentSettingsFormProps {
@@ -370,9 +371,7 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
                 className="mt-2"
                 required
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                Must be at least 8 characters with uppercase, lowercase, and number
-              </p>
+              <PasswordStrengthMeter password={newPassword} className="mt-2" />
             </div>
 
             <div>

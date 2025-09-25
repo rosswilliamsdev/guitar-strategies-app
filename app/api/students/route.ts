@@ -16,6 +16,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
+import { getPaginationParams, getPrismaOffsetPagination, createPaginatedResponse } from '@/lib/pagination';
 
 /**
  * GET /api/students
@@ -33,7 +35,7 @@ import { apiLog, dbLog, emailLog } from '@/lib/logger';
  * @param request - Next.js request object with query parameters
  * @returns JSON response with students array or error
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -43,6 +45,10 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const teacherId = searchParams.get('teacherId');
+
+    // Get pagination parameters
+    const paginationParams = getPaginationParams(request);
+    const { skip, take } = getPrismaOffsetPagination(paginationParams);
 
     if (session.user.role === 'TEACHER') {
       // Get teacher's profile to find their assigned students
@@ -54,29 +60,43 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
       }
 
-      // Get all active students assigned to this teacher
-      const students = await prisma.studentProfile.findMany({
-        where: { 
-          teacherId: teacherProfile.id,
-          isActive: true
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            }
-          }
-        },
-        orderBy: {
-          user: {
-            name: 'asc'
-          }
-        }
-      });
+      // Get all active students assigned to this teacher (with pagination)
+      const whereClause = {
+        teacherId: teacherProfile.id,
+        isActive: true
+      };
 
-      return NextResponse.json({ students });
+      const [students, total] = await Promise.all([
+        prisma.studentProfile.findMany({
+          where: whereClause,
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            }
+          },
+          orderBy: {
+            user: {
+              name: 'asc'
+            }
+          },
+          skip,
+          take,
+        }),
+        prisma.studentProfile.count({ where: whereClause }),
+      ]);
+
+      const paginatedResponse = await createPaginatedResponse(
+        students,
+        paginationParams.page || 1,
+        paginationParams.limit || 20,
+        total
+      );
+
+      return NextResponse.json(paginatedResponse);
     } else if (session.user.role === 'ADMIN') {
       // Admin can view all students with optional teacher filtering
       let whereClause: any = { isActive: true };
@@ -86,36 +106,48 @@ export async function GET(request: NextRequest) {
         whereClause.teacherId = teacherId;
       }
 
-      const students = await prisma.studentProfile.findMany({
-        where: whereClause,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            }
-          },
-          teacher: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
+      const [students, total] = await Promise.all([
+        prisma.studentProfile.findMany({
+          where: whereClause,
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            },
+            teacher: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  }
                 }
               }
             }
-          }
-        },
-        orderBy: {
-          user: {
-            name: 'asc'
-          }
-        }
-      });
+          },
+          orderBy: {
+            user: {
+              name: 'asc'
+            }
+          },
+          skip,
+          take,
+        }),
+        prisma.studentProfile.count({ where: whereClause }),
+      ]);
 
-      return NextResponse.json({ students });
+      const paginatedResponse = await createPaginatedResponse(
+        students,
+        paginationParams.page || 1,
+        paginationParams.limit || 20,
+        total
+      );
+
+      return NextResponse.json(paginatedResponse);
     } else {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -127,3 +159,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+
+// Export the wrapped handler with rate limiting
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'READ' });

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { apiLog, dbLog, invoiceLog, schedulerLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
 interface Params {
   params: Promise<{
@@ -11,7 +12,7 @@ interface Params {
 }
 
 // DELETE /api/admin/students/[id] - Delete a student and all related data
-export async function DELETE(request: NextRequest, { params }: Params) {
+async function handleDELETE(request: NextRequest, { params }: Params) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -147,3 +148,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     );
   }
 }
+
+// Export wrapped handler with admin rate limiting
+export const DELETE = withApiMiddleware(handleDELETE, { rateLimit: 'API', requireRole: 'ADMIN' });

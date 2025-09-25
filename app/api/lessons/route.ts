@@ -19,8 +19,20 @@ import { createLessonSchema } from '@/lib/validations';
 import { validateJsonSize } from '@/lib/request-validation';
 import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
 import { apiLog, dbLog } from '@/lib/logger';
-import { createCachedResponse, generateETag, isCacheValid, createNotModifiedResponse, CacheKeys, lessonCache } from '@/lib/cache';
+import {
+  createCachedResponse,
+  generateETag,
+  isCacheValid,
+  createNotModifiedResponse,
+  CacheKeys,
+  lessonCache,
+  getCachedData,
+  CACHE_DURATIONS,
+  invalidateLessonCache,
+  redisCache
+} from '@/lib/cache';
 import { withRateLimit } from '@/lib/rate-limit';
+import { getPaginationParams, getPrismaOffsetPagination, createPaginatedResponse, addPaginationHeaders } from '@/lib/pagination';
 
 /**
  * GET /api/lessons
@@ -58,6 +70,10 @@ async function handleGET(request: NextRequest) {
     const future = searchParams.get('future');
     const dateFrom = searchParams.get('dateFrom');
     const dateTo = searchParams.get('dateTo');
+
+    // Get pagination parameters
+    const paginationParams = getPaginationParams(request);
+    const { skip, take } = getPrismaOffsetPagination(paginationParams);
 
     const whereClause: {
       status?: string;
@@ -116,48 +132,84 @@ async function handleGET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    // Fetch lessons with related teacher and student data
-    const lessons = await prisma.lesson.findMany({
-      where: whereClause,
-      include: {
-        student: {
-          include: { user: true }
-        },
-        teacher: {
-          include: { user: true }
-        },
-        attachments: true,
-        links: true,
-      },
-      orderBy: {
-        date: future === 'true' ? 'asc' : 'desc',
-      },
-    });
+    // Generate cache key for Redis/memory caching
+    const profileId = session.user.role === 'TEACHER'
+      ? (await prisma.teacherProfile.findUnique({ where: { userId: session.user.id } }))?.id
+      : (await prisma.studentProfile.findUnique({ where: { userId: session.user.id } }))?.id;
 
-    // Generate cache key and check cache
-    const cacheKey = session.user.role === 'TEACHER' 
-      ? CacheKeys.teacherLessons(session.user.teacherProfile!.id) 
-      : CacheKeys.studentLessons(session.user.studentProfile!.id);
-    
-    // Generate ETag for cache validation
+    if (!profileId) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    }
+
+    const cacheKey = session.user.role === 'TEACHER'
+      ? CacheKeys.teacherLessons(profileId, paginationParams.page)
+      : CacheKeys.studentLessons(profileId, paginationParams.page);
+
+    // Use Redis cache with automatic fallback
+    const cachedData = await getCachedData(
+      cacheKey,
+      async () => {
+        const [lessons, total] = await Promise.all([
+          prisma.lesson.findMany({
+            where: whereClause,
+            include: {
+              student: {
+                include: { user: true }
+              },
+              teacher: {
+                include: { user: true }
+              },
+              attachments: true,
+              links: true,
+            },
+            orderBy: {
+              date: future === 'true' ? 'asc' : 'desc',
+            },
+            skip,
+            take,
+          }),
+          prisma.lesson.count({ where: whereClause }),
+        ]);
+
+        return { lessons, total };
+      },
+      CACHE_DURATIONS.DYNAMIC_SHORT // Cache for 1 minute since lessons change frequently
+    );
+
+    const { lessons, total } = cachedData;
+
+    // Generate ETag for HTTP cache validation
     const etag = generateETag({ lessons, timestamp: Date.now() });
-    const lastModified = lessons.length > 0 
+    const lastModified = lessons.length > 0
       ? new Date(Math.max(...lessons.map(l => new Date(l.updatedAt || l.createdAt).getTime())))
       : new Date();
 
-    // Check if client has valid cache
+    // Check if client has valid HTTP cache
     if (isCacheValid(request, etag, lastModified)) {
       return createNotModifiedResponse();
     }
 
-    // Cache the result in memory for subsequent requests
+    // Also set in memory cache for quick access
     lessonCache.set(cacheKey, lessons);
 
-    // Return cached response with appropriate headers
-    return createCachedResponse({ lessons }, 'LESSONS', {
+    // Create paginated response
+    const paginatedResponse = await createPaginatedResponse(
+      lessons,
+      paginationParams.page || 1,
+      paginationParams.limit || 20,
+      total
+    );
+
+    // Create response with cache headers
+    const response = createCachedResponse(paginatedResponse, 'LESSONS', {
       etag,
       lastModified,
     });
+
+    // Add pagination headers
+    addPaginationHeaders(response, paginatedResponse.pagination);
+
+    return response;
   } catch (error) {
     apiLog.error('Error fetching lessons:', {
         error: error instanceof Error ? error.message : String(error),
@@ -266,6 +318,9 @@ async function handlePOST(request: NextRequest) {
         },
       },
     });
+
+    // Invalidate related caches after creating a lesson
+    await invalidateLessonCache(lesson.id, teacherProfile.id, validatedData.studentId);
 
     return NextResponse.json({ lesson }, { status: 201 });
   } catch (error) {

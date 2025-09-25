@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { apiLog, dbLog, invoiceLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
-export async function GET(
+async function handleGET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -56,7 +57,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+async function handlePUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -137,7 +138,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
+async function handleDELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -181,3 +182,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// Export wrapped handlers with rate limiting
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API' });
+export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API' });
+export const DELETE = withApiMiddleware(handleDELETE, { rateLimit: 'API' });

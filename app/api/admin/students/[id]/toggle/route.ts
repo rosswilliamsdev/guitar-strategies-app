@@ -1,21 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { apiLog, dbLog } from '@/lib/logger';
+import { withAdminValidation } from '@/lib/api-wrapper';
+import { toggleStatusSchema } from '@/lib/validations';
+import {
+  createSuccessResponse,
+  handleApiError
+} from '@/lib/api-responses';
+import { getValidatedBody } from '@/lib/validated-request';
 
-export async function POST(
+async function handlePOST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { id } = await params;
+    const validatedData = getValidatedBody(request, toggleStatusSchema);
 
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!validatedData) {
+      throw new Error('Invalid request body');
     }
 
-    const { isActive } = await request.json();
+    const { isActive } = validatedData;
 
     // Update student profile active status
     await prisma.studentProfile.update({
@@ -27,15 +32,14 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    apiLog.error('Error toggling student status:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    return NextResponse.json(
-      { error: "Failed to update student status" },
-      { status: 500 }
+    return createSuccessResponse(
+      { isActive },
+      'Student status updated successfully'
     );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
+
+// Export with validation middleware
+export const POST = withAdminValidation(handlePOST, toggleStatusSchema);

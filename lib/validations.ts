@@ -56,8 +56,8 @@ export const registerSchema = z
       .string()
       .min(8, "Password must be at least 8 characters")
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
       ),
     confirmPassword: z.string(),
     role: z.nativeEnum(Role),
@@ -83,8 +83,8 @@ export const passwordChangeSchema = z
       .string()
       .min(8, "Password must be at least 8 characters")
       .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
       ),
     confirmPassword: z.string(),
   })
@@ -673,3 +673,102 @@ export type MonthlyBillingData = z.infer<typeof monthlyBillingSchema>;
 export type UpdateBillingData = z.infer<typeof updateBillingSchema>;
 export type SlotAvailabilityParams = z.infer<typeof slotAvailabilitySchema>;
 export type MonthlySlotSummaryParams = z.infer<typeof monthlySlotSummarySchema>;
+
+// ========================================
+// Admin API Schemas
+// ========================================
+
+/**
+ * Schema for admin creating a new student
+ */
+export const createStudentSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+      "Password must contain uppercase, lowercase, number, and special character"
+    ),
+  teacherId: z.string().uuid("Invalid teacher ID format"),
+  instrument: z.string().min(1).max(50).default("guitar"),
+  goals: z.string().max(1000).optional(),
+  parentEmail: z.string().email("Invalid parent email address").optional(),
+  phoneNumber: z.string().regex(
+    /^[\+]?[\d\s\-\(\)]{10,}$/,
+    "Invalid phone number format"
+  ).optional(),
+});
+
+/**
+ * Schema for admin creating a new teacher
+ */
+export const createTeacherSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+      "Password must contain uppercase, lowercase, number, and special character"
+    ),
+  bio: z.string().max(2000).optional(),
+  hourlyRate: z.number().min(10).max(500).optional(),
+  timezone: z.string().default("America/New_York"),
+  phoneNumber: z.string().regex(
+    /^[\+]?[\d\s\-\(\)]{10,}$/,
+    "Invalid phone number format"
+  ).optional(),
+  venmoHandle: z.string().max(50).optional(),
+  paypalEmail: z.string().email("Invalid PayPal email").optional(),
+  zelleEmail: z.string().max(100).optional(),
+});
+
+/**
+ * Schema for admin settings updates
+ */
+export const adminSettingsSchema = z.object({
+  systemName: z.string().min(1).max(100).optional(),
+  maintenanceMode: z.boolean().optional(),
+  allowNewRegistrations: z.boolean().optional(),
+  defaultTimezone: z.string().optional(),
+  maxStudentsPerTeacher: z.number().int().min(1).max(100).optional(),
+  sessionTimeoutMinutes: z.number().int().min(15).max(480).optional(),
+});
+
+/**
+ * Schema for bulk operations
+ */
+export const bulkDeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, "At least one ID is required"),
+});
+
+export const bulkUpdateSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1, "At least one ID is required"),
+  updates: z.record(z.unknown()),
+});
+
+/**
+ * Schema for ID path parameters
+ */
+export const idParamSchema = z.object({
+  id: z.string().uuid("Invalid ID format"),
+});
+
+/**
+ * Schema for toggle status operations
+ */
+export const toggleStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+
+// Export types for the new schemas
+export type CreateStudentData = z.infer<typeof createStudentSchema>;
+export type CreateTeacherData = z.infer<typeof createTeacherSchema>;
+export type AdminSettingsData = z.infer<typeof adminSettingsSchema>;
+export type BulkDeleteData = z.infer<typeof bulkDeleteSchema>;
+export type BulkUpdateData = z.infer<typeof bulkUpdateSchema>;
+export type IdParam = z.infer<typeof idParamSchema>;
+export type ToggleStatusData = z.infer<typeof toggleStatusSchema>;

@@ -6,6 +6,7 @@ import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
 import { createInvoiceSchema } from '@/lib/validations';
 import { apiLog, dbLog, invoiceLog } from '@/lib/logger';
 import { withRateLimit } from '@/lib/rate-limit';
+import { getPaginationParams, getPrismaOffsetPagination, createPaginatedResponse } from '@/lib/pagination';
 
 async function handleGET(request: NextRequest) {
   try {
@@ -23,8 +24,10 @@ async function handleGET(request: NextRequest) {
     const studentId = url.searchParams.get('studentId');
     const month = url.searchParams.get('month');
     const status = url.searchParams.get('status');
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+
+    // Get pagination parameters
+    const paginationParams = getPaginationParams(request);
+    const { skip, take } = getPrismaOffsetPagination(paginationParams);
 
     const where: {
       teacherId?: string;
@@ -68,24 +71,21 @@ async function handleGET(request: NextRequest) {
           orderBy: {
             createdAt: 'desc',
           },
-          skip: (page - 1) * limit,
-          take: limit,
+          skip,
+          take,
         })
       ),
       dbQuery(() => prisma.invoice.count({ where })),
     ]);
 
-    return NextResponse.json({
+    const paginatedResponse = await createPaginatedResponse(
       invoices,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    });
+      paginationParams.page || 1,
+      paginationParams.limit || 20,
+      total
+    );
+
+    return NextResponse.json(paginatedResponse);
   } catch (error) {
     apiLog.error('Error fetching invoices:', {
         error: error instanceof Error ? error.message : String(error),

@@ -11,35 +11,59 @@ import {
   createBadRequestResponse,
   handleApiError
 } from '@/lib/api-responses';
+import { withApiMiddleware } from '@/lib/api-wrapper';
+import {
+  CacheKeys,
+  getCachedData,
+  CACHE_DURATIONS,
+  invalidateTeacherCache
+} from '@/lib/cache';
 
-export async function GET() {
+async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || session.user.role !== 'TEACHER') {
       return createAuthErrorResponse('Teacher access required');
     }
 
-    // Get teacher profile
-    const teacherProfile = await prisma.teacherProfile.findUnique({
-      where: { userId: session.user.id },
-      include: {
-        availability: {
-          where: { isActive: true },
-          orderBy: [
-            { dayOfWeek: 'asc' },
-            { startTime: 'asc' }
-          ]
-        }
-      }
-    });
+    // Get teacher profile with caching
+    const cacheKey = CacheKeys.teacherAvailability(session.user.id);
 
-    if (!teacherProfile) {
+    const data = await getCachedData(
+      cacheKey,
+      async () => {
+        const teacherProfile = await prisma.teacherProfile.findUnique({
+          where: { userId: session.user.id },
+          include: {
+            availability: {
+              where: { isActive: true },
+              orderBy: [
+                { dayOfWeek: 'asc' },
+                { startTime: 'asc' }
+              ]
+            }
+          }
+        });
+
+        if (!teacherProfile) {
+          return null;
+        }
+
+        return {
+          teacherProfileId: teacherProfile.id,
+          availability: teacherProfile.availability
+        };
+      },
+      CACHE_DURATIONS.DYNAMIC_LONG // Cache for 15 minutes since availability doesn't change often
+    );
+
+    if (!data) {
       return createNotFoundResponse('Teacher profile');
     }
 
     return createSuccessResponse({
-      availability: teacherProfile.availability
+      availability: data.availability
     });
 
   } catch (error) {
@@ -47,7 +71,7 @@ export async function GET() {
   }
 }
 
-export async function PUT(request: NextRequest) {
+async function handlePUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -95,15 +119,18 @@ export async function PUT(request: NextRequest) {
 
     // Fetch updated availability
     const updatedAvailability = await prisma.teacherAvailability.findMany({
-      where: { 
+      where: {
         teacherId: teacherProfile.id,
-        isActive: true 
+        isActive: true
       },
       orderBy: [
         { dayOfWeek: 'asc' },
         { startTime: 'asc' }
       ]
     });
+
+    // Invalidate caches after updating availability
+    await invalidateTeacherCache(session.user.id);
 
     return createSuccessResponse({
       availability: updatedAvailability
@@ -113,3 +140,7 @@ export async function PUT(request: NextRequest) {
     return handleApiError(error);
   }
 }
+
+// Export wrapped handlers with teacher rate limiting
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER' });
+export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API', requireRole: 'TEACHER' });

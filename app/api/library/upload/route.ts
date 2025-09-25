@@ -4,8 +4,9 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { put } from '@vercel/blob';
 import { apiLog, dbLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -123,8 +124,11 @@ export async function POST(request: NextRequest) {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-    return NextResponse.json({ 
-      error: 'Internal server error' 
+    return NextResponse.json({
+      error: 'Internal server error'
     }, { status: 500 });
   }
 }
+
+// Export wrapped handler with upload rate limiting
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'UPLOAD', requireRole: 'TEACHER' });

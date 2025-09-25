@@ -6,8 +6,9 @@ import { blockedTimeSchema } from '@/lib/validations';
 import { validateBlockedTime } from '@/lib/scheduler';
 import { toZonedTime } from 'date-fns-tz';
 import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
-export async function GET() {
+async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
     
@@ -59,7 +60,7 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -130,3 +131,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Export wrapped handlers with teacher rate limiting
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER' });
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'TEACHER' });

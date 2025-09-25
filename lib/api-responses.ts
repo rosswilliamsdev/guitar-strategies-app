@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { log } from '@/lib/logger';
+import * as Sentry from '@sentry/nextjs';
 
 // Standardized error response structure
 export interface ApiErrorResponse {
@@ -145,39 +146,58 @@ export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-  
-  // Zod validation errors
+
+  // Zod validation errors - don't send to Sentry (handled by application)
   if (error instanceof ZodError) {
     return createValidationErrorResponse(error);
   }
-  
+
   // Business logic errors (thrown by our application logic)
   if (error instanceof Error) {
     // Check for specific business logic error patterns
-    if (error.message.includes('not available') || 
+    if (error.message.includes('not available') ||
         error.message.includes('already booked') ||
         error.message.includes('time slot conflict')) {
       return createConflictResponse(error.message);
     }
-    
+
     if (error.message.includes('not authorized') ||
         error.message.includes('permission denied')) {
       return createForbiddenResponse(error.message);
     }
-    
+
     if (error.message.includes('not found')) {
       return createNotFoundResponse();
     }
-    
-    if (error.message.includes('invalid') || 
+
+    if (error.message.includes('invalid') ||
         error.message.includes('required')) {
       return createBadRequestResponse(error.message);
     }
-    
+
+    // Send unexpected errors to Sentry
+    Sentry.captureException(error, {
+      tags: {
+        component: 'api-handler',
+        errorType: 'application-error',
+      },
+    });
+
     // Return error message for other Error instances
     return createInternalErrorResponse(error.message, error);
   }
-  
+
+  // Send unknown errors to Sentry
+  Sentry.captureException(new Error(`Unknown error: ${String(error)}`), {
+    tags: {
+      component: 'api-handler',
+      errorType: 'unknown-error',
+    },
+    extra: {
+      originalError: error,
+    },
+  });
+
   // Default to internal server error
   return createInternalErrorResponse(
     'An unexpected error occurred',

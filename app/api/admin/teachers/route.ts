@@ -3,8 +3,9 @@ import { prisma } from "@/lib/db";
 import bcrypt from "bcrypt";
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
 import { getAdminSession } from "@/lib/admin-auth";
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
-export async function POST(request: NextRequest) {
+async function handlePOST(request: NextRequest) {
   try {
     const session = await getAdminSession();
 
@@ -80,3 +81,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Export wrapped handler with admin rate limiting
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'ADMIN' });

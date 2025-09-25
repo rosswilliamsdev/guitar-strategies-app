@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PasswordStrengthMeter } from '@/components/ui/password-strength-meter';
 
 interface RegisterFormProps {
   callbackUrl?: string;
@@ -107,6 +108,7 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
           required
           disabled={isLoading}
         />
+        <PasswordStrengthMeter password={formData.password} className="mt-2" />
       </div>
 
       <div>

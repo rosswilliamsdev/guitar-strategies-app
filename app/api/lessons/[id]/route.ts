@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
 import { updateLessonOptimistic, OptimisticLockingError, retryOptimisticUpdate } from '@/lib/optimistic-locking';
 import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
+import { invalidateLessonCache } from '@/lib/cache';
 
 interface RouteContext {
   params: {
@@ -179,6 +180,11 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       },
     });
 
+    // Invalidate related caches after updating the lesson
+    if (fullLesson) {
+      await invalidateLessonCache(fullLesson.id, fullLesson.teacherId, fullLesson.studentId);
+    }
+
     return NextResponse.json({ lesson: fullLesson });
   } catch (error) {
     apiLog.error('Error updating lesson:', {
@@ -249,6 +255,9 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       where: { id: params.id },
       data: { status: 'CANCELLED' }
     });
+
+    // Invalidate related caches after cancelling the lesson
+    await invalidateLessonCache(lesson.id, lesson.teacherId, lesson.studentId);
 
     return NextResponse.json({ message: 'Lesson cancelled successfully' });
   } catch (error) {

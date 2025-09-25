@@ -17,6 +17,7 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 
 - **Framework**: Next.js 15.4.6 with App Router
 - **Language**: TypeScript 5
+- **UI Components**: shadcn/ui (built on Radix UI primitives)
 - **Styling**: TailwindCSS 3.4.17 with custom design system + Typography plugin
 - **Database**: PostgreSQL with Prisma ORM 6.13.0
 - **Authentication**: NextAuth.js v4.24.11 with Prisma Adapter
@@ -25,7 +26,7 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 - **Invoicing**: Simple invoice generation and payment tracking (no external payment processor)
 - **Scheduling**: Internal availability management and booking system
 - **Validation**: Zod 4.0.15
-- **Styling Utils**: clsx + tailwind-merge
+- **Styling Utils**: clsx + tailwind-merge (cn utility)
 - **Logging**: Winston 3.x with structured logging and domain-specific loggers
 
 ## Design System Colors (OpenAI-Inspired)
@@ -454,9 +455,9 @@ logAPIError('POST', '/api/lessons', error, { userId });
 
 ### Core Components Path
 
-- `components/ui/` - Base UI components (Button, Input, Card, RichTextEditor, etc.)
+- `components/ui/` - shadcn/ui components (Button, Dialog, Select, etc.) with custom styling
 - `components/auth/` - Login/register forms
-- `components/layout/` - Headers, sidebars, navigation  
+- `components/layout/` - Headers, sidebars, navigation
 - `components/dashboard/` - Role-specific dashboards
 - `components/lessons/` - Lesson forms and management
 - `components/library/` - File upload and library management
@@ -648,20 +649,27 @@ Always use Zod schemas from `lib/validations.ts`:
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/client": "^6.13.0",
-    "@radix-ui/react-label": "^2.1.0",
-    "@radix-ui/react-select": "^2.1.0", 
-    "@radix-ui/react-separator": "^1.1.0",
+    // Radix UI primitives (used by shadcn/ui components)
     "@radix-ui/react-checkbox": "^1.1.0",
+    "@radix-ui/react-dialog": "^1.x.x",
+    "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-select": "^2.1.0",
+    "@radix-ui/react-separator": "^1.1.0",
+    "@radix-ui/react-slot": "^1.x.x",
+    "@radix-ui/react-switch": "^1.x.x",
+    "@radix-ui/react-toast": "^1.x.x",
+    // Tiptap rich text editor
     "@tiptap/react": "^2.x.x",
-    "@tiptap/starter-kit": "^2.x.x", 
+    "@tiptap/starter-kit": "^2.x.x",
     "@tiptap/extension-placeholder": "^2.x.x",
     "@tiptap/extension-text-style": "^2.x.x",
     "@tiptap/extension-color": "^2.x.x",
     "@vercel/blob": "^1.1.1",
     "autoprefixer": "^10.4.21",
     "bcrypt": "^6.0.0",
+    "class-variance-authority": "^0.7.x",  // For component variants
     "clsx": "^2.1.1",
-    "lucide-react": "^0.x.x",
+    "lucide-react": "^0.x.x",  // Icon library
     "next": "15.4.6",
     "next-auth": "^4.24.11",
     "prisma": "^6.13.0",
@@ -689,7 +697,9 @@ Always use Zod schemas from `lib/validations.ts`:
 
 ```typescript
 // Use absolute imports with @ alias
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";  // shadcn/ui component
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem } from "@/components/ui/select";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import type { TeacherProfile } from "@/types";
@@ -699,7 +709,7 @@ import { getServerSession } from "next-auth/next";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 // Utility imports
-import { cn } from "@/lib/design";
+import { cn } from "@/lib/utils";  // Class name utility from shadcn/ui
 import { z } from "zod";
 ```
 

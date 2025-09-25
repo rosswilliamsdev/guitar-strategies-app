@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
+import { withApiMiddleware } from '@/lib/api-wrapper';
 
 // Admin settings validation schema
 const adminSettingsSchema = z.object({
@@ -31,7 +32,7 @@ const adminSettingsSchema = z.object({
  * GET /api/admin/settings
  * Get current admin settings
  */
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
  * PUT /api/admin/settings
  * Update admin settings
  */
-export async function PUT(request: NextRequest) {
+async function handlePUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -136,3 +137,7 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+// Export wrapped handlers with admin rate limiting
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'ADMIN' });
+export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API', requireRole: 'ADMIN' });

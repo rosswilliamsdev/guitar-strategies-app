@@ -147,9 +147,8 @@ export function validateEnvOrThrow(): ValidatedEnv {
   const result = validateEnv();
 
   if (!result.success) {
-    console.error("❌ Environment Validation Failed:");
-    result.errors?.forEach((error) => console.error(`  - ${error}`));
-    
+    log.error("❌ Environment Validation Failed:", { errors: result.errors });
+
     throw new Error(
       `Environment validation failed with ${result.errors?.length || 0} error(s). ` +
       `Please check your .env file and ensure all required variables are set correctly.`

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { startOfMonth, startOfWeek, startOfDay, subDays } from "date-fns";
 import { log, dbLog, emailLog, invoiceLog } from '@/lib/logger';
-import { dashboardCache, CacheKeys } from '@/lib/cache';
+// import { dashboardCache, CacheKeys } from '@/lib/cache'; // Temporarily disabled for connection pooling test
 
 export interface AdminStats {
   totalUsers: number;
@@ -34,12 +34,12 @@ export interface UserStats {
  * Get comprehensive admin statistics
  */
 export async function getAdminStats(): Promise<AdminStats> {
-  // Check cache first
-  const cacheKey = 'admin:dashboard:stats';
-  const cached = dashboardCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
+  // Check cache first (temporarily disabled)
+  // const cacheKey = 'admin:dashboard:stats';
+  // const cached = dashboardCache.get(cacheKey);
+  // if (cached) {
+  //   return cached;
+  // }
   
   try {
     const now = new Date();
@@ -278,8 +278,8 @@ export async function getAdminStats(): Promise<AdminStats> {
       recentActivity: limitedActivity
     };
     
-    // Cache the result for 2 minutes
-    dashboardCache.set(cacheKey, stats, 1000 * 60 * 2);
+    // Cache the result for 2 minutes (temporarily disabled)
+    // dashboardCache.set(cacheKey, stats, 1000 * 60 * 2);
     
     return stats;
   } catch (error) {
