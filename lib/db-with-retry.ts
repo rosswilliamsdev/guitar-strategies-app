@@ -118,9 +118,9 @@ export const prismaWithRetry = {
    * Transaction with retry
    */
   transactionWithRetry: async <T>(
-    fn: (tx: PrismaClient) => Promise<T>
+    fn: (tx: any) => Promise<T>
   ): Promise<T> => {
-    return criticalDbQuery(() => prisma.$transaction(fn));
+    return criticalDbQuery(() => prisma.$transaction(fn)) as Promise<T>;
   },
   
   /**
@@ -181,8 +181,7 @@ export function logDatabaseError(
   if (process.env.NODE_ENV === 'production') {
     // In production, log to monitoring service
     log.error('[Database Error]', {
-        error: JSON.stringify(errorInfo) instanceof Error ? JSON.stringify(errorInfo).message : String(JSON.stringify(errorInfo)),
-        stack: JSON.stringify(errorInfo) instanceof Error ? JSON.stringify(errorInfo).stack : undefined
+        errorInfo: JSON.stringify(errorInfo)
       });
   } else {
     // In development, log more verbosely

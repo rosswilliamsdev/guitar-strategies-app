@@ -72,9 +72,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     apiLog.error("Error fetching student's recurring slots", {
       error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      userId: session?.user?.id,
-      role: session?.user?.role
+      stack: error instanceof Error ? error.stack : undefined
     });
     return NextResponse.json(
       { success: false, error: "Internal server error" },

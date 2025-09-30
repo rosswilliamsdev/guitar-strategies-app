@@ -4,20 +4,22 @@ import { authOptions } from '@/lib/auth';
 import { LessonDetails } from '@/components/lessons/lesson-details';
 
 interface LessonPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: LessonPageProps) {
+  const { id } = await params;
   // TODO: Fetch lesson details for metadata
   return {
-    title: `Lesson ${params.id}`,
+    title: `Lesson ${id}`,
     description: 'View lesson details and progress',
   };
 }
 
 export default async function LessonPage({ params }: LessonPageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -25,7 +27,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
   }
 
   // TODO: Verify user has access to this lesson
-  // const lesson = await getLessonById(params.id, session.user.id);
+  // const lesson = await getLessonById(id, session.user.id);
   // if (!lesson) {
   //   notFound();
   // }
@@ -35,8 +37,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
   return (
     <div>
 
-      <LessonDetails 
-        lessonId={params.id} 
+      <LessonDetails
+        lessonId={id} 
         userId={session.user.id}
         canEdit={canEdit}
       />

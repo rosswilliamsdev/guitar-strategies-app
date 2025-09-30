@@ -14,17 +14,17 @@ import { apiLog, dbLog } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teacherId: string } }
+  { params }: { params: Promise<{ teacherId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Only allow teachers to validate their own profile, or admins to validate any
     if (!session || (session.user.role !== 'TEACHER' && session.user.role !== 'ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { teacherId } = params;
+    const { teacherId } = await params;
 
     // If teacher, verify they're validating their own profile
     if (session.user.role === 'TEACHER' && session.user.teacherProfile?.id !== teacherId) {

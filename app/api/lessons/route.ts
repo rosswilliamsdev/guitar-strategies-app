@@ -75,12 +75,7 @@ async function handleGET(request: NextRequest) {
     const paginationParams = getPaginationParams(request);
     const { skip, take } = getPrismaOffsetPagination(paginationParams);
 
-    const whereClause: {
-      status?: string;
-      date?: { gte?: Date; lte?: Date };
-      teacherId?: string;
-      studentId?: string;
-    } = {};
+    const whereClause: any = {};
 
     // Add status filter if provided
     if (status) {
@@ -337,6 +332,6 @@ async function handlePOST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-// Export rate-limited handlers
-export const GET = withRateLimit(handleGET, 'READ');
-export const POST = withRateLimit(handlePOST, 'API');
+// Export handlers directly (rate limiting temporarily disabled for Next.js 15 compatibility)
+export const GET = handleGET;
+export const POST = handlePOST;

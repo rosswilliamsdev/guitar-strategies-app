@@ -60,8 +60,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const errorMessage = `Cron job failed: ${error instanceof Error ? error.message : "Unknown error"}`;
     apiLog.error('Error occurred', {
-        error: errorMessage instanceof Error ? errorMessage.message : String(errorMessage),
-        stack: errorMessage instanceof Error ? errorMessage.stack : undefined
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
     
     return NextResponse.json(

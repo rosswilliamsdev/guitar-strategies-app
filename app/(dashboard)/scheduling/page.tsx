@@ -91,8 +91,17 @@ export default async function SchedulingPage() {
   }
 
   const teacher = userData.studentProfile.teacher;
-  const recurringSlots = userData.studentProfile.recurringSlots || [];
-  const recurringLessons = userData.studentProfile.lessons || [];
+  // Map recurringSlots to include monthlyRate (calculated from perLessonPrice * 4 weeks)
+  const recurringSlots = (userData.studentProfile.recurringSlots || []).map(slot => ({
+    ...slot,
+    monthlyRate: slot.perLessonPrice * 4, // Convert per-lesson price to monthly (assuming 4 lessons per month)
+  }));
+  // Map lessons to convert Date to string for the client component
+  const recurringLessons = (userData.studentProfile.lessons || []).map(lesson => ({
+    ...lesson,
+    date: lesson.date.toISOString(),
+    status: lesson.status as string,
+  }));
 
   return (
     <SchedulingClient

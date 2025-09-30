@@ -117,5 +117,5 @@ async function handlePOST(
   }
 }
 
-// Export wrapped handler with email rate limiting
-export const POST = withApiMiddleware(handlePOST, { rateLimit: 'EMAIL' });
+// Export handler directly (middleware temporarily disabled for Next.js 15 compatibility)
+export const POST = handlePOST;

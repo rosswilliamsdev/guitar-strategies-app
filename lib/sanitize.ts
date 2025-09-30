@@ -50,10 +50,7 @@ const RICH_TEXT_CONFIG: DOMPurify.Config = {
   
   // Allowed URI schemes
   ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|sms):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-  
-  // Prevent data URIs (can be used for XSS)
-  ADD_URI_SAFE_ATTR: false,
-  
+
   // Keep safe styles
   KEEP_CONTENT: true,
   
@@ -88,10 +85,10 @@ export function sanitizeRichText(html: string | null | undefined): string {
   if (!html) return '';
   
   // Clean the HTML
-  const clean = DOMPurify.sanitize(html, RICH_TEXT_CONFIG);
+  const clean = DOMPurify.sanitize(html, RICH_TEXT_CONFIG as any);
   
   // Additional security: Remove javascript: protocol from remaining links
-  return clean.replace(/javascript:/gi, '');
+  return String(clean).replace(/javascript:/gi, '');
 }
 
 /**
@@ -101,7 +98,7 @@ export function sanitizeRichText(html: string | null | undefined): string {
 export function sanitizePlainText(text: string | null | undefined): string {
   if (!text) return '';
   
-  return DOMPurify.sanitize(text, PLAIN_TEXT_CONFIG);
+  return String(DOMPurify.sanitize(text, PLAIN_TEXT_CONFIG as any));
 }
 
 /**
@@ -110,7 +107,7 @@ export function sanitizePlainText(text: string | null | undefined): string {
 export function sanitizeTitle(text: string | null | undefined): string {
   if (!text) return '';
   
-  return DOMPurify.sanitize(text, TITLE_CONFIG);
+  return String(DOMPurify.sanitize(text, TITLE_CONFIG as any));
 }
 
 /**
@@ -147,7 +144,7 @@ export function sanitizeInput(
   if (options.type === 'rich' && options.allowLinks === false) {
     const tempConfig = { ...RICH_TEXT_CONFIG };
     tempConfig.ALLOWED_TAGS = tempConfig.ALLOWED_TAGS?.filter(tag => tag !== 'a');
-    sanitized = DOMPurify.sanitize(sanitized, tempConfig);
+    sanitized = String(DOMPurify.sanitize(sanitized, tempConfig as any));
   }
   
   // Enforce max length if specified

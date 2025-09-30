@@ -82,16 +82,30 @@ export default async function SettingsPage() {
       </div>
 
       {/* Settings Form */}
-      {session.user.role === 'STUDENT' && userData.studentProfile ? (
-        <StudentSettingsForm 
+      {session.user.role === 'STUDENT' && userData && 'studentProfile' in userData && userData.studentProfile ? (
+        <StudentSettingsForm
           user={userData}
-          studentProfile={userData.studentProfile}
+          studentProfile={{
+            ...userData.studentProfile,
+            goals: userData.studentProfile.goals ?? undefined,
+            phoneNumber: userData.studentProfile.phoneNumber ?? undefined,
+            parentEmail: userData.studentProfile.parentEmail ?? undefined,
+          }}
           emailPreferences={userData.emailPreferences || []}
         />
-      ) : session.user.role === 'TEACHER' && userData.teacherProfile ? (
-        <TeacherSettingsForm 
+      ) : session.user.role === 'TEACHER' && userData && 'teacherProfile' in userData && userData.teacherProfile ? (
+        <TeacherSettingsForm
           user={userData}
-          teacherProfile={userData.teacherProfile}
+          teacherProfile={{
+            id: userData.teacherProfile.id,
+            bio: userData.teacherProfile.bio ?? undefined,
+            hourlyRate: userData.teacherProfile.hourlyRate ?? undefined,
+            timezone: userData.teacherProfile.timezone ?? undefined,
+            phoneNumber: userData.teacherProfile.phoneNumber ?? undefined,
+            venmoHandle: userData.teacherProfile.venmoHandle ?? undefined,
+            paypalEmail: userData.teacherProfile.paypalEmail ?? undefined,
+            zelleEmail: userData.teacherProfile.zelleEmail ?? undefined,
+          }}
           emailPreferences={userData.emailPreferences || []}
         />
       ) : (

@@ -8,21 +8,22 @@ import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 import { invalidateLessonCache } from '@/lib/cache';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Build access control conditions based on user role
-    const whereCondition: { id: string; teacherId?: string; studentId?: string } = { id: params.id };
+    const whereCondition: { id: string; teacherId?: string; studentId?: string } = { id: id };
     
     if (session.user.role === 'TEACHER') {
       // Teachers can access lessons they taught
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session || session.user.role !== 'TEACHER') {
@@ -98,7 +100,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     // Verify lesson exists and belongs to teacher
     const existingLesson = await prisma.lesson.findFirst({
       where: { 
-        id: params.id,
+        id: id,
         teacherId: teacherProfile.id 
       }
     });
@@ -156,7 +158,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     // Update lesson with optimistic locking
     const lesson = await retryOptimisticUpdate(async () => {
       try {
-        return await updateLessonOptimistic(params.id, expectedVersion, updateData);
+        return await updateLessonOptimistic(id, expectedVersion, updateData);
       } catch (error) {
         if (error instanceof OptimisticLockingError) {
           throw new Error(`Lesson was modified by another user. Current version: ${error.currentVersion}, your version: ${error.attemptedVersion}. Please refresh and try again.`);
@@ -167,7 +169,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
     // Fetch full lesson data for response
     const fullLesson = await prisma.lesson.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         student: {
           include: { user: true }
@@ -197,6 +199,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     
     if (!session) {
@@ -204,7 +207,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     }
 
     // Build access control conditions based on user role
-    const whereCondition: { id: string; teacherId?: string; studentId?: string } = { id: params.id };
+    const whereCondition: { id: string; teacherId?: string; studentId?: string } = { id: id };
     
     if (session.user.role === 'TEACHER') {
       // Teachers can cancel lessons they are teaching
@@ -252,7 +255,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
     // Update lesson status to CANCELLED instead of deleting
     await prisma.lesson.update({
-      where: { id: params.id },
+      where: { id: id },
       data: { status: 'CANCELLED' }
     });
 

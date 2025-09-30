@@ -68,7 +68,7 @@ export async function updateLessonOptimistic(
   expectedVersion: number,
   updateData: Partial<Prisma.LessonUpdateInput>
 ) {
-  return optimisticUpdate(prisma.lesson, id, expectedVersion, updateData);
+  return optimisticUpdate(prisma.lesson, id, expectedVersion, updateData as any);
 }
 
 /**
@@ -79,7 +79,7 @@ export async function updateTeacherAvailabilityOptimistic(
   expectedVersion: number,
   updateData: Partial<Prisma.TeacherAvailabilityUpdateInput>
 ) {
-  return optimisticUpdate(prisma.teacherAvailability, id, expectedVersion, updateData);
+  return optimisticUpdate(prisma.teacherAvailability, id, expectedVersion, updateData as any);
 }
 
 /**
@@ -90,7 +90,7 @@ export async function updateRecurringSlotOptimistic(
   expectedVersion: number,
   updateData: Partial<Prisma.RecurringSlotUpdateInput>
 ) {
-  return optimisticUpdate(prisma.recurringSlot, id, expectedVersion, updateData);
+  return optimisticUpdate(prisma.recurringSlot, id, expectedVersion, updateData as any);
 }
 
 /**

@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Check if student has email
-        if (!invoice.student.user.email) {
+        // Check if student and email exist
+        if (!invoice.student || !invoice.student.user.email) {
           results.push({
             invoiceId,
             success: false,

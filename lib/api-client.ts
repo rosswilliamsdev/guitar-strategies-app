@@ -50,15 +50,15 @@ export async function apiFetch(
   if (needsCSRF) {
     const csrfToken = getCSRFToken();
     if (csrfToken) {
-      headers['x-csrf-token'] = csrfToken;
+      (headers as any)['x-csrf-token'] = csrfToken;
     } else {
       console.warn('No CSRF token found for protected request');
     }
   }
 
   // Add content-type for JSON if not specified
-  if (options.body && typeof options.body === 'string' && !headers['content-type']) {
-    headers['content-type'] = 'application/json';
+  if (options.body && typeof options.body === 'string' && !(headers as any)['content-type']) {
+    (headers as any)['content-type'] = 'application/json';
   }
 
   // Make the request
@@ -177,7 +177,7 @@ export class ApiClient {
 
     // DELETE might return empty response
     const text = await response.text();
-    return text ? JSON.parse(text) : null;
+    return text ? JSON.parse(text) : null as T;
   }
 
   /**

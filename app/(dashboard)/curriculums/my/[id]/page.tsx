@@ -9,12 +9,13 @@ export const metadata = {
 };
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function PersonalChecklistDetailPage({ params }: PageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -27,7 +28,7 @@ export default async function PersonalChecklistDetailPage({ params }: PageProps)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <ChecklistDetail checklistId={params.id} />
+      <ChecklistDetail checklistId={id} />
     </div>
   );
 }

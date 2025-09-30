@@ -15,8 +15,9 @@ export const metadata = {
 export default async function EditRecommendationPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -62,7 +63,7 @@ export default async function EditRecommendationPage({
 
   // Get the recommendation
   const recommendation = await prisma.recommendation.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       teacher: true
     }

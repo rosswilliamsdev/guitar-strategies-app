@@ -151,7 +151,6 @@ class RedisRateLimitStore {
       if (process.env.NODE_ENV === 'production' && process.env.REDIS_URL) {
         const { Redis } = await import('ioredis');
         this.redis = new Redis(process.env.REDIS_URL, {
-          retryDelayOnFailover: 100,
           maxRetriesPerRequest: 3,
           lazyConnect: true,
         });
@@ -263,7 +262,7 @@ function getClientIP(request: NextRequest): string {
   }
   
   // Fallback for development
-  return request.ip || '127.0.0.1';
+  return '127.0.0.1';
 }
 
 /**

@@ -9,11 +9,11 @@ import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 // Get slot details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -21,7 +21,7 @@ export async function GET(
       );
     }
 
-    const slotId = params.id;
+    const { id: slotId } = await params;
 
     const slot = await prisma.recurringSlot.findUnique({
       where: { id: slotId },
@@ -84,11 +84,11 @@ export async function GET(
 // Update slot (for rate changes, status changes)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -96,7 +96,7 @@ export async function PUT(
       );
     }
 
-    const slotId = params.id;
+    const { id: slotId } = await params;
     const body = await request.json();
     
     const validation = updateSlotSchema.safeParse({ ...body, slotId });
@@ -174,11 +174,11 @@ export async function PUT(
 // Cancel slot
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -186,7 +186,7 @@ export async function DELETE(
       );
     }
 
-    const slotId = params.id;
+    const { id: slotId } = await params;
     const body = await request.json();
     
     // Parse the date string to a Date object

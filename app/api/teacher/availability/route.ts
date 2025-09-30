@@ -87,7 +87,7 @@ async function handlePUT(request: NextRequest) {
     // Additional business logic validation
     const validation = await validateAvailability(session.user.id, validatedData);
     if (!validation.success) {
-      return createBadRequestResponse(validation.error);
+      return createBadRequestResponse(validation.error || 'Validation failed');
     }
 
     // Get teacher profile

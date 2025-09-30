@@ -514,7 +514,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                 <Card key={item.id} className="p-4">
                   <div className="flex items-start gap-3">
                     <Checkbox
-                      ref={(el) => (checkboxRefs.current[item.id] = el)}
+                      ref={(el) => { checkboxRefs.current[item.id] = el; }}
                       checked={item.isCompleted}
                       onCheckedChange={(checked) =>
                         toggleItemCompletion(item.id, checked as boolean)
@@ -579,7 +579,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                 <Card key={item.id} className="p-4">
                   <div className="flex items-start gap-3">
                     <Checkbox
-                      ref={(el) => (checkboxRefs.current[item.id] = el)}
+                      ref={(el) => { checkboxRefs.current[item.id] = el; }}
                       checked={item.isCompleted}
                       onCheckedChange={(checked) =>
                         toggleItemCompletion(item.id, checked as boolean)

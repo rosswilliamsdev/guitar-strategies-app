@@ -123,7 +123,7 @@ export function validateEnv(): EnvValidationResult {
   } catch (error) {
     if (error instanceof z.ZodError) {
       // Format Zod errors into readable messages
-      const zodErrors = error.errors.map((err) => {
+      const zodErrors = error.issues.map((err) => {
         const path = err.path.join(".");
         return `${path}: ${err.message}`;
       });

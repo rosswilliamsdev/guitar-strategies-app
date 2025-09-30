@@ -7,6 +7,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash, randomBytes } from 'crypto';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { getCachedData, CACHE_DURATIONS } from '@/lib/cache';
+import { log } from '@/lib/logger';
 
 // CSRF token configuration
 const CSRF_HEADER_NAME = 'x-csrf-token';
@@ -94,7 +98,7 @@ export async function validateCSRFToken(
 
     // Get stored token hash from cache
     const cacheKey = `${CSRF_CACHE_PREFIX}${session.user.id}`;
-    const storedHash = await getCachedData<string>(
+    const storedHash = await getCachedData<string | null>(
       cacheKey,
       async () => null,
       0

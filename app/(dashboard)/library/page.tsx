@@ -28,12 +28,11 @@ async function getLibraryData(teacherId: string) {
     return libraryItems.map(item => ({
       id: item.id,
       title: item.title,
-      description: item.description,
+      description: item.description ?? undefined,
       fileName: item.fileName,
       fileSize: item.fileSize,
       fileUrl: item.fileUrl,
       category: item.category,
-      difficulty: item.difficulty,
       tags: item.tags ? JSON.parse(item.tags) : [],
       downloadCount: item.downloadCount,
       isPublic: item.isPublic,

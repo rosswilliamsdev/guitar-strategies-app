@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface LoginFormProps {
@@ -61,10 +62,10 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
       )}
       
       <div>
+        <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           type="email"
-          label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email address"
@@ -74,10 +75,10 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
       </div>
 
       <div>
+        <Label htmlFor="password">Password</Label>
         <Input
           id="password"
           type="password"
-          label="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"

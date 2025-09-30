@@ -119,27 +119,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         where: { teacherId: id },
       });
 
-      // Delete curriculums (teacher checklists)
-      const curriculums = await tx.curriculum.findMany({
-        where: { teacherId: id },
-        select: { id: true },
-      });
-
-      if (curriculums.length > 0) {
-        // Delete curriculum items first
-        await tx.curriculumItem.deleteMany({
-          where: {
-            curriculumId: {
-              in: curriculums.map(c => c.id),
-            },
-          },
-        });
-
-        // Then delete curriculums
-        await tx.curriculum.deleteMany({
-          where: { teacherId: id },
-        });
-      }
+      // Note: Curriculum models don't exist in the current schema
 
       // Delete all student profiles associated with this teacher
       await tx.studentProfile.deleteMany({

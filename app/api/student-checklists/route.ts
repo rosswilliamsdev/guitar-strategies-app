@@ -99,50 +99,51 @@ export async function GET(request: NextRequest) {
     });
 
     // Also fetch teacher curricula that could be used for this student
-    let curricula = [];
-    if (session.user.role === "TEACHER" || session.user.role === "ADMIN") {
-      // Get the teacher ID for this student
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { id: targetStudentId },
-        select: { teacherId: true }
-      });
+    let curricula: any[] = [];
+    // NOTE: Curriculum functionality disabled - models don't exist in schema
+    // if (session.user.role === "TEACHER" || session.user.role === "ADMIN") {
+    //   // Get the teacher ID for this student
+    //   const studentProfile = await prisma.studentProfile.findUnique({
+    //     where: { id: targetStudentId },
+    //     select: { teacherId: true }
+    //   });
 
-      if (studentProfile?.teacherId) {
-        curricula = await prisma.curriculum.findMany({
-          where: {
-            teacherId: studentProfile.teacherId,
-            isActive: true,
-          },
-          include: {
-            sections: {
-              include: {
-                items: {
-                  orderBy: { sortOrder: "asc" },
-                }
-              },
-              orderBy: { sortOrder: "asc" }
-            },
-            teacher: {
-              select: { 
-                userId: true,
-                user: {
-                  select: { name: true, role: true }
-                }
-              }
-            },
-            studentProgress: {
-              where: {
-                studentId: targetStudentId
-              },
-              include: {
-                itemProgress: true
-              }
-            }
-          },
-          orderBy: { createdAt: "desc" },
-        });
-      }
-    }
+    //   if (studentProfile?.teacherId) {
+    //     curricula = await prisma.curriculum.findMany({
+    //       where: {
+    //         teacherId: studentProfile.teacherId,
+    //         isActive: true,
+    //       },
+    //       include: {
+    //         sections: {
+    //           include: {
+    //             items: {
+    //               orderBy: { sortOrder: "asc" },
+    //             }
+    //           },
+    //           orderBy: { sortOrder: "asc" }
+    //         },
+    //         teacher: {
+    //           select: {
+    //             userId: true,
+    //             user: {
+    //               select: { name: true, role: true }
+    //             }
+    //           }
+    //         },
+    //         studentProgress: {
+    //           where: {
+    //             studentId: targetStudentId
+    //           },
+    //           include: {
+    //             itemProgress: true
+    //           }
+    //         }
+    //       },
+    //       orderBy: { createdAt: "desc" },
+    //     });
+    //   }
+    // }
 
     // Calculate completion stats for each checklist
     const checklistsWithStats = checklists.map((checklist) => {
@@ -163,57 +164,57 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Transform curricula to match checklist format
-    const curriculaAsChecklists = curricula.map((curriculum) => {
-      // Get the student progress for this curriculum
-      const studentProgress = curriculum.studentProgress?.[0]; // Should only be one progress record per student per curriculum
-      
-      // Flatten all items from all sections
-      const allItems = curriculum.sections.flatMap(section => 
-        section.items.map(item => {
-          // Find the progress for this specific item
-          const itemProgress = studentProgress?.itemProgress?.find(progress => progress.itemId === item.id);
-          const isCompleted = itemProgress?.status === "COMPLETED";
-          
-          return {
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            isCompleted: isCompleted,
-            completedAt: itemProgress?.completedAt || null,
-          };
-        })
-      );
+    // NOTE: Curriculum transformation disabled - models don't exist in schema
+    // const curriculaAsChecklists = curricula.map((curriculum) => {
+    //   // Get the student progress for this curriculum
+    //   const studentProgress = curriculum.studentProgress?.[0]; // Should only be one progress record per student per curriculum
+    //
+    //   // Flatten all items from all sections
+    //   const allItems = curriculum.sections.flatMap(section =>
+    //     section.items.map(item => {
+    //       // Find the progress for this specific item
+    //       const itemProgress = studentProgress?.itemProgress?.find(progress => progress.itemId === item.id);
+    //       const isCompleted = itemProgress?.status === "COMPLETED";
+    //
+    //       return {
+    //         id: item.id,
+    //         title: item.title,
+    //         description: item.description,
+    //         isCompleted: isCompleted,
+    //         completedAt: itemProgress?.completedAt || null,
+    //       };
+    //     })
+    //   );
 
-      const totalItems = allItems.length;
-      const completedItems = allItems.filter(item => item.isCompleted).length;
-      const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    //   const totalItems = allItems.length;
+    //   const completedItems = allItems.filter(item => item.isCompleted).length;
+    //   const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-      return {
-        id: curriculum.id,
-        title: curriculum.title,
-        isActive: curriculum.isActive,
-        isArchived: false,
-        createdAt: curriculum.createdAt,
-        updatedAt: curriculum.updatedAt,
-        studentId: targetStudentId, // This isn't really correct, but needed for compatibility
-        createdBy: curriculum.teacher.userId,
-        createdByRole: "TEACHER",
-        creator: {
-          name: curriculum.teacher.user.name,
-          role: curriculum.teacher.user.role
-        },
-        items: allItems,
-        stats: {
-          totalItems,
-          completedItems,
-          progressPercent,
-        }
-      };
-    });
+    //   return {
+    //     id: curriculum.id,
+    //     title: curriculum.title,
+    //     isActive: curriculum.isActive,
+    //     isArchived: false,
+    //     createdAt: curriculum.createdAt,
+    //     updatedAt: curriculum.updatedAt,
+    //     studentId: targetStudentId, // This isn't really correct, but needed for compatibility
+    //     createdBy: curriculum.teacher.userId,
+    //     createdByRole: "TEACHER",
+    //     creator: {
+    //       name: curriculum.teacher.user.name,
+    //       role: curriculum.teacher.user.role
+    //     },
+    //     items: allItems,
+    //     stats: {
+    //       totalItems,
+    //       completedItems,
+    //       progressPercent,
+    //     }
+    //   };
+    // });
 
-    // Combine both types of checklists
-    const allChecklists = [...checklistsWithStats, ...curriculaAsChecklists];
+    // Combine only checklists (no curricula)
+    const allChecklists = checklistsWithStats;
 
     return NextResponse.json({ checklists: allChecklists });
   } catch (error) {
@@ -290,6 +291,11 @@ export async function POST(request: NextRequest) {
       }
 
       targetStudentId = studentProfile.id;
+    } else {
+      return NextResponse.json(
+        { error: "Invalid user role" },
+        { status: 403 }
+      );
     }
 
     const checklist = await prisma.studentChecklist.create({
@@ -308,7 +314,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       );
     }

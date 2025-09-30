@@ -25,7 +25,8 @@ const LIMITS = {
 // Check request size limits
 function checkRequestSizeLimit(req: NextRequest): NextResponse | null {
   const contentLength = req.headers.get('content-length');
-  const { pathname, method } = req.nextUrl;
+  const { pathname } = req.nextUrl;
+  const method = req.method;
   
   // Only check POST, PUT, PATCH requests with content
   if (!['POST', 'PUT', 'PATCH'].includes(method) || !contentLength) {

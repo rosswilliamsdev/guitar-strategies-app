@@ -64,10 +64,16 @@ export function SchedulingClient({
 
         {/* Weekly Lesson Time Display and Cancellation */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <WeeklyLessonDisplay 
-            recurringSlots={recurringSlots}
+          <WeeklyLessonDisplay
+            recurringSlots={recurringSlots.map((slot: any) => ({
+              ...slot,
+              perLessonPrice: slot.monthlyRate || 0
+            }))}
             teacherName={teacherName}
-            recurringLessons={recurringLessons}
+            recurringLessons={recurringLessons.map((lesson: any) => ({
+              ...lesson,
+              date: new Date(lesson.date)
+            }))}
           />
           <LessonCancellationCard 
             studentId={studentId}

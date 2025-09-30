@@ -747,7 +747,7 @@ export const bulkDeleteSchema = z.object({
 
 export const bulkUpdateSchema = z.object({
   ids: z.array(z.string().uuid()).min(1, "At least one ID is required"),
-  updates: z.record(z.unknown()),
+  updates: z.record(z.string(), z.unknown()),
 });
 
 /**

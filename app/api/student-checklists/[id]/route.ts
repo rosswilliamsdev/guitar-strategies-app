@@ -9,7 +9,7 @@ import { apiLog, dbLog } from '@/lib/logger';
 // GET /api/student-checklists/[id] - Get a specific checklist
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -28,9 +28,10 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
     const checklist = await prisma.studentChecklist.findFirst({
       where: {
-        id: params.id,
+        id,
         studentId: studentProfile.id,
       },
       include: {
@@ -78,7 +79,7 @@ export async function GET(
 // PUT /api/student-checklists/[id] - Update a checklist
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -97,10 +98,11 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     // Verify ownership
     const existingChecklist = await prisma.studentChecklist.findFirst({
       where: {
-        id: params.id,
+        id,
         studentId: studentProfile.id,
       },
     });
@@ -115,13 +117,13 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateStudentChecklistSchema.parse({
       ...body,
-      id: params.id,
+      id,
     });
 
-    const { id, ...updateData } = validatedData;
+    const { id: validatedId, ...updateData } = validatedData;
 
     const updatedChecklist = await prisma.studentChecklist.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         items: {
@@ -134,7 +136,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       );
     }
@@ -153,7 +155,7 @@ export async function PUT(
 // DELETE /api/student-checklists/[id] - Delete a checklist
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -172,10 +174,11 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     // Verify ownership
     const existingChecklist = await prisma.studentChecklist.findFirst({
       where: {
-        id: params.id,
+        id,
         studentId: studentProfile.id,
       },
     });
@@ -188,7 +191,7 @@ export async function DELETE(
     }
 
     await prisma.studentChecklist.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Checklist deleted successfully" });

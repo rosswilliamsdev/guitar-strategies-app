@@ -32,7 +32,7 @@ async function main() {
 
     let adminUser;
     if (existingAdmin) {
-      log.info('✅ Admin user already exists:', adminEmail);
+      log.info('✅ Admin user already exists', { email: adminEmail });
       adminUser = existingAdmin;
     } else {
       // Create admin user
@@ -56,7 +56,7 @@ async function main() {
 
     let teacherUser;
     if (existingTeacher) {
-      log.info('✅ Teacher user already exists:', teacherEmail);
+      log.info('✅ Teacher user already exists', { email: teacherEmail });
       teacherUser = existingTeacher;
     } else {
       // Create teacher user with profile
@@ -91,7 +91,7 @@ async function main() {
 
     let studentUser;
     if (existingStudent) {
-      log.info('✅ Student user already exists:', studentEmail);
+      log.info('✅ Student user already exists', { email: studentEmail });
       studentUser = existingStudent;
     } else {
       // Create student user with profile assigned to teacher
@@ -136,7 +136,7 @@ async function main() {
     log.info('│ 🔑 Password: admin123                   │');
     log.info('│ 👨‍🏫 Role: ${teacherUser.role.padEnd(28)} │');
     if (teacherUser.teacherProfile) {
-      log.info('│ 💰 Rate: $/hour │', { data: `│ 💰 Rate: $${(teacherUser.teacherProfile.hourlyRate! / 100).toFixed(2)}/hour${' '.repeat(18)} │` });
+      log.info(`│ 💰 Rate: $${(teacherUser.teacherProfile.hourlyRate! / 100).toFixed(2)}/hour${' '.repeat(18)} │`);
     }
     log.info('└─────────────────────────────────────────┘');
 

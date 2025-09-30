@@ -7,16 +7,16 @@ import { apiLog, dbLog, emailLog, invoiceLog, schedulerLog } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const studentId = params.id;
+    const { id: studentId } = await params;
 
     // Get the student profile with user information
     const student = await prisma.studentProfile.findUnique({

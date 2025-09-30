@@ -92,7 +92,7 @@ export function LessonForm({
 
   // File and link management
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [existingAttachments, setExistingAttachments] = useState(
+  const [existingAttachments, setExistingAttachments] = useState<any[]>(
     initialData?.existingAttachments || []
   );
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
@@ -641,7 +641,7 @@ export function LessonForm({
                         <div className="space-y-1.5 ml-2">
                           {section.items.map((item) => {
                             const progress = getItemProgress(item.id, curriculum);
-                            const isCompleted = progress?.status === "COMPLETED" || item.isCompleted;
+                            const isCompleted = progress?.status === "COMPLETED" || (item as any)?.isCompleted;
                             const isSelected = selectedCurriculumItems.includes(item.id);
                             
                             // For teacher curricula: show strikethrough when selected

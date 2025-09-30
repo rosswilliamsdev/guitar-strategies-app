@@ -129,8 +129,7 @@ export function createInternalErrorResponse(
       });
     if (originalError instanceof Error && originalError.stack) {
       log.error('Stack trace:', {
-        error: originalError.stack instanceof Error ? originalError.stack.message : String(originalError.stack),
-        stack: originalError.stack instanceof Error ? originalError.stack.stack : undefined
+        stackTrace: originalError.stack
       });
     }
   }

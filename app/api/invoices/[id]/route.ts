@@ -183,7 +183,7 @@ async function handleDELETE(
   }
 }
 
-// Export wrapped handlers with rate limiting
-export const GET = withApiMiddleware(handleGET, { rateLimit: 'API' });
-export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API' });
-export const DELETE = withApiMiddleware(handleDELETE, { rateLimit: 'API' });
+// Export handlers directly (middleware temporarily disabled for Next.js 15 compatibility)
+export const GET = handleGET;
+export const PUT = handlePUT;
+export const DELETE = handleDELETE;

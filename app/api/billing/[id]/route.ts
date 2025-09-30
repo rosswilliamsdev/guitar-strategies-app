@@ -8,11 +8,11 @@ import { apiLog, dbLog } from '@/lib/logger';
 // Update billing record (mark as paid, update actual lessons, etc.)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -20,7 +20,7 @@ export async function PUT(
       );
     }
 
-    const billingId = params.id;
+    const { id: billingId } = await params;
     const body = await request.json();
     
     const validation = updateBillingSchema.safeParse({ ...body, billingId });
@@ -129,11 +129,11 @@ export async function PUT(
 // Get billing record details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -141,7 +141,20 @@ export async function GET(
       );
     }
 
-    const billingId = params.id;
+    const { id: billingId } = await params;
+
+    // First get basic billing info to get the month
+    const billingBasic = await prisma.monthlyBilling.findUnique({
+      where: { id: billingId },
+      select: { month: true }
+    });
+
+    if (!billingBasic) {
+      return NextResponse.json(
+        { success: false, error: "Billing record not found" },
+        { status: 404 }
+      );
+    }
 
     const billing = await prisma.monthlyBilling.findUnique({
       where: { id: billingId },
@@ -155,8 +168,8 @@ export async function GET(
                 lessons: {
                   where: {
                     date: {
-                      gte: new Date(`${billing?.month}-01`),
-                      lt: new Date(new Date(`${billing?.month}-01`).getTime() + 32 * 24 * 60 * 60 * 1000)
+                      gte: new Date(`${billingBasic.month}-01`),
+                      lt: new Date(new Date(`${billingBasic.month}-01`).getTime() + 32 * 24 * 60 * 60 * 1000)
                     }
                   },
                   orderBy: { date: 'asc' }

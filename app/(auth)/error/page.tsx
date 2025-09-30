@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
 interface AuthErrorPageProps {
-  searchParams: {
+  searchParams: Promise<{
     error?: string;
-  };
+  }>;
 }
 
-export default function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
-  const error = searchParams.error;
+export default async function AuthErrorPage({ searchParams }: AuthErrorPageProps) {
+  const params = await searchParams;
+  const error = params.error;
 
   const getErrorMessage = (error?: string) => {
     switch (error) {

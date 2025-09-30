@@ -6,11 +6,11 @@ import { apiLog, dbLog } from '@/lib/logger';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || session.user.role !== 'TEACHER') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -18,7 +18,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Get teacher profile
     const teacherProfile = await prisma.teacherProfile.findUnique({

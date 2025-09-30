@@ -31,7 +31,10 @@ async function makeTeacherAdmin() {
     });
 
   } catch (error) {
-    log.error('Error making teacher admin:', error);
+    log.error('Error making teacher admin', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
   } finally {
     await prisma.$disconnect();
   }

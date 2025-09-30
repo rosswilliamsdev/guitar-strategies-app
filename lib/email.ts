@@ -218,11 +218,9 @@ function logEmailError(
 ): void {
   const errorInfo = {
     operation,
-    error: {
-      message: error?.message,
-      status: error?.status,
-      code: error?.code,
-    },
+    errorMessage: error?.message || String(error),
+    errorStatus: error?.status,
+    errorCode: error?.code,
     context,
     timestamp: new Date().toISOString(),
   };

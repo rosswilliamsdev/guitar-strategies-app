@@ -112,10 +112,10 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       apiLog.warn('Invalid email preferences data:', {
-        errors: error.errors
+        errors: error.issues
       });
       return NextResponse.json(
-        { error: 'Invalid data provided', details: error.errors },
+        { error: 'Invalid data provided', details: error.issues },
         { status: 400 }
       );
     }

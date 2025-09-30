@@ -4,12 +4,13 @@ import { authOptions } from '@/lib/auth';
 import { StudentProfile } from '@/components/students/student-profile';
 
 interface StudentPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: StudentPageProps) {
+  const { id } = await params;
   // TODO: Fetch student details for metadata
   return {
     title: `Student Profile`,
@@ -18,6 +19,7 @@ export async function generateMetadata({ params }: StudentPageProps) {
 }
 
 export default async function StudentPage({ params }: StudentPageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session || session.user.role !== 'TEACHER') {
@@ -25,7 +27,7 @@ export default async function StudentPage({ params }: StudentPageProps) {
   }
 
   // TODO: Verify teacher has access to this student
-  // const student = await getStudentById(params.id, session.user.id);
+  // const student = await getStudentById(id, session.user.id);
   // if (!student) {
   //   notFound();
   // }
@@ -41,8 +43,8 @@ export default async function StudentPage({ params }: StudentPageProps) {
         </p>
       </div>
 
-      <StudentProfile 
-        studentId={params.id}
+      <StudentProfile
+        studentId={id}
         teacherId={session.user.id}
       />
     </div>

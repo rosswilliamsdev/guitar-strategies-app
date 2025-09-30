@@ -33,8 +33,8 @@ export function ProfileValidationAlert({ teacherId }: ProfileValidationAlertProp
       } else {
         // Handle error response - create a default validation object
         log.error('Failed to fetch validation, status:', {
-        error: response.status instanceof Error ? response.status.message : String(response.status),
-        stack: response.status instanceof Error ? response.status.stack : undefined
+        status: response.status,
+        statusText: response.statusText
       });
         setValidation({
           isComplete: false,

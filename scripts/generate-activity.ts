@@ -110,7 +110,6 @@ async function generateRecentActivity() {
       data: {
         userId: newStudent.id,
         teacherId: teacher.teacherProfile.id,
-        skillLevel: 'BEGINNER',
         goals: 'Learn to play guitar',
         instrument: 'guitar',
         isActive: true,
@@ -122,7 +121,10 @@ async function generateRecentActivity() {
     log.info('\nRefresh your admin dashboard to see the new activity!');
 
   } catch (error) {
-    log.error('Error generating activity:', error);
+    log.error('Error generating activity', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
   } finally {
     await prisma.$disconnect();
   }

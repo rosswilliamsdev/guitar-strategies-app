@@ -5,9 +5,9 @@ import { prisma } from '@/lib/db';
 import { LessonForm } from '@/components/lessons/lesson-form';
 
 interface EditLessonPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export const metadata = {
@@ -16,6 +16,7 @@ export const metadata = {
 };
 
 export default async function EditLessonPage({ params }: EditLessonPageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -28,7 +29,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
 
   // Fetch the lesson data
   const lesson = await prisma.lesson.findUnique({
-    where: { id: params.id },
+    where: { id: id },
     include: {
       student: {
         include: { user: true }
@@ -75,9 +76,9 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
         </p>
       </div>
 
-      <LessonForm 
+      <LessonForm
         teacherId={lesson.teacherId}
-        lessonId={params.id}
+        lessonId={id}
         initialData={initialData}
       />
     </div>

@@ -8,16 +8,16 @@ import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const lessonId = params.id;
+    const { id: lessonId } = await params;
     const body = await request.json();
     const { reason } = body;
 

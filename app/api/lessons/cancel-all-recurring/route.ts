@@ -178,7 +178,6 @@ export async function POST(req: NextRequest) {
     apiLog.error('Error cancelling all recurring lessons', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      studentId: session?.user?.id,
       endpoint: '/api/lessons/cancel-all-recurring'
     })
     return NextResponse.json(

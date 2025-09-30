@@ -160,6 +160,7 @@ export async function createSingleLessonInvoice(lessonId: string) {
         format(invoice.dueDate, 'MMM dd, yyyy'),
         lesson.teacher.user.name || 'Teacher',
         invoice.month,
+        items.length,
         paymentInfo
       );
 
@@ -173,7 +174,7 @@ export async function createSingleLessonInvoice(lessonId: string) {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         invoiceId: invoice.id,
-        studentEmail: invoice.student.user.email
+        studentEmail: lesson.student.user.email
       });
     }
   }
@@ -191,9 +192,9 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
   const endDate = endOfMonth(targetMonth);
 
   invoiceLog.info('Starting monthly invoice generation', {
-    month: monthString,
-    year,
-    month: month
+    monthString,
+    year: targetMonth.getFullYear(),
+    month: targetMonth.getMonth() + 1
   });
 
   // Get all active recurring slots
@@ -311,6 +312,7 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
             format(invoice.dueDate, 'MMM dd, yyyy'),
             slot.teacher.user.name || 'Teacher',
             invoice.month,
+            items.length,
             paymentInfo
           );
 
@@ -371,22 +373,10 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
 /**
  * Build payment information string from teacher profile
  */
-function buildPaymentInfo(teacher: any): string {
-  const paymentMethods = [];
-  
-  if (teacher.venmoHandle) {
-    paymentMethods.push(`<strong>Venmo:</strong> ${teacher.venmoHandle}`);
-  }
-  
-  if (teacher.paypalEmail) {
-    paymentMethods.push(`<strong>PayPal:</strong> ${teacher.paypalEmail}`);
-  }
-  
-  if (teacher.zelleEmail) {
-    paymentMethods.push(`<strong>Zelle:</strong> ${teacher.zelleEmail}`);
-  }
-  
-  return paymentMethods.length > 0 
-    ? paymentMethods.join('<br>')
-    : 'Please contact your teacher for payment instructions.';
+function buildPaymentInfo(teacher: any): { venmoHandle?: string; paypalEmail?: string; zelleEmail?: string; } {
+  return {
+    venmoHandle: teacher.venmoHandle,
+    paypalEmail: teacher.paypalEmail,
+    zelleEmail: teacher.zelleEmail
+  };
 }

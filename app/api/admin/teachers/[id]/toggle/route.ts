@@ -6,9 +6,10 @@ import { apiLog, dbLog } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user || session.user.role !== "ADMIN") {
@@ -20,7 +21,7 @@ export async function POST(
     // Update teacher profile active status
     await prisma.teacherProfile.update({
       where: {
-        userId: params.id,
+        userId: id,
       },
       data: {
         isActive,

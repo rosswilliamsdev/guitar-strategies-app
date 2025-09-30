@@ -144,7 +144,7 @@ export const authOptions: NextAuthOptions = {
       authLog.info('JWT token prepared', {
         sub: token.sub,
         role: token.role,
-        email: token.email
+        email: token.email || undefined
       });
 
       return token;

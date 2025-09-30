@@ -457,7 +457,7 @@ export function BackgroundJobsMonitor() {
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className="font-medium">{job.jobName}</span>
-                        <Badge variant={job.success ? "default" : "error"}>
+                        <Badge variant={job.success ? "default" : "destructive"}>
                           {job.success ? "Success" : "Failed"}
                         </Badge>
                       </div>

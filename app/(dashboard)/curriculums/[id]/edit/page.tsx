@@ -5,12 +5,13 @@ import { prisma } from "@/lib/db";
 import { CurriculumEditForm } from "@/components/curriculums/curriculum-edit-form";
 
 interface EditCurriculumPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditCurriculumPage({ params }: EditCurriculumPageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user || session.user.role !== "TEACHER") {
@@ -20,7 +21,7 @@ export default async function EditCurriculumPage({ params }: EditCurriculumPageP
   // Fetch the curriculum to edit
   const curriculum = await prisma.curriculum.findFirst({
     where: {
-      id: params.id,
+      id: id,
       teacherId: session.user.teacherProfile?.id,
     },
     include: {

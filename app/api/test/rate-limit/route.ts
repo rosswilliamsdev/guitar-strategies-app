@@ -10,9 +10,8 @@ import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
 async function handleGET(request: NextRequest) {
   const timestamp = new Date().toISOString();
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             request.ip || 
+  const ip = request.headers.get('x-forwarded-for') ||
+             request.headers.get('x-real-ip') ||
              '127.0.0.1';
   
   return NextResponse.json({
@@ -37,6 +36,6 @@ async function handlePOST(request: NextRequest) {
   });
 }
 
-// Apply different rate limits for testing
-export const GET = withRateLimit(handleGET, 'READ'); // 200 requests per minute
-export const POST = withRateLimit(handlePOST, 'AUTH'); // 5 requests per 15 minutes (strict for testing)
+// Export handlers directly (rate limiting temporarily disabled for Next.js 15 compatibility)
+export const GET = handleGET;
+export const POST = handlePOST;

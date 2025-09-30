@@ -322,7 +322,7 @@ export function CurriculumDetail({
                 >
                   {userRole === "STUDENT" ? (
                     <Checkbox
-                      ref={(el) => (checkboxRefs.current[item.id] = el)}
+                      ref={(el) => { checkboxRefs.current[item.id] = el; }}
                       checked={isCompleted}
                       onCheckedChange={(checked) =>
                         handleToggleProgress(item.id, checked as boolean)
@@ -382,6 +382,7 @@ export function CurriculumDetail({
                 Are you sure you want to delete "{curriculum?.title}"? This
                 action cannot be undone.
                 {curriculum?.studentProgress &&
+                  Array.isArray(curriculum.studentProgress) &&
                   curriculum.studentProgress.length > 0 && (
                     <span className="block mt-2 text-amber-600 font-medium">
                       Warning: This checklist has student progress data that

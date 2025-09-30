@@ -9,12 +9,13 @@ export const metadata = {
 };
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditPersonalChecklistPage({ params }: PageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -34,7 +35,7 @@ export default async function EditPersonalChecklistPage({ params }: PageProps) {
         </p>
       </div>
 
-      <ChecklistForm checklist={{ id: params.id, title: "" }} />
+      <ChecklistForm checklist={{ id: id, title: "" }} />
     </div>
   );
 }

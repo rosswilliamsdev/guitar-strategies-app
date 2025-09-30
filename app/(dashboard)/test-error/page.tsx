@@ -162,8 +162,8 @@ export default function TestErrorPage() {
               <Button
                 onClick={() => {
                   // This will cause an unhandled error
-                  const obj: Record<string, unknown> | null = null;
-                  obj.someMethod();
+                  const obj: Record<string, any> | null = null;
+                  obj!.someMethod(); // Non-null assertion for intentional error
                 }}
                 variant="secondary"
                 className="justify-start"

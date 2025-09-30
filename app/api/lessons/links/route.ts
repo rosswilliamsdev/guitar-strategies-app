@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const requestBody = await request.json();
-    apiLog.info('Links API request body:', JSON.stringify(requestBody, null, 2));
+    apiLog.info('Links API request body', { requestBody });
     
     const { links } = requestBody;
 
@@ -153,7 +153,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Create new links if any
-    let createdLinks = [];
+    let createdLinks: any[] = [];
     if (links && Array.isArray(links) && links.length > 0) {
       createdLinks = await Promise.all(
         links.map(async (link) => {

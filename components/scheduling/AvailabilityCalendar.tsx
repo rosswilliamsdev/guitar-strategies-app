@@ -230,7 +230,7 @@ export function AvailabilityCalendar({
           `endDate=${endDate.toISOString()}&` +
           `timezone=${studentTimezone}`;
       
-      log.info('🔗 Fetching availability from:', url);
+      log.info('🔗 Fetching availability from:', { url });
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -260,9 +260,9 @@ export function AvailabilityCalendar({
         end: new Date(slot.end),
       }));
 
-      log.info('🔍 Parsed slots:', parsedSlots.length, 'total');
-      log.info('🔍 Available slots:', parsedSlots.filter(s => s.available).length);
-      log.info('🔍 Sample slots:', parsedSlots.slice(0, 3));
+      log.info('🔍 Parsed slots:', { totalSlots: parsedSlots.length });
+      log.info('🔍 Available slots:', { availableSlots: parsedSlots.filter((s: any) => s.available).length });
+      log.info('🔍 Sample slots:', { sampleSlots: parsedSlots.slice(0, 3) });
 
       setSlots(parsedSlots);
     } catch (error: unknown) {
@@ -399,7 +399,7 @@ export function AvailabilityCalendar({
     
     // Debug logging for specific days
     if (daySlots.length > 0 || date.getDate() === 1) { // Sep 1st or any day with slots
-      log.info('🔍 Slots for ${date.toDateString()}:', daySlots.length, daySlots.slice(0, 2));
+      log.info(`🔍 Slots for ${date.toDateString()}:`, { slotsCount: daySlots.length, sampleSlots: daySlots.slice(0, 2) });
     }
     
     return daySlots;

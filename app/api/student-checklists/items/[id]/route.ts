@@ -10,7 +10,7 @@ import { apiLog, dbLog, emailLog } from '@/lib/logger';
 // GET /api/student-checklists/items/[id] - Get a single checklist item
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,8 +18,9 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const item = await prisma.studentChecklistItem.findFirst({
-      where: { id: params.id },
+      where: { id },
       include: {
         checklist: {
           include: {
@@ -82,7 +83,7 @@ export async function GET(
 // PUT /api/student-checklists/items/[id] - Update a checklist item
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -90,9 +91,10 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     // Verify ownership through the checklist
     const item = await prisma.studentChecklistItem.findFirst({
-      where: { id: params.id },
+      where: { id },
       include: {
         checklist: {
           include: {
@@ -137,18 +139,18 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateStudentChecklistItemSchema.parse({
       ...body,
-      id: params.id,
+      id,
     });
 
-    const { id, ...updateData } = validatedData;
+    const { id: validatedId, ...updateData } = validatedData;
 
     // Handle completion status change
     if (updateData.isCompleted !== undefined) {
-      updateData.completedAt = updateData.isCompleted ? new Date() : null;
+      updateData.completedAt = updateData.isCompleted ? new Date() : undefined;
     }
 
     const updatedItem = await prisma.studentChecklistItem.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
@@ -156,7 +158,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       );
     }
@@ -175,7 +177,7 @@ export async function PUT(
 // DELETE /api/student-checklists/items/[id] - Delete a checklist item
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -194,9 +196,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     // Verify ownership through the checklist
     const item = await prisma.studentChecklistItem.findFirst({
-      where: { id: params.id },
+      where: { id },
       include: {
         checklist: true,
       },
@@ -210,7 +213,7 @@ export async function DELETE(
     }
 
     await prisma.studentChecklistItem.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Item deleted successfully" });
@@ -229,7 +232,7 @@ export async function DELETE(
 // PATCH /api/student-checklists/items/[id] - Toggle completion status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -248,15 +251,16 @@ export async function PATCH(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = toggleChecklistItemSchema.parse({
-      itemId: params.id,
+      itemId: id,
       isCompleted: body.isCompleted,
     });
 
     // Verify ownership through the checklist
     const item = await prisma.studentChecklistItem.findFirst({
-      where: { id: params.id },
+      where: { id },
       include: {
         checklist: {
           include: {
@@ -283,7 +287,7 @@ export async function PATCH(
     }
 
     const updatedItem = await prisma.studentChecklistItem.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         isCompleted: validatedData.isCompleted,
         completedAt: validatedData.isCompleted ? new Date() : null,
@@ -333,7 +337,7 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       );
     }

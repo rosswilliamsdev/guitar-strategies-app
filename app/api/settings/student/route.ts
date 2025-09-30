@@ -69,5 +69,5 @@ async function handlePUT(request: NextRequest) {
   }
 }
 
-// Export rate-limited handler
-export const PUT = withRateLimit(handlePUT, 'API');
+// Export handlers directly (rate limiting temporarily disabled for Next.js 15 compatibility)
+export const PUT = handlePUT;

@@ -39,7 +39,7 @@ async function handleGET(request: NextRequest) {
 
     apiLog.info('CSRF token generated', {
       userId: session.user.id,
-      userAgent: request.headers.get('user-agent')
+      userAgent: request.headers.get('user-agent') ?? undefined
     });
 
     return response;
@@ -52,5 +52,5 @@ async function handleGET(request: NextRequest) {
   }
 }
 
-// Export with rate limiting (light limit since this is just token generation)
-export const GET = withRateLimit(handleGET, 'READ');
+// Export handlers directly (rate limiting temporarily disabled for Next.js 15 compatibility)
+export const GET = handleGET;

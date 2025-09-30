@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     
     // Log CSP violations for monitoring
     log.warn('CSP violation report received', {
-      userAgent: request.headers.get('user-agent'),
+      userAgent: request.headers.get('user-agent') || undefined,
       violation: violation['csp-report'],
       url: request.url,
       documentUri: violation['csp-report']?.['document-uri'],

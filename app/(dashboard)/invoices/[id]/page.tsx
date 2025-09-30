@@ -87,9 +87,39 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
     notFound();
   }
 
+  // Convert null values to undefined for compatibility with InvoiceData interface
+  const invoiceData = {
+    ...invoice,
+    paidAt: invoice.paidAt ?? undefined,
+    paymentMethod: invoice.paymentMethod ?? undefined,
+    paymentNotes: invoice.paymentNotes ?? undefined,
+    customFullName: invoice.customFullName ?? undefined,
+    customEmail: invoice.customEmail ?? undefined,
+    items: invoice.items.map((item: any) => ({
+      id: item.id,
+      description: item.description,
+      lessonDate: item.lessonDate ?? undefined,
+      quantity: item.quantity,
+      rate: item.rate,
+      amount: item.amount,
+    })),
+    teacher: {
+      ...invoice.teacher,
+      phoneNumber: invoice.teacher.phoneNumber ?? undefined,
+      venmoHandle: invoice.teacher.venmoHandle ?? undefined,
+      paypalEmail: invoice.teacher.paypalEmail ?? undefined,
+      zelleEmail: invoice.teacher.zelleEmail ?? undefined,
+    },
+    student: invoice.student ? {
+      ...invoice.student,
+      phoneNumber: invoice.student.phoneNumber ?? undefined,
+      parentEmail: invoice.student.parentEmail ?? undefined,
+    } : undefined,
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <InvoiceTemplate invoice={invoice as InvoiceWithRelations} showActions={isTeacher} />
+      <InvoiceTemplate invoice={invoiceData} showActions={isTeacher} />
     </div>
   );
 }

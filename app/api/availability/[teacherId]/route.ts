@@ -18,43 +18,9 @@ export async function GET(
 ) {
   try {
     const { teacherId } = await params;
-    const session = await getServerSession(authOptions);
-    
+
     // Student availability viewing has been disabled
     return createAuthErrorResponse('Student scheduling disabled. Please contact your teacher to schedule lessons.');
-
-    const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const timezone = searchParams.get('timezone') || 'America/Chicago';
-
-    if (!startDate || !endDate) {
-      return createBadRequestResponse('startDate and endDate are required');
-    }
-
-    // Get student profile to verify they're assigned to this teacher
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-      select: { teacherId: true }
-    });
-
-    if (!studentProfile) {
-      return createNotFoundResponse('Student profile');
-    }
-
-    // Verify student is assigned to this teacher
-    if (studentProfile.teacherId !== teacherId) {
-      return createForbiddenResponse('Not authorized to view this teacher\'s availability');
-    }
-
-    // Get available slots
-    const slots = await getAvailableSlots(
-      teacherId,
-      new Date(startDate),
-      new Date(endDate),
-      timezone
-    );
-    return createSuccessResponse({ slots });
 
   } catch (error: any) {
     return handleApiError(error);

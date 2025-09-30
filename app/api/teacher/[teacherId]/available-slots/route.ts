@@ -14,16 +14,16 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { teacherId: string } }
+  { params }: { params: Promise<{ teacherId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
       return createAuthErrorResponse();
     }
 
-    const { teacherId } = params;
+    const { teacherId } = await params;
     const { searchParams } = new URL(request.url);
     
     // Get query parameters

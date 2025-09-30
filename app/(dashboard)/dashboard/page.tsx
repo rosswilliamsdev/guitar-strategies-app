@@ -99,7 +99,7 @@ export async function getTeacherData(userId: string) {
       recentLessons,
       teacherProfile: {
         bio: teacherProfile.bio,
-        hourlyRate: teacherProfile.hourlyRate,
+        hourlyRate: teacherProfile.hourlyRate ?? undefined,
       },
     };
   } catch (error) {
@@ -113,8 +113,8 @@ export async function getTeacherData(userId: string) {
 
 export async function getStudentData(userId: string) {
   try {
-    log.info('Looking for student with userId:', userId);
-    
+    log.info('Looking for student with userId', { userId });
+
     // Get student profile
     const studentProfile = await prisma.studentProfile.findUnique({
       where: { userId },
@@ -129,7 +129,7 @@ export async function getStudentData(userId: string) {
       }
     });
 
-    log.info('Student profile found:', !!studentProfile);
+    log.info('Student profile found', { found: !!studentProfile });
 
     if (!studentProfile) {
       return null;
@@ -243,7 +243,7 @@ export default async function DashboardPage() {
     if (studentData) {
       return <StudentDashboard {...studentData} />;
     } else {
-      log.info('Student data not found for user:', session.user.id);
+      log.info('Student data not found for user', { userId: session.user.id });
     }
   }
 

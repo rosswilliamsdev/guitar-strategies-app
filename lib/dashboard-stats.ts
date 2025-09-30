@@ -252,7 +252,7 @@ export async function getAdminStats(): Promise<AdminStats> {
         type: 'invoice_generated',
         description: `Invoice ${invoice.invoiceNumber} generated for ${studentName}`,
         timestamp: invoice.createdAt,
-        userEmail: studentEmail
+        userEmail: studentEmail || undefined
       });
     });
 
@@ -455,7 +455,7 @@ export async function getAllActivity(filters?: {
           type: 'invoice_generated',
           description: `Invoice ${invoice.invoiceNumber} generated for ${studentName}`,
           timestamp: invoice.createdAt,
-          userEmail: studentEmail
+          userEmail: studentEmail || undefined
         });
       });
     }

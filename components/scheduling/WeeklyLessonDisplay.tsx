@@ -112,8 +112,8 @@ export function WeeklyLessonDisplay({
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to cancel recurring lessons'
       log.error('Error cancelling recurring lessons:', {
-        error: errorMessage instanceof Error ? errorMessage.message : String(errorMessage),
-        stack: errorMessage instanceof Error ? errorMessage.stack : undefined
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
       setErrorMessage(errorMessage || 'Failed to cancel recurring lessons. Please try again.')
     } finally {
