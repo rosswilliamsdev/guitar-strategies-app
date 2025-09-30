@@ -72,6 +72,8 @@ async function main() {
               bio: 'Experienced guitar instructor with 10+ years of teaching experience. Specializes in acoustic, electric, and classical guitar styles.',
               hourlyRate: 6000, // $60.00 in cents
               isActive: true,
+              isSoloTeacher: true, // Solo teacher with admin privileges
+              isAdmin: true, // Grant admin access
               timezone: 'America/New_York'
             }
           }

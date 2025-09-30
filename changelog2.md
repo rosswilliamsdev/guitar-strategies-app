@@ -4,7 +4,49 @@
 
 ---
 
-## 🚀 [Current Version] - September 24, 2025
+## 🚀 [Current Version] - September 29, 2025
+
+### **Organization Management System** (Sep 29, 2025)
+- **Three-Tier Teacher System**: Complete organizational hierarchy for teacher management
+  - **Solo Teachers**: Independent teachers with full admin privileges
+  - **Organization Founders**: Create and manage organizations with admin access
+  - **Organization Members**: Teachers who join existing organizations
+  - **Permanent Status**: Organization type set at signup and cannot be changed
+
+- **Organization Model**: Full database schema for multi-teacher organizations
+  - Unique organization names and URL slugs
+  - Founder tracking and organization settings
+  - Teacher-to-organization relationships
+  - Test organization: "Harmony Music Academy" 🎵
+
+- **Registration System**: Enhanced signup flow with three teacher pathways
+  - Radio button selection: Solo Teacher, Found Organization, or Join Organization
+  - Dropdown menu for joining existing organizations (no manual typing)
+  - Automatic admin privilege assignment for solo teachers and founders
+  - Organization name validation and uniqueness enforcement
+
+- **Settings Display**: Read-only organization status in teacher settings
+  - Solo teachers: Turquoise badge with checkmark
+  - Organization founders: Turquoise badge with crown emoji (👑)
+  - Organization members: Neutral badge with organization name
+  - Warning message that status cannot be changed post-signup
+
+- **Admin Access**: Enhanced admin privilege system
+  - Solo teachers: `isSoloTeacher: true, isAdmin: true`
+  - Organization founders: `isOrgFounder: true, isAdmin: true`
+  - Organization members: Standard teacher permissions
+  - Middleware checks both `role === 'ADMIN'` and `isAdmin === true`
+
+- **API Endpoints**:
+  - `/api/organizations` - Public endpoint listing active organizations
+  - `/api/auth/register` - Enhanced with organization founding/joining logic
+  - Organization selection integrated into registration workflow
+
+- **Files**: `prisma/schema.prisma` (Organization model), `components/auth/register-form.tsx`, `app/api/auth/register/route.ts`, `app/api/organizations/route.ts`, `lib/auth.ts`, `middleware.ts`, `CLAUDE.md`
+
+---
+
+## 📅 [Previous Version] - September 24, 2025
 
 ### **Production Readiness Improvements** (Sep 24, 2025)
 - **Database Connection Pooling**: Implemented PostgreSQL connection pooling for production scalability

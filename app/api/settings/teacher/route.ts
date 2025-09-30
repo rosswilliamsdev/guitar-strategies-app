@@ -41,6 +41,9 @@ async function handleGET() {
       venmoHandle: user.teacherProfile.venmoHandle,
       paypalEmail: user.teacherProfile.paypalEmail,
       zelleEmail: user.teacherProfile.zelleEmail,
+      isSoloTeacher: user.teacherProfile.isSoloTeacher,
+      isOrgFounder: user.teacherProfile.isOrgFounder,
+      organizationName: user.teacherProfile.organizationName,
     };
 
     return NextResponse.json(profileData);
@@ -99,6 +102,8 @@ async function handlePUT(request: NextRequest) {
       });
 
       // Update teacher profile with sanitized data
+      // Note: Organization fields (isSoloTeacher, isAdmin, organizationName) are NOT updated
+      // as they are set at signup and cannot be changed
       await tx.teacherProfile.update({
         where: { userId: session.user.id },
         data: {

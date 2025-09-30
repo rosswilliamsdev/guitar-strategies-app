@@ -105,6 +105,9 @@ export default async function SettingsPage() {
             venmoHandle: userData.teacherProfile.venmoHandle ?? undefined,
             paypalEmail: userData.teacherProfile.paypalEmail ?? undefined,
             zelleEmail: userData.teacherProfile.zelleEmail ?? undefined,
+            isSoloTeacher: userData.teacherProfile.isSoloTeacher ?? false,
+            isOrgFounder: userData.teacherProfile.isOrgFounder ?? false,
+            organizationName: userData.teacherProfile.organizationName ?? undefined,
           }}
           emailPreferences={userData.emailPreferences || []}
         />

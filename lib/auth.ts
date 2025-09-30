@@ -97,12 +97,15 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
             teacherProfile: user.teacherProfile,
             studentProfile: user.studentProfile,
+            isAdmin: user.role === 'ADMIN' || (user.teacherProfile?.isAdmin || false),
+            isOrgFounder: user.teacherProfile?.isOrgFounder || false,
           };
 
           authLog.info('Authorization successful', {
             id: authResult.id,
             email: authResult.email,
-            role: authResult.role
+            role: authResult.role,
+            isAdmin: authResult.isAdmin
           });
 
           return authResult;
@@ -134,11 +137,14 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           role: user.role,
           hasTeacherProfile: !!user.teacherProfile,
-          hasStudentProfile: !!user.studentProfile
+          hasStudentProfile: !!user.studentProfile,
+          isAdmin: user.isAdmin
         });
         token.role = user.role;
         token.teacherProfile = user.teacherProfile;
         token.studentProfile = user.studentProfile;
+        token.isAdmin = user.isAdmin;
+        token.isOrgFounder = user.isOrgFounder;
       }
 
       authLog.info('JWT token prepared', {
@@ -167,11 +173,14 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         session.user.teacherProfile = token.teacherProfile;
         session.user.studentProfile = token.studentProfile;
+        session.user.isAdmin = token.isAdmin;
+        session.user.isOrgFounder = token.isOrgFounder;
 
         authLog.info('Session enriched with user data', {
           id: session.user.id,
           role: session.user.role,
-          email: session.user.email
+          email: session.user.email,
+          isAdmin: session.user.isAdmin
         });
       }
 

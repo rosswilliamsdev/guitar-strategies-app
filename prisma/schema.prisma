@@ -65,9 +65,33 @@ model User {
   studentProfile StudentProfile?
   createdChecklists StudentChecklist[] // Checklists created by this user
   emailPreferences EmailPreference[] // User's email notification preferences
+  foundedOrganizations Organization[] @relation("OrganizationFounder") // Organizations founded by this user
 
   @@index([email])
   @@index([role])
+}
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String   @unique // Organization name must be unique
+  slug            String   @unique // URL-friendly identifier
+  founderId       String   // User who created the organization
+  isActive        Boolean  @default(true)
+
+  // Settings
+  description     String?  @db.Text
+  website         String?
+  logoUrl         String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  founder         User             @relation("OrganizationFounder", fields: [founderId], references: [id])
+  teachers        TeacherProfile[] @relation("OrganizationTeachers")
+
+  @@index([founderId])
+  @@index([slug])
 }
 
 model TeacherProfile {
@@ -76,7 +100,13 @@ model TeacherProfile {
   bio             String? @db.Text
   hourlyRate      Int?    // stored in cents
   isActive        Boolean @default(true)
-  isAdmin         Boolean @default(false) // For solo teachers with admin privileges
+  isAdmin         Boolean @default(false) // For solo teachers and org founders with admin privileges
+
+  // Organization settings
+  organizationId   String? // Reference to Organization (null for solo teachers)
+  organizationName String? // Cached org name for display (deprecated, use organization.name)
+  isSoloTeacher    Boolean @default(false) // Solo teachers get admin privileges
+  isOrgFounder     Boolean @default(false) // Organization founders get admin privileges
 
   // Payment methods for invoice generation
   venmoHandle     String? // @username
@@ -93,6 +123,7 @@ model TeacherProfile {
 
   // Relations
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization?    @relation("OrganizationTeachers", fields: [organizationId], references: [id])
   students        StudentProfile[] @relation("TeacherStudents")
   lessons         Lesson[]
   recommendations Recommendation[]
@@ -107,6 +138,7 @@ model TeacherProfile {
 
   @@index([userId])
   @@index([isActive])
+  @@index([organizationId])
 }
 
 model StudentProfile {

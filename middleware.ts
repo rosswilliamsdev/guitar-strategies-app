@@ -106,9 +106,10 @@ export default withAuth(
     //   }
     // }
 
-    // Admin routes (allow both ADMIN and TEACHER - teachers will be checked for isAdmin flag in the route)
+    // Admin routes (allow ADMIN role or users with isAdmin flag - including solo teachers)
     if (pathname.startsWith("/admin")) {
-      if (token?.role !== "ADMIN" && token?.role !== "TEACHER") {
+      const isAdmin = token?.role === "ADMIN" || token?.isAdmin === true;
+      if (!isAdmin) {
         const response = NextResponse.redirect(new URL("/dashboard", req.url));
         return applySecurityHeaders(response, defaultSecurityConfig);
       }
@@ -143,9 +144,10 @@ export default withAuth(
       }
     }
 
-    // API route protection (allow both ADMIN and TEACHER - teachers will be checked for isAdmin flag in the route)
+    // API route protection (allow ADMIN role or users with isAdmin flag - including solo teachers)
     if (pathname.startsWith("/api/admin")) {
-      if (token?.role !== "ADMIN" && token?.role !== "TEACHER") {
+      const isAdmin = token?.role === "ADMIN" || token?.isAdmin === true;
+      if (!isAdmin) {
         const response = NextResponse.json(
           { error: "Admin access required" },
           { status: 403 }
@@ -154,7 +156,7 @@ export default withAuth(
       }
     }
 
-    if (pathname.startsWith("/api/teacher")) {
+    if (pathname.startsWith("/api/teacher/")) {
       if (token?.role !== "TEACHER" && token?.role !== "ADMIN") {
         const response = NextResponse.json(
           { error: "Teacher access required" },
@@ -199,7 +201,9 @@ export default withAuth(
           pathname.startsWith("/favicon.ico") ||
           pathname.startsWith("/api/auth") ||
           pathname.startsWith("/api/cron") ||
-          pathname.startsWith("/api/health")
+          pathname.startsWith("/api/health") ||
+          pathname === "/api/teachers" || // Public endpoint for registration
+          pathname === "/api/organizations" // Public endpoint for registration
         ) {
           return true;
         }
