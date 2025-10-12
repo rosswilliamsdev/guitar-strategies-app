@@ -117,11 +117,31 @@ export function withApiMiddleware(
         }
 
         // Check role if specified
-        if (requireRole && session.user.role !== requireRole && session.user.role !== 'ADMIN') {
-          return NextResponse.json(
-            { error: 'Forbidden', message: `${requireRole} access required` },
-            { status: 403 }
-          );
+        if (requireRole) {
+          // For ADMIN requirement, check both role and isAdmin flag
+          if (requireRole === 'ADMIN') {
+            const hasAdminAccess = session.user.role === 'ADMIN' ||
+              (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin === true);
+
+            if (!hasAdminAccess) {
+              return NextResponse.json(
+                { error: 'Forbidden', message: 'Admin access required' },
+                { status: 403 }
+              );
+            }
+          } else {
+            // For other roles, check exact match or ADMIN override
+            const hasAccess = session.user.role === requireRole ||
+              session.user.role === 'ADMIN' ||
+              (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin === true);
+
+            if (!hasAccess) {
+              return NextResponse.json(
+                { error: 'Forbidden', message: `${requireRole} access required` },
+                { status: 403 }
+              );
+            }
+          }
         }
       }
 

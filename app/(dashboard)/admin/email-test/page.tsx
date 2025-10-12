@@ -6,8 +6,14 @@ import EmailTestInterface from '@/components/admin/email-test-interface';
 export default async function EmailTestPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== 'ADMIN') {
-    redirect('/login');
+  // Check for admin access (ADMIN role or TEACHER with isAdmin flag)
+  const hasAdminAccess = session?.user && (
+    session.user.role === 'ADMIN' ||
+    (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin === true)
+  );
+
+  if (!hasAdminAccess) {
+    redirect('/dashboard');
   }
 
   return (

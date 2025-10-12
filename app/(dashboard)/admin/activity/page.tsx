@@ -11,8 +11,14 @@ export const metadata = {
 export default async function AdminActivityPageServer() {
   const session = await getServerSession(authOptions);
 
-  if (!session || session.user.role !== 'ADMIN') {
-    redirect('/login');
+  // Check for admin access (ADMIN role or TEACHER with isAdmin flag)
+  const hasAdminAccess = session?.user && (
+    session.user.role === 'ADMIN' ||
+    (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin === true)
+  );
+
+  if (!hasAdminAccess) {
+    redirect('/dashboard');
   }
 
   return (

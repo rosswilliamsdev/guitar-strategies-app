@@ -26,14 +26,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     // Verify admin authentication
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user || session.user.role !== 'ADMIN') {
+
+    // Check for admin access (ADMIN role or TEACHER with isAdmin flag)
+    const hasAdminAccess = session?.user && (
+      session.user.role === 'ADMIN' ||
+      (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin === true)
+    );
+
+    if (!hasAdminAccess) {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
         { status: 401 }
       );
     }
-    
+
     // Get connection pool status
     const startTime = Date.now();
     const poolStatus = await getConnectionPoolStatus();
@@ -91,14 +97,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Verify admin authentication
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user || session.user.role !== 'ADMIN') {
+
+    // Check for admin access (ADMIN role or TEACHER with isAdmin flag)
+    const hasAdminAccess = session?.user && (
+      session.user.role === 'ADMIN' ||
+      (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin === true)
+    );
+
+    if (!hasAdminAccess) {
       return NextResponse.json(
         { error: 'Unauthorized - Admin access required' },
         { status: 401 }
       );
     }
-    
+
     const body = await request.json().catch(() => ({}));
     const concurrentTests = Math.min(body.concurrentTests || 3, 10); // Limit to prevent overload
     

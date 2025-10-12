@@ -50,11 +50,16 @@ const navItems: NavItem[] = [
   { label: "Settings", href: "/settings", roles: ["TEACHER", "STUDENT"] },
 ];
 
-export function DashboardSidebar({ user, isOpen = false, onClose }: DashboardSidebarProps) {
+export function DashboardSidebar({
+  user,
+  isOpen = false,
+  onClose,
+}: DashboardSidebarProps) {
   const pathname = usePathname();
 
   // Check if user is a teacher-admin (teacher with admin privileges)
-  const isTeacherAdmin = user.role === 'TEACHER' && user.teacherProfile?.isAdmin === true;
+  const isTeacherAdmin =
+    user.role === "TEACHER" && user.teacherProfile?.isAdmin === true;
 
   // Try to get view mode context (only available for teacher-admins)
   let currentViewMode: "teacher" | "admin" | null = null;
@@ -73,9 +78,9 @@ export function DashboardSidebar({ user, isOpen = false, onClose }: DashboardSid
     // For teacher-admins with view mode context, show items based on current view
     if (isTeacherAdmin && currentViewMode) {
       if (currentViewMode === "teacher") {
-        return item.roles.includes('TEACHER');
+        return item.roles.includes("TEACHER");
       } else if (currentViewMode === "admin") {
-        return item.roles.includes('ADMIN');
+        return item.roles.includes("ADMIN");
       }
     }
 
@@ -101,7 +106,7 @@ export function DashboardSidebar({ user, isOpen = false, onClose }: DashboardSid
 
       <aside
         className={cn(
-          "bg-background border-r border-border min-h-screen transition-all duration-300 ease-in-out",
+          "bg-background border-r border-border min-h-screen transition-all duration-300 ease-in-out shadow-recessed bg-gradient-to-t from-gray-200 to-gray-50",
           // Desktop: always visible, fixed width
           "lg:w-64 lg:translate-x-0",
           // Mobile: slide in/out from left
@@ -131,10 +136,7 @@ export function DashboardSidebar({ user, isOpen = false, onClose }: DashboardSid
 
         {/* Desktop header */}
         <div className="hidden lg:block p-6">
-          <Link
-            href="/dashboard"
-            className="text-xl font-semibold text-black"
-          >
+          <Link href="/dashboard" className="text-xl font-semibold text-black">
             Guitar Strategies
           </Link>
         </div>
@@ -148,7 +150,7 @@ export function DashboardSidebar({ user, isOpen = false, onClose }: DashboardSid
               className={cn(
                 "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
                 pathname === item.href || pathname.startsWith(item.href + "/")
-                  ? "bg-turquoise-100 text-black font-medium"
+                  ? "bg-turquoise-100 text-black font-medium shadow-md"
                   : "text-black hover:bg-muted hover:text-black"
               )}
             >
@@ -157,7 +159,7 @@ export function DashboardSidebar({ user, isOpen = false, onClose }: DashboardSid
           ))}
         </nav>
 
-        <div className="absolute bottom-0 w-64 p-4 border-t border-border">
+        <div className="absolute bottom-0 w-64 p-4 border-t border-border shadow-sm">
           <div className="space-y-3">
             <Button
               variant="secondary"

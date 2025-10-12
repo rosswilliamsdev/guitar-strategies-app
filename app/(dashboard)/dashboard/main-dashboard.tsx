@@ -4,7 +4,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { User } from "next-auth";
-import { UserStats, AdminStats, formatRelativeTime } from "@/lib/dashboard-stats";
+import {
+  UserStats,
+  AdminStats,
+  formatRelativeTime,
+} from "@/lib/dashboard-stats";
 import {
   Users,
   UserCheck,
@@ -89,9 +93,14 @@ function QuickAction({
   );
 }
 
-export function MainDashboard({ user, hideTitle = false, userStats, adminStats }: DashboardProps) {
+export function MainDashboard({
+  user,
+  hideTitle = false,
+  userStats,
+  adminStats,
+}: DashboardProps) {
   // If admin user with admin stats, show only recent activity
-  if (user.role === 'ADMIN' && adminStats) {
+  if (user.role === "ADMIN" && adminStats) {
     return (
       <div className="space-y-8">
         {/* Welcome Section */}
@@ -167,9 +176,21 @@ export function MainDashboard({ user, hideTitle = false, userStats, adminStats }
     // If we have userStats, use real data
     if (userStats) {
       return [
-        { title: "Total Platform Users", value: userStats.totalUsers, description: "Registered accounts" },
-        { title: "Platform Status", value: userStats.platformActivity, description: "Current status" },
-        { title: "System Health", value: userStats.systemStatus, description: "Operational status" },
+        {
+          title: "Total Platform Users",
+          value: userStats.totalUsers,
+          description: "Registered accounts",
+        },
+        {
+          title: "Platform Status",
+          value: userStats.platformActivity,
+          description: "Current status",
+        },
+        {
+          title: "System Health",
+          value: userStats.systemStatus,
+          description: "Operational status",
+        },
         { title: "Your Role", value: user.role, description: "Account type" },
       ];
     }
@@ -179,7 +200,11 @@ export function MainDashboard({ user, hideTitle = false, userStats, adminStats }
       { title: "Welcome", value: "👋", description: "Getting started" },
       { title: "Your Role", value: user.role, description: "Account type" },
       { title: "Status", value: "Active", description: "Account status" },
-      { title: "Getting Started", value: "📚", description: "Setup in progress" },
+      {
+        title: "Getting Started",
+        value: "📚",
+        description: "Setup in progress",
+      },
     ];
   };
 
@@ -258,8 +283,8 @@ export function MainDashboard({ user, hideTitle = false, userStats, adminStats }
             Welcome back, {user.name}!
           </h1>
           <p className="text-muted-foreground mt-2">
-            Here&apos;s what&apos;s happening with your {user.role.toLowerCase()} account
-            today.
+            Here&apos;s what&apos;s happening with your{" "}
+            {user.role.toLowerCase()} account today.
           </p>
         </div>
       )}

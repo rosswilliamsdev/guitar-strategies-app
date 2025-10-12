@@ -127,6 +127,10 @@ module.exports = {
         md: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
         lg: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
         xl: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        recessed: `inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1)`,
+        recessedSmall: `inset 0 2px 3px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(0, 0, 0, 0.1)`,
       },
       minHeight: {
         touch: "44px", // Minimum touch target size for accessibility
@@ -136,12 +140,12 @@ module.exports = {
       },
       keyframes: {
         shimmer: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(200%)' },
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(200%)" },
         },
       },
       animation: {
-        shimmer: 'shimmer 1.5s ease-in-out infinite',
+        shimmer: "shimmer 1.5s ease-in-out infinite",
       },
     },
   },
