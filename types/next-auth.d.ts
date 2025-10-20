@@ -10,6 +10,8 @@ declare module "next-auth" {
       role: Role;
       teacherProfile?: TeacherProfile | null;
       studentProfile?: StudentProfile | null;
+      isAdmin?: boolean;
+      isOrgFounder?: boolean;
     };
   }
 
@@ -17,6 +19,8 @@ declare module "next-auth" {
     role: Role;
     teacherProfile?: TeacherProfile | null;
     studentProfile?: StudentProfile | null;
+    isAdmin?: boolean;
+    isOrgFounder?: boolean;
   }
 }
 
@@ -25,5 +29,7 @@ declare module "next-auth/jwt" {
     role: Role;
     teacherProfile?: TeacherProfile | null;
     studentProfile?: StudentProfile | null;
+    isAdmin?: boolean;
+    isOrgFounder?: boolean;
   }
 }

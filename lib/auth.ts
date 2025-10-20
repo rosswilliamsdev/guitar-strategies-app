@@ -34,22 +34,22 @@ export const authOptions: NextAuthOptions = {
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       /**
        * Authorize user credentials against the database.
-       * 
+       *
        * @param credentials - User credentials from login form
        * @returns User object if authentication successful, null otherwise
        */
       async authorize(credentials) {
-        authLog.info('Authorization attempt', {
+        authLog.info("Authorization attempt", {
           email: credentials?.email,
-          hasPassword: !!credentials?.password
+          hasPassword: !!credentials?.password,
         });
 
         if (!credentials?.email || !credentials?.password) {
-          authLog.warn('Missing credentials for login attempt');
+          authLog.warn("Missing credentials for login attempt");
           return null;
         }
 
@@ -57,23 +57,25 @@ export const authOptions: NextAuthOptions = {
           // Find user with associated profiles
           const user = await prisma.user.findUnique({
             where: {
-              email: credentials.email
+              email: credentials.email,
             },
             include: {
               teacherProfile: true,
               studentProfile: true,
-            }
+            },
           });
 
-          authLog.info('User lookup completed', {
+          authLog.info("User lookup completed", {
             found: !!user,
             email: user?.email,
             role: user?.role,
-            hasPassword: !!user?.password
+            hasPassword: !!user?.password,
           });
 
           if (!user || !user.password) {
-            authLog.warn('User not found or no password', { email: credentials.email });
+            authLog.warn("User not found or no password", {
+              email: credentials.email,
+            });
             return null;
           }
 
@@ -83,10 +85,15 @@ export const authOptions: NextAuthOptions = {
             user.password
           );
 
-          authLog.info('Password validation completed', { isValid: isPasswordValid, email: credentials.email });
+          authLog.info("Password validation completed", {
+            isValid: isPasswordValid,
+            email: credentials.email,
+          });
 
           if (!isPasswordValid) {
-            authLog.warn('Invalid password provided', { email: credentials.email });
+            authLog.warn("Invalid password provided", {
+              email: credentials.email,
+            });
             return null;
           }
 
@@ -97,27 +104,28 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
             teacherProfile: user.teacherProfile,
             studentProfile: user.studentProfile,
-            isAdmin: user.role === 'ADMIN' || (user.teacherProfile?.isAdmin || false),
+            isAdmin:
+              user.role === "ADMIN" || user.teacherProfile?.isAdmin || false,
             isOrgFounder: user.teacherProfile?.isOrgFounder || false,
           };
 
-          authLog.info('Authorization successful', {
+          authLog.info("Authorization successful", {
             id: authResult.id,
             email: authResult.email,
             role: authResult.role,
-            isAdmin: authResult.isAdmin
+            isAdmin: authResult.isAdmin,
           });
 
           return authResult;
         } catch (error) {
-          authLog.error('Authorization error', {
+          authLog.error("Authorization error", {
             error: error instanceof Error ? error.message : String(error),
-            email: credentials.email
+            email: credentials.email,
           });
           return null;
         }
-      }
-    })
+      },
+    }),
   ],
   callbacks: {
     /**
@@ -125,20 +133,20 @@ export const authOptions: NextAuthOptions = {
      * Adds user role and profile data to the token for session use.
      */
     async jwt({ token, user, trigger }) {
-      authLog.info('JWT callback triggered', {
+      authLog.info("JWT callback triggered", {
         trigger,
         hasUser: !!user,
         tokenSub: token.sub,
-        tokenRole: token.role
+        tokenRole: token.role,
       });
 
       if (user) {
-        authLog.info('Adding user data to JWT token', {
+        authLog.info("Adding user data to JWT token", {
           id: user.id,
           role: user.role,
           hasTeacherProfile: !!user.teacherProfile,
           hasStudentProfile: !!user.studentProfile,
-          isAdmin: user.isAdmin
+          isAdmin: user.isAdmin,
         });
         token.role = user.role;
         token.teacherProfile = user.teacherProfile;
@@ -147,10 +155,10 @@ export const authOptions: NextAuthOptions = {
         token.isOrgFounder = user.isOrgFounder;
       }
 
-      authLog.info('JWT token prepared', {
+      authLog.info("JWT token prepared", {
         sub: token.sub,
         role: token.role,
-        email: token.email || undefined
+        email: token.email || undefined,
       });
 
       return token;
@@ -161,11 +169,11 @@ export const authOptions: NextAuthOptions = {
      * Enriches session with user role and profile information from token.
      */
     async session({ session, token }) {
-      authLog.info('Session callback triggered', {
+      authLog.info("Session callback triggered", {
         hasToken: !!token,
         tokenSub: token.sub,
         tokenRole: token.role,
-        sessionUserEmail: session.user?.email
+        sessionUserEmail: session.user?.email,
       });
 
       if (token && session.user) {
@@ -176,11 +184,11 @@ export const authOptions: NextAuthOptions = {
         session.user.isAdmin = token.isAdmin;
         session.user.isOrgFounder = token.isOrgFounder;
 
-        authLog.info('Session enriched with user data', {
+        authLog.info("Session enriched with user data", {
           id: session.user.id,
           role: session.user.role,
           email: session.user.email,
-          isAdmin: session.user.isAdmin
+          isAdmin: session.user.isAdmin,
         });
       }
 
