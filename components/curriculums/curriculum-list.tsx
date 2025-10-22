@@ -69,7 +69,12 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
 
   const fetchCurriculums = async () => {
     try {
-      const response = await fetch("/api/curriculums");
+      const response = await fetch("/api/curriculums", {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         log.info('Fetched curriculums from API', {

@@ -6,6 +6,10 @@ import { createCurriculumSchema } from "@/lib/validations";
 import { apiLog } from "@/lib/logger";
 import { sanitizePlainText, sanitizeRichText } from "@/lib/sanitize";
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -47,12 +51,20 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      apiLog.info("Fetched curriculums for teacher", {
+      apiLog.info("Fetched curriculums for teacher from database", {
         teacherId: teacherProfile.id,
         count: curriculums.length,
+        curriculumIds: curriculums.map(c => c.id),
+        curriculumTitles: curriculums.map(c => c.title),
       });
 
-      return NextResponse.json({ curriculums });
+      return NextResponse.json({ curriculums }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
     }
 
     // Students see curriculums from their assigned teacher
@@ -103,7 +115,13 @@ export async function GET(request: NextRequest) {
         count: curriculums.length,
       });
 
-      return NextResponse.json({ curriculums });
+      return NextResponse.json({ curriculums }, {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      });
     }
 
     // Other roles not supported
