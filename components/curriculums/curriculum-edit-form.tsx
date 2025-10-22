@@ -140,46 +140,123 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
         throw new Error(error.error || "Failed to update checklist");
       }
 
-      // Clear existing items from all sections
-      for (const section of curriculum.sections) {
-        for (const item of section.items) {
-          await fetch(`/api/curriculums/items/${item.id}`, {
+      // Clear existing items from all sections in parallel
+      const existingItemIds = curriculum.sections.flatMap(section =>
+        section.items.map(item => item.id)
+      );
+
+      log.info('Deleting existing items', {
+        curriculumId: curriculum.id,
+        itemCount: existingItemIds.length
+      });
+
+      if (existingItemIds.length > 0) {
+        const deletePromises = existingItemIds.map(itemId =>
+          fetch(`/api/curriculums/items/${itemId}`, {
             method: "DELETE",
-          });
+          }).then(async (response) => ({
+            itemId,
+            success: response.ok,
+            status: response.status,
+          }))
+        );
+
+        const deleteResults = await Promise.all(deletePromises);
+        const deleteSuccessCount = deleteResults.filter(r => r.success).length;
+        const deleteFailCount = deleteResults.filter(r => !r.success).length;
+
+        log.info('Finished deleting items', {
+          total: existingItemIds.length,
+          success: deleteSuccessCount,
+          failed: deleteFailCount
+        });
+
+        if (deleteFailCount > 0) {
+          throw new Error(`Failed to delete ${deleteFailCount} items`);
         }
       }
 
       // Add updated items to the first section (or create one if none exist)
       let sectionId = curriculum.sections[0]?.id;
-      
+
       if (!sectionId) {
+        log.info('Creating new section for items', {
+          curriculumId: curriculum.id
+        });
+
         const sectionResponse = await fetch("/api/curriculums/sections", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             curriculumId: curriculum.id,
             title: "Checklist Items",
-            category: "OTHER",
+            // No category needed for simple checklists
           }),
         });
-        
+
         if (sectionResponse.ok) {
-          const createdSection = await sectionResponse.json();
-          sectionId = createdSection.id;
+          const sectionData = await sectionResponse.json();
+          // API returns { section: {...} }
+          sectionId = sectionData.section?.id || sectionData.id;
+          log.info('Section created', { sectionId });
+        } else {
+          const errorData = await sectionResponse.json();
+          log.error('Failed to create section', {
+            status: sectionResponse.status,
+            error: errorData
+          });
+          throw new Error('Failed to create section for items');
         }
       }
 
-      // Add all items
-      if (sectionId) {
-        for (const item of items) {
-          await fetch("/api/curriculums/items", {
+      // Add all items in parallel
+      if (sectionId && items.length > 0) {
+        log.info('Creating items in parallel', {
+          sectionId,
+          itemCount: items.length
+        });
+
+        const itemPromises = items.map(item =>
+          fetch("/api/curriculums/items", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               sectionId,
               title: item.title,
             }),
-          });
+          }).then(async (response) => ({
+            title: item.title,
+            success: response.ok,
+            status: response.status,
+            error: response.ok ? null : await response.json(),
+          }))
+        );
+
+        const results = await Promise.all(itemPromises);
+        const successCount = results.filter(r => r.success).length;
+        const failCount = results.filter(r => !r.success).length;
+
+        // Log results
+        results.forEach(result => {
+          if (result.success) {
+            log.info('Item created successfully', { title: result.title });
+          } else {
+            log.error('Failed to create item', {
+              title: result.title,
+              status: result.status,
+              error: result.error
+            });
+          }
+        });
+
+        log.info('Finished adding items', {
+          total: items.length,
+          success: successCount,
+          failed: failCount
+        });
+
+        if (failCount > 0) {
+          throw new Error(`Failed to create ${failCount} of ${items.length} items`);
         }
       }
 
