@@ -103,26 +103,14 @@ const getWinstonLogger = () => {
           environment: process.env.NODE_ENV || 'development',
         },
         transports: [
-          // Console output
+          // Console output (works in both dev and production)
           new winston.transports.Console({
             handleExceptions: true,
             handleRejections: true,
           }),
-          
-          // File output for production
-          ...(process.env.NODE_ENV === 'production' ? [
-            new winston.transports.File({
-              filename: 'logs/error.log',
-              level: 'error',
-              maxsize: 5242880, // 5MB
-              maxFiles: 5,
-            }),
-            new winston.transports.File({
-              filename: 'logs/combined.log',
-              maxsize: 5242880, // 5MB
-              maxFiles: 10,
-            }),
-          ] : []),
+
+          // Note: File logging disabled for serverless environments (Vercel)
+          // Logs are captured by the platform's logging system instead
         ],
         exitOnError: false,
       });
