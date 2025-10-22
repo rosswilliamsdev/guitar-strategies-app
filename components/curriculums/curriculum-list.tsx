@@ -72,7 +72,8 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
       const response = await fetch("/api/curriculums");
       if (response.ok) {
         const data = await response.json();
-        setCurriculums(data);
+        // API returns { curriculums: [...] }, extract the array
+        setCurriculums(data.curriculums || []);
       }
     } catch (error) {
       log.error('Error fetching curriculums:', {
