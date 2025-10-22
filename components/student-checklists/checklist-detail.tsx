@@ -97,10 +97,25 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
 
   const fetchChecklist = async () => {
     try {
-      const response = await fetch(`/api/student-checklists/${checklistId}`);
+      const response = await fetch(`/api/student-checklists/${checklistId}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (response.ok) {
         const data = await response.json();
+        log.info('Fetched student checklist detail', {
+          checklistId,
+          title: data.title,
+          itemCount: data.items?.length || 0,
+        });
         setChecklist(data);
+      } else {
+        log.error('Failed to fetch student checklist', {
+          status: response.status,
+          checklistId,
+        });
       }
     } catch (error) {
       log.error('Error fetching checklist:', {

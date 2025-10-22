@@ -6,6 +6,10 @@ import { createStudentChecklistSchema } from "@/lib/validations";
 import { z } from "zod";
 import { apiLog, dbLog } from '@/lib/logger';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET /api/student-checklists - Get all checklists for a student
 export async function GET(request: NextRequest) {
   try {

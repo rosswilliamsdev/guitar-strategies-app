@@ -45,8 +45,13 @@ export function StudentChecklistList() {
     try {
       const params = new URLSearchParams();
       if (showArchived) params.append("includeArchived", "true");
-      
-      const response = await fetch(`/api/student-checklists?${params}`);
+
+      const response = await fetch(`/api/student-checklists?${params}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         // Handle the correct response structure: { checklists: [...] }
