@@ -72,8 +72,22 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
       const response = await fetch("/api/curriculums");
       if (response.ok) {
         const data = await response.json();
+        log.info('Fetched curriculums from API', {
+          count: data.curriculums?.length || 0,
+          curriculums: data.curriculums?.map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            sectionCount: c.sections?.length || 0,
+            itemCount: c.sections?.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0) || 0
+          }))
+        });
         // API returns { curriculums: [...] }, extract the array
         setCurriculums(data.curriculums || []);
+      } else {
+        log.error('Failed to fetch curriculums', {
+          status: response.status,
+          statusText: response.statusText
+        });
       }
     } catch (error) {
       log.error('Error fetching curriculums:', {
