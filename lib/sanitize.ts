@@ -1,17 +1,65 @@
 /**
  * XSS Sanitization Utility
- * 
+ *
  * This module provides secure HTML sanitization to prevent XSS attacks
  * while preserving safe HTML formatting for rich text content.
+ *
+ * Note: Server-side uses a lightweight regex-based approach to avoid
+ * ES Module issues with DOMPurify/jsdom in serverless environments.
  */
 
-import DOMPurify from 'isomorphic-dompurify';
+// Lazy load DOMPurify only in browser environment
+let DOMPurify: any = null;
+
+if (typeof window !== 'undefined') {
+  // Client-side: Use full DOMPurify
+  import('dompurify').then(module => {
+    DOMPurify = module.default;
+  });
+}
+
+/**
+ * Server-side regex-based HTML sanitization (fallback)
+ * Removes dangerous tags and attributes without requiring DOM
+ */
+function serverSanitizeHtml(html: string, allowedTags: string[] = []): string {
+  if (!html) return '';
+
+  let sanitized = String(html);
+
+  // Remove script tags and their content
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove dangerous tags
+  const dangerousTags = ['iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button', 'style'];
+  dangerousTags.forEach(tag => {
+    const regex = new RegExp(`<${tag}\\b[^<]*(?:(?!<\\/${tag}>)<[^<]*)*<\\/${tag}>`, 'gi');
+    sanitized = sanitized.replace(regex, '');
+  });
+
+  // Remove event handlers
+  sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, '');
+  sanitized = sanitized.replace(/\s*on\w+\s*=\s*[^\s>]*/gi, '');
+
+  // Remove javascript: protocol
+  sanitized = sanitized.replace(/javascript:/gi, '');
+
+  // Remove data: protocol (except images)
+  sanitized = sanitized.replace(/data:(?!image\/)/gi, '');
+
+  // If no tags allowed, strip all HTML
+  if (allowedTags.length === 0) {
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+  }
+
+  return sanitized;
+}
 
 /**
  * Configuration for DOMPurify to allow safe HTML tags and attributes
  * while removing dangerous elements and scripts.
  */
-const RICH_TEXT_CONFIG: DOMPurify.Config = {
+const RICH_TEXT_CONFIG: any = {
   // Allowed HTML tags for rich text content
   ALLOWED_TAGS: [
     // Text formatting
@@ -83,10 +131,15 @@ const TITLE_CONFIG: DOMPurify.Config = {
  */
 export function sanitizeRichText(html: string | null | undefined): string {
   if (!html) return '';
-  
-  // Clean the HTML
+
+  // Use server-safe sanitization if DOMPurify not available (server-side)
+  if (!DOMPurify || typeof window === 'undefined') {
+    return serverSanitizeHtml(html, RICH_TEXT_CONFIG.ALLOWED_TAGS || []);
+  }
+
+  // Clean the HTML with DOMPurify (client-side)
   const clean = DOMPurify.sanitize(html, RICH_TEXT_CONFIG as any);
-  
+
   // Additional security: Remove javascript: protocol from remaining links
   return String(clean).replace(/javascript:/gi, '');
 }
@@ -97,7 +150,12 @@ export function sanitizeRichText(html: string | null | undefined): string {
  */
 export function sanitizePlainText(text: string | null | undefined): string {
   if (!text) return '';
-  
+
+  // Use server-safe sanitization if DOMPurify not available (server-side)
+  if (!DOMPurify || typeof window === 'undefined') {
+    return serverSanitizeHtml(text, []);
+  }
+
   return String(DOMPurify.sanitize(text, PLAIN_TEXT_CONFIG as any));
 }
 
@@ -106,7 +164,12 @@ export function sanitizePlainText(text: string | null | undefined): string {
  */
 export function sanitizeTitle(text: string | null | undefined): string {
   if (!text) return '';
-  
+
+  // Use server-safe sanitization if DOMPurify not available (server-side)
+  if (!DOMPurify || typeof window === 'undefined') {
+    return serverSanitizeHtml(text, TITLE_CONFIG.ALLOWED_TAGS || []);
+  }
+
   return String(DOMPurify.sanitize(text, TITLE_CONFIG as any));
 }
 
@@ -143,8 +206,13 @@ export function sanitizeInput(
   // Remove links if not allowed (for rich text)
   if (options.type === 'rich' && options.allowLinks === false) {
     const tempConfig = { ...RICH_TEXT_CONFIG };
-    tempConfig.ALLOWED_TAGS = tempConfig.ALLOWED_TAGS?.filter(tag => tag !== 'a');
-    sanitized = String(DOMPurify.sanitize(sanitized, tempConfig as any));
+    tempConfig.ALLOWED_TAGS = tempConfig.ALLOWED_TAGS?.filter((tag: string) => tag !== 'a');
+    if (DOMPurify && typeof window !== 'undefined') {
+      sanitized = String(DOMPurify.sanitize(sanitized, tempConfig as any));
+    } else {
+      // Server-side: use regex to remove links
+      sanitized = sanitized.replace(/<a\b[^<]*(?:(?!<\/a>)<[^<]*)*<\/a>/gi, '');
+    }
   }
   
   // Enforce max length if specified
@@ -264,19 +332,21 @@ export function escapeHtml(text: string): string {
  */
 export function stripHtml(html: string): string {
   if (!html) return '';
-  
+
+  // Server-side fallback
+  if (!DOMPurify || typeof window === 'undefined') {
+    return serverSanitizeHtml(html, []);
+  }
+
   // Use DOMPurify to strip all tags
   const stripped = DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
-  
+
   // Decode HTML entities
   const textarea = typeof document !== 'undefined' ? document.createElement('textarea') : null;
   if (textarea) {
     textarea.innerHTML = stripped;
     return textarea.value;
   }
-  
+
   return stripped;
 }
-
-// Export DOMPurify for advanced use cases
-export { DOMPurify };

@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate deploy && prisma generate && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx prisma/seed.ts",
-    "db:seed": "npx prisma db seed"
+    "db:seed": "npx prisma db seed",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -45,7 +46,6 @@
     "dompurify": "^3.2.6",
     "html2canvas": "^1.4.1",
     "ioredis": "^5.7.0",
-    "isomorphic-dompurify": "^2.26.0",
     "jspdf": "^3.0.1",
     "lru-cache": "^11.2.1",
     "lucide-react": "^0.539.0",
