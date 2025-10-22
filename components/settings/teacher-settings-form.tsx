@@ -325,7 +325,11 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         zelleEmail: zelleEmail.trim() === "" ? null : zelleEmail,
       };
 
+      log.info('Submitting teacher profile update', { formData });
+
       const validatedData = teacherProfileSchema.parse(formData);
+
+      log.info('Validated data', { validatedData });
 
       const response = await fetch('/api/settings/teacher', {
         method: 'PUT',
@@ -335,16 +339,29 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         body: JSON.stringify(validatedData),
       });
 
+      log.info('API response', {
+        status: response.status,
+        ok: response.ok
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
+        log.error('Profile update failed', { errorData });
         throw new Error(errorData.error || 'Failed to update profile');
       }
+
+      const responseData = await response.json();
+      log.info('Profile update successful', { responseData });
 
       setSuccess("Profile updated successfully!");
       // Reload the profile data to show updated values
       await loadProfileData();
       router.refresh();
     } catch (error) {
+      log.error('Profile update error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       if (error instanceof Error) {
         setError(error.message);
       } else {

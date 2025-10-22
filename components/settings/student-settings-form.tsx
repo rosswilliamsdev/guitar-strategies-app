@@ -105,7 +105,11 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
         parentEmail: parentEmail || undefined,
       };
 
+      console.log('Submitting student profile update', formData);
+
       const validatedData = studentProfileSchema.parse(formData);
+
+      console.log('Validated data', validatedData);
 
       const response = await fetch('/api/settings/student', {
         method: 'PUT',
@@ -115,14 +119,24 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
         body: JSON.stringify(validatedData),
       });
 
+      console.log('API response', {
+        status: response.status,
+        ok: response.ok
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Profile update failed', errorData);
         throw new Error(errorData.error || 'Failed to update profile');
       }
+
+      const responseData = await response.json();
+      console.log('Profile update successful', responseData);
 
       setSuccess("Profile updated successfully!");
       router.refresh();
     } catch (error) {
+      console.error('Profile update error', error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
