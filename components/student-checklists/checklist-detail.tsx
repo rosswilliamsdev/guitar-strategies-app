@@ -200,13 +200,22 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       });
 
       if (response.ok) {
+        log.info('Single item created successfully', { title: firstLine });
         // Remove the first line from the textarea
         const remainingLines = newItem.title.split('\n').slice(1).join('\n');
         setNewItem({
           ...newItem,
           title: remainingLines,
         });
-        fetchChecklist();
+        // Wait for checklist to refresh before continuing
+        await fetchChecklist();
+      } else {
+        const errorData = await response.json();
+        log.error('Failed to create single item', {
+          title: firstLine,
+          status: response.status,
+          error: errorData
+        });
       }
     } catch (error) {
       log.error('Error adding item:', {
@@ -227,9 +236,14 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
     if (items.length === 0) return;
 
     try {
-      // Add all items
-      for (const itemTitle of items) {
-        await fetch("/api/student-checklists/items", {
+      log.info('Adding bulk items in parallel', {
+        checklistId,
+        itemCount: items.length
+      });
+
+      // Add all items in parallel
+      const itemPromises = items.map(itemTitle =>
+        fetch("/api/student-checklists/items", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -240,7 +254,40 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
             resourceUrl: newItem.resourceUrl || undefined,
             notes: newItem.notes || undefined,
           }),
-        });
+        }).then(async (response) => ({
+          title: itemTitle,
+          success: response.ok,
+          status: response.status,
+          error: response.ok ? null : await response.json(),
+        }))
+      );
+
+      const results = await Promise.all(itemPromises);
+
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+
+      // Log results
+      results.forEach(result => {
+        if (result.success) {
+          log.info('Bulk item created successfully', { title: result.title });
+        } else {
+          log.error('Failed to create bulk item', {
+            title: result.title,
+            status: result.status,
+            error: result.error
+          });
+        }
+      });
+
+      log.info('Finished adding bulk items', {
+        total: items.length,
+        success: successCount,
+        failed: failCount
+      });
+
+      if (failCount > 0) {
+        alert(`Warning: ${failCount} of ${items.length} items failed to create. Check console for details.`);
       }
 
       setNewItem({
@@ -251,7 +298,9 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         notes: "",
       });
       setShowAddItem(false);
-      fetchChecklist();
+
+      // Wait for checklist to refresh before continuing
+      await fetchChecklist();
     } catch (error) {
       log.error('Error adding items:', {
         error: error instanceof Error ? error.message : String(error),
