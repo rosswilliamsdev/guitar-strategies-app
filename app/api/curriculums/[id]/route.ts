@@ -6,6 +6,10 @@ import { createCurriculumSchema } from "@/lib/validations";
 import { apiLog } from "@/lib/logger";
 import { sanitizePlainText, sanitizeRichText } from "@/lib/sanitize";
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -80,9 +84,17 @@ export async function GET(
     apiLog.info("Fetched curriculum", {
       curriculumId: id,
       userId: session.user.id,
+      sectionCount: curriculum.sections?.length || 0,
+      itemCount: curriculum.sections?.reduce((sum, s) => sum + (s.items?.length || 0), 0) || 0,
     });
 
-    return NextResponse.json({ curriculum });
+    return NextResponse.json({ curriculum }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
   } catch (error) {
     apiLog.error("Error fetching curriculum", {
       error: error instanceof Error ? error.message : String(error),

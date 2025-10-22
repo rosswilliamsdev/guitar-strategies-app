@@ -102,11 +102,25 @@ export function CurriculumDetail({
 
   const fetchCurriculum = async () => {
     try {
-      const response = await fetch(`/api/curriculums/${curriculumId}`);
+      const response = await fetch(`/api/curriculums/${curriculumId}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         // API returns { curriculum: {...} }, extract the curriculum object
-        setCurriculum(data.curriculum || data);
+        const curriculumData = data.curriculum || data;
+
+        log.info('Fetched curriculum detail', {
+          curriculumId,
+          title: curriculumData.title,
+          sectionCount: curriculumData.sections?.length || 0,
+          itemCount: curriculumData.sections?.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0) || 0,
+        });
+
+        setCurriculum(curriculumData);
       } else {
         log.error("Failed to fetch curriculum", {
           status: response.status,
