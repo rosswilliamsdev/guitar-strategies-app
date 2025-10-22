@@ -160,8 +160,11 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           });
 
           // Add all items to this section
+          let successCount = 0;
+          let failCount = 0;
+
           for (const item of items) {
-            await fetch("/api/curriculums/items", {
+            const itemResponse = await fetch("/api/curriculums/items", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -169,8 +172,26 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
                 title: item.title,
               }),
             });
+
+            if (itemResponse.ok) {
+              successCount++;
+              log.info('Item created successfully', { title: item.title });
+            } else {
+              failCount++;
+              const itemError = await itemResponse.json();
+              log.error('Failed to create item', {
+                title: item.title,
+                status: itemResponse.status,
+                error: itemError
+              });
+            }
           }
-          log.info('All items added successfully');
+
+          log.info('Finished adding items', {
+            total: items.length,
+            success: successCount,
+            failed: failCount
+          });
         } else {
           const errorData = await sectionResponse.json();
           log.error('Failed to create section', {

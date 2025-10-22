@@ -105,7 +105,13 @@ export function CurriculumDetail({
       const response = await fetch(`/api/curriculums/${curriculumId}`);
       if (response.ok) {
         const data = await response.json();
-        setCurriculum(data);
+        // API returns { curriculum: {...} }, extract the curriculum object
+        setCurriculum(data.curriculum || data);
+      } else {
+        log.error("Failed to fetch curriculum", {
+          status: response.status,
+          curriculumId,
+        });
       }
     } catch (error) {
       log.error("Error fetching curriculum:", {
