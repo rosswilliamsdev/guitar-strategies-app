@@ -80,11 +80,17 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   // Load current profile data
   const loadProfileData = async () => {
     try {
+      log.info('Loading profile data...');
       const response = await fetch('/api/settings/teacher', {
         credentials: 'include',
       });
+      log.info('Profile data response', {
+        status: response.status,
+        ok: response.ok
+      });
       if (response.ok) {
         const data = await response.json();
+        log.info('Loaded profile data from API', { data });
         setName(data.name || "");
         setEmail(data.email || "");
         setBio(data.bio || "");
@@ -96,6 +102,12 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         setIsSoloTeacher(data.isSoloTeacher || false);
         setIsOrgFounder(data.isOrgFounder || false);
         setOrganizationName(data.organizationName || "");
+        log.info('Profile state updated with new data');
+      } else {
+        log.error('Failed to load profile data', {
+          status: response.status,
+          statusText: response.statusText
+        });
       }
     } catch (error) {
       log.error('Error loading profile data:', {
@@ -354,9 +366,14 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       log.info('Profile update successful', { responseData });
 
       setSuccess("Profile updated successfully!");
+
       // Reload the profile data to show updated values
+      log.info('Reloading profile data after save...');
       await loadProfileData();
-      router.refresh();
+
+      // Don't call router.refresh() - it reloads the entire page and resets form state
+      // The loadProfileData() call above already updated the form state
+      log.info('Profile update complete');
     } catch (error) {
       log.error('Profile update error', {
         error: error instanceof Error ? error.message : String(error),

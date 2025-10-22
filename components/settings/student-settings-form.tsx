@@ -134,7 +134,10 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
       console.log('Profile update successful', responseData);
 
       setSuccess("Profile updated successfully!");
-      router.refresh();
+
+      // Form state already contains the updated values, no need to reload
+      // Don't call router.refresh() - it causes form to reset
+      console.log('Profile update complete');
     } catch (error) {
       console.error('Profile update error', error);
       if (error instanceof Error) {
