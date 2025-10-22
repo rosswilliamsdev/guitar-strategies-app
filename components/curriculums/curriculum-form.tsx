@@ -145,7 +145,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           body: JSON.stringify({
             curriculumId: savedChecklist.id,
             title: "Checklist Items",
-            category: "SONGS", // Changed from OTHER to a valid enum value
+            // No category needed for simple checklists
           }),
         });
 

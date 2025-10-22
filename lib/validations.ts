@@ -445,7 +445,7 @@ export const createCurriculumSectionSchema = z.object({
   curriculumId: z.string().min(1, "Curriculum ID is required"),
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().max(500).optional(),
-  category: z.nativeEnum(CurriculumCategory),
+  category: z.nativeEnum(CurriculumCategory).optional(), // Optional - not required for simple checklists
   sortOrder: z.number().min(0).default(0),
 });
 
