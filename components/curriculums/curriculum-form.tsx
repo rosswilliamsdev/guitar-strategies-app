@@ -159,39 +159,56 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
             itemCount: items.length
           });
 
-          // Add all items to this section
-          let successCount = 0;
-          let failCount = 0;
+          // Add all items to this section in parallel
+          log.info('Creating items in parallel', {
+            sectionId: createdSection.id,
+            itemCount: items.length
+          });
 
-          for (const item of items) {
-            const itemResponse = await fetch("/api/curriculums/items", {
+          const itemPromises = items.map(item =>
+            fetch("/api/curriculums/items", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 sectionId: createdSection.id,
                 title: item.title,
               }),
-            });
+            }).then(async (response) => ({
+              title: item.title,
+              success: response.ok,
+              status: response.status,
+              error: response.ok ? null : await response.json(),
+            }))
+          );
 
-            if (itemResponse.ok) {
-              successCount++;
-              log.info('Item created successfully', { title: item.title });
+          const results = await Promise.all(itemPromises);
+
+          const successCount = results.filter(r => r.success).length;
+          const failCount = results.filter(r => !r.success).length;
+
+          // Log results
+          results.forEach(result => {
+            if (result.success) {
+              log.info('Item created successfully', { title: result.title });
             } else {
-              failCount++;
-              const itemError = await itemResponse.json();
               log.error('Failed to create item', {
-                title: item.title,
-                status: itemResponse.status,
-                error: itemError
+                title: result.title,
+                status: result.status,
+                error: result.error
               });
             }
-          }
+          });
 
           log.info('Finished adding items', {
             total: items.length,
             success: successCount,
             failed: failCount
           });
+
+          // Throw error if any items failed to create
+          if (failCount > 0) {
+            throw new Error(`Failed to create ${failCount} of ${items.length} items`);
+          }
         } else {
           const errorData = await sectionResponse.json();
           log.error('Failed to create section', {

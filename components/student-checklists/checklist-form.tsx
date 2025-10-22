@@ -122,23 +122,56 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
 
       const savedChecklist = await response.json();
 
-      // If this is a new checklist and we have items, add them
+      // If this is a new checklist and we have items, add them in parallel
       if (!checklist && items.length > 0) {
-        for (const [index, item] of items.entries()) {
-          const itemResponse = await fetch("/api/student-checklists/items", {
+        log.info('Creating student checklist items in parallel', {
+          checklistId: savedChecklist.id,
+          itemCount: items.length
+        });
+
+        const itemPromises = items.map(item =>
+          fetch("/api/student-checklists/items", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               checklistId: savedChecklist.id,
               title: item.title,
             }),
-          });
+          }).then(async (response) => ({
+            title: item.title,
+            success: response.ok,
+            status: response.status,
+            error: response.ok ? null : await response.json(),
+          }))
+        );
 
-          if (!itemResponse.ok) {
-            const error = await itemResponse.json();
-            console.error(`Failed to create item "${item.title}":`, error);
-            throw new Error(error.error || `Failed to create item "${item.title}"`);
+        const results = await Promise.all(itemPromises);
+
+        const successCount = results.filter(r => r.success).length;
+        const failCount = results.filter(r => !r.success).length;
+
+        // Log results
+        results.forEach(result => {
+          if (result.success) {
+            log.info('Student checklist item created successfully', { title: result.title });
+          } else {
+            log.error('Failed to create student checklist item', {
+              title: result.title,
+              status: result.status,
+              error: result.error
+            });
           }
+        });
+
+        log.info('Finished adding student checklist items', {
+          total: items.length,
+          success: successCount,
+          failed: failCount
+        });
+
+        // Throw error if any items failed to create
+        if (failCount > 0) {
+          throw new Error(`Failed to create ${failCount} of ${items.length} items`);
         }
       }
 
