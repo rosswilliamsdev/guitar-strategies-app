@@ -14,51 +14,103 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only teachers can create/manage curriculums
-    if (session.user.role !== "TEACHER") {
-      return NextResponse.json(
-        { error: "Only teachers can access curriculums" },
-        { status: 403 }
-      );
-    }
+    // Teachers see their own curriculums
+    if (session.user.role === "TEACHER") {
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+      });
 
-    const teacherProfile = await prisma.teacherProfile.findUnique({
-      where: { userId: session.user.id },
-    });
+      if (!teacherProfile) {
+        return NextResponse.json(
+          { error: "Teacher profile not found" },
+          { status: 404 }
+        );
+      }
 
-    if (!teacherProfile) {
-      return NextResponse.json(
-        { error: "Teacher profile not found" },
-        { status: 404 }
-      );
-    }
+      // Get all curriculums for this teacher
+      const curriculums = await prisma.curriculum.findMany({
+        where: {
+          teacherId: teacherProfile.id,
+        },
+        include: {
+          sections: {
+            include: {
+              items: {
+                orderBy: { sortOrder: "asc" },
+              },
+            },
+            orderBy: { sortOrder: "asc" },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-    // Get all curriculums for this teacher
-    const curriculums = await prisma.curriculum.findMany({
-      where: {
+      apiLog.info("Fetched curriculums for teacher", {
         teacherId: teacherProfile.id,
-      },
-      include: {
-        sections: {
-          include: {
-            items: {
-              orderBy: { sortOrder: "asc" },
+        count: curriculums.length,
+      });
+
+      return NextResponse.json({ curriculums });
+    }
+
+    // Students see curriculums from their assigned teacher
+    if (session.user.role === "STUDENT") {
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!studentProfile) {
+        return NextResponse.json(
+          { error: "Student profile not found" },
+          { status: 404 }
+        );
+      }
+
+      // Get all published curriculums from student's teacher with student progress
+      const curriculums = await prisma.curriculum.findMany({
+        where: {
+          teacherId: studentProfile.teacherId,
+          isPublished: true,
+        },
+        include: {
+          sections: {
+            include: {
+              items: {
+                orderBy: { sortOrder: "asc" },
+              },
+            },
+            orderBy: { sortOrder: "asc" },
+          },
+          studentProgress: {
+            where: {
+              studentId: studentProfile.id,
+            },
+            include: {
+              itemProgress: true,
             },
           },
-          orderBy: { sortOrder: "asc" },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
-    apiLog.info("Fetched curriculums", {
-      teacherId: teacherProfile.id,
-      count: curriculums.length,
-    });
+      apiLog.info("Fetched curriculums for student", {
+        studentId: studentProfile.id,
+        teacherId: studentProfile.teacherId,
+        count: curriculums.length,
+      });
 
-    return NextResponse.json({ curriculums });
+      return NextResponse.json({ curriculums });
+    }
+
+    // Other roles not supported
+    return NextResponse.json(
+      { error: "Invalid role for accessing curriculums" },
+      { status: 403 }
+    );
   } catch (error) {
     apiLog.error("Error fetching curriculums", {
       error: error instanceof Error ? error.message : String(error),
