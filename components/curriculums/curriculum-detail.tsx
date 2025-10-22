@@ -216,7 +216,7 @@ export function CurriculumDetail({
   }
 
   // Get all items from all sections in a flat list
-  const allItems = curriculum.sections.flatMap((section) => section.items);
+  const allItems = curriculum.sections?.flatMap((section) => section.items || []) || [];
 
   return (
     <Card className="p-6">
