@@ -41,15 +41,22 @@ export async function POST(request: NextRequest) {
       ? sanitizeRichText(validatedData.description)
       : null;
 
+    // Build data object conditionally to avoid undefined category
+    const createData: any = {
+      curriculumId: validatedData.curriculumId,
+      title: sanitizedTitle,
+      description: sanitizedDescription,
+      sortOrder: validatedData.sortOrder || 0,
+    };
+
+    // Only add category if it's provided
+    if (validatedData.category) {
+      createData.category = validatedData.category;
+    }
+
     // Create section
     const section = await prisma.curriculumSection.create({
-      data: {
-        curriculumId: validatedData.curriculumId,
-        title: sanitizedTitle,
-        description: sanitizedDescription,
-        category: validatedData.category,
-        sortOrder: validatedData.sortOrder || 0,
-      },
+      data: createData,
       include: {
         items: true,
       },

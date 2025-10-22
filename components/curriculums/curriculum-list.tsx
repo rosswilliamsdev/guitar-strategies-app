@@ -325,7 +325,8 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                 Are you sure you want to delete &quot;{curriculums.find(c => c.id === showDeleteModal)?.title}&quot;? This action cannot be undone.
                 {(() => {
                   const curriculum = curriculums.find(c => c.id === showDeleteModal);
-                  return curriculum?.studentProgress?.length > 0 && (
+                  const hasProgress = (curriculum?.studentProgress?.length || 0) > 0;
+                  return hasProgress && (
                     <span className="block mt-2 text-amber-600 font-medium">
                       Warning: This checklist has student progress data that will be lost.
                     </span>
