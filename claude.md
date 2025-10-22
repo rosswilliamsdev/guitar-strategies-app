@@ -7,6 +7,7 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 ### Core Philosophy: Booking Time, Not Lessons
 
 **Important**: Students are booking and paying for the teacher's TIME, not lessons. This means:
+
 - Use "Book a Time" or "Book Time" instead of "Book a Lesson"
 - Students pay for reserved time slots whether they attend or cancel
 - The teacher's time has value regardless of student attendance
@@ -34,7 +35,7 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 ```css
 /* Neutral Palette (OpenAI Style) */
 --neutral-50: #fafafa
---neutral-100: #f5f5f5 
+--neutral-100: #f5f5f5
 --neutral-200: #e5e5e5
 --neutral-300: #d4d4d4
 --neutral-400: #a3a3a3
@@ -71,14 +72,12 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 --ring: #14b8b3           /* Primary focus ring */
 ```
 
-
 #4c5b6e
 #417685
 #417d8c
 #e4e9ec
 #c4d1d6
 #a5b7bf
-
 
 ## Typography System (OpenAI-Inspired)
 
@@ -116,6 +115,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 ```css
 /* Buttons */
 .btn-primary     /* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
 .btn-secondary   /* Neutral button with border (bg-background border text-foreground hover:bg-muted) */
 
 /* Cards */
@@ -127,7 +127,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 .label          /* Form labels using text-sm font-medium */
 
 /* Status Badges */
-.badge          /* Subtle badges with borders (bg-*-50 text-*-700 border border-*-200) */
+.badge; /* Subtle badges with borders (bg-*-50 text-*-700 border border-*-200) */
 ```
 
 ## Database Schema Key Models
@@ -175,6 +175,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 ```
 
 **Important Notes:**
+
 - **Three Types**: Teachers choose at signup: Solo, Found Organization, or Join Organization
 - **Permanent Choice**: Teacher type and organization affiliation cannot be changed after signup
 - **Admin Privileges**:
@@ -185,13 +186,13 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 
 ### StudentProfile Model
 
-```typescript
+````typescript
 {
   id: string
   userId: string
   teacherId: string
   joinedAt: DateTime
-  
+
   // Student preferences
   skill_level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'PROFESSIONAL'
   goals?: string
@@ -201,7 +202,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   emergencyContact?: string
   isActive: boolean
 }
-```
+``` .
 
 ### Lesson Model
 
@@ -216,7 +217,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   homework?: string             // assignments for next lesson
   progress?: string             // skill progression notes
   status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'MISSED'
-  
+
   // Lesson details (optional fields)
   focusAreas?: string           // Comma-separated focus areas
   songsPracticed?: string       // Comma-separated songs
@@ -224,7 +225,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   studentRating?: number        // 1-5 scale, student feedback
   teacherRating?: number        // 1-5 scale, teacher assessment
 }
-```
+````
 
 ### Scheduling Models
 
@@ -308,11 +309,13 @@ session.user = {
 ## Email Notification System Architecture
 
 ### Overview
+
 The Guitar Strategies app implements a comprehensive email notification system using Resend as the service provider. The architecture prioritizes reliability, maintainability, and professional presentation.
 
 ### Core Components
 
 #### 1. Email Service Library (`lib/email.ts`)
+
 - **Provider**: Resend API with environment-stored API key
 - **Central Function**: `sendEmail()` handles all email operations
 - **Error Handling**: Returns boolean success/failure with comprehensive error logging
@@ -320,6 +323,7 @@ The Guitar Strategies app implements a comprehensive email notification system u
 - **Reliability**: Graceful failure handling - email failures don't break main operations
 
 #### 2. Email Templates
+
 - **Design System**: Professional HTML templates with responsive design
 - **Styling**: Consistent turquoise accent colors (#14b8b3), OpenAI-inspired design
 - **Structure**: Base template wrapper (header, content area, footer)
@@ -328,6 +332,7 @@ The Guitar Strategies app implements a comprehensive email notification system u
 ### Email Types & Triggers
 
 #### Lesson Management
+
 - **Cancellation Emails**: Dual perspective (student/teacher) with lesson details
   - Triggered: `/api/lessons/[id]/cancel` endpoint
   - Data: Date, time, duration, participant names
@@ -336,11 +341,13 @@ The Guitar Strategies app implements a comprehensive email notification system u
   - Content: Lesson details, reminders, booking-specific messaging
 
 #### Student Engagement
+
 - **Checklist Completion**: Achievement celebration emails
   - Triggered: `/api/student-checklists/items/[id]` at 100% completion
   - Content: Achievement summary, encouragement, emoji support
 
 #### Business Operations
+
 - **Invoice Overdue Reminders**: Payment reminder system
   - Triggered: Manual/automated job execution
   - Content: Invoice details, payment methods (Venmo/PayPal/Zelle), professional CTAs
@@ -348,22 +355,27 @@ The Guitar Strategies app implements a comprehensive email notification system u
 ### Development & Testing
 
 #### Admin Interface
+
 - **Testing Route**: `/admin/email-test` (admin-only access)
 - **Features**: Template preview, delivery testing, configuration verification
 - **Purpose**: Debug templates without triggering real events
 
 #### Configuration
+
 ```env
 RESEND_API_KEY=your_resend_api_key_here
 ```
 
 ### Production Considerations
+
 - **Domain Verification**: Required for custom sender addresses
 - **Error Resilience**: Email failures logged but don't break primary operations
 - **Scalability**: Centralized service pattern supports easy template additions
 
 ### Reusable Pattern
+
 This architecture provides a template for implementing email notifications in any application:
+
 1. Single service abstraction (`lib/email.ts`)
 2. Template-based design system
 3. Event-driven triggers
@@ -378,14 +390,30 @@ The application uses Winston-based structured logging with comprehensive context
 
 ```typescript
 // Basic usage
-import { log } from '@/lib/logger';
-log.info('User action completed', { userId, action: 'profile_update' });
-log.error('Database connection failed', { error: error.message, stack: error.stack });
+import { log } from "@/lib/logger";
+log.info("User action completed", { userId, action: "profile_update" });
+log.error("Database connection failed", {
+  error: error.message,
+  stack: error.stack,
+});
 
 // Domain-specific loggers
-import { apiLog, dbLog, emailLog, schedulerLog, invoiceLog } from '@/lib/logger';
-apiLog.info('API request completed', { method: 'POST', endpoint: '/api/lessons', statusCode: 200 });
-dbLog.error('Query timeout', { query: 'SELECT * FROM lessons', duration: 5000 });
+import {
+  apiLog,
+  dbLog,
+  emailLog,
+  schedulerLog,
+  invoiceLog,
+} from "@/lib/logger";
+apiLog.info("API request completed", {
+  method: "POST",
+  endpoint: "/api/lessons",
+  statusCode: 200,
+});
+dbLog.error("Query timeout", {
+  query: "SELECT * FROM lessons",
+  duration: 5000,
+});
 ```
 
 ### Log Levels & Usage
@@ -411,12 +439,12 @@ Always include relevant structured data for better searchability and debugging:
 
 ```typescript
 // Good - Structured context
-log.info('Lesson booking completed', {
+log.info("Lesson booking completed", {
   studentId: student.id,
   teacherId: teacher.id,
   lessonDate: lesson.date.toISOString(),
   duration: lesson.duration,
-  bookingType: 'single' // or 'recurring'
+  bookingType: "single", // or 'recurring'
 });
 
 // Avoid - Unstructured string interpolation
@@ -433,12 +461,12 @@ console.log(`Lesson booked for ${student.name} with ${teacher.name}`);
 ### Utility Functions
 
 ```typescript
-import { logAPIRequest, logAPIResponse, logAPIError } from '@/lib/logger';
+import { logAPIRequest, logAPIResponse, logAPIError } from "@/lib/logger";
 
 // API request logging
-logAPIRequest('POST', '/api/lessons', { userId, teacherId });
-logAPIResponse('POST', '/api/lessons', 201, 150, { lessonId });
-logAPIError('POST', '/api/lessons', error, { userId });
+logAPIRequest("POST", "/api/lessons", { userId, teacherId });
+logAPIResponse("POST", "/api/lessons", 201, 150, { lessonId });
+logAPIError("POST", "/api/lessons", error, { userId });
 ```
 
 ### Migration from console.log
@@ -526,14 +554,14 @@ Admin:
   Role: ADMIN
 
 Teacher:
-  Email: teacher@guitarstrategies.com  
+  Email: teacher@guitarstrategies.com
   Password: teacher123
   Role: TEACHER
   Features: Bio, hourly rate ($60/hr), availability schedule
 
 Student:
   Email: student@guitarstrategies.com
-  Password: student123  
+  Password: student123
   Role: STUDENT
   Features: Assigned to test teacher, intermediate skill level
 ```
@@ -550,27 +578,27 @@ openssl rand -base64 32
 
 ### Invoice Model
 
-```typescript
+````typescript
 {
   id: string
   teacherId: string
   studentId: string
-  
+
   // Invoice details
   invoiceNumber: string             // "INV-2025-001" format
   month: string                     // "2025-09" format
   dueDate: DateTime
   status: 'PENDING' | 'SENT' | 'VIEWED' | 'PAID' | 'OVERDUE' | 'CANCELLED'
-  
+
   // Totals (calculated from items)
   subtotal: number                  // cents
   total: number                     // cents
-  
+
   // Payment tracking
   paidAt?: DateTime
   paymentMethod?: string            // "Venmo", "PayPal", "Zelle", "Cash", "Check"
   paymentNotes?: string             // Reference number, etc.
-  
+
   items: InvoiceItem[]              // Individual lesson charges
 }
 
@@ -580,7 +608,7 @@ openssl rand -base64 32
 {
   id: string
   invoiceId: string
-  
+
   // Item details
   description: string               // "Guitar Lesson - Sep 15, 2025"
   quantity: number                  // Default: 1
@@ -589,9 +617,10 @@ openssl rand -base64 32
   lessonDate?: DateTime
   lessonId?: string                 // Optional reference to actual lesson
 }
-```
+````
 
 **Invoice Workflow:**
+
 1. Teacher schedules lessons for students (recurring weekly slots)
 2. App generates monthly invoices with all scheduled lesson items
 3. Invoice includes teacher's payment methods (Venmo, PayPal, Zelle)
@@ -630,11 +659,13 @@ openssl rand -base64 32
 **Three Teacher Types at Registration:**
 
 1. **Solo Teacher**
+
    - Independent teachers managing their own business
    - Automatically receive `isAdmin: true` for full admin privileges
    - No organization affiliation
 
 2. **Organization Founder** ✨
+
    - Creates a new organization during signup
    - Becomes the organization's founder and admin
    - Automatically receives `isAdmin: true` and `isOrgFounder: true`
@@ -648,6 +679,7 @@ openssl rand -base64 32
    - Linked to organization via `organizationId`
 
 **Important Rules:**
+
 1. Teacher type is **permanent** - set at signup and cannot be changed
 2. Organization founders automatically get full admin access
 3. Organization names must be unique (enforced at database level)
@@ -656,12 +688,14 @@ openssl rand -base64 32
 6. If a teacher needs to change organization status, they must contact support
 
 **Admin Access Hierarchy:**
+
 - Users with role `ADMIN` have full system access
 - Solo teachers (`isSoloTeacher: true`) get admin access
 - Organization founders (`isOrgFounder: true`) get admin access for their org
 - Middleware checks: `role === 'ADMIN'` OR `isAdmin === true`
 
 **Organization Model:**
+
 ```typescript
 {
   id: string
@@ -734,9 +768,9 @@ Always use Zod schemas from `lib/validations.ts`:
     "@vercel/blob": "^1.1.1",
     "autoprefixer": "^10.4.21",
     "bcrypt": "^6.0.0",
-    "class-variance-authority": "^0.7.x",  // For component variants
+    "class-variance-authority": "^0.7.x", // For component variants
     "clsx": "^2.1.1",
-    "lucide-react": "^0.x.x",  // Icon library
+    "lucide-react": "^0.x.x", // Icon library
     "next": "15.4.6",
     "next-auth": "^4.24.11",
     "prisma": "^6.13.0",
@@ -764,7 +798,7 @@ Always use Zod schemas from `lib/validations.ts`:
 
 ```typescript
 // Use absolute imports with @ alias
-import { Button } from "@/components/ui/button";  // shadcn/ui component
+import { Button } from "@/components/ui/button"; // shadcn/ui component
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem } from "@/components/ui/select";
 import { prisma } from "@/lib/db";
@@ -776,7 +810,7 @@ import { getServerSession } from "next-auth/next";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 // Utility imports
-import { cn } from "@/lib/utils";  // Class name utility from shadcn/ui
+import { cn } from "@/lib/utils"; // Class name utility from shadcn/ui
 import { z } from "zod";
 ```
 
@@ -813,48 +847,56 @@ import { z } from "zod";
 ## Completed Features ✅
 
 ### Complete Internal Scheduling System (Aug 13, 2025)
+
 11. **Custom Scheduling System** ✅
-   - Replaced Calendly with complete internal availability management
-   - Teachers set weekly availability schedules with drag-and-drop interface
-   - Support for multiple time slots per day with customizable hours
-   - Lesson duration configuration (30-minute and 60-minute options)
-   - Dynamic pricing per lesson duration
-   - Advance booking limits (configurable 1-90 days)
-   - Blocked time management for vacations and personal time
-   - Timezone-aware scheduling with automatic UTC conversion
-   - Real-time slot generation with conflict detection
-   - Recurring lesson support (2-52 weeks)
+
+- Replaced Calendly with complete internal availability management
+- Teachers set weekly availability schedules with drag-and-drop interface
+- Support for multiple time slots per day with customizable hours
+- Lesson duration configuration (30-minute and 60-minute options)
+- Dynamic pricing per lesson duration
+- Advance booking limits (configurable 1-90 days)
+- Blocked time management for vacations and personal time
+- Timezone-aware scheduling with automatic UTC conversion
+- Real-time slot generation with conflict detection
+- Recurring lesson support (2-52 weeks)
 
 12. **Refined Booking System** ✅
-   - 30-minute slot standardization for all bookings
-   - Consecutive slot selection (1-2 slots) for 30 or 60-minute lessons
-   - Simplified interface without pricing display per user request
-   - Student-accessible booking API endpoint (`/api/availability/[teacherId]`)
-   - Smart duration calculation based on selected slots
-   - Clear instructional text for slot selection
+
+- 30-minute slot standardization for all bookings
+- Consecutive slot selection (1-2 slots) for 30 or 60-minute lessons
+- Simplified interface without pricing display per user request
+- Student-accessible booking API endpoint (`/api/availability/[teacherId]`)
+- Smart duration calculation based on selected slots
+- Clear instructional text for slot selection
 
 13. **UI/UX Improvements** ✅
-   - Left-aligned daily schedule view for better readability and cleaner appearance
-   - Removed duplicate "Book a Lesson" titles from booking interface
-   - Fixed hanging "8:30 PM" time slot display issue in weekly view
-   - Timezone-corrected availability display (fixed day-of-week mapping)
-   - Improved schedule alignment and visual organization
+
+- Left-aligned daily schedule view for better readability and cleaner appearance
+- Removed duplicate "Book a Lesson" titles from booking interface
+- Fixed hanging "8:30 PM" time slot display issue in weekly view
+- Timezone-corrected availability display (fixed day-of-week mapping)
+- Improved schedule alignment and visual organization
 
 14. **Navigation Consolidation** ✅
-   - Integrated "My Checklists" as section within main Checklists page
-   - Created unified route structure: `/curriculums/my/*` for personal checklists
-   - Updated all student checklist navigation links consistently
-   - Removed redundant "My Checklists" sidebar menu item
-   - Simplified dashboard quick actions for students
+
+- Integrated "My Checklists" as section within main Checklists page
+- Created unified route structure: `/curriculums/my/*` for personal checklists
+- Updated all student checklist navigation links consistently
+- Removed redundant "My Checklists" sidebar menu item
+- Simplified dashboard quick actions for students
 
 ### Core Authentication & Dashboards
+
 1. **Authentication System** ✅
+
    - NextAuth.js integration with database sessions
    - Role-based authentication (Student/Teacher/Admin)
    - Secure login/logout with proper redirects
    - Password hashing with bcrypt
 
 2. **Role-Based Dashboards** ✅
+
    - Teacher Dashboard: Stats, recent lessons, student overview
    - Student Dashboard: Assigned teacher, lesson history, progress
    - Admin Dashboard: System overview
@@ -867,7 +909,9 @@ import { z } from "zod";
    - Tabbed interface for better UX
 
 ### Lesson Management System
+
 4. **Streamlined Lesson Logging** ✅
+
    - Simple form: Student selection + rich text notes
    - Auto-populated date/time (current timestamp)
    - Default 30-minute duration
@@ -883,7 +927,9 @@ import { z } from "zod";
    - Professional styling with proper focus states
 
 ### Content Management
+
 6. **Library System** ✅
+
    - File upload for lesson materials (sheet music, exercises, etc.)
    - Category system (Sheet Music, TAB, Chord Charts, etc.)
    - Search and filtering capabilities
@@ -892,14 +938,16 @@ import { z } from "zod";
 
 7. **Recommendations System** ✅
    - Teacher interface: Add/edit/archive recommendations
-   - Student interface: View teacher's recommendations  
+   - Student interface: View teacher's recommendations
    - Category system (Gear, Books, Software, Apps, etc.)
    - Priority system (1-5 stars) with visual indicators
    - Purchase links and price information
    - Search and filtering by category/priority
 
 ### Database & API Layer
+
 8. **Complete Database Schema** ✅
+
    - Users, TeacherProfiles, StudentProfiles
    - Lessons, LibraryItems, Recommendations
    - Proper relationships and constraints
@@ -914,23 +962,27 @@ import { z } from "zod";
    - Full validation with Zod schemas
 
 ### Invoice & Payment System ✅
+
 8. **Simple Invoice Generation** ✅
+
    - Generate monthly invoices based on scheduled lessons
    - Include teacher payment methods (Venmo, PayPal, Zelle)
    - Calculate totals from hourly rate × lesson duration
    - Professional invoice formatting and numbering
 
 9. **Payment Tracking Dashboard** ✅
+
    - Track invoice status (Pending, Sent, Paid, Overdue)
    - Monthly earnings summaries
    - Student payment history
    - Mark payments as received with method and notes
 
 10. **Teacher Payment Methods** ✅
-   - Add Venmo handle, PayPal email, Zelle info in settings
-   - Automatically include payment options on invoices
-   - No complex payment processor setup required
-   - Teachers collect payments directly from students
+
+- Add Venmo handle, PayPal email, Zelle info in settings
+- Automatically include payment options on invoices
+- No complex payment processor setup required
+- Teachers collect payments directly from students
 
 ## Remaining Features (Future)
 
