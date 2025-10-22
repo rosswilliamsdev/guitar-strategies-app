@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { updateCurriculumSchema } from "@/lib/validations";
+import { createCurriculumSchema } from "@/lib/validations";
 import { apiLog } from "@/lib/logger";
 import { sanitizePlainText, sanitizeRichText } from "@/lib/sanitize";
 
@@ -109,7 +109,8 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const validatedData = updateCurriculumSchema.parse(body);
+    // Use partial schema - ID comes from URL param, not body
+    const validatedData = createCurriculumSchema.partial().parse(body);
 
     // Verify the curriculum belongs to this teacher
     const teacherProfile = await prisma.teacherProfile.findUnique({
