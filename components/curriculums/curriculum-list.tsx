@@ -178,12 +178,12 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
         {curriculums.map((curriculum) => {
           // For students, calculate their own progress
           const studentProgress =
-            userRole === "STUDENT" ? curriculum.studentProgress[0] : null;
+            userRole === "STUDENT" ? curriculum.studentProgress?.[0] : null;
 
-          const totalItems = curriculum.sections.reduce(
-            (sum, section) => sum + section.items.length,
+          const totalItems = curriculum.sections?.reduce(
+            (sum, section) => sum + (section.items?.length || 0),
             0
-          );
+          ) || 0;
 
           return (
             <div key={curriculum.id} className="relative">
@@ -238,7 +238,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                         <span>{totalItems} items</span>
                       </div>
                       {userRole === "TEACHER" &&
-                        curriculum.studentProgress.length > 0 && (
+                        curriculum.studentProgress?.length > 0 && (
                           <div className="flex items-center gap-1">
                             <Users className="h-4 w-4" />
                             <span>
@@ -280,14 +280,14 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
 
                     {/* Teacher: Student Progress Summary */}
                     {userRole === "TEACHER" &&
-                      curriculum.studentProgress.length > 0 && (
+                      curriculum.studentProgress?.length > 0 && (
                         <div className="border-t pt-4">
                           <p className="text-xs text-muted-foreground mb-2">
                             Recent Student Progress
                           </p>
                           <div className="space-y-1">
                             {curriculum.studentProgress
-                              .slice(0, 3)
+                              ?.slice(0, 3)
                               .map((progress) => (
                                 <div
                                   key={progress.id}
@@ -325,7 +325,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                 Are you sure you want to delete &quot;{curriculums.find(c => c.id === showDeleteModal)?.title}&quot;? This action cannot be undone.
                 {(() => {
                   const curriculum = curriculums.find(c => c.id === showDeleteModal);
-                  return curriculum?.studentProgress && curriculum.studentProgress.length > 0 && (
+                  return curriculum?.studentProgress?.length > 0 && (
                     <span className="block mt-2 text-amber-600 font-medium">
                       Warning: This checklist has student progress data that will be lost.
                     </span>
