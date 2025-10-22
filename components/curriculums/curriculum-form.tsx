@@ -122,10 +122,22 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
         throw new Error(error.error || "Failed to save checklist");
       }
 
-      const savedChecklist = await response.json();
+      const savedResponse = await response.json();
+      // API returns { curriculum: {...} }, extract the curriculum object
+      const savedChecklist = savedResponse.curriculum || savedResponse;
+
+      log.info('Checklist saved', {
+        curriculumId: savedChecklist.id,
+        title: savedChecklist.title
+      });
 
       // If this is a new checklist and we have items, add them
       if (!checklist && items.length > 0) {
+        log.info('Creating section for checklist items', {
+          curriculumId: savedChecklist.id,
+          itemCount: items.length
+        });
+
         // Create a default section first
         const sectionResponse = await fetch("/api/curriculums/sections", {
           method: "POST",
@@ -133,12 +145,19 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           body: JSON.stringify({
             curriculumId: savedChecklist.id,
             title: "Checklist Items",
-            category: "OTHER",
+            category: "SONGS", // Changed from OTHER to a valid enum value
           }),
         });
 
         if (sectionResponse.ok) {
-          const createdSection = await sectionResponse.json();
+          const sectionResponseData = await sectionResponse.json();
+          // API returns { section: {...} }, extract the section object
+          const createdSection = sectionResponseData.section || sectionResponseData;
+
+          log.info('Section created, adding items', {
+            sectionId: createdSection.id,
+            itemCount: items.length
+          });
 
           // Add all items to this section
           for (const item of items) {
@@ -151,6 +170,13 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
               }),
             });
           }
+          log.info('All items added successfully');
+        } else {
+          const errorData = await sectionResponse.json();
+          log.error('Failed to create section', {
+            status: sectionResponse.status,
+            error: errorData
+          });
         }
       }
 
