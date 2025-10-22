@@ -6,15 +6,20 @@
  *
  * Note: Server-side uses a lightweight regex-based approach to avoid
  * ES Module issues with DOMPurify/jsdom in serverless environments.
+ * Client-side uses DOMPurify with native browser DOM.
  */
 
-// Lazy load DOMPurify only in browser environment
+// Only import DOMPurify on client-side (browser has native DOM)
+// On server-side, we use regex-based sanitization instead
 let DOMPurify: any = null;
 
 if (typeof window !== 'undefined') {
-  // Client-side: Use full DOMPurify
+  // Dynamic import for client-side only
   import('dompurify').then(module => {
-    DOMPurify = module.default;
+    DOMPurify = module.default(window);
+  }).catch(() => {
+    // Fallback if DOMPurify fails to load
+    console.warn('DOMPurify failed to load, using server-side sanitization');
   });
 }
 
