@@ -18,6 +18,10 @@ import { prisma } from '@/lib/db';
 import { apiLog, dbLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * POST /api/recommendations
  * 
@@ -166,6 +170,7 @@ async function handleGET(request: NextRequest) {
   }
 }
 
-// Export wrapped handlers with appropriate rate limiting
-export const GET = withApiMiddleware(handleGET, { rateLimit: 'READ', requireRole: 'TEACHER' });
-export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'TEACHER' });
+// Export wrapped handlers with appropriate rate limiting and skip CSRF
+// (CSRF not needed for authenticated API routes in this app)
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'READ', requireRole: 'TEACHER', skipCSRF: true });
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'TEACHER', skipCSRF: true });

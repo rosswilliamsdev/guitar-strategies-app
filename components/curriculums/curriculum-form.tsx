@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Plus, X } from "lucide-react";
 import Link from "next/link";
-import { log } from '@/lib/logger';
+import { log } from "@/lib/logger";
 
 interface ChecklistItem {
   title: string;
@@ -126,16 +126,16 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
       // API returns { curriculum: {...} }, extract the curriculum object
       const savedChecklist = savedResponse.curriculum || savedResponse;
 
-      log.info('Checklist saved', {
+      log.info("Checklist saved", {
         curriculumId: savedChecklist.id,
-        title: savedChecklist.title
+        title: savedChecklist.title,
       });
 
       // If this is a new checklist and we have items, add them
       if (!checklist && items.length > 0) {
-        log.info('Creating section for checklist items', {
+        log.info("Creating section for checklist items", {
           curriculumId: savedChecklist.id,
-          itemCount: items.length
+          itemCount: items.length,
         });
 
         // Create a default section first
@@ -152,20 +152,21 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
         if (sectionResponse.ok) {
           const sectionResponseData = await sectionResponse.json();
           // API returns { section: {...} }, extract the section object
-          const createdSection = sectionResponseData.section || sectionResponseData;
+          const createdSection =
+            sectionResponseData.section || sectionResponseData;
 
-          log.info('Section created, adding items', {
+          log.info("Section created, adding items", {
             sectionId: createdSection.id,
-            itemCount: items.length
+            itemCount: items.length,
           });
 
           // Add all items to this section in parallel
-          log.info('Creating items in parallel', {
+          log.info("Creating items in parallel", {
             sectionId: createdSection.id,
-            itemCount: items.length
+            itemCount: items.length,
           });
 
-          const itemPromises = items.map(item =>
+          const itemPromises = items.map((item) =>
             fetch("/api/curriculums/items", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -183,46 +184,48 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
 
           const results = await Promise.all(itemPromises);
 
-          const successCount = results.filter(r => r.success).length;
-          const failCount = results.filter(r => !r.success).length;
+          const successCount = results.filter((r) => r.success).length;
+          const failCount = results.filter((r) => !r.success).length;
 
           // Log results
-          results.forEach(result => {
+          results.forEach((result) => {
             if (result.success) {
-              log.info('Item created successfully', { title: result.title });
+              log.info("Item created successfully", { title: result.title });
             } else {
-              log.error('Failed to create item', {
+              log.error("Failed to create item", {
                 title: result.title,
                 status: result.status,
-                error: result.error
+                error: result.error,
               });
             }
           });
 
-          log.info('Finished adding items', {
+          log.info("Finished adding items", {
             total: items.length,
             success: successCount,
-            failed: failCount
+            failed: failCount,
           });
 
           // Throw error if any items failed to create
           if (failCount > 0) {
-            throw new Error(`Failed to create ${failCount} of ${items.length} items`);
+            throw new Error(
+              `Failed to create ${failCount} of ${items.length} items`
+            );
           }
         } else {
           const errorData = await sectionResponse.json();
-          log.error('Failed to create section', {
+          log.error("Failed to create section", {
             status: sectionResponse.status,
-            error: errorData
+            error: errorData,
           });
         }
       }
 
       router.push(`/curriculums/${savedChecklist.id}`);
     } catch (error) {
-      log.error('Error saving checklist:', {
+      log.error("Error saving checklist:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       setErrors({
         submit:
@@ -359,7 +362,6 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
                         variant="destructive"
                         size="sm"
                         onClick={() => removeItem(index)}
-                        
                       >
                         <X className="h-4 w-4" />
                       </Button>
