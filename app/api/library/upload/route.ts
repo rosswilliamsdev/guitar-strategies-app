@@ -6,6 +6,10 @@ import { put } from '@vercel/blob';
 import { apiLog, dbLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -130,5 +134,6 @@ async function handlePOST(request: NextRequest) {
   }
 }
 
-// Export wrapped handler with upload rate limiting
-export const POST = withApiMiddleware(handlePOST, { rateLimit: 'UPLOAD', requireRole: 'TEACHER' });
+// Export wrapped handler with upload rate limiting and skip CSRF
+// (CSRF not needed for multipart/form-data file uploads)
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'UPLOAD', requireRole: 'TEACHER', skipCSRF: true });
