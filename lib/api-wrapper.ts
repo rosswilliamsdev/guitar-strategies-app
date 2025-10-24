@@ -258,7 +258,8 @@ export const withTeacherValidation = (handler: RouteHandler, bodySchema: ZodSche
     requireAuth: true,
     requireRole: 'TEACHER',
     bodySchema,
-    rateLimit: 'API'
+    rateLimit: 'API',
+    skipCSRF: true
   });
 
 export const withStudentValidation = (handler: RouteHandler, bodySchema: ZodSchema) =>
@@ -266,7 +267,8 @@ export const withStudentValidation = (handler: RouteHandler, bodySchema: ZodSche
     requireAuth: true,
     requireRole: 'STUDENT',
     bodySchema,
-    rateLimit: 'READ'
+    rateLimit: 'READ',
+    skipCSRF: true
   });
 
 export const withAdminValidation = (handler: RouteHandler, bodySchema: ZodSchema) =>
@@ -274,5 +276,6 @@ export const withAdminValidation = (handler: RouteHandler, bodySchema: ZodSchema
     requireAuth: true,
     requireRole: 'ADMIN',
     bodySchema,
-    rateLimit: 'API'
+    rateLimit: 'API',
+    skipCSRF: true
   });
