@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertCircle, UserPlus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { log } from "@/lib/logger";
@@ -28,7 +27,6 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [instrument, setInstrument] = useState("guitar");
-  const [skillLevel, setSkillLevel] = useState<"BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "PROFESSIONAL">("BEGINNER");
   const [goals, setGoals] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [parentEmail, setParentEmail] = useState("");
@@ -44,8 +42,7 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
         name,
         email,
         teacherId,
-        instrument,
-        skillLevel
+        instrument
       });
 
       const response = await fetch('/api/students/invite', {
@@ -59,7 +56,6 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
           password,
           teacherId,
           instrument,
-          skillLevel,
           goals: goals.trim() || undefined,
           phoneNumber: phoneNumber.trim() || undefined,
           parentEmail: parentEmail.trim() || undefined,
@@ -85,7 +81,6 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
       setEmail("");
       setPassword("");
       setInstrument("guitar");
-      setSkillLevel("BEGINNER");
       setGoals("");
       setPhoneNumber("");
       setParentEmail("");
@@ -179,32 +174,15 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
           <div>
             <h3 className="text-lg font-semibold mb-4">Learning Details</h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="instrument">Instrument</Label>
-                <Input
-                  id="instrument"
-                  value={instrument}
-                  onChange={(e) => setInstrument(e.target.value)}
-                  placeholder="Guitar"
-                  className="mt-2"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="skillLevel">Skill Level</Label>
-                <Select value={skillLevel} onValueChange={(value: any) => setSkillLevel(value)}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Select skill level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BEGINNER">Beginner</SelectItem>
-                    <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-                    <SelectItem value="ADVANCED">Advanced</SelectItem>
-                    <SelectItem value="PROFESSIONAL">Professional</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="instrument">Instrument</Label>
+              <Input
+                id="instrument"
+                value={instrument}
+                onChange={(e) => setInstrument(e.target.value)}
+                placeholder="Guitar"
+                className="mt-2"
+              />
             </div>
 
             <div className="mt-4">
