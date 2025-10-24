@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react"
-import { Clock, DollarSign, Calendar, Save, AlertTriangle } from "lucide-react"
+import { Clock, DollarSign, Save, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,8 +23,8 @@ export function LessonSettingsForm({
   settings = {
     allows30Min: true,
     allows60Min: true,
-    price30Min: 0,
-    price60Min: 0,
+    price30Min: 3500,
+    price60Min: 7000,
     advanceBookingDays: 21,
   },
   onSave,
@@ -195,36 +195,6 @@ export function LessonSettingsForm({
         )}
       </div>
 
-      {/* Booking Settings */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Calendar className="h-5 w-5 text-primary" />
-          <h4 className="font-medium">Booking Settings</h4>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="advanceBookingDays">
-            Maximum advance booking (days)
-          </Label>
-          <Input
-            id="advanceBookingDays"
-            type="number"
-            value={formData.advanceBookingDays}
-            onChange={(e) => handleChange("advanceBookingDays", parseInt(e.target.value) || 21)}
-            min="1"
-            max="90"
-            disabled={readonly}
-            className="w-32"
-          />
-          <p className="text-sm text-muted-foreground">
-            Students can book lessons up to {formData.advanceBookingDays} days in advance.
-          </p>
-          {errors.advanceBookingDays && (
-            <p className="text-sm text-red-500">{errors.advanceBookingDays}</p>
-          )}
-        </div>
-      </div>
-
       {/* Summary */}
       <div className="bg-muted/50 p-4 rounded-lg">
         <h4 className="font-medium mb-3">Settings Summary</h4>
@@ -246,10 +216,6 @@ export function LessonSettingsForm({
             )}>
               {formData.allows60Min ? `$${formatPrice(formData.price60Min)}` : "Disabled"}
             </span>
-          </div>
-          <div className="flex justify-between">
-            <span>Advance booking limit:</span>
-            <span className="font-medium">{formData.advanceBookingDays} days</span>
           </div>
         </div>
       </div>

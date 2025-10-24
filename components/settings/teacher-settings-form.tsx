@@ -13,7 +13,6 @@ import { AlertCircle, Save, Key, User, Calendar, Clock, Settings2, CalendarDays,
 import { teacherProfileSchema, passwordChangeSchema, timezoneSchema } from "@/lib/validations";
 import { EmailPreferences, type EmailPreference } from "@/components/settings/email-preferences";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
-import { BlockedTimeManager } from "@/components/teacher/BlockedTimeManager";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
 import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
 import { log, emailLog, invoiceLog } from '@/lib/logger';
@@ -58,7 +57,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<'profile' | 'availability' | 'lesson-settings' | 'blocked-time' | 'password' | 'email'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'availability' | 'lesson-settings' | 'password' | 'email'>('profile');
 
   // Profile form state
   const [name, setName] = useState(user.name);
@@ -153,11 +152,10 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   const [lessonSettings, setLessonSettings] = useState({
     allows30Min: true,
     allows60Min: true,
-    price30Min: 3000,
-    price60Min: 6000,
+    price30Min: 3500,
+    price60Min: 7000,
     advanceBookingDays: 21,
   });
-  const [blockedTimes, setBlockedTimes] = useState<any[]>([]);
   const [schedulingLoading, setSchedulingLoading] = useState(false);
 
   // Load profile data when component mounts
@@ -167,7 +165,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
 
   // Load scheduling data when availability-related tabs are selected
   useEffect(() => {
-    if (activeTab === 'availability' || activeTab === 'lesson-settings' || activeTab === 'blocked-time') {
+    if (activeTab === 'availability' || activeTab === 'lesson-settings') {
       loadSchedulingData();
     }
   }, [activeTab]);
@@ -195,13 +193,6 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       if (settingsResponse.ok) {
         const settingsData = await settingsResponse.json();
         setLessonSettings(settingsData.settings);
-      }
-
-      // Load blocked times
-      const blockedResponse = await fetch('/api/teacher/blocked-time');
-      if (blockedResponse.ok) {
-        const blockedData = await blockedResponse.json();
-        setBlockedTimes(blockedData.blockedTimes || []);
       }
     } catch (error) {
       log.error('Error loading scheduling data:', {
@@ -291,57 +282,6 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
     }
   };
 
-  const handleAddBlockedTime = async (blockedTime: any) => {
-    try {
-      setSchedulingLoading(true);
-      const response = await fetch('/api/teacher/blocked-time', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(blockedTime),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add blocked time');
-      }
-
-      // Reload blocked times
-      await loadSchedulingData();
-      setSuccess('Blocked time added successfully!');
-      setError('');
-    } catch (error: any) {
-      setError(error.message || 'Failed to add blocked time');
-      setSuccess('');
-      throw error; // Re-throw so the component can handle it
-    } finally {
-      setSchedulingLoading(false);
-    }
-  };
-
-  const handleRemoveBlockedTime = async (id: string) => {
-    try {
-      setSchedulingLoading(true);
-      const response = await fetch(`/api/teacher/blocked-time/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to remove blocked time');
-      }
-
-      // Reload blocked times
-      await loadSchedulingData();
-      setSuccess('Blocked time removed successfully!');
-      setError('');
-    } catch (error: any) {
-      setError(error.message || 'Failed to remove blocked time');
-      setSuccess('');
-      throw error; // Re-throw so the component can handle it
-    } finally {
-      setSchedulingLoading(false);
-    }
-  };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -498,17 +438,6 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         >
           <Settings2 className="h-4 w-4" />
           <span className="hidden sm:inline">Lessons</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('blocked-time')}
-          className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'blocked-time'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Calendar className="h-4 w-4" />
-          <span className="hidden sm:inline">Blocked Time</span>
         </button>
         <button
           onClick={() => setActiveTab('password')}
@@ -867,19 +796,6 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
           <LessonSettingsForm
             settings={lessonSettings}
             onSave={handleSaveLessonSettings}
-            loading={schedulingLoading}
-          />
-        </Card>
-      )}
-
-      {/* Blocked Time Tab */}
-      {activeTab === 'blocked-time' && (
-        <Card className="p-6">
-          <BlockedTimeManager
-            blockedTimes={blockedTimes}
-            onAdd={handleAddBlockedTime}
-            onRemove={handleRemoveBlockedTime}
-            timezone={timezone}
             loading={schedulingLoading}
           />
         </Card>
