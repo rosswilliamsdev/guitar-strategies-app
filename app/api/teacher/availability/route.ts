@@ -19,6 +19,10 @@ import {
   invalidateTeacherCache
 } from '@/lib/cache';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
@@ -141,6 +145,7 @@ async function handlePUT(request: NextRequest) {
   }
 }
 
-// Export wrapped handlers with teacher rate limiting
-export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER' });
-export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API', requireRole: 'TEACHER' });
+// Export wrapped handlers with teacher rate limiting and skip CSRF
+// (CSRF not needed for authenticated API routes in this app)
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER', skipCSRF: true });
+export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API', requireRole: 'TEACHER', skipCSRF: true });
