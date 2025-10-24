@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import { log } from '@/lib/logger';
 import { withTeacherValidation } from '@/lib/api-wrapper';
 import { createStudentSchema } from '@/lib/validations';
+import { getValidatedBody } from '@/lib/validated-request';
 import {
   createSuccessResponse,
   createErrorResponse,
@@ -25,7 +26,12 @@ async function handlePOST(request: NextRequest) {
       return createErrorResponse('Teacher access required', 403);
     }
 
-    const body = await request.json();
+    // Get validated body from middleware (already parsed and validated)
+    const body = getValidatedBody(request, createStudentSchema);
+
+    if (!body) {
+      return createErrorResponse('Request body validation failed', 400);
+    }
 
     log.info('Teacher inviting student', {
       teacherId: body.teacherId,
