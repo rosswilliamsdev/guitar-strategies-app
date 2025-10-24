@@ -45,7 +45,6 @@ const navItems: NavItem[] = [
     href: "/admin/background-jobs",
     roles: ["ADMIN"],
   },
-  { label: "Email Templates", href: "/admin/email-templates", roles: ["ADMIN"] },
   { label: "Manage Emails", href: "/admin/email-test", roles: ["ADMIN"] },
   { label: "Settings", href: "/admin/settings", roles: ["ADMIN"] },
   { label: "Settings", href: "/settings", roles: ["TEACHER", "STUDENT"] },
