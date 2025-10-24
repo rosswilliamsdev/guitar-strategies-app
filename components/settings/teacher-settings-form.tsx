@@ -216,22 +216,48 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   const handleSaveAvailability = async (newAvailability: any[]) => {
     try {
       setSchedulingLoading(true);
+
+      log.info('Saving availability...', {
+        slotCount: newAvailability.length,
+        slots: newAvailability
+      });
+
       const response = await fetch('/api/teacher/availability', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ availability: newAvailability }),
       });
 
+      log.info('Availability save response', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
+        log.error('Availability save failed', {
+          status: response.status,
+          error: errorData
+        });
         throw new Error(errorData.error || 'Failed to save availability');
       }
 
       const data = await response.json();
+
+      log.info('Availability saved successfully', {
+        returnedSlots: data.data?.availability?.length || 0,
+        data: data
+      });
+
       setAvailability(data.data?.availability || []);
       setSuccess('Availability saved successfully!');
       setError('');
     } catch (error: any) {
+      log.error('Error saving availability', {
+        error: error.message,
+        stack: error.stack
+      });
       setError(error.message || 'Failed to save availability');
       setSuccess('');
     } finally {
