@@ -819,6 +819,7 @@ enum EmailType {
   INVOICE_GENERATED     // New invoice notifications
   INVOICE_OVERDUE       // Overdue invoice reminders
   CHECKLIST_COMPLETION  // Achievement celebration emails
+  STUDENT_WELCOME       // Welcome email for new students
   SYSTEM_UPDATES        // System announcements
 }
 
@@ -836,6 +837,23 @@ model EmailPreference {
   
   @@unique([userId, type]) // One preference per user per email type
   @@index([userId])
+}
+
+// Email templates for customizable system emails
+model EmailTemplate {
+  id          String    @id @default(cuid())
+  type        EmailType @unique
+  subject     String
+  htmlBody    String    @db.Text
+  variables   String    @db.Text // JSON string of available variables
+  description String?   @db.Text
+  isActive    Boolean   @default(true)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([type])
+  @@index([isActive])
 }
 
 // Background job logging for monitoring automatic lesson generation
