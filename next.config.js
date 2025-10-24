@@ -149,8 +149,8 @@ const nextConfig = {
         ],
       },
       {
-        // No caching for teacher availability (changes frequently)
-        source: '/api/teacher/availability',
+        // No caching for scheduling-related endpoints (change frequently)
+        source: '/api/(teacher/availability|teacher/lesson-settings|teacher/blocked-time|teacher/recurring-slots|teacher/:teacherId*/available-slots|availability/:teacherId*|lessons|lessons/:path*)',
         headers: [
           {
             key: 'Cache-Control',
