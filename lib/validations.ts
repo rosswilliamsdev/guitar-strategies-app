@@ -688,19 +688,12 @@ export const createStudentSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
-      "Password must contain uppercase, lowercase, number, and special character"
-    ),
-  teacherId: z.string().uuid("Invalid teacher ID format"),
+    .min(8, "Password must be at least 8 characters"),
+  teacherId: z.string().min(1, "Teacher ID is required"),
   instrument: z.string().min(1).max(50).default("guitar"),
-  goals: z.string().max(1000).optional(),
-  parentEmail: z.string().email("Invalid parent email address").optional(),
-  phoneNumber: z.string().regex(
-    /^[\+]?[\d\s\-\(\)]{10,}$/,
-    "Invalid phone number format"
-  ).optional(),
+  goals: z.string().max(1000).optional().or(z.literal('')),
+  parentEmail: z.string().email("Invalid parent email address").optional().or(z.literal('')),
+  phoneNumber: z.string().optional().or(z.literal('')),
 });
 
 /**
