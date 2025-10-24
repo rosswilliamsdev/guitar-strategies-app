@@ -173,10 +173,27 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   const loadSchedulingData = async () => {
     setSchedulingLoading(true);
     try {
-      // Load availability
-      const availabilityResponse = await fetch('/api/teacher/availability');
+      log.info('Loading scheduling data...');
+
+      // Load availability with cache-busting
+      const availabilityResponse = await fetch('/api/teacher/availability', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      log.info('Availability response received', {
+        status: availabilityResponse.status,
+        ok: availabilityResponse.ok
+      });
+
       if (availabilityResponse.ok) {
         const availabilityData = await availabilityResponse.json();
+        log.info('Availability data parsed', {
+          slotCount: availabilityData.data?.availability?.length || 0,
+          slots: availabilityData.data?.availability
+        });
         setAvailability(availabilityData.data?.availability || []);
       } else {
         const errorText = await availabilityResponse.text();
@@ -189,11 +206,19 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       }
 
       // Load lesson settings
-      const settingsResponse = await fetch('/api/teacher/lesson-settings');
+      const settingsResponse = await fetch('/api/teacher/lesson-settings', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
+
       if (settingsResponse.ok) {
         const settingsData = await settingsResponse.json();
         setLessonSettings(settingsData.settings);
       }
+
+      log.info('Scheduling data loaded successfully');
     } catch (error) {
       log.error('Error loading scheduling data:', {
         error: error instanceof Error ? error.message : String(error),
