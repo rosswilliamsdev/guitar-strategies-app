@@ -12,12 +12,6 @@ import {
   handleApiError
 } from '@/lib/api-responses';
 import { withApiMiddleware } from '@/lib/api-wrapper';
-import {
-  CacheKeys,
-  getCachedData,
-  CACHE_DURATIONS,
-  invalidateTeacherCache
-} from '@/lib/cache';
 import { log } from '@/lib/logger';
 
 // Disable caching for this route
@@ -26,52 +20,54 @@ export const revalidate = 0;
 
 async function handleGET() {
   try {
+    log.info('API GET: Starting availability GET request');
+
     const session = await getServerSession(authOptions);
 
     if (!session || session.user.role !== 'TEACHER') {
+      log.warn('API GET: Unauthorized access attempt');
       return createAuthErrorResponse('Teacher access required');
     }
 
-    // Get teacher profile with caching
-    const cacheKey = CacheKeys.teacherAvailability(session.user.id);
+    log.info('API GET: Fetching teacher availability from database', {
+      userId: session.user.id
+    });
 
-    const data = await getCachedData(
-      cacheKey,
-      async () => {
-        const teacherProfile = await prisma.teacherProfile.findUnique({
-          where: { userId: session.user.id },
-          include: {
-            availability: {
-              where: { isActive: true },
-              orderBy: [
-                { dayOfWeek: 'asc' },
-                { startTime: 'asc' }
-              ]
-            }
-          }
-        });
-
-        if (!teacherProfile) {
-          return null;
+    // Get teacher profile directly without caching (availability changes frequently)
+    const teacherProfile = await prisma.teacherProfile.findUnique({
+      where: { userId: session.user.id },
+      include: {
+        availability: {
+          where: { isActive: true },
+          orderBy: [
+            { dayOfWeek: 'asc' },
+            { startTime: 'asc' }
+          ]
         }
+      }
+    });
 
-        return {
-          teacherProfileId: teacherProfile.id,
-          availability: teacherProfile.availability
-        };
-      },
-      CACHE_DURATIONS.DYNAMIC_LONG // Cache for 15 minutes since availability doesn't change often
-    );
-
-    if (!data) {
+    if (!teacherProfile) {
+      log.error('API GET: Teacher profile not found', {
+        userId: session.user.id
+      });
       return createNotFoundResponse('Teacher profile');
     }
 
+    log.info('API GET: Returning availability', {
+      slotCount: teacherProfile.availability.length,
+      slots: teacherProfile.availability
+    });
+
     return createSuccessResponse({
-      availability: data.availability
+      availability: teacherProfile.availability
     });
 
   } catch (error) {
+    log.error('API GET: Error fetching availability', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
     return handleApiError(error);
   }
 }
@@ -200,10 +196,6 @@ async function handlePUT(request: NextRequest) {
       slotCount: updatedAvailability.length,
       slots: updatedAvailability
     });
-
-    // Invalidate caches after updating availability
-    log.info('API: Invalidating teacher cache');
-    await invalidateTeacherCache(session.user.id);
 
     log.info('API: Returning success response');
     return createSuccessResponse({
