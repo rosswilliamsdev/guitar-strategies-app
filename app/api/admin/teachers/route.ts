@@ -5,6 +5,10 @@ import { apiLog, dbLog, emailLog } from '@/lib/logger';
 import { getAdminSession } from "@/lib/admin-auth";
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function handlePOST(request: NextRequest) {
   try {
     const session = await getAdminSession();
@@ -82,5 +86,5 @@ async function handlePOST(request: NextRequest) {
   }
 }
 
-// Export wrapped handler with admin rate limiting
-export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'ADMIN' });
+// Export wrapped handler with admin rate limiting and skip CSRF
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'ADMIN', skipCSRF: true });

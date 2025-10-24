@@ -13,6 +13,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
@@ -160,5 +164,5 @@ async function handleGET(request: NextRequest) {
   }
 }
 
-// Export the wrapped handler with rate limiting
-export const GET = withApiMiddleware(handleGET, { rateLimit: 'READ' });
+// Export the wrapped handler with rate limiting and skip CSRF
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'READ', skipCSRF: true });

@@ -6,6 +6,10 @@ import { z } from "zod";
 import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Admin settings validation schema
 const adminSettingsSchema = z.object({
   // Invoice Configuration
@@ -150,6 +154,6 @@ async function handlePUT(request: NextRequest) {
   }
 }
 
-// Export wrapped handlers with admin rate limiting
-export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'ADMIN' });
-export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API', requireRole: 'ADMIN' });
+// Export wrapped handlers with admin rate limiting and skip CSRF
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'ADMIN', skipCSRF: true });
+export const PUT = withApiMiddleware(handlePUT, { rateLimit: 'API', requireRole: 'ADMIN', skipCSRF: true });

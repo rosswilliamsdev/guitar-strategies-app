@@ -8,6 +8,10 @@ import { toZonedTime } from 'date-fns-tz';
 import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
@@ -132,6 +136,6 @@ async function handlePOST(request: NextRequest) {
   }
 }
 
-// Export wrapped handlers with teacher rate limiting
-export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER' });
-export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'TEACHER' });
+// Export wrapped handlers with teacher rate limiting and skip CSRF
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER', skipCSRF: true });
+export const POST = withApiMiddleware(handlePOST, { rateLimit: 'API', requireRole: 'TEACHER', skipCSRF: true });

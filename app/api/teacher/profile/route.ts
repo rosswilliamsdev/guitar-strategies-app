@@ -5,6 +5,10 @@ import { prisma } from '@/lib/db';
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -60,5 +64,5 @@ async function handleGET(request: NextRequest) {
   }
 }
 
-// Export wrapped handler with teacher rate limiting
-export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER' });
+// Export wrapped handler with teacher rate limiting and skip CSRF
+export const GET = withApiMiddleware(handleGET, { rateLimit: 'API', requireRole: 'TEACHER', skipCSRF: true });
