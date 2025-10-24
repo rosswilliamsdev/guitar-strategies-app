@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, Trash2, Copy, Save } from "lucide-react"
 import { TimePicker } from "@/components/ui/time-picker"
 import { Button } from "@/components/ui/button"
@@ -39,6 +39,11 @@ export function WeeklyScheduleGrid({
   const [localAvailability, setLocalAvailability] = useState<AvailabilitySlot[]>(availability || [])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+
+  // Sync local state when availability prop changes (e.g., after successful save)
+  useEffect(() => {
+    setLocalAvailability(availability || [])
+  }, [availability])
 
   const slots = readonly ? (availability || []) : localAvailability
 
