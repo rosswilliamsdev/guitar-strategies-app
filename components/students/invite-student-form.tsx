@@ -74,7 +74,7 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
         throw new Error(data.error || 'Failed to create student account');
       }
 
-      setSuccess(`Student account created successfully! ${data.student.name} can now log in with the provided credentials.`);
+      setSuccess(`Student account created successfully! ${data.data.student.name} can now log in with the provided credentials.`);
 
       // Reset form
       setName("");
