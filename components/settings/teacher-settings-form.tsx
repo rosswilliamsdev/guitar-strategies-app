@@ -175,11 +175,14 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
     try {
       log.info('Loading scheduling data...');
 
-      // Load availability with cache-busting
-      const availabilityResponse = await fetch('/api/teacher/availability', {
+      // Load availability with aggressive cache-busting
+      const timestamp = Date.now();
+      const availabilityResponse = await fetch(`/api/teacher/availability?t=${timestamp}`, {
         cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
         },
       });
 

@@ -149,6 +149,16 @@ const nextConfig = {
         ],
       },
       {
+        // No caching for teacher availability (changes frequently)
+        source: '/api/teacher/availability',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, max-age=0',
+          },
+        ],
+      },
+      {
         // API routes caching headers (can be overridden by individual routes)
         source: '/api/(.*)',
         headers: [
