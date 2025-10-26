@@ -153,7 +153,12 @@ model StudentProfile {
   phoneNumber       String?
   parentEmail       String?    // For minor students
   emergencyContact  String?
-  
+
+  // Email notification preferences
+  emailOnLessonComplete Boolean @default(true)  // Send email when lesson is logged
+  emailOnLessonReminder Boolean @default(true)  // Send reminder 24h before lesson
+  emailOnInvoice        Boolean @default(true)  // Send email when invoice is generated
+
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -815,6 +820,7 @@ enum BillingStatus {
 enum EmailType {
   LESSON_BOOKING        // Lesson booking confirmations
   LESSON_CANCELLATION   // Lesson cancellation notifications
+  LESSON_COMPLETED      // Lesson completion summary sent to student
   LESSON_REMINDER       // Lesson reminders (24h before)
   INVOICE_GENERATED     // New invoice notifications
   INVOICE_OVERDUE       // Overdue invoice reminders

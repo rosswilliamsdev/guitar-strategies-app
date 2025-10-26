@@ -161,6 +161,75 @@ async function seedEmailTemplates() {
       `.trim()
     },
     {
+      type: 'LESSON_COMPLETED' as EmailType,
+      subject: 'Lesson Summary - {{lessonDate}}',
+      description: 'Sent when a teacher logs a completed lesson',
+      variables: JSON.stringify(['studentName', 'teacherName', 'lessonDate', 'duration', 'notes', 'homework', 'progress']),
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body { font-family: Inter, system-ui, sans-serif; line-height: 1.6; color: #0a0a0a; margin: 0; padding: 0; background-color: #fafafa; }
+      .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+      .header { background-color: #14b8b3; color: #ffffff; padding: 32px 24px; text-align: center; }
+      .content { padding: 32px 24px; }
+      .lesson-info { background-color: #f0fdfc; border-left: 4px solid #14b8b3; padding: 16px; margin: 16px 0; }
+      .section { margin: 24px 0; }
+      .section-title { font-weight: 600; color: #14b8b3; margin-bottom: 8px; }
+      .notes-content { background-color: #f5f5f5; padding: 16px; border-radius: 6px; }
+      .footer { background-color: #f5f5f5; padding: 24px; text-align: center; font-size: 14px; color: #737373; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 style="margin: 0; font-size: 28px;">Lesson Complete!</h1>
+      </div>
+      <div class="content">
+        <p>Hi {{studentName}},</p>
+        <p>{{teacherName}} has logged your lesson. Here's a summary of what was covered:</p>
+
+        <div class="lesson-info">
+          <strong>Lesson Details:</strong><br>
+          Date: {{lessonDate}}<br>
+          Duration: {{duration}} minutes
+        </div>
+
+        <div class="section">
+          <div class="section-title">Lesson Notes</div>
+          <div class="notes-content">
+            {{notes}}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Homework & Practice</div>
+          <div class="notes-content">
+            {{homework}}
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Progress Update</div>
+          <div class="notes-content">
+            {{progress}}
+          </div>
+        </div>
+
+        <p style="margin-top: 24px;">Keep up the great work! See you at your next lesson.</p>
+      </div>
+      <div class="footer">
+        <p>Guitar Strategies - Manage Your Music Journey</p>
+      </div>
+    </div>
+  </body>
+</html>
+      `.trim()
+    },
+    {
       type: 'LESSON_REMINDER' as EmailType,
       subject: 'Reminder: Lesson Tomorrow with {{teacherName}}',
       description: 'Sent 24 hours before a lesson',

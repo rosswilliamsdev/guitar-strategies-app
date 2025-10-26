@@ -36,6 +36,13 @@ const EMAIL_TYPES = [
     category: 'Lessons'
   },
   {
+    type: 'LESSON_COMPLETED',
+    label: 'Lesson Summaries',
+    description: 'Receive an email with lesson notes, homework, and progress after each lesson',
+    icon: Mail,
+    category: 'Lessons'
+  },
+  {
     type: 'LESSON_REMINDER',
     label: 'Lesson Reminders',
     description: 'Receive reminders 24 hours before your lessons',
