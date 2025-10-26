@@ -4,15 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { ConfettiModal } from "@/components/ui/confetti-modal";
 import { fireItemConfetti, fireChecklistCompleteConfetti } from "@/lib/confetti";
 import {
   ArrowLeft,
-  Plus,
   Edit2,
   Trash2,
   Archive,
@@ -21,7 +17,6 @@ import {
   Calendar,
   Clock,
   Link as LinkIcon,
-  X,
   Trophy,
 } from "lucide-react";
 import Link from "next/link";
@@ -61,17 +56,9 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
   const router = useRouter();
   const [checklist, setChecklist] = useState<StudentChecklist | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAddItem, setShowAddItem] = useState(false);
   const [showCelebrationModal, setShowCelebrationModal] = useState(false);
   const [previousCompletedCount, setPreviousCompletedCount] = useState(0);
   const checkboxRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
-  const [newItem, setNewItem] = useState({
-    title: "",
-    dueDate: "",
-    estimatedMinutes: "",
-    resourceUrl: "",
-    notes: "",
-  });
 
   useEffect(() => {
     fetchChecklist();
@@ -180,135 +167,6 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       fetchChecklist();
     }
   };
-
-  const addSingleItem = async () => {
-    const firstLine = newItem.title.split('\n')[0].trim();
-    if (!firstLine) return;
-
-    try {
-      const response = await fetch("/api/student-checklists/items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          checklistId,
-          title: firstLine,
-          estimatedMinutes: newItem.estimatedMinutes ? Number(newItem.estimatedMinutes) : undefined,
-          dueDate: newItem.dueDate || undefined,
-          resourceUrl: newItem.resourceUrl || undefined,
-          notes: newItem.notes || undefined,
-        }),
-      });
-
-      if (response.ok) {
-        log.info('Single item created successfully', { title: firstLine });
-        // Remove the first line from the textarea
-        const remainingLines = newItem.title.split('\n').slice(1).join('\n');
-        setNewItem({
-          ...newItem,
-          title: remainingLines,
-        });
-        // Wait for checklist to refresh before continuing
-        await fetchChecklist();
-      } else {
-        const errorData = await response.json();
-        log.error('Failed to create single item', {
-          title: firstLine,
-          status: response.status,
-          error: errorData
-        });
-      }
-    } catch (error) {
-      log.error('Error adding item:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    }
-  };
-
-  const addBulkItems = async () => {
-    if (!newItem.title.trim()) return;
-
-    const items = newItem.title
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-
-    if (items.length === 0) return;
-
-    try {
-      log.info('Adding bulk items in parallel', {
-        checklistId,
-        itemCount: items.length
-      });
-
-      // Add all items in parallel
-      const itemPromises = items.map(itemTitle =>
-        fetch("/api/student-checklists/items", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            checklistId,
-            title: itemTitle,
-            estimatedMinutes: newItem.estimatedMinutes ? Number(newItem.estimatedMinutes) : undefined,
-            dueDate: newItem.dueDate || undefined,
-            resourceUrl: newItem.resourceUrl || undefined,
-            notes: newItem.notes || undefined,
-          }),
-        }).then(async (response) => ({
-          title: itemTitle,
-          success: response.ok,
-          status: response.status,
-          error: response.ok ? null : await response.json(),
-        }))
-      );
-
-      const results = await Promise.all(itemPromises);
-
-      const successCount = results.filter(r => r.success).length;
-      const failCount = results.filter(r => !r.success).length;
-
-      // Log results
-      results.forEach(result => {
-        if (result.success) {
-          log.info('Bulk item created successfully', { title: result.title });
-        } else {
-          log.error('Failed to create bulk item', {
-            title: result.title,
-            status: result.status,
-            error: result.error
-          });
-        }
-      });
-
-      log.info('Finished adding bulk items', {
-        total: items.length,
-        success: successCount,
-        failed: failCount
-      });
-
-      if (failCount > 0) {
-        alert(`Warning: ${failCount} of ${items.length} items failed to create. Check console for details.`);
-      }
-
-      setNewItem({
-        title: "",
-        dueDate: "",
-        estimatedMinutes: "",
-        resourceUrl: "",
-        notes: "",
-      });
-      setShowAddItem(false);
-
-      // Wait for checklist to refresh before continuing
-      await fetchChecklist();
-    } catch (error) {
-      log.error('Error adding items:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    }
-  };
-
 
   const deleteItem = async (itemId: string) => {
     if (!confirm("Are you sure you want to delete this item?")) return;
@@ -479,91 +337,6 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
           </div>
         </div>
       </Card>
-
-      {/* Add Item Button/Form */}
-      {!showAddItem ? (
-        <Button
-          variant="primary"
-          onClick={() => setShowAddItem(true)}
-          className="w-full"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Item
-        </Button>
-      ) : (
-        <Card className="p-6">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Add New Item</h3>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowAddItem(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div>
-              <Label htmlFor="new-title">Items</Label>
-              <Textarea
-                id="new-title"
-                value={newItem.title}
-                onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                placeholder="Add checklist items (one per line)&#10;Press Ctrl+Enter to add all items"
-                rows={3}
-                className="resize-none"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    addBulkItems();
-                  } else if (e.key === "Enter" && !e.shiftKey && newItem.title.trim().indexOf('\n') === -1) {
-                    e.preventDefault();
-                    addSingleItem();
-                  }
-                }}
-              />
-            </div>
-
-
-            <div>
-              <Label htmlFor="new-due">Due Date (Optional)</Label>
-              <Input
-                id="new-due"
-                type="date"
-                value={newItem.dueDate}
-                onChange={(e) => setNewItem({ ...newItem, dueDate: e.target.value })}
-              />
-            </div>
-
-            <div className="flex justify-between gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => setShowAddItem(false)}
-              >
-                Cancel
-              </Button>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={addSingleItem}
-                  disabled={!newItem.title.trim()}
-                >
-                  Add Single Item
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={addBulkItems}
-                  disabled={!newItem.title.trim()}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add All Items
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {/* Items List */}
       <div className="space-y-4">
