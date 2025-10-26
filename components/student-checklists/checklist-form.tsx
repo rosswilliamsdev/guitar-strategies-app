@@ -228,6 +228,8 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
         }
       }
 
+      // Force refresh to ensure the detail page shows updated data
+      router.refresh();
       router.push(`/curriculums/my/${savedChecklist.id}`);
     } catch (error) {
       log.error('Error saving checklist:', {
