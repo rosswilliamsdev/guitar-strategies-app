@@ -151,9 +151,8 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
           const checkboxElement = checkboxRefs.current[itemId];
           fireItemConfetti(checkboxElement || undefined);
         }
-        // Fetch the latest data from server to ensure consistency
-        // But the UI has already been updated optimistically
-        fetchChecklist();
+        // Don't refetch - optimistic update is sufficient
+        // The data will refresh naturally when the user navigates away and back
       } else {
         // If the request failed, revert the optimistic update
         fetchChecklist();

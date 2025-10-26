@@ -86,14 +86,17 @@ export function EmailPreferences({ preferences, onUpdate }: EmailPreferencesProp
 
   // Sync local state when preferences prop changes
   useEffect(() => {
+    console.log('[Email Preferences] useEffect triggered, syncing preferences:', preferences);
     setLocalPreferences(preferences);
     setHasChanges(false);
   }, [preferences]);
 
   const handleToggle = (type: string, enabled: boolean) => {
+    console.log('[Email Preferences] Toggle clicked:', { type, enabled, currentPrefs: localPreferences });
     const updated = localPreferences.map(pref =>
       pref.type === type ? { ...pref, enabled } : pref
     );
+    console.log('[Email Preferences] Updated prefs:', updated);
     setLocalPreferences(updated);
     setHasChanges(true);
   };
@@ -147,7 +150,8 @@ export function EmailPreferences({ preferences, onUpdate }: EmailPreferencesProp
               {types.map((emailType) => {
                 const Icon = emailType.icon;
                 const enabled = getPreferenceEnabled(emailType.type);
-                
+                console.log('[Email Preferences] Rendering switch:', { type: emailType.type, enabled, localPreferences });
+
                 return (
                   <div key={emailType.type} className="flex items-center justify-between p-3 rounded-lg border bg-muted/10">
                     <div className="flex items-start gap-3 flex-1">
