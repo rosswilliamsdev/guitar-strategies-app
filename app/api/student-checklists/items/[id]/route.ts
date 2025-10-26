@@ -185,19 +185,8 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== "STUDENT") {
+    if (!session?.user || !["STUDENT", "TEACHER"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    if (!studentProfile) {
-      return NextResponse.json(
-        { error: "Student profile not found" },
-        { status: 404 }
-      );
     }
 
     const { id } = await params;
@@ -205,15 +194,44 @@ export async function DELETE(
     const item = await prisma.studentChecklistItem.findFirst({
       where: { id },
       include: {
-        checklist: true,
+        checklist: {
+          include: {
+            student: true,
+          }
+        },
       },
     });
 
-    if (!item || item.checklist.studentId !== studentProfile.id) {
+    if (!item) {
       return NextResponse.json(
-        { error: "Item not found or unauthorized" },
+        { error: "Item not found" },
         { status: 404 }
       );
+    }
+
+    // Check authorization based on role
+    if (session.user.role === "STUDENT") {
+      const studentProfile = await prisma.studentProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!studentProfile || item.checklist.studentId !== studentProfile.id) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
+    } else if (session.user.role === "TEACHER") {
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!teacherProfile || item.checklist.student.teacherId !== teacherProfile.id) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 403 }
+        );
+      }
     }
 
     await prisma.studentChecklistItem.delete({

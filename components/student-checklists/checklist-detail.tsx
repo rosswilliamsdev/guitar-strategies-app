@@ -168,15 +168,21 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
   };
 
   const deleteItem = async (itemId: string) => {
-    if (!confirm("Are you sure you want to delete this item?")) return;
-
     try {
       const response = await fetch(`/api/student-checklists/items/${itemId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        fetchChecklist();
+        log.info('Deleted checklist item', { itemId, checklistId });
+        await fetchChecklist();
+      } else {
+        const errorData = await response.json();
+        log.error('Failed to delete checklist item', {
+          itemId,
+          status: response.status,
+          error: errorData
+        });
       }
     } catch (error) {
       log.error('Error deleting item:', {
