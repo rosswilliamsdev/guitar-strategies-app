@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       include: {
         items: {
-          orderBy: { createdAt: "asc" },
+          orderBy: { sortOrder: "asc" },
         },
         creator: {
           select: { name: true, role: true }

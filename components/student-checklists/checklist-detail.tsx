@@ -32,6 +32,7 @@ interface ChecklistItem {
   notes?: string;
   resourceUrl?: string;
   estimatedMinutes?: number;
+  sortOrder?: number;
   createdAt: string;
 }
 
@@ -257,7 +258,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
     );
   }
 
-  const sortedItems = [...checklist.items].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const sortedItems = [...checklist.items].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   const completedItems = sortedItems.filter((item) => item.isCompleted);
   const pendingItems = sortedItems.filter((item) => !item.isCompleted);
 

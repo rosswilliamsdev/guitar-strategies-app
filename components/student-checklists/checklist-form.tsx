@@ -190,7 +190,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
       }
 
       // Update existing items or create new ones
-      const itemPromises = items.map(item => {
+      const itemPromises = items.map((item, index) => {
         if (item.id) {
           // Update existing item
           return fetch(`/api/student-checklists/items/${item.id}`, {
@@ -198,6 +198,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               title: item.title,
+              sortOrder: index,
             }),
           });
         } else {
@@ -208,6 +209,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
             body: JSON.stringify({
               checklistId: savedChecklist.id,
               title: item.title,
+              sortOrder: index,
             }),
           });
         }

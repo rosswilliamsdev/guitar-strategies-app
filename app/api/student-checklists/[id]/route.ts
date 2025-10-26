@@ -40,7 +40,7 @@ export async function GET(
       },
       include: {
         items: {
-          orderBy: { createdAt: "asc" },
+          orderBy: { sortOrder: "asc" },
         },
       },
     });

@@ -506,25 +506,27 @@ model StudentChecklistItem {
   checklistId String
   title       String
   description String?  @db.Text
-  
+  sortOrder   Int      @default(0)  // Explicit order for items
+
   // Item tracking
   isCompleted Boolean  @default(false)
   completedAt DateTime?
   dueDate     DateTime?
-  
+
   // Optional metadata
   notes       String?  @db.Text
   resourceUrl String?  // Link to sheet music, video, etc.
   estimatedMinutes Int? // Estimated time to complete
-  
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Relations
   checklist   StudentChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
-  
+
   @@index([checklistId])
   @@index([isCompleted])
+  @@index([checklistId, sortOrder])
 }
 
 // Teacher Scheduling Models

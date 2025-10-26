@@ -510,6 +510,7 @@ export const createStudentChecklistItemSchema = z.object({
   notes: z.string().max(2000).optional(),
   resourceUrl: z.string().url().optional(),
   estimatedMinutes: z.number().min(1).max(300).optional(),
+  sortOrder: z.number().int().min(0).optional(),
 });
 
 export const updateStudentChecklistItemSchema = createStudentChecklistItemSchema
@@ -518,6 +519,7 @@ export const updateStudentChecklistItemSchema = createStudentChecklistItemSchema
     id: z.string().min(1, "Item ID is required"),
     isCompleted: z.boolean().optional(),
     completedAt: z.date().optional(),
+    sortOrder: z.number().int().min(0).optional(),
   });
 
 export const toggleChecklistItemSchema = z.object({
