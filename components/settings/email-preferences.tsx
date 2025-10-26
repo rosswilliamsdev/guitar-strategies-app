@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -84,8 +84,14 @@ export function EmailPreferences({ preferences, onUpdate }: EmailPreferencesProp
   const [localPreferences, setLocalPreferences] = useState(preferences);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Sync local state when preferences prop changes
+  useEffect(() => {
+    setLocalPreferences(preferences);
+    setHasChanges(false);
+  }, [preferences]);
+
   const handleToggle = (type: string, enabled: boolean) => {
-    const updated = localPreferences.map(pref => 
+    const updated = localPreferences.map(pref =>
       pref.type === type ? { ...pref, enabled } : pref
     );
     setLocalPreferences(updated);
