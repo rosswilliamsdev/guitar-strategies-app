@@ -93,9 +93,28 @@ export function EmailPreferences({ preferences, onUpdate }: EmailPreferencesProp
 
   const handleToggle = (type: string, enabled: boolean) => {
     console.log('[Email Preferences] Toggle clicked:', { type, enabled, currentPrefs: localPreferences });
-    const updated = localPreferences.map(pref =>
-      pref.type === type ? { ...pref, enabled } : pref
-    );
+
+    // Check if this preference type already exists
+    const existingPref = localPreferences.find(p => p.type === type);
+
+    let updated: EmailPreference[];
+    if (existingPref) {
+      // Update existing preference
+      updated = localPreferences.map(pref =>
+        pref.type === type ? { ...pref, enabled } : pref
+      );
+    } else {
+      // Add new preference (create a new ID)
+      updated = [
+        ...localPreferences,
+        {
+          id: `temp-${Date.now()}-${type}`,
+          type,
+          enabled
+        }
+      ];
+    }
+
     console.log('[Email Preferences] Updated prefs:', updated);
     setLocalPreferences(updated);
     setHasChanges(true);
