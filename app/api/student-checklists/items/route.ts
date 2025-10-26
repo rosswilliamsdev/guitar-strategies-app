@@ -6,6 +6,10 @@ import { createStudentChecklistItemSchema } from "@/lib/validations";
 import { z } from "zod";
 import { apiLog, dbLog } from '@/lib/logger';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // POST /api/student-checklists/items - Create a new checklist item
 export async function POST(request: NextRequest) {
   try {

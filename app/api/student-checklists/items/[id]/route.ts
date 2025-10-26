@@ -7,6 +7,10 @@ import { sendEmail, createChecklistCompletionEmail } from "@/lib/email";
 import { z } from "zod";
 import { apiLog, dbLog, emailLog } from '@/lib/logger';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET /api/student-checklists/items/[id] - Get a single checklist item
 export async function GET(
   request: NextRequest,

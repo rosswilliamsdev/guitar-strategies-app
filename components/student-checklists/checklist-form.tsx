@@ -228,9 +228,8 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
         }
       }
 
-      // Force refresh to ensure the detail page shows updated data
-      router.refresh();
-      router.push(`/curriculums/my/${savedChecklist.id}`);
+      // Use window.location for hard navigation to bypass all caches
+      window.location.href = `/curriculums/my/${savedChecklist.id}`;
     } catch (error) {
       log.error('Error saving checklist:', {
         error: error instanceof Error ? error.message : String(error),

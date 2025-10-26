@@ -3,6 +3,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ChecklistDetail } from "@/components/student-checklists/checklist-detail";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: "Personal Checklist | Guitar Strategies",
   description: "View and manage your personal practice checklist",
