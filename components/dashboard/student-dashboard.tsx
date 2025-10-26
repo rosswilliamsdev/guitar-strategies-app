@@ -22,29 +22,29 @@ interface StudentDashboardProps {
   };
 }
 
-export function StudentDashboard({ 
-  studentId, 
+export function StudentDashboard({
+  studentId,
   recentLessons = [],
-  studentProfile
+  studentProfile,
 }: StudentDashboardProps) {
   const safeStudentProfile = studentProfile || {
-    teacherName: 'Unknown Teacher',
-    teacherEmail: 'unknown@guitarstrategies.com',
+    teacherName: "Unknown Teacher",
+    teacherEmail: "unknown@guitarstrategies.com",
     goals: undefined,
-    instrument: 'guitar',
+    instrument: "guitar",
   };
 
   const quickActions = [
     {
       href: "/lessons",
-      text: "View Lessons", 
+      text: "View Lessons",
       variant: "primary" as const,
       description: "See your lesson history",
     },
     {
       href: "/curriculums",
       text: "Checklists",
-      variant: "secondary" as const, 
+      variant: "secondary" as const,
       description: "Track your progress",
     },
     {
@@ -67,10 +67,11 @@ export function StudentDashboard({
         </p>
         <div className="mt-3 text-sm">
           <span className="text-muted-foreground">Your teacher: </span>
-          <span className="font-medium text-foreground">{safeStudentProfile.teacherName}</span>
+          <span className="font-medium text-foreground">
+            {safeStudentProfile.teacherName}
+          </span>
         </div>
       </div>
-
 
       {/* Quick Actions & Recent Lessons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -82,8 +83,8 @@ export function StudentDashboard({
           <div className="space-y-2">
             {quickActions.map((action, index) => (
               <Link key={index} href={action.href} className="block">
-                <Button 
-                  variant={action.variant} 
+                <Button
+                  variant={action.variant}
                   className="w-full justify-start"
                   size="sm"
                 >
@@ -133,16 +134,14 @@ export function StudentDashboard({
               ))
             ) : (
               <p className="text-muted-foreground text-sm py-4 text-center">
-                No lessons completed yet.<br />
-                <Link href={`/teacher/${safeStudentProfile.teacherEmail.replace('@guitarstrategies.com', '')}`} className="text-primary hover:underline">
-                  Book your first lesson
-                </Link>
+                No lessons completed yet.
+                <br />
+                <p>Contact your teacher to schedule lessons.</p>
               </p>
             )}
           </div>
         </Card>
       </div>
-
 
       {/* Learning Goals */}
       {safeStudentProfile.goals && (
