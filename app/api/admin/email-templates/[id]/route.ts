@@ -113,21 +113,53 @@ async function handleDELETE(
   }
 }
 
-// Export wrapped handlers
-export const GET = withApiMiddleware(handleGET, {
-  rateLimit: 'API',
-  requireRole: 'ADMIN',
-  skipCSRF: true
-});
+// Create wrappers that match the expected signature
+async function wrappedGET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  return handleGET(request, context);
+}
 
-export const PUT = withApiMiddleware(handlePUT, {
-  rateLimit: 'API',
-  requireRole: 'ADMIN',
-  skipCSRF: true
-});
+async function wrappedPUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  return handlePUT(request, context);
+}
 
-export const DELETE = withApiMiddleware(handleDELETE, {
-  rateLimit: 'API',
-  requireRole: 'ADMIN',
-  skipCSRF: true
-});
+async function wrappedDELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  return handleDELETE(request, context);
+}
+
+// Export with Next.js 15 handler signature (params as second argument)
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  // Check auth manually since withApiMiddleware doesn't support params
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const session = await getServerSession(authOptions);
+
+  if (!session || (session.user.role !== 'ADMIN' && !session.user.teacherProfile?.isAdmin)) {
+    return createNotFoundResponse('Resource');
+  }
+
+  return handleGET(request, context);
+}
+
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const session = await getServerSession(authOptions);
+
+  if (!session || (session.user.role !== 'ADMIN' && !session.user.teacherProfile?.isAdmin)) {
+    return createNotFoundResponse('Resource');
+  }
+
+  return handlePUT(request, context);
+}
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { getServerSession } = await import('next-auth');
+  const { authOptions } = await import('@/lib/auth');
+  const session = await getServerSession(authOptions);
+
+  if (!session || (session.user.role !== 'ADMIN' && !session.user.teacherProfile?.isAdmin)) {
+    return createNotFoundResponse('Resource');
+  }
+
+  return handleDELETE(request, context);
+}
