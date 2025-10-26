@@ -46,7 +46,14 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
 
   const fetchChecklistItems = async () => {
     try {
-      const response = await fetch(`/api/student-checklists/${checklist?.id}`);
+      // Add timestamp to bypass all caching layers
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/student-checklists/${checklist?.id}?_t=${timestamp}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch checklist items");
       }

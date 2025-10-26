@@ -84,7 +84,9 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
 
   const fetchChecklist = async () => {
     try {
-      const response = await fetch(`/api/student-checklists/${checklistId}`, {
+      // Add timestamp to bypass all caching layers
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/student-checklists/${checklistId}?_t=${timestamp}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
