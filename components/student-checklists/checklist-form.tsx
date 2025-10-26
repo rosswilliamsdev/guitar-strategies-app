@@ -166,10 +166,20 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
         const deletePromises = itemsToDelete.map(itemId =>
           fetch(`/api/student-checklists/items/${itemId}`, {
             method: "DELETE",
+          }).then(response => {
+            // Ignore 404 errors - item already deleted
+            if (response.status === 404) {
+              return { success: true, alreadyDeleted: true };
+            }
+            return { success: response.ok };
           })
         );
 
-        await Promise.all(deletePromises);
+        const deleteResults = await Promise.all(deletePromises);
+        const failedDeletes = deleteResults.filter(r => !r.success);
+        if (failedDeletes.length > 0) {
+          throw new Error(`Failed to delete ${failedDeletes.length} items`);
+        }
       }
 
       // Update existing items or create new ones
@@ -205,7 +215,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
         const results = await Promise.all(
           itemPromises.map(p =>
             p.then(async (response) => ({
-              success: response.ok,
+              success: response.ok || response.status === 404, // 404 on update means item was deleted, ignore
               status: response.status,
               error: response.ok ? null : await response.json(),
             }))
