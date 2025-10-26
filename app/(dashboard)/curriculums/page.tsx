@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { CurriculumList } from "@/components/curriculums/curriculum-list";
 import { StudentChecklistList } from "@/components/student-checklists/checklist-list";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function CurriculumsPage() {
   const session = await getServerSession(authOptions);
 

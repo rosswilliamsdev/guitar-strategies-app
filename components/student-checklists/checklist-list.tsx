@@ -41,10 +41,30 @@ export function StudentChecklistList() {
     fetchChecklists();
   }, [showArchived]);
 
+  // Refetch when page becomes visible (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchChecklists();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchChecklists);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchChecklists);
+    };
+  }, [showArchived]);
+
   const fetchChecklists = async () => {
     try {
       const params = new URLSearchParams();
       if (showArchived) params.append("includeArchived", "true");
+
+      // Add timestamp to bypass all caching layers
+      params.append("_t", new Date().getTime().toString());
 
       const response = await fetch(`/api/student-checklists?${params}`, {
         cache: 'no-store',
