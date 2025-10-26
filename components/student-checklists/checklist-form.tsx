@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Plus, X } from "lucide-react";
+import { ArrowLeft, Save, Plus, X, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { log } from '@/lib/logger';
 
 interface ChecklistItem {
+  id?: string;
   title: string;
+  isCompleted?: boolean;
 }
 
 interface ChecklistFormProps {
@@ -26,12 +28,39 @@ interface ChecklistFormProps {
 export function ChecklistForm({ checklist }: ChecklistFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [loadingItems, setLoadingItems] = useState(!!checklist);
   const [formData, setFormData] = useState({
     title: checklist?.title || "",
   });
   const [items, setItems] = useState<ChecklistItem[]>([]);
+  const [itemsToDelete, setItemsToDelete] = useState<string[]>([]);
   const [newItemTitle, setNewItemTitle] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Load existing items when editing
+  useEffect(() => {
+    if (checklist?.id) {
+      fetchChecklistItems();
+    }
+  }, [checklist?.id]);
+
+  const fetchChecklistItems = async () => {
+    try {
+      const response = await fetch(`/api/student-checklists/${checklist?.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch checklist items");
+      }
+      const data = await response.json();
+      setItems(data.items || []);
+      setFormData({ title: data.title });
+    } catch (error) {
+      log.error('Error fetching checklist items:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setLoadingItems(false);
+    }
+  };
 
   const addItem = () => {
     const firstLine = newItemTitle.split('\n')[0].trim();
@@ -78,6 +107,11 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
   };
 
   const removeItem = (index: number) => {
+    const itemToRemove = items[index];
+    // If the item has an ID, mark it for deletion
+    if (itemToRemove.id) {
+      setItemsToDelete([...itemsToDelete, itemToRemove.id]);
+    }
     setItems(items.filter((_, i) => i !== index));
   };
 
@@ -122,56 +156,65 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
 
       const savedChecklist = await response.json();
 
-      // If this is a new checklist and we have items, add them in parallel
-      if (!checklist && items.length > 0) {
-        log.info('Creating student checklist items in parallel', {
+      // Delete items marked for deletion
+      if (itemsToDelete.length > 0) {
+        log.info('Deleting student checklist items', {
           checklistId: savedChecklist.id,
-          itemCount: items.length
+          itemCount: itemsToDelete.length
         });
 
-        const itemPromises = items.map(item =>
-          fetch("/api/student-checklists/items", {
+        const deletePromises = itemsToDelete.map(itemId =>
+          fetch(`/api/student-checklists/items/${itemId}`, {
+            method: "DELETE",
+          })
+        );
+
+        await Promise.all(deletePromises);
+      }
+
+      // Update existing items or create new ones
+      const itemPromises = items.map(item => {
+        if (item.id) {
+          // Update existing item
+          return fetch(`/api/student-checklists/items/${item.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: item.title,
+            }),
+          });
+        } else {
+          // Create new item
+          return fetch("/api/student-checklists/items", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               checklistId: savedChecklist.id,
               title: item.title,
             }),
-          }).then(async (response) => ({
-            title: item.title,
-            success: response.ok,
-            status: response.status,
-            error: response.ok ? null : await response.json(),
-          }))
+          });
+        }
+      });
+
+      if (itemPromises.length > 0) {
+        log.info('Saving student checklist items', {
+          checklistId: savedChecklist.id,
+          itemCount: items.length
+        });
+
+        const results = await Promise.all(
+          itemPromises.map(p =>
+            p.then(async (response) => ({
+              success: response.ok,
+              status: response.status,
+              error: response.ok ? null : await response.json(),
+            }))
+          )
         );
 
-        const results = await Promise.all(itemPromises);
-
-        const successCount = results.filter(r => r.success).length;
         const failCount = results.filter(r => !r.success).length;
-
-        // Log results
-        results.forEach(result => {
-          if (result.success) {
-            log.info('Student checklist item created successfully', { title: result.title });
-          } else {
-            log.error('Failed to create student checklist item', {
-              title: result.title,
-              status: result.status,
-              error: result.error
-            });
-          }
-        });
-
-        log.info('Finished adding student checklist items', {
-          total: items.length,
-          success: successCount,
-          failed: failCount
-        });
-
-        // Throw error if any items failed to create
         if (failCount > 0) {
-          throw new Error(`Failed to create ${failCount} of ${items.length} items`);
+          throw new Error(`Failed to save ${failCount} of ${items.length} items`);
         }
       }
 
@@ -189,6 +232,16 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
       setLoading(false);
     }
   };
+
+  if (loadingItems) {
+    return (
+      <Card className="p-6">
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Loading checklist...</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -231,16 +284,15 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
 
         </div>
 
-        {/* Items Section (only for new checklists) */}
-        {!checklist && (
-          <div className="space-y-4 border-t pt-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Checklist Items</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Add items to your checklist. You can always add more items
-                later.
-              </p>
-            </div>
+        {/* Items Section */}
+        <div className="space-y-4 border-t pt-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Checklist Items</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Add items to your checklist. You can always add more items
+              later.
+            </p>
+          </div>
 
             {/* Add New Items */}
             <div className="space-y-2">
@@ -288,40 +340,39 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
               </div>
             </div>
 
-            {/* Items List */}
-            {items.length > 0 && (
-              <div className="space-y-2 mt-4">
-                <p className="text-sm font-medium text-muted-foreground">
-                  {items.length} item{items.length !== 1 ? "s" : ""} added
-                </p>
-                {items.map((item, index) => (
-                  <Card key={index} className="p-3">
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1">
-                        <Input
-                          value={item.title}
-                          onChange={(e) =>
-                            updateItem(index, "title", e.target.value)
-                          }
-                          placeholder="Item title"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => removeItem(index)}
-                        
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+          {/* Items List */}
+          {items.length > 0 && (
+            <div className="space-y-2 mt-4">
+              <p className="text-sm font-medium text-muted-foreground">
+                {items.length} item{items.length !== 1 ? "s" : ""} {checklist ? "in checklist" : "added"}
+              </p>
+              {items.map((item, index) => (
+                <Card key={item.id || index} className="p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <Input
+                        value={item.title}
+                        onChange={(e) =>
+                          updateItem(index, "title", e.target.value)
+                        }
+                        placeholder="Item title"
+                      />
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeItem(index)}
+
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Link href="/curriculums">
             <Button variant="secondary" type="button">
