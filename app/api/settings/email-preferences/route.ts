@@ -10,7 +10,8 @@ const emailPreferencesSchema = z.object({
     id: z.string().optional(),
     type: z.enum([
       'LESSON_BOOKING',
-      'LESSON_CANCELLATION', 
+      'LESSON_CANCELLATION',
+      'LESSON_COMPLETED',
       'LESSON_REMINDER',
       'INVOICE_GENERATED',
       'INVOICE_OVERDUE',
