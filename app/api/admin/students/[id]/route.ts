@@ -20,8 +20,11 @@ async function handleDELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only admins can delete students
-    if (session.user.role !== 'ADMIN') {
+    // Only admins can delete students (includes teacher-admins)
+    const isAdmin = session.user.role === 'ADMIN' ||
+                    (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin === true);
+
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
