@@ -47,6 +47,7 @@ export async function GET(
                 },
               },
             },
+            itemProgress: true,  // Include item-level progress
           },
         },
         teacher: {
