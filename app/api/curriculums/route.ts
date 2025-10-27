@@ -113,6 +113,14 @@ export async function GET(request: NextRequest) {
         studentId: studentProfile.id,
         teacherId: studentProfile.teacherId,
         count: curriculums.length,
+        curriculumIds: curriculums.map(c => c.id),
+        progressData: curriculums.map(c => ({
+          id: c.id,
+          title: c.title,
+          hasProgress: !!c.studentProgress?.[0],
+          totalItems: c.studentProgress?.[0]?.totalItems,
+          completedItems: c.studentProgress?.[0]?.completedItems,
+        })),
       });
 
       return NextResponse.json({ curriculums }, {
