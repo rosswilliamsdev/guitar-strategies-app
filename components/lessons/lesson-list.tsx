@@ -166,13 +166,14 @@ export function LessonList({ userRole }: LessonListProps) {
   // Filter lessons based on search term, student, and date
   const filteredLessons = useMemo(() => {
     const filtered = lessons.filter((lesson) => {
-      // Exclude cancelled lessons
+      // Exclude cancelled lessons for everyone
       if (lesson.status === "CANCELLED") {
         return false;
       }
 
-      // For students, only show completed lessons
-      if (userRole === "STUDENT" && lesson.status !== "COMPLETED") {
+      // Students can see SCHEDULED (upcoming) and COMPLETED (past with notes) lessons
+      // Hide MISSED lessons from students
+      if (userRole === "STUDENT" && lesson.status === "MISSED") {
         return false;
       }
 
