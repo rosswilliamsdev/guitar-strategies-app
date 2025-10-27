@@ -93,13 +93,16 @@ export function LessonList({ userRole }: LessonListProps) {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        const response = await fetch("/api/lessons");
+        const timestamp = Date.now();
+        const response = await fetch(`/api/lessons?_t=${timestamp}`);
         if (!response.ok) {
           throw new Error("Failed to fetch lessons");
         }
         const data = await response.json();
+        // Handle paginated response structure
+        const lessonsArray = data.data?.lessons || data.lessons || data.data || [];
         // Sort lessons by date in descending order (most recent first)
-        const sortedLessons = (data.lessons || []).sort(
+        const sortedLessons = lessonsArray.sort(
           (a: Lesson, b: Lesson) => {
             return new Date(b.date).getTime() - new Date(a.date).getTime();
           }
@@ -117,6 +120,21 @@ export function LessonList({ userRole }: LessonListProps) {
     };
 
     fetchLessons();
+
+    // Refetch when tab becomes visible or window gains focus
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchLessons();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchLessons);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchLessons);
+    };
   }, []);
 
   const handleCancelLesson = async (lessonId: string) => {

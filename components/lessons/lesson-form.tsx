@@ -516,11 +516,11 @@ export function LessonForm({
         }
       }
 
-      // Success - redirect appropriately
+      // Success - use hard navigation to bypass cache
       if (lessonId) {
-        router.push(`/lessons/${lessonId}`);
+        window.location.href = `/lessons/${lessonId}`;
       } else {
-        router.push("/lessons");
+        window.location.href = "/lessons";
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred");
