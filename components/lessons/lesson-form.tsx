@@ -467,27 +467,44 @@ export function LessonForm({
         }
       }
 
-      // Update checklist items as completed
+      // Update checklist/curriculum items as completed
       if (selectedCurriculumItems.length > 0) {
         try {
           for (const itemId of selectedCurriculumItems) {
-            // Find which checklist contains this item
-            const checklist = studentCurriculums.find(c => 
+            // Find which checklist/curriculum contains this item
+            const checklist = studentCurriculums.find(c =>
               c.sections.some(s => s.items.some(i => i.id === itemId))
             );
-            
+
             if (checklist) {
-              // Mark the checklist item as completed
-              await fetch(`/api/student-checklists/items/${itemId}`, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  isCompleted: true,
-                  completedAt: new Date().toISOString(),
-                }),
-              });
+              // Check if it's a teacher-created curriculum or student checklist
+              if (checklist.createdByRole === "TEACHER") {
+                // Update curriculum item progress
+                await fetch("/api/curriculums/progress", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    studentId: formData.studentId,
+                    curriculumId: checklist.id,
+                    itemId: itemId,
+                    status: "COMPLETED",
+                  }),
+                });
+              } else {
+                // Update student checklist item
+                await fetch(`/api/student-checklists/items/${itemId}`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    isCompleted: true,
+                    completedAt: new Date().toISOString(),
+                  }),
+                });
+              }
             }
           }
         } catch (progressError) {
