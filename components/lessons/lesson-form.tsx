@@ -134,7 +134,8 @@ export function LessonForm({
         const response = await fetch(`/api/students?teacherId=${teacherId}`);
         if (response.ok) {
           const data = await response.json();
-          setStudents(data.students || []);
+          // API returns paginated response with data.data
+          setStudents(data.data || data.students || []);
         }
       } catch (error) {
         log.error('Error fetching students:', {
