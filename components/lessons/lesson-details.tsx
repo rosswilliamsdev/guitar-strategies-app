@@ -112,11 +112,23 @@ export function LessonDetails({
               const checklistItemsData = await Promise.all(
                 itemIds.map(async (itemId: string) => {
                   try {
-                    const itemResponse = await fetch(`/api/student-checklists/items/${itemId}`);
+                    // Try student checklist item first
+                    let itemResponse = await fetch(`/api/student-checklists/items/${itemId}`);
                     if (itemResponse.ok) {
                       const itemData = await itemResponse.json();
                       return itemData.item;
                     }
+
+                    // If 404, try curriculum item
+                    if (itemResponse.status === 404) {
+                      itemResponse = await fetch(`/api/curriculums/items/${itemId}`);
+                      if (itemResponse.ok) {
+                        const itemData = await itemResponse.json();
+                        return itemData.item;
+                      }
+                    }
+
+                    return null;
                   } catch (err) {
                     log.error('Error fetching checklist item ${itemId}:', {
         error: err instanceof Error ? err.message : String(err),
@@ -126,9 +138,9 @@ export function LessonDetails({
                   }
                 })
               );
-              
+
               // Filter out any null responses and set valid items
-              const validItems = checklistItemsData.filter(item => item !== null);
+              const validItems = checklistItemsData.filter((item): item is ChecklistItem => item !== null && item !== undefined);
               setChecklistItems(validItems);
             }
           } catch (parseError) {
