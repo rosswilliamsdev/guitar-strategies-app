@@ -216,8 +216,11 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
           itemCount: items.length
         });
 
-        const itemPromises = items.map((item, index) =>
-          fetch("/api/curriculums/items", {
+        // Create items sequentially to ensure correct sortOrder
+        const results = [];
+        for (let index = 0; index < items.length; index++) {
+          const item = items[index];
+          const response = await fetch("/api/curriculums/items", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -225,15 +228,15 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
               title: item.title,
               sortOrder: index,  // Set sortOrder based on position in array
             }),
-          }).then(async (response) => ({
+          });
+
+          results.push({
             title: item.title,
             success: response.ok,
             status: response.status,
             error: response.ok ? null : await response.json(),
-          }))
-        );
-
-        const results = await Promise.all(itemPromises);
+          });
+        }
         const successCount = results.filter(r => r.success).length;
         const failCount = results.filter(r => !r.success).length;
 
