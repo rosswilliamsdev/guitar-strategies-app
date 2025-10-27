@@ -27,10 +27,12 @@ export function StudentList({ teacherId }: StudentListProps) {
     fetch('/api/students')
       .then(res => res.json())
       .then(data => {
-        setStudents(data.students || []);
+        // API returns paginated response with data.data
+        setStudents(data.data || data.students || []);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Error fetching students:', error);
         setLoading(false);
       });
   }, [teacherId]);
