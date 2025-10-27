@@ -174,10 +174,10 @@ export async function GET(request: NextRequest) {
       const studentProgress = curriculum.studentProgress?.[0]; // Should only be one progress record per student per curriculum
 
       // Flatten all items from all sections
-      const allItems = curriculum.sections.flatMap(section =>
-        section.items.map(item => {
+      const allItems = curriculum.sections.flatMap((section: any) =>
+        section.items.map((item: any) => {
           // Find the progress for this specific item
-          const itemProgress = studentProgress?.itemProgress?.find(progress => progress.itemId === item.id);
+          const itemProgress = studentProgress?.itemProgress?.find((progress: any) => progress.itemId === item.id);
           const isCompleted = itemProgress?.status === "COMPLETED";
 
           return {
