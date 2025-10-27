@@ -33,6 +33,8 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // Try to find as student checklist first
     const checklist = await prisma.studentChecklist.findFirst({
       where: {
         id,
@@ -45,28 +47,108 @@ export async function GET(
       },
     });
 
-    if (!checklist) {
+    if (checklist) {
+      // Calculate completion stats for student checklist
+      const totalItems = checklist.items.length;
+      const completedItems = checklist.items.filter(
+        (item) => item.isCompleted
+      ).length;
+      const progressPercent =
+        totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+      return NextResponse.json({
+        ...checklist,
+        createdByRole: "STUDENT",
+        stats: {
+          totalItems,
+          completedItems,
+          progressPercent,
+        },
+      });
+    }
+
+    // If not found, try to find as a curriculum
+    const curriculum = await prisma.curriculum.findUnique({
+      where: { id },
+      include: {
+        sections: {
+          include: {
+            items: {
+              orderBy: { sortOrder: "asc" },
+            }
+          },
+          orderBy: { sortOrder: "asc" }
+        },
+        teacher: {
+          select: {
+            userId: true,
+            user: {
+              select: { name: true, role: true }
+            }
+          }
+        },
+        studentProgress: {
+          where: {
+            studentId: studentProfile.id
+          },
+          include: {
+            itemProgress: true
+          }
+        }
+      }
+    });
+
+    if (!curriculum) {
       return NextResponse.json(
-        { error: "Checklist not found" },
+        { error: "Checklist or curriculum not found" },
         { status: 404 }
       );
     }
 
-    // Calculate completion stats
-    const totalItems = checklist.items.length;
-    const completedItems = checklist.items.filter(
-      (item) => item.isCompleted
-    ).length;
-    const progressPercent =
-      totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    // Get student progress for this curriculum
+    const studentProgress = curriculum.studentProgress?.[0];
+
+    // Flatten all items from all sections
+    const allItems = curriculum.sections.flatMap((section) =>
+      section.items.map((item) => {
+        const itemProgress = studentProgress?.itemProgress?.find((progress) => progress.itemId === item.id);
+        const isCompleted = itemProgress?.status === "COMPLETED";
+
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          isCompleted: isCompleted,
+          completedAt: itemProgress?.completedAt || null,
+          sortOrder: item.sortOrder,
+        };
+      })
+    );
+
+    const totalItems = allItems.length;
+    const completedItems = allItems.filter((item) => item.isCompleted).length;
+    const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
     return NextResponse.json({
-      ...checklist,
+      id: curriculum.id,
+      title: curriculum.title,
+      isActive: curriculum.isActive,
+      isArchived: false,
+      createdAt: curriculum.createdAt,
+      updatedAt: curriculum.updatedAt,
+      studentId: studentProfile.id,
+      createdBy: curriculum.teacher.userId,
+      createdByRole: "TEACHER",
+      creator: {
+        name: curriculum.teacher.user.name,
+        role: curriculum.teacher.user.role
+      },
+      items: allItems,
       stats: {
         totalItems,
         completedItems,
         progressPercent,
-      },
+      }
     });
   } catch (error) {
     apiLog.error('Error fetching checklist:', {
