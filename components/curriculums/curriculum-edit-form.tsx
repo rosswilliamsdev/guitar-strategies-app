@@ -216,13 +216,14 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
           itemCount: items.length
         });
 
-        const itemPromises = items.map(item =>
+        const itemPromises = items.map((item, index) =>
           fetch("/api/curriculums/items", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               sectionId,
               title: item.title,
+              sortOrder: index,  // Set sortOrder based on position in array
             }),
           }).then(async (response) => ({
             title: item.title,
