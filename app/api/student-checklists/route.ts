@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
       );
 
       const totalItems = allItems.length;
-      const completedItems = allItems.filter(item => item.isCompleted).length;
+      const completedItems = allItems.filter((item: any) => item.isCompleted).length;
       const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
       return {
