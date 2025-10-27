@@ -97,7 +97,19 @@ export async function POST(request: NextRequest) {
       where: { curriculumProgressId: curriculumProgress.id },
     });
 
-    const totalItems = allItemProgress.length;
+    // Get the actual total number of items in the curriculum
+    const curriculum = await prisma.curriculum.findUnique({
+      where: { id: curriculumId },
+      include: {
+        sections: {
+          include: {
+            items: true,
+          },
+        },
+      },
+    });
+
+    const totalItems = curriculum?.sections.reduce((sum, section) => sum + section.items.length, 0) || 0;
     const completedItems = allItemProgress.filter(p => p.status === "COMPLETED").length;
     const progressPercent = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
 
