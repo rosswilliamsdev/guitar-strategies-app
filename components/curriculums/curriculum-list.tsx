@@ -65,11 +65,27 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
 
   useEffect(() => {
     fetchCurriculums();
+
+    // Refetch when tab becomes visible or window gains focus
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCurriculums();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', fetchCurriculums);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', fetchCurriculums);
+    };
   }, []);
 
   const fetchCurriculums = async () => {
     try {
-      const response = await fetch("/api/curriculums", {
+      const timestamp = Date.now();
+      const response = await fetch(`/api/curriculums?_t=${timestamp}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',

@@ -102,7 +102,8 @@ export function CurriculumDetail({
 
   const fetchCurriculum = async () => {
     try {
-      const response = await fetch(`/api/curriculums/${curriculumId}`, {
+      const timestamp = Date.now();
+      const response = await fetch(`/api/curriculums/${curriculumId}?_t=${timestamp}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache',
