@@ -113,27 +113,27 @@ export function LessonDetails({
                 itemIds.map(async (itemId: string) => {
                   try {
                     // Try student checklist item first
-                    let itemResponse = await fetch(`/api/student-checklists/items/${itemId}`);
-                    if (itemResponse.ok) {
-                      const itemData = await itemResponse.json();
+                    const checklistResponse = await fetch(`/api/student-checklists/items/${itemId}`);
+                    if (checklistResponse.ok) {
+                      const itemData = await checklistResponse.json();
                       return itemData.item;
                     }
 
-                    // If 404, try curriculum item
-                    if (itemResponse.status === 404) {
-                      itemResponse = await fetch(`/api/curriculums/items/${itemId}`);
-                      if (itemResponse.ok) {
-                        const itemData = await itemResponse.json();
-                        return itemData.item;
-                      }
+                    // If not found, try curriculum item
+                    const curriculumResponse = await fetch(`/api/curriculums/items/${itemId}`);
+                    if (curriculumResponse.ok) {
+                      const itemData = await curriculumResponse.json();
+                      return itemData.item;
                     }
 
+                    // Item not found in either location
+                    log.warn(`Checklist item not found: ${itemId}`);
                     return null;
                   } catch (err) {
-                    log.error('Error fetching checklist item ${itemId}:', {
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined
-      });
+                    log.error(`Error fetching checklist item ${itemId}:`, {
+                      error: err instanceof Error ? err.message : String(err),
+                      stack: err instanceof Error ? err.stack : undefined
+                    });
                     return null;
                   }
                 })
