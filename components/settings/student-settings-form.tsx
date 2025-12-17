@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,10 +16,21 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle, Save, Key, User, GraduationCap, Phone, Mail } from "lucide-react";
+import {
+  AlertCircle,
+  Save,
+  Key,
+  User,
+  GraduationCap,
+  Phone,
+  Mail,
+} from "lucide-react";
 import { studentProfileSchema, passwordChangeSchema } from "@/lib/validations";
 import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
-import { EmailPreferences, type EmailPreference } from "@/components/settings/email-preferences";
+import {
+  EmailPreferences,
+  type EmailPreference,
+} from "@/components/settings/email-preferences";
 
 interface StudentSettingsFormProps {
   user: {
@@ -43,20 +54,29 @@ interface StudentSettingsFormProps {
   emailPreferences?: EmailPreference[];
 }
 
-
-export function StudentSettingsForm({ user, studentProfile, emailPreferences = [] }: StudentSettingsFormProps) {
+export function StudentSettingsForm({
+  user,
+  studentProfile,
+  emailPreferences = [],
+}: StudentSettingsFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'email'>('profile');
+  const [activeTab, setActiveTab] = useState<"profile" | "password" | "email">(
+    "profile"
+  );
 
   // Profile form state
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [goals, setGoals] = useState(studentProfile.goals || "");
-  const [phoneNumber, setPhoneNumber] = useState(studentProfile.phoneNumber || "");
-  const [parentEmail, setParentEmail] = useState(studentProfile.parentEmail || "");
+  const [phoneNumber, setPhoneNumber] = useState(
+    studentProfile.phoneNumber || ""
+  );
+  const [parentEmail, setParentEmail] = useState(
+    studentProfile.parentEmail || ""
+  );
 
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -64,26 +84,34 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Email preferences handler
-  const handleEmailPreferencesUpdate = async (preferences: EmailPreference[]): Promise<boolean> => {
+  const handleEmailPreferencesUpdate = async (
+    preferences: EmailPreference[]
+  ): Promise<boolean> => {
     try {
-      const response = await fetch('/api/settings/email-preferences', {
-        method: 'PUT',
+      const response = await fetch("/api/settings/email-preferences", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ preferences }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update email preferences');
+        throw new Error(
+          errorData.error || "Failed to update email preferences"
+        );
       }
 
       setSuccess("Email preferences updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
       return true;
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to update email preferences");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update email preferences"
+      );
       setTimeout(() => setError(""), 5000);
       return false;
     }
@@ -105,41 +133,37 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
         parentEmail: parentEmail || undefined,
       };
 
-      console.log('Submitting student profile update', formData);
+      console.log("Submitting student profile update", formData);
 
       const validatedData = studentProfileSchema.parse(formData);
 
-      console.log('Validated data', validatedData);
+      console.log("Validated data", validatedData);
 
-      const response = await fetch('/api/settings/student', {
-        method: 'PUT',
+      const response = await fetch("/api/settings/student", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(validatedData),
       });
 
-      console.log('API response', {
+      console.log("API response", {
         status: response.status,
-        ok: response.ok
+        ok: response.ok,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Profile update failed', errorData);
-        throw new Error(errorData.error || 'Failed to update profile');
+        console.error("Profile update failed", errorData);
+        throw new Error(errorData.error || "Failed to update profile");
       }
 
-      const responseData = await response.json();
-      console.log('Profile update successful', responseData);
-
       setSuccess("Profile updated successfully!");
+      redirect("dashboard");
 
       // Form state already contains the updated values, no need to reload
       // Don't call router.refresh() - it causes form to reset
-      console.log('Profile update complete');
     } catch (error) {
-      console.error('Profile update error', error);
       if (error instanceof Error) {
         setError(error.message);
       } else {
@@ -166,10 +190,10 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
 
       const validatedData = passwordChangeSchema.parse(formData);
 
-      const response = await fetch('/api/settings/password', {
-        method: 'PUT',
+      const response = await fetch("/api/settings/password", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           currentPassword: validatedData.currentPassword,
@@ -179,7 +203,7 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update password');
+        throw new Error(errorData.error || "Failed to update password");
       }
 
       setSuccess("Password updated successfully!");
@@ -202,33 +226,33 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
       {/* Tabs */}
       <div className="flex space-x-1 bg-muted p-1 rounded-lg">
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => setActiveTab("profile")}
           className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'profile'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "profile"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <User className="h-4 w-4" />
           <span>Profile Information</span>
         </button>
         <button
-          onClick={() => setActiveTab('password')}
+          onClick={() => setActiveTab("password")}
           className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'password'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "password"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Key className="h-4 w-4" />
           <span>Change Password</span>
         </button>
         <button
-          onClick={() => setActiveTab('email')}
+          onClick={() => setActiveTab("email")}
           className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'email'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "email"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Mail className="h-4 w-4" />
@@ -251,18 +275,26 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
       )}
 
       {/* Profile Tab */}
-      {activeTab === 'profile' && (
+      {activeTab === "profile" && (
         <div className="space-y-6">
           {/* Teacher Information */}
           <Card className="p-6">
             <div className="flex items-center space-x-2 mb-4">
               <GraduationCap className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-lg font-semibold text-foreground">Your Teacher</h3>
+              <h3 className="text-lg font-semibold text-foreground">
+                Your Teacher
+              </h3>
             </div>
             <div className="bg-muted p-4 rounded-lg">
-              <p className="font-medium text-foreground">{studentProfile.teacher.user.name}</p>
-              <p className="text-sm text-muted-foreground">{studentProfile.teacher.user.email}</p>
-              <Badge variant="secondary" className="mt-2">Current Teacher</Badge>
+              <p className="font-medium text-foreground">
+                {studentProfile.teacher.user.name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {studentProfile.teacher.user.email}
+              </p>
+              <Badge variant="secondary" className="mt-2">
+                Current Teacher
+              </Badge>
             </div>
           </Card>
 
@@ -270,7 +302,9 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
           <Card className="p-6">
             <div className="flex items-center space-x-2 mb-6">
               <User className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-lg font-semibold text-foreground">Profile Information</h3>
+              <h3 className="text-lg font-semibold text-foreground">
+                Profile Information
+              </h3>
             </div>
 
             <form onSubmit={handleProfileSubmit} className="space-y-6">
@@ -327,7 +361,8 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
                   className="mt-2"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  For students under 18, provide a parent or guardian email for lesson updates
+                  For students under 18, provide a parent or guardian email for
+                  lesson updates
                 </p>
               </div>
 
@@ -343,7 +378,8 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
                   className="mt-2"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Share your musical goals to help your teacher customize lessons
+                  Share your musical goals to help your teacher customize
+                  lessons
                 </p>
               </div>
 
@@ -358,11 +394,13 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
       )}
 
       {/* Password Tab */}
-      {activeTab === 'password' && (
+      {activeTab === "password" && (
         <Card className="p-6">
           <div className="flex items-center space-x-2 mb-6">
             <Key className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-lg font-semibold text-foreground">Change Password</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              Change Password
+            </h3>
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
@@ -412,7 +450,7 @@ export function StudentSettingsForm({ user, studentProfile, emailPreferences = [
       )}
 
       {/* Email Preferences Tab */}
-      {activeTab === 'email' && (
+      {activeTab === "email" && (
         <EmailPreferences
           preferences={emailPreferences}
           onUpdate={handleEmailPreferencesUpdate}
