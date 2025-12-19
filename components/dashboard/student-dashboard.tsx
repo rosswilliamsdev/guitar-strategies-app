@@ -135,21 +135,6 @@ export function StudentDashboard({
                     </span>
                   </div>
                 </Link>
-
-                //
-                // <div
-                //   key={lesson.id}
-                //   className="flex items-start justify-between py-2 border-b border-border last:border-b-0"
-                // >
-                //   <div className="flex-1">
-                //     <p className="font-medium text-foreground text-sm">
-                //       {lesson.date}
-                //     </p>
-                //     <p className="text-xs text-muted-foreground">
-                //       {lesson.duration} minutes • {lesson.status.toLowerCase()}
-                //     </p>
-                //   </div>
-                // </div>
               ))
             ) : (
               <p className="text-muted-foreground text-sm py-4 text-center">
