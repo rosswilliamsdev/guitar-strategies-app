@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface Student {
   id: string;
@@ -24,15 +24,15 @@ export function StudentList({ teacherId }: StudentListProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/students')
-      .then(res => res.json())
-      .then(data => {
+    fetch("/api/students")
+      .then((res) => res.json())
+      .then((data) => {
         // API returns paginated response with data.data
         setStudents(data.data || data.students || []);
         setLoading(false);
       })
       .catch((error) => {
-        console.error('Error fetching students:', error);
+        console.error("Error fetching students:", error);
         setLoading(false);
       });
   }, [teacherId]);
@@ -48,9 +48,7 @@ export function StudentList({ teacherId }: StudentListProps) {
   if (students.length === 0) {
     return (
       <Card className="p-8 text-center">
-        <h3 className="text-lg font-medium mb-2">
-          No students yet
-        </h3>
+        <h3 className="text-lg font-medium mb-2">No students yet</h3>
         <p className="text-muted-foreground mb-4">
           Start by inviting your first student to join your teaching platform.
         </p>
@@ -67,18 +65,20 @@ export function StudentList({ teacherId }: StudentListProps) {
         <Card key={student.id} className="p-6">
           <div className="text-center">
             <h3 className="font-medium text-lg mb-2">{student.user.name}</h3>
-            <p className="text-sm text-muted-foreground mb-2">{student.user.email}</p>
             <p className="text-xs text-muted-foreground mb-4">
               {student.instrument}
             </p>
-            
+
             <div className="space-y-2">
               <Link href={`/students/${student.id}`} className="block">
                 <Button variant="secondary" size="sm" className="w-full">
                   View Profile
                 </Button>
               </Link>
-              <Link href={`/lessons/new?studentId=${student.id}`} className="block">
+              <Link
+                href={`/lessons/new?studentId=${student.id}`}
+                className="block"
+              >
                 <Button size="sm" className="w-full">
                   New Lesson
                 </Button>
