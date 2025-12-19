@@ -240,20 +240,6 @@ export function StudentSettingsForm({
         </button>
       </div>
 
-      {/* Messages */}
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
-          <AlertCircle className="h-5 w-5 text-red-500" />
-          <span className="text-red-700">{error}</span>
-        </div>
-      )}
-
-      {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <span className="text-green-700">{success}</span>
-        </div>
-      )}
-
       {/* Profile Tab */}
       {activeTab === "profile" && (
         <div className="space-y-6">
@@ -363,6 +349,20 @@ export function StudentSettingsForm({
                 </p>
               </div>
 
+              {/* Messages */}
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                  <span className="text-red-700">{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <span className="text-green-700">{success}</span>
+                </div>
+              )}
+
               {/* Submit */}
               <Button type="submit" disabled={isLoading} className="w-full">
                 <Save className="h-4 w-4 mr-2" />
@@ -420,6 +420,19 @@ export function StudentSettingsForm({
                 required
               />
             </div>
+            {/* Messages */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <span className="text-red-700">{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <span className="text-green-700">{success}</span>
+              </div>
+            )}
 
             <Button type="submit" disabled={isLoading} className="w-full">
               <Key className="h-4 w-4 mr-2" />

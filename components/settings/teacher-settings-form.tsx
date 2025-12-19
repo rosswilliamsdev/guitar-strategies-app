@@ -1,21 +1,39 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Save, Key, User, Calendar, Clock, Settings2, CalendarDays, DollarSign, Mail } from "lucide-react";
-import { teacherProfileSchema, passwordChangeSchema, timezoneSchema } from "@/lib/validations";
-import { EmailPreferences, type EmailPreference } from "@/components/settings/email-preferences";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertCircle,
+  Save,
+  Key,
+  User,
+  Clock,
+  Settings2,
+  CalendarDays,
+  DollarSign,
+  Mail,
+} from "lucide-react";
+import { teacherProfileSchema, passwordChangeSchema } from "@/lib/validations";
+import {
+  EmailPreferences,
+  type EmailPreference,
+} from "@/components/settings/email-preferences";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
 import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
-import { log, emailLog, invoiceLog } from '@/lib/logger';
+import { log } from "@/lib/logger";
 
 // Common US timezones
 const TIMEZONE_OPTIONS = [
@@ -52,44 +70,63 @@ interface TeacherSettingsFormProps {
   emailPreferences?: EmailPreference[];
 }
 
-export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [] }: TeacherSettingsFormProps) {
-  const router = useRouter();
+export function TeacherSettingsForm({
+  user,
+  teacherProfile,
+  emailPreferences = [],
+}: TeacherSettingsFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<'profile' | 'availability' | 'lesson-settings' | 'password' | 'email'>('profile');
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "availability" | "lesson-settings" | "password" | "email"
+  >("profile");
 
   // Profile form state
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [bio, setBio] = useState(teacherProfile.bio || "");
-  const [timezone, setTimezone] = useState(teacherProfile.timezone || "America/New_York");
-  const [phoneNumber, setPhoneNumber] = useState(teacherProfile.phoneNumber || "");
-  
+  const [timezone, setTimezone] = useState(
+    teacherProfile.timezone || "America/New_York"
+  );
+  const [phoneNumber, setPhoneNumber] = useState(
+    teacherProfile.phoneNumber || ""
+  );
+
   // Payment method fields
-  const [venmoHandle, setVenmoHandle] = useState(teacherProfile.venmoHandle || "");
-  const [paypalEmail, setPaypalEmail] = useState(teacherProfile.paypalEmail || "");
+  const [venmoHandle, setVenmoHandle] = useState(
+    teacherProfile.venmoHandle || ""
+  );
+  const [paypalEmail, setPaypalEmail] = useState(
+    teacherProfile.paypalEmail || ""
+  );
   const [zelleEmail, setZelleEmail] = useState(teacherProfile.zelleEmail || "");
 
   // Organization fields
-  const [isSoloTeacher, setIsSoloTeacher] = useState(teacherProfile.isSoloTeacher || false);
-  const [isOrgFounder, setIsOrgFounder] = useState(teacherProfile.isOrgFounder || false);
-  const [organizationName, setOrganizationName] = useState(teacherProfile.organizationName || "");
+  const [isSoloTeacher, setIsSoloTeacher] = useState(
+    teacherProfile.isSoloTeacher || false
+  );
+  const [isOrgFounder, setIsOrgFounder] = useState(
+    teacherProfile.isOrgFounder || false
+  );
+  const [organizationName, setOrganizationName] = useState(
+    teacherProfile.organizationName || ""
+  );
 
   // Load current profile data
   const loadProfileData = async () => {
     try {
-      log.info('Loading profile data...');
-      const response = await fetch('/api/settings/teacher', {
-        credentials: 'include',
+      log.info("Loading profile data...");
+      const response = await fetch("/api/settings/teacher", {
+        credentials: "include",
       });
-      log.info('Profile data response', {
+      log.info("Profile data response", {
         status: response.status,
-        ok: response.ok
+        ok: response.ok,
       });
       if (response.ok) {
         const data = await response.json();
-        log.info('Loaded profile data from API', { data });
+        log.info("Loaded profile data from API", { data });
         setName(data.name || "");
         setEmail(data.email || "");
         setBio(data.bio || "");
@@ -101,17 +138,17 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         setIsSoloTeacher(data.isSoloTeacher || false);
         setIsOrgFounder(data.isOrgFounder || false);
         setOrganizationName(data.organizationName || "");
-        log.info('Profile state updated with new data');
+        log.info("Profile state updated with new data");
       } else {
-        log.error('Failed to load profile data', {
+        log.error("Failed to load profile data", {
           status: response.status,
-          statusText: response.statusText
+          statusText: response.statusText,
         });
       }
     } catch (error) {
-      log.error('Error loading profile data:', {
+      log.error("Error loading profile data:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     }
   };
@@ -122,26 +159,34 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   const [confirmPassword, setConfirmPassword] = useState("");
 
   // Email preferences handler
-  const handleEmailPreferencesUpdate = async (preferences: EmailPreference[]): Promise<boolean> => {
+  const handleEmailPreferencesUpdate = async (
+    preferences: EmailPreference[]
+  ): Promise<boolean> => {
     try {
-      const response = await fetch('/api/settings/email-preferences', {
-        method: 'PUT',
+      const response = await fetch("/api/settings/email-preferences", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ preferences }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update email preferences');
+        throw new Error(
+          errorData.error || "Failed to update email preferences"
+        );
       }
 
       setSuccess("Email preferences updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
       return true;
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to update email preferences");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update email preferences"
+      );
       setTimeout(() => setError(""), 5000);
       return false;
     }
@@ -165,7 +210,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
 
   // Load scheduling data when availability-related tabs are selected
   useEffect(() => {
-    if (activeTab === 'availability' || activeTab === 'lesson-settings') {
+    if (activeTab === "availability" || activeTab === "lesson-settings") {
       loadSchedulingData();
     }
   }, [activeTab]);
@@ -173,46 +218,49 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   const loadSchedulingData = async () => {
     setSchedulingLoading(true);
     try {
-      log.info('Loading scheduling data...');
+      log.info("Loading scheduling data...");
 
       // Load availability with aggressive cache-busting
       const timestamp = Date.now();
-      const availabilityResponse = await fetch(`/api/teacher/availability?t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0',
-        },
-      });
+      const availabilityResponse = await fetch(
+        `/api/teacher/availability?t=${timestamp}`,
+        {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }
+      );
 
-      log.info('Availability response received', {
+      log.info("Availability response received", {
         status: availabilityResponse.status,
-        ok: availabilityResponse.ok
+        ok: availabilityResponse.ok,
       });
 
       if (availabilityResponse.ok) {
         const availabilityData = await availabilityResponse.json();
-        log.info('Availability data parsed', {
+        log.info("Availability data parsed", {
           slotCount: availabilityData.data?.availability?.length || 0,
-          slots: availabilityData.data?.availability
+          slots: availabilityData.data?.availability,
         });
         setAvailability(availabilityData.data?.availability || []);
       } else {
         const errorText = await availabilityResponse.text();
-        log.error('Failed to load availability:', {
+        log.error("Failed to load availability:", {
           status: availabilityResponse.status,
           error: errorText,
-          statusText: availabilityResponse.statusText
+          statusText: availabilityResponse.statusText,
         });
-        setError('Failed to load availability data');
+        setError("Failed to load availability data");
       }
 
       // Load lesson settings
-      const settingsResponse = await fetch('/api/teacher/lesson-settings', {
-        cache: 'no-store',
+      const settingsResponse = await fetch("/api/teacher/lesson-settings", {
+        cache: "no-store",
         headers: {
-          'Cache-Control': 'no-cache',
+          "Cache-Control": "no-cache",
         },
       });
 
@@ -221,11 +269,11 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         setLessonSettings(settingsData.settings);
       }
 
-      log.info('Scheduling data loaded successfully');
+      log.info("Scheduling data loaded successfully");
     } catch (error) {
-      log.error('Error loading scheduling data:', {
+      log.error("Error loading scheduling data:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
       setSchedulingLoading(false);
@@ -236,49 +284,49 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
     try {
       setSchedulingLoading(true);
 
-      log.info('Saving availability...', {
+      log.info("Saving availability...", {
         slotCount: newAvailability.length,
-        slots: newAvailability
+        slots: newAvailability,
       });
 
-      const response = await fetch('/api/teacher/availability', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/teacher/availability", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ availability: newAvailability }),
       });
 
-      log.info('Availability save response', {
+      log.info("Availability save response", {
         status: response.status,
         ok: response.ok,
-        statusText: response.statusText
+        statusText: response.statusText,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        log.error('Availability save failed', {
+        log.error("Availability save failed", {
           status: response.status,
-          error: errorData
+          error: errorData,
         });
-        throw new Error(errorData.error || 'Failed to save availability');
+        throw new Error(errorData.error || "Failed to save availability");
       }
 
       const data = await response.json();
 
-      log.info('Availability saved successfully', {
+      log.info("Availability saved successfully", {
         returnedSlots: data.data?.availability?.length || 0,
-        data: data
+        data: data,
       });
 
       setAvailability(data.data?.availability || []);
-      setSuccess('Availability saved successfully!');
-      setError('');
+      setSuccess("Availability saved successfully!");
+      setError("");
     } catch (error: any) {
-      log.error('Error saving availability', {
+      log.error("Error saving availability", {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
-      setError(error.message || 'Failed to save availability');
-      setSuccess('');
+      setError(error.message || "Failed to save availability");
+      setSuccess("");
     } finally {
       setSchedulingLoading(false);
     }
@@ -287,29 +335,28 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
   const handleSaveLessonSettings = async (newSettings: any) => {
     try {
       setSchedulingLoading(true);
-      const response = await fetch('/api/teacher/lesson-settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/teacher/lesson-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newSettings),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save lesson settings');
+        throw new Error(errorData.error || "Failed to save lesson settings");
       }
 
       const data = await response.json();
       setLessonSettings(data.settings);
-      setSuccess('Lesson settings saved successfully!');
-      setError('');
+      setSuccess("Lesson settings saved successfully!");
+      setError("");
     } catch (error: any) {
-      setError(error.message || 'Failed to save lesson settings');
-      setSuccess('');
+      setError(error.message || "Failed to save lesson settings");
+      setSuccess("");
     } finally {
       setSchedulingLoading(false);
     }
   };
-
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -331,47 +378,47 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         zelleEmail: zelleEmail.trim() === "" ? null : zelleEmail,
       };
 
-      log.info('Submitting teacher profile update', { formData });
+      log.info("Submitting teacher profile update", { formData });
 
       const validatedData = teacherProfileSchema.parse(formData);
 
-      log.info('Validated data', { validatedData });
+      log.info("Validated data", { validatedData });
 
-      const response = await fetch('/api/settings/teacher', {
-        method: 'PUT',
+      const response = await fetch("/api/settings/teacher", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(validatedData),
       });
 
-      log.info('API response', {
+      log.info("API response", {
         status: response.status,
-        ok: response.ok
+        ok: response.ok,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        log.error('Profile update failed', { errorData });
-        throw new Error(errorData.error || 'Failed to update profile');
+        log.error("Profile update failed", { errorData });
+        throw new Error(errorData.error || "Failed to update profile");
       }
 
       const responseData = await response.json();
-      log.info('Profile update successful', { responseData });
+      log.info("Profile update successful", { responseData });
 
       setSuccess("Profile updated successfully!");
 
       // Reload the profile data to show updated values
-      log.info('Reloading profile data after save...');
+      log.info("Reloading profile data after save...");
       await loadProfileData();
 
       // Don't call router.refresh() - it reloads the entire page and resets form state
       // The loadProfileData() call above already updated the form state
-      log.info('Profile update complete');
+      log.info("Profile update complete");
     } catch (error) {
-      log.error('Profile update error', {
+      log.error("Profile update error", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       if (error instanceof Error) {
         setError(error.message);
@@ -399,10 +446,10 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
 
       const validatedData = passwordChangeSchema.parse(formData);
 
-      const response = await fetch('/api/settings/password', {
-        method: 'PUT',
+      const response = await fetch("/api/settings/password", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           currentPassword: validatedData.currentPassword,
@@ -412,7 +459,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update password');
+        throw new Error(errorData.error || "Failed to update password");
       }
 
       setSuccess("Password updated successfully!");
@@ -435,55 +482,55 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       {/* Tabs */}
       <div className="flex flex-wrap gap-1 bg-muted p-1 rounded-lg">
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => setActiveTab("profile")}
           className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'profile'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "profile"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <User className="h-4 w-4" />
           <span className="hidden sm:inline">Profile</span>
         </button>
         <button
-          onClick={() => setActiveTab('availability')}
+          onClick={() => setActiveTab("availability")}
           className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'availability'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "availability"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <CalendarDays className="h-4 w-4" />
           <span className="hidden sm:inline">Availability</span>
         </button>
         <button
-          onClick={() => setActiveTab('lesson-settings')}
+          onClick={() => setActiveTab("lesson-settings")}
           className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'lesson-settings'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "lesson-settings"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Settings2 className="h-4 w-4" />
           <span className="hidden sm:inline">Lessons</span>
         </button>
         <button
-          onClick={() => setActiveTab('password')}
+          onClick={() => setActiveTab("password")}
           className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'password'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "password"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Key className="h-4 w-4" />
           <span className="hidden sm:inline">Password</span>
         </button>
         <button
-          onClick={() => setActiveTab('email')}
+          onClick={() => setActiveTab("email")}
           className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'email'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            activeTab === "email"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
           }`}
         >
           <Mail className="h-4 w-4" />
@@ -491,26 +538,14 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
         </button>
       </div>
 
-      {/* Messages */}
-      {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
-          <AlertCircle className="h-5 w-5 text-red-500" />
-          <span className="text-red-700">{error}</span>
-        </div>
-      )}
-
-      {success && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-          <span className="text-green-700">{success}</span>
-        </div>
-      )}
-
       {/* Profile Tab */}
-      {activeTab === 'profile' && (
+      {activeTab === "profile" && (
         <Card className="p-6">
           <div className="flex items-center space-x-2 mb-6">
             <User className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-lg font-semibold text-foreground">Profile Information</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              Profile Information
+            </h3>
           </div>
 
           <form onSubmit={handleProfileSubmit} className="space-y-6">
@@ -615,17 +650,22 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
                   <div className="bg-turquoise-50 border border-turquoise-200 rounded-lg p-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="text-2xl">✓</span>
-                      <h4 className="font-semibold text-turquoise-900">Solo Teacher</h4>
+                      <h4 className="font-semibold text-turquoise-900">
+                        Solo Teacher
+                      </h4>
                     </div>
                     <p className="text-sm text-turquoise-800">
-                      You have full administrative access to manage students, billing, and all system features.
+                      You have full administrative access to manage students,
+                      billing, and all system features.
                     </p>
                   </div>
                 ) : isOrgFounder ? (
                   <div className="bg-turquoise-50 border border-turquoise-200 rounded-lg p-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <span className="text-2xl">👑</span>
-                      <h4 className="font-semibold text-turquoise-900">Organization Founder</h4>
+                      <h4 className="font-semibold text-turquoise-900">
+                        Organization Founder
+                      </h4>
                     </div>
                     {organizationName && (
                       <p className="text-sm text-turquoise-800 mb-2">
@@ -633,13 +673,17 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
                       </p>
                     )}
                     <p className="text-sm text-turquoise-800">
-                      You have full administrative access to manage your organization, teachers, students, billing, and all system features.
+                      You have full administrative access to manage your
+                      organization, teachers, students, billing, and all system
+                      features.
                     </p>
                   </div>
                 ) : (
                   <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
                     <div className="mb-2">
-                      <h4 className="font-semibold text-neutral-900">Organization Teacher</h4>
+                      <h4 className="font-semibold text-neutral-900">
+                        Organization Teacher
+                      </h4>
                     </div>
                     {organizationName ? (
                       <div className="space-y-1">
@@ -647,7 +691,8 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
                           <strong>Organization:</strong> {organizationName}
                         </p>
                         <p className="text-xs text-neutral-600 mt-2">
-                          Organization affiliation was set during signup and cannot be changed.
+                          Organization affiliation was set during signup and
+                          cannot be changed.
                         </p>
                       </div>
                     ) : (
@@ -660,7 +705,9 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
 
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <p className="text-xs text-amber-800">
-                    <strong>Note:</strong> Organization status cannot be changed after signup. If you need to update this, please contact support.
+                    <strong>Note:</strong> Organization status cannot be changed
+                    after signup. If you need to update this, please contact
+                    support.
                   </p>
                 </div>
               </div>
@@ -686,7 +733,9 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
                 <div>
                   <Label htmlFor="venmoHandle">Venmo Username</Label>
                   <div className="relative mt-2">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">
+                      @
+                    </span>
                     <Input
                       id="venmoHandle"
                       value={venmoHandle}
@@ -730,18 +779,32 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
                 </div>
               </div>
 
-              {(!venmoHandle && !paypalEmail && !zelleEmail) && (
+              {!venmoHandle && !paypalEmail && !zelleEmail && (
                 <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <h4 className="font-medium text-orange-900 mb-2">
                     Add Payment Methods
                   </h4>
                   <p className="text-sm text-orange-800">
-                    Add at least one payment method so students know how to pay you. 
-                    These will be automatically included on your invoices.
+                    Add at least one payment method so students know how to pay
+                    you. These will be automatically included on your invoices.
                   </p>
                 </div>
               )}
             </div>
+
+            {/* Messages */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <span className="text-red-700">{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <span className="text-green-700">{success}</span>
+              </div>
+            )}
 
             {/* Submit */}
             <Button type="submit" disabled={isLoading} className="w-full">
@@ -753,11 +816,13 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       )}
 
       {/* Password Tab */}
-      {activeTab === 'password' && (
+      {activeTab === "password" && (
         <Card className="p-6">
           <div className="flex items-center space-x-2 mb-6">
             <Key className="h-5 w-5 text-muted-foreground" />
-            <h3 className="text-lg font-semibold text-foreground">Change Password</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              Change Password
+            </h3>
           </div>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-6">
@@ -798,6 +863,20 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
               />
             </div>
 
+            {/* Messages */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <span className="text-red-700">{error}</span>
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <span className="text-green-700">{success}</span>
+              </div>
+            )}
+
             <Button type="submit" disabled={isLoading} className="w-full">
               <Key className="h-4 w-4 mr-2" />
               {isLoading ? "Updating..." : "Update Password"}
@@ -807,7 +886,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       )}
 
       {/* Availability Tab */}
-      {activeTab === 'availability' && (
+      {activeTab === "availability" && (
         <Card className="p-6">
           <WeeklyScheduleGrid
             key={`availability-${availability?.length || 0}`}
@@ -819,7 +898,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       )}
 
       {/* Lesson Settings Tab */}
-      {activeTab === 'lesson-settings' && (
+      {activeTab === "lesson-settings" && (
         <Card className="p-6">
           <LessonSettingsForm
             settings={lessonSettings}
@@ -830,7 +909,7 @@ export function TeacherSettingsForm({ user, teacherProfile, emailPreferences = [
       )}
 
       {/* Email Preferences Tab */}
-      {activeTab === 'email' && (
+      {activeTab === "email" && (
         <EmailPreferences
           preferences={emailPreferences}
           onUpdate={handleEmailPreferencesUpdate}
