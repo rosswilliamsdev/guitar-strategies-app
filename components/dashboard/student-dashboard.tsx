@@ -108,29 +108,48 @@ export function StudentDashboard({
           <div className="space-y-3">
             {recentLessons.length > 0 ? (
               recentLessons.slice(0, 4).map((lesson) => (
-                <div
+                <Link
                   key={lesson.id}
-                  className="flex items-start justify-between py-2 border-b border-border last:border-b-0"
+                  href={`/lessons/${lesson.id}`}
+                  className="block hover:bg-muted/50 rounded-md px-2 py-1 -mx-2 -my-1 transition-colors"
                 >
-                  <div className="flex-1">
-                    <p className="font-medium text-foreground text-sm">
-                      {lesson.date}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {lesson.duration} minutes • {lesson.status.toLowerCase()}
-                    </p>
-                    {lesson.notes && (
-                      <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        {lesson.notes}
-                      </div>
-                    )}
-                  </div>
-                  {lesson.homework && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                      homework
+                  <div className="flex items-center justify-between py-2 border-b border-border last:border-b-0">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground text-sm">
+                        {lesson.date}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {lesson.duration} min
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        lesson.status === "COMPLETED"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : lesson.status === "SCHEDULED"
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "bg-gray-50 text-gray-700 border border-gray-200"
+                      }`}
+                    >
+                      {lesson.status.toLowerCase()}
                     </span>
-                  )}
-                </div>
+                  </div>
+                </Link>
+
+                //
+                // <div
+                //   key={lesson.id}
+                //   className="flex items-start justify-between py-2 border-b border-border last:border-b-0"
+                // >
+                //   <div className="flex-1">
+                //     <p className="font-medium text-foreground text-sm">
+                //       {lesson.date}
+                //     </p>
+                //     <p className="text-xs text-muted-foreground">
+                //       {lesson.duration} minutes • {lesson.status.toLowerCase()}
+                //     </p>
+                //   </div>
+                // </div>
               ))
             ) : (
               <p className="text-muted-foreground text-sm py-4 text-center">
