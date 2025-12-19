@@ -120,9 +120,9 @@ export function StudentDashboard({
                       {lesson.duration} minutes • {lesson.status.toLowerCase()}
                     </p>
                     {lesson.notes && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {lesson.notes}
-                      </p>
+                      </div>
                     )}
                   </div>
                   {lesson.homework && (
@@ -135,8 +135,6 @@ export function StudentDashboard({
             ) : (
               <p className="text-muted-foreground text-sm py-4 text-center">
                 No lessons completed yet.
-                <br />
-                <p>Contact your teacher to schedule lessons.</p>
               </p>
             )}
           </div>
