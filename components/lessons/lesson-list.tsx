@@ -21,7 +21,6 @@ import {
   FileText,
   Search,
   CalendarDays,
-  X,
   AlertCircle,
   ArrowUpDown,
 } from "lucide-react";
@@ -33,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log, schedulerLog } from "@/lib/logger";
+import { log} from "@/lib/logger";
 
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
