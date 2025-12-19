@@ -3,13 +3,9 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
-  Calendar,
-  Clock,
-  User,
   FileText,
   Paperclip,
   ExternalLink,
@@ -71,13 +67,6 @@ interface LessonDetailsProps {
   userId: string;
   canEdit: boolean;
 }
-
-// Utility function to strip HTML tags and return plain text
-const stripHtml = (html: string): string => {
-  const tmp = document.createElement("DIV");
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || "";
-};
 
 export function LessonDetails({
   lessonId,
@@ -194,7 +183,7 @@ export function LessonDetails({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">
-            Lesson with {lesson.student.user.name}
+            Lesson with {lesson.teacher.user.name}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {format(new Date(lesson.date), "PPp")} • {lesson.duration} min
