@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { createInvoiceSchema } from "@/lib/validations";
 import type { StudentProfile, User, Lesson } from "@/types";
-import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
+import { log, emailLog, invoiceLog, schedulerLog } from "@/lib/logger";
 
 interface InvoiceFormProps {
   teacherId: string;
@@ -77,7 +77,7 @@ export function InvoiceForm({
     format(addDays(new Date(), 14), "yyyy-MM-dd")
   );
   const [notes, setNotes] = useState("");
-  
+
   // Custom invoice fields
   const [customFullName, setCustomFullName] = useState("");
   const [customEmail, setCustomEmail] = useState("");
@@ -104,10 +104,10 @@ export function InvoiceForm({
           }
         }
       } catch (error) {
-        log.error('Error loading teacher rate:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        log.error("Error loading teacher rate:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     };
 
@@ -125,8 +125,10 @@ export function InvoiceForm({
     setLoadingLessons(true);
     try {
       // Parse the selected month (YYYY-MM format) properly to avoid timezone issues
-      const [year, month] = selectedMonth.split('-');
-      const startDate = startOfMonth(new Date(parseInt(year), parseInt(month) - 1, 1));
+      const [year, month] = selectedMonth.split("-");
+      const startDate = startOfMonth(
+        new Date(parseInt(year), parseInt(month) - 1, 1)
+      );
       const endDate = endOfMonth(startDate);
 
       const response = await fetch(
@@ -135,7 +137,9 @@ export function InvoiceForm({
 
       if (response.ok) {
         const data = await response.json();
-        const lessons: Lesson[] = Array.isArray(data.lessons) ? data.lessons : [];
+        const lessons: Lesson[] = Array.isArray(data.lessons)
+          ? data.lessons
+          : [];
         const lessonItems = lessons.map((lesson) => ({
           id: lesson.id,
           date: new Date(lesson.date),
@@ -169,9 +173,9 @@ export function InvoiceForm({
         setItems(invoiceItems);
       }
     } catch (error) {
-      log.error('Error loading lessons:', {
+      log.error("Error loading lessons:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
       setLoadingLessons(false);
@@ -266,7 +270,7 @@ export function InvoiceForm({
     try {
       // Skip Zod validation and send data directly to API
       // The API will handle its own validation
-      
+
       // Prepare the request body
       const requestBody: any = {
         month: selectedMonth,
@@ -281,7 +285,7 @@ export function InvoiceForm({
         })),
         notes,
       };
-      
+
       // Add either studentId or custom invoice fields
       if (selectedStudentId === "custom") {
         requestBody.customFullName = customFullName;
@@ -360,7 +364,9 @@ export function InvoiceForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="custom">
-                  <span className="font-medium">Custom Invoice (Non-System Student)</span>
+                  <span className="font-medium">
+                    Custom Invoice (Non-System Student)
+                  </span>
                 </SelectItem>
                 <Separator className="my-1" />
                 {students.map((student) => (
@@ -375,7 +381,6 @@ export function InvoiceForm({
           <div>
             <Label htmlFor="month">Month *</Label>
             <div className="relative mt-2">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 id="month"
                 type="month"
@@ -387,7 +392,7 @@ export function InvoiceForm({
             </div>
           </div>
         </div>
-        
+
         {/* Custom Invoice Fields */}
         {selectedStudentId === "custom" && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -421,7 +426,6 @@ export function InvoiceForm({
         <div>
           <Label htmlFor="dueDate">Due Date *</Label>
           <div className="relative mt-2">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               id="dueDate"
               type="date"
@@ -434,58 +438,63 @@ export function InvoiceForm({
         </div>
 
         {/* Lesson Selection */}
-        {selectedStudentId && selectedStudentId !== "custom" && selectedMonth && (
-          <>
-            <Separator />
-            <div>
-              <h4 className="font-medium text-foreground mb-4">
-                Lessons for {selectedStudent?.user.name} -{" "}
-                {format(new Date(selectedMonth + "-01"), "MMMM yyyy")}
-              </h4>
+        {selectedStudentId &&
+          selectedStudentId !== "custom" &&
+          selectedMonth && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-medium text-foreground mb-4">
+                  Lessons for {selectedStudent?.user.name} -{" "}
+                  {format(new Date(selectedMonth + "-01"), "MMMM yyyy")}
+                </h4>
 
-              {loadingLessons ? (
-                <div className="text-center py-4 text-muted-foreground">
-                  Loading lessons...
-                </div>
-              ) : availableLessons.length > 0 ? (
-                <div className="space-y-2 mb-4">
-                  {availableLessons.map((lesson) => (
-                    <div
-                      key={lesson.id}
-                      className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg"
-                    >
-                      <Checkbox
-                        checked={lesson.selected}
-                        onCheckedChange={() => toggleLessonSelection(lesson.id)}
-                      />
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">
-                          {format(lesson.date, "MMM d, yyyy")} -{" "}
-                          {lesson.duration} minutes
-                        </p>
-                        {lesson.notes && (
-                          <p className="text-xs text-muted-foreground">
-                            {lesson.notes}
+                {loadingLessons ? (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Loading lessons...
+                  </div>
+                ) : availableLessons.length > 0 ? (
+                  <div className="space-y-2 mb-4">
+                    {availableLessons.map((lesson) => (
+                      <div
+                        key={lesson.id}
+                        className="flex items-center space-x-3 p-3 bg-muted/30 rounded-lg"
+                      >
+                        <Checkbox
+                          checked={lesson.selected}
+                          onCheckedChange={() =>
+                            toggleLessonSelection(lesson.id)
+                          }
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">
+                            {format(lesson.date, "MMM d, yyyy")} -{" "}
+                            {lesson.duration} minutes
                           </p>
-                        )}
+                          {lesson.notes && (
+                            <p className="text-xs text-muted-foreground">
+                              {lesson.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          $
+                          {(
+                            ((hourlyRate / 60) * lesson.duration) /
+                            100
+                          ).toFixed(2)}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        $
-                        {(((hourlyRate / 60) * lesson.duration) / 100).toFixed(
-                          2
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  No scheduled lessons found for this month.
-                </div>
-              )}
-            </div>
-          </>
-        )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    No scheduled lessons found for this month.
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
         {/* Invoice Items */}
         <Separator />
