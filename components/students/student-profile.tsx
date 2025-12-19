@@ -16,7 +16,6 @@ import {
   DollarSign,
   Clock,
   ChevronRight,
-  X,
   CalendarClock,
   AlertCircle,
 } from "lucide-react";
@@ -28,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log, emailLog, invoiceLog, schedulerLog } from "@/lib/logger";
+import { log } from "@/lib/logger";
 
 interface StudentData {
   student: {
@@ -646,7 +645,6 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
             </Button>
             <Button
               variant={"destructive"}
-              
               onClick={() =>
                 confirmCancelLesson && handleCancelLesson(confirmCancelLesson)
               }
