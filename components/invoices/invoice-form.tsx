@@ -22,13 +22,11 @@ import {
   Plus,
   Trash2,
   FileText,
-  Calendar,
   DollarSign,
   User as UserIcon,
 } from "lucide-react";
-import { createInvoiceSchema } from "@/lib/validations";
 import type { StudentProfile, User, Lesson } from "@/types";
-import { log, emailLog, invoiceLog, schedulerLog } from "@/lib/logger";
+import { log } from "@/lib/logger";
 
 interface InvoiceFormProps {
   teacherId: string;
