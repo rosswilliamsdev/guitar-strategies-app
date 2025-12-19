@@ -319,6 +319,7 @@ export function TeacherSettingsForm({
 
       setAvailability(data.data?.availability || []);
       setSuccess("Availability saved successfully!");
+      setTimeout(() => setSuccess(""), 3000);
       setError("");
     } catch (error: any) {
       log.error("Error saving availability", {
@@ -326,6 +327,7 @@ export function TeacherSettingsForm({
         stack: error.stack,
       });
       setError(error.message || "Failed to save availability");
+      setTimeout(() => setError(""), 5000);
       setSuccess("");
     } finally {
       setSchedulingLoading(false);
@@ -349,9 +351,11 @@ export function TeacherSettingsForm({
       const data = await response.json();
       setLessonSettings(data.settings);
       setSuccess("Lesson settings saved successfully!");
+      setTimeout(() => setSuccess(""), 3000);
       setError("");
     } catch (error: any) {
       setError(error.message || "Failed to save lesson settings");
+      setTimeout(() => setError(""), 5000);
       setSuccess("");
     } finally {
       setSchedulingLoading(false);
@@ -407,6 +411,7 @@ export function TeacherSettingsForm({
       log.info("Profile update successful", { responseData });
 
       setSuccess("Profile updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
 
       // Reload the profile data to show updated values
       log.info("Reloading profile data after save...");
@@ -425,6 +430,7 @@ export function TeacherSettingsForm({
       } else {
         setError("An unexpected error occurred");
       }
+      setTimeout(() => setError(""), 5000);
     } finally {
       setIsLoading(false);
     }
@@ -463,6 +469,7 @@ export function TeacherSettingsForm({
       }
 
       setSuccess("Password updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -472,6 +479,7 @@ export function TeacherSettingsForm({
       } else {
         setError("An unexpected error occurred");
       }
+      setTimeout(() => setError(""), 5000);
     } finally {
       setIsLoading(false);
     }

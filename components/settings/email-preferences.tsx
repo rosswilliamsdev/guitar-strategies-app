@@ -14,6 +14,8 @@ import {
   Trophy,
   AlertTriangle,
   Info,
+  AlertCircle,
+  Save,
 } from "lucide-react";
 
 export type EmailPreference = {
@@ -93,6 +95,8 @@ export function EmailPreferences({
 }: EmailPreferencesProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [localPreferences, setLocalPreferences] = useState(preferences);
+  const [success, setSuccess] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   // Sync local state when preferences prop changes
   useEffect(() => {
@@ -137,8 +141,21 @@ export function EmailPreferences({
 
   const handleSave = async () => {
     setIsLoading(true);
+    setSuccess("");
+    setError("");
+
     try {
-      await onUpdate(localPreferences);
+      const result = await onUpdate(localPreferences);
+      if (result) {
+        setSuccess("Email preferences saved successfully!");
+        setTimeout(() => setSuccess(""), 3000);
+      } else {
+        setError("Failed to save email preferences");
+        setTimeout(() => setError(""), 5000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to save email preferences");
+      setTimeout(() => setError(""), 5000);
     } finally {
       setIsLoading(false);
     }
@@ -221,8 +238,24 @@ export function EmailPreferences({
       </div>
 
       <div className="mt-6 pt-4 border-t">
-        <div className="flex items-center justify-end">
-          <Button onClick={handleSave} disabled={isLoading} size="sm">
+        <div className="space-y-4">
+          {/* Messages */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <span className="text-red-700">{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <span className="text-green-700">{success}</span>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <Button onClick={handleSave} disabled={isLoading} className="w-full">
+            <Save className="h-4 w-4 mr-2" />
             {isLoading ? "Saving..." : "Save Preferences"}
           </Button>
         </div>

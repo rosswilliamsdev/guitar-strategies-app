@@ -13,7 +13,7 @@ import {
   CheckSquare,
 } from "lucide-react";
 import { YouTubeEmbed } from "@/components/ui/youtube-embed";
-import { log } from '@/lib/logger';
+import { log } from "@/lib/logger";
 
 interface Lesson {
   id: string;
@@ -92,7 +92,7 @@ export function LessonDetails({
         }
         const data = await response.json();
         setLesson(data.lesson);
-        
+
         // Fetch checklist item details if they exist
         if (data.lesson.checklistItems) {
           try {
@@ -102,14 +102,18 @@ export function LessonDetails({
                 itemIds.map(async (itemId: string) => {
                   try {
                     // Try student checklist item first
-                    const checklistResponse = await fetch(`/api/student-checklists/items/${itemId}`);
+                    const checklistResponse = await fetch(
+                      `/api/student-checklists/items/${itemId}`
+                    );
                     if (checklistResponse.ok) {
                       const itemData = await checklistResponse.json();
                       return itemData.item;
                     }
 
                     // If not found, try curriculum item
-                    const curriculumResponse = await fetch(`/api/curriculums/items/${itemId}`);
+                    const curriculumResponse = await fetch(
+                      `/api/curriculums/items/${itemId}`
+                    );
                     if (curriculumResponse.ok) {
                       const itemData = await curriculumResponse.json();
                       return itemData.item;
@@ -121,7 +125,7 @@ export function LessonDetails({
                   } catch (err) {
                     log.error(`Error fetching checklist item ${itemId}:`, {
                       error: err instanceof Error ? err.message : String(err),
-                      stack: err instanceof Error ? err.stack : undefined
+                      stack: err instanceof Error ? err.stack : undefined,
                     });
                     return null;
                   }
@@ -129,22 +133,28 @@ export function LessonDetails({
               );
 
               // Filter out any null responses and set valid items
-              const validItems = checklistItemsData.filter((item): item is ChecklistItem => item !== null && item !== undefined);
+              const validItems = checklistItemsData.filter(
+                (item): item is ChecklistItem =>
+                  item !== null && item !== undefined
+              );
               setChecklistItems(validItems);
             }
           } catch (parseError) {
-            log.error('Error parsing checklist items:', {
-        error: parseError instanceof Error ? parseError.message : String(parseError),
-        stack: parseError instanceof Error ? parseError.stack : undefined
-      });
+            log.error("Error parsing checklist items:", {
+              error:
+                parseError instanceof Error
+                  ? parseError.message
+                  : String(parseError),
+              stack: parseError instanceof Error ? parseError.stack : undefined,
+            });
           }
         }
       } catch (error) {
         setError("Failed to load lesson details");
-        log.error('Error fetching lesson:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        log.error("Error fetching lesson:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       } finally {
         setLoading(false);
       }
@@ -222,8 +232,8 @@ export function LessonDetails({
           </div>
           <div className="space-y-2">
             {checklistItems.map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="flex items-start space-x-3 px-3 py-2 bg-turquoise-50 border border-turquoise-200 rounded-lg"
               >
                 <CheckSquare className="h-4 w-4 text-turquoise-600 mt-0.5 flex-shrink-0" />
@@ -242,7 +252,8 @@ export function LessonDetails({
           </div>
           <div className="mt-4 p-3 bg-turquoise-50 border border-turquoise-200 rounded-lg">
             <p className="text-sm text-turquoise-700">
-              <span className="font-semibold">{checklistItems.length}</span> checklist item(s) were completed during this lesson.
+              <span className="font-semibold">{checklistItems.length}</span>{" "}
+              checklist item(s) were completed during this lesson.
             </p>
           </div>
         </Card>

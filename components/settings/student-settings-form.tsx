@@ -142,6 +142,7 @@ export function StudentSettingsForm({
       }
 
       setSuccess("Profile updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
       router.refresh();
     } catch (error) {
       if (error instanceof Error) {
@@ -149,6 +150,7 @@ export function StudentSettingsForm({
       } else {
         setError("An unexpected error occurred");
       }
+      setTimeout(() => setError(""), 5000);
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +189,7 @@ export function StudentSettingsForm({
       }
 
       setSuccess("Password updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -196,6 +199,7 @@ export function StudentSettingsForm({
       } else {
         setError("An unexpected error occurred");
       }
+      setTimeout(() => setError(""), 5000);
     } finally {
       setIsLoading(false);
     }

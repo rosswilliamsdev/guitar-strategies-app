@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react"
-import { Plus, Trash2, Copy, Save } from "lucide-react"
-import { TimePicker } from "@/components/ui/time-picker"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { availabilitySchema } from "@/lib/validations"
-import type { z } from "zod"
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Copy, Save, AlertCircle } from "lucide-react";
+import { TimePicker } from "@/components/ui/time-picker";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { availabilitySchema } from "@/lib/validations";
+import type { z } from "zod";
 
-type AvailabilitySlot = z.infer<typeof availabilitySchema>
+type AvailabilitySlot = z.infer<typeof availabilitySchema>;
 
 interface WeeklyScheduleGridProps {
-  availability?: AvailabilitySlot[]
-  onChange?: (availability: AvailabilitySlot[]) => void
-  onSave?: (availability: AvailabilitySlot[]) => Promise<void>
-  loading?: boolean
-  readonly?: boolean
+  availability?: AvailabilitySlot[];
+  onChange?: (availability: AvailabilitySlot[]) => void;
+  onSave?: (availability: AvailabilitySlot[]) => Promise<void>;
+  loading?: boolean;
+  readonly?: boolean;
 }
 
 const DAYS_OF_WEEK = [
@@ -26,7 +26,7 @@ const DAYS_OF_WEEK = [
   { value: 4, label: "Thursday", short: "Thu" },
   { value: 5, label: "Friday", short: "Fri" },
   { value: 6, label: "Saturday", short: "Sat" },
-]
+];
 
 export function WeeklyScheduleGrid({
   availability = [],
@@ -36,16 +36,20 @@ export function WeeklyScheduleGrid({
   readonly = false,
 }: WeeklyScheduleGridProps) {
   // Initialize with prop value - the key prop will handle remounting when needed
-  const [localAvailability, setLocalAvailability] = useState<AvailabilitySlot[]>(availability || [])
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [saving, setSaving] = useState(false)
+  const [localAvailability, setLocalAvailability] = useState<
+    AvailabilitySlot[]
+  >(availability || []);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   // Sync local state when availability prop changes (e.g., after successful save)
   useEffect(() => {
-    setLocalAvailability(availability || [])
-  }, [availability])
+    setLocalAvailability(availability || []);
+  }, [availability]);
 
-  const slots = readonly ? (availability || []) : localAvailability
+  const slots = readonly ? availability || [] : localAvailability;
 
   const handleAddSlot = (dayOfWeek: number) => {
     const newSlot: AvailabilitySlot = {
@@ -53,102 +57,108 @@ export function WeeklyScheduleGrid({
       startTime: "09:00",
       endTime: "17:00",
       isActive: true,
-    }
-    
-    const updated = [...localAvailability, newSlot]
-    setLocalAvailability(updated)
-    onChange?.(updated)
-  }
+    };
 
-  const handleUpdateSlot = (index: number, field: keyof AvailabilitySlot, value: any) => {
-    const updated = [...localAvailability]
-    updated[index] = { ...updated[index], [field]: value }
-    
+    const updated = [...localAvailability, newSlot];
+    setLocalAvailability(updated);
+    onChange?.(updated);
+  };
+
+  const handleUpdateSlot = (
+    index: number,
+    field: keyof AvailabilitySlot,
+    value: any
+  ) => {
+    const updated = [...localAvailability];
+    updated[index] = { ...updated[index], [field]: value };
+
     // Validate the slot
     try {
-      availabilitySchema.parse(updated[index])
-      const errorKey = `${index}-${field}`
-      const newErrors = { ...errors }
-      delete newErrors[errorKey]
-      setErrors(newErrors)
+      availabilitySchema.parse(updated[index]);
+      const errorKey = `${index}-${field}`;
+      const newErrors = { ...errors };
+      delete newErrors[errorKey];
+      setErrors(newErrors);
     } catch (error: any) {
-      const errorKey = `${index}-${field}`
-      setErrors({ ...errors, [errorKey]: error.errors?.[0]?.message || "Invalid input" })
+      const errorKey = `${index}-${field}`;
+      setErrors({
+        ...errors,
+        [errorKey]: error.errors?.[0]?.message || "Invalid input",
+      });
     }
-    
-    setLocalAvailability(updated)
-    onChange?.(updated)
-  }
+
+    setLocalAvailability(updated);
+    onChange?.(updated);
+  };
 
   const handleRemoveSlot = (index: number) => {
-    const updated = localAvailability.filter((_, i) => i !== index)
-    setLocalAvailability(updated)
-    onChange?.(updated)
-  }
+    const updated = localAvailability.filter((_, i) => i !== index);
+    setLocalAvailability(updated);
+    onChange?.(updated);
+  };
 
   const handleCopyDay = (dayOfWeek: number) => {
-    const daySlots = localAvailability.filter(slot => slot.dayOfWeek === dayOfWeek)
-    
+    const daySlots = localAvailability.filter(
+      (slot) => slot.dayOfWeek === dayOfWeek
+    );
+
     // Copy to all other days
-    const newSlots: AvailabilitySlot[] = []
+    const newSlots: AvailabilitySlot[] = [];
     for (let day = 0; day < 7; day++) {
-      if (day === dayOfWeek) continue
-      
+      if (day === dayOfWeek) continue;
+
       // Add copied slots for this day
-      daySlots.forEach(slot => {
+      daySlots.forEach((slot) => {
         newSlots.push({
           ...slot,
           dayOfWeek: day,
-        })
-      })
+        });
+      });
     }
-    
+
     // Keep only the source day's slots and add the new copied slots
     const updated = [
-      ...localAvailability.filter(slot => slot.dayOfWeek === dayOfWeek),
+      ...localAvailability.filter((slot) => slot.dayOfWeek === dayOfWeek),
       ...newSlots,
-    ]
-    
-    setLocalAvailability(updated)
-    onChange?.(updated)
-  }
+    ];
+
+    setLocalAvailability(updated);
+    onChange?.(updated);
+  };
 
   const handleSave = async () => {
-    if (!onSave) return
-    
-    setSaving(true)
+    if (!onSave) return;
+    setSuccess("");
+    setError("");
+
+    setSaving(true);
     try {
-      await onSave(localAvailability)
+      await onSave(localAvailability);
+      setSuccess("Availability updated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message || "Failed to save availability");
+      setTimeout(() => setError(""), 5000);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const getDaySlots = (dayOfWeek: number) => {
     return slots
       .map((slot, index) => ({ ...slot, index }))
-      .filter(slot => slot.dayOfWeek === dayOfWeek)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime))
-  }
+      .filter((slot) => slot.dayOfWeek === dayOfWeek)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  };
 
   const hasSlots = (dayOfWeek: number) => {
-    return slots.some(slot => slot.dayOfWeek === dayOfWeek)
-  }
+    return slots.some((slot) => slot.dayOfWeek === dayOfWeek);
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Weekly Availability</h3>
-        {!readonly && onSave && (
-          <Button
-            onClick={handleSave}
-            disabled={saving || Object.keys(errors).length > 0}
-            className="bg-primary hover:bg-turquoise-600"
-          >
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? "Saving..." : "Save Schedule"}
-          </Button>
-        )}
       </div>
 
       <div className="grid gap-4">
@@ -166,7 +176,7 @@ export function WeeklyScheduleGrid({
                 <span className="md:hidden">{day.short}</span>
                 <span className="hidden md:inline">{day.label}</span>
               </h4>
-              
+
               {!readonly && (
                 <div className="flex items-center gap-2">
                   {hasSlots(day.value) && (
@@ -208,7 +218,9 @@ export function WeeklyScheduleGrid({
                     <div className="flex-1 grid grid-cols-2 gap-2">
                       <TimePicker
                         value={slot.startTime}
-                        onChange={(time) => handleUpdateSlot(slot.index!, "startTime", time)}
+                        onChange={(time) =>
+                          handleUpdateSlot(slot.index!, "startTime", time)
+                        }
                         disabled={readonly}
                         placeholder="Start"
                         step={30}
@@ -216,14 +228,16 @@ export function WeeklyScheduleGrid({
                       />
                       <TimePicker
                         value={slot.endTime}
-                        onChange={(time) => handleUpdateSlot(slot.index!, "endTime", time)}
+                        onChange={(time) =>
+                          handleUpdateSlot(slot.index!, "endTime", time)
+                        }
                         disabled={readonly}
                         placeholder="End"
                         step={30}
                         error={errors[`${slot.index}-endTime`]}
                       />
                     </div>
-                    
+
                     {!readonly && (
                       <Button
                         type="button"
@@ -243,11 +257,34 @@ export function WeeklyScheduleGrid({
         ))}
       </div>
 
-      {!readonly && (
-        <div className="text-sm text-muted-foreground">
-          <p>💡 Tip: Set your availability for each day of the week. You can copy one day&apos;s schedule to all other days using the copy button.</p>
+      {/* Messages and Save Button */}
+      {!readonly && onSave && (
+        <div className="space-y-4">
+          {/* Messages */}
+          {error && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-500" />
+              <span className="text-red-700">{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <span className="text-green-700">{success}</span>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <Button
+            onClick={handleSave}
+            disabled={saving || Object.keys(errors).length > 0}
+            className="w-full"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? "Saving..." : "Save Schedule"}
+          </Button>
         </div>
       )}
     </div>
-  )
+  );
 }
