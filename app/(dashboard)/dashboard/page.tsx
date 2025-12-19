@@ -8,6 +8,15 @@ import { StudentDashboard } from "@/components/dashboard/student-dashboard";
 import { getUserStats, getAdminStats } from "@/lib/dashboard-stats";
 import { log } from "@/lib/logger";
 
+// Helper function to format dates
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
+
 export const metadata = {
   title: "Dashboard",
   description: "Your Guitar Strategies dashboard",
@@ -85,7 +94,7 @@ export async function getTeacherData(userId: string) {
       .map((lesson) => ({
         id: lesson.id,
         studentName: lesson.student.user.name,
-        date: lesson.date.toISOString(),
+        date: formatDate(lesson.date),
         duration: lesson.duration,
         status: lesson.status as string,
         notes: lesson.notes,
@@ -170,7 +179,7 @@ export async function getStudentData(userId: string) {
       .slice(0, 5)
       .map((lesson) => ({
         id: lesson.id,
-        date: lesson.date.toISOString(),
+        date: formatDate(lesson.date),
         duration: lesson.duration,
         status: lesson.status as string,
         notes: lesson.notes,
@@ -184,7 +193,7 @@ export async function getStudentData(userId: string) {
       .map((lesson) => ({
         id: lesson.id,
         homework: lesson.homework!,
-        fromLesson: lesson.date.toISOString(),
+        fromLesson: formatDate(lesson.date),
       }));
 
     return {
