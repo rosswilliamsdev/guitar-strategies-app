@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,12 +75,16 @@ export function TeacherSettingsForm({
   teacherProfile,
   emailPreferences = [],
 }: TeacherSettingsFormProps) {
+  const profileFormRef = useRef<HTMLFormElement>(null);
+  const passwordFormRef = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [activeTab, setActiveTab] = useState<
     "profile" | "availability" | "lesson-settings" | "password" | "email"
   >("profile");
+  const [emailPrefs, setEmailPrefs] =
+    useState<EmailPreference[]>(emailPreferences);
 
   // Profile form state
   const [name, setName] = useState(user.name);
@@ -161,7 +165,7 @@ export function TeacherSettingsForm({
   // Email preferences handler
   const handleEmailPreferencesUpdate = async (
     preferences: EmailPreference[]
-  ): Promise<boolean> => {
+  ): Promise<EmailPreference[] | null> => {
     try {
       const response = await fetch("/api/settings/email-preferences", {
         method: "PUT",
@@ -177,18 +181,12 @@ export function TeacherSettingsForm({
           errorData.error || "Failed to update email preferences"
         );
       }
-
-      setSuccess("Email preferences updated successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-      return true;
+      const data = await response.json();
+      setEmailPrefs(data.preferences);
+      return data.preferences;
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to update email preferences"
-      );
-      setTimeout(() => setError(""), 5000);
-      return false;
+      log.error("Failed to update email preferences", { error });
+      return null;
     }
   };
 
@@ -417,6 +415,11 @@ export function TeacherSettingsForm({
       log.info("Reloading profile data after save...");
       await loadProfileData();
 
+      // Reset form state to prevent "unsaved changes" warning
+      if (profileFormRef.current) {
+        profileFormRef.current.reset();
+      }
+
       // Don't call router.refresh() - it reloads the entire page and resets form state
       // The loadProfileData() call above already updated the form state
       log.info("Profile update complete");
@@ -473,6 +476,11 @@ export function TeacherSettingsForm({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+
+      // Reset form state to prevent "unsaved changes" warning
+      if (passwordFormRef.current) {
+        passwordFormRef.current.reset();
+      }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -556,7 +564,7 @@ export function TeacherSettingsForm({
             </h3>
           </div>
 
-          <form onSubmit={handleProfileSubmit} className="space-y-6">
+          <form ref={profileFormRef} onSubmit={handleProfileSubmit} className="space-y-6">
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -833,7 +841,7 @@ export function TeacherSettingsForm({
             </h3>
           </div>
 
-          <form onSubmit={handlePasswordSubmit} className="space-y-6">
+          <form ref={passwordFormRef} onSubmit={handlePasswordSubmit} className="space-y-6">
             <div>
               <Label htmlFor="currentPassword">Current Password *</Label>
               <Input
@@ -919,7 +927,7 @@ export function TeacherSettingsForm({
       {/* Email Preferences Tab */}
       {activeTab === "email" && (
         <EmailPreferences
-          preferences={emailPreferences}
+          preferences={emailPrefs}
           onUpdate={handleEmailPreferencesUpdate}
         />
       )}

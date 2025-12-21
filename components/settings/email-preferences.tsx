@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -26,7 +26,9 @@ export type EmailPreference = {
 
 interface EmailPreferencesProps {
   preferences: EmailPreference[];
-  onUpdate: (preferences: EmailPreference[]) => Promise<boolean>;
+  onUpdate: (
+    preferences: EmailPreference[]
+  ) => Promise<EmailPreference[] | null>;
 }
 
 const EMAIL_TYPES = [
@@ -93,27 +95,20 @@ export function EmailPreferences({
   preferences,
   onUpdate,
 }: EmailPreferencesProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [localPreferences, setLocalPreferences] = useState(preferences);
+  const [localPreferences, setLocalPreferences] = useState<EmailPreference[]>(
+    Array.isArray(preferences) ? preferences : []
+  );
   const [success, setSuccess] = useState<string>("");
   const [error, setError] = useState<string>("");
 
   // Sync local state when preferences prop changes
   useEffect(() => {
-    console.log(
-      "[Email Preferences] useEffect triggered, syncing preferences:",
-      preferences
-    );
-    setLocalPreferences(preferences);
+    setLocalPreferences(Array.isArray(preferences) ? preferences : []);
   }, [preferences]);
 
   const handleToggle = (type: string, enabled: boolean) => {
-    console.log("[Email Preferences] Toggle clicked:", {
-      type,
-      enabled,
-      currentPrefs: localPreferences,
-    });
-
     // Check if this preference type already exists
     const existingPref = localPreferences.find((p) => p.type === type);
 
@@ -134,8 +129,6 @@ export function EmailPreferences({
         },
       ];
     }
-
-    console.log("[Email Preferences] Updated prefs:", updated);
     setLocalPreferences(updated);
   };
 
@@ -145,10 +138,16 @@ export function EmailPreferences({
     setError("");
 
     try {
-      const result = await onUpdate(localPreferences);
-      if (result) {
+      const updatedPreferences = await onUpdate(localPreferences);
+      if (updatedPreferences) {
+        setLocalPreferences(updatedPreferences);
         setSuccess("Email preferences saved successfully!");
         setTimeout(() => setSuccess(""), 3000);
+
+        // Reset form state to prevent "unsaved changes" warning
+        if (formRef.current) {
+          formRef.current.reset();
+        }
       } else {
         setError("Failed to save email preferences");
         setTimeout(() => setError(""), 5000);
@@ -187,79 +186,77 @@ export function EmailPreferences({
         </div>
       </div>
 
-      <div className="space-y-6">
-        {Object.entries(groupedTypes).map(([category, types]) => (
-          <div key={category}>
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant="outline" className="text-xs">
-                {category}
-              </Badge>
-            </div>
+      <form ref={formRef} className="space-y-6">
+        <div className="space-y-6">
+          {Object.entries(groupedTypes).map(([category, types]) => (
+            <div key={category}>
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="outline" className="text-xs">
+                  {category}
+                </Badge>
+              </div>
 
-            <div className="space-y-4">
-              {types.map((emailType) => {
-                const Icon = emailType.icon;
-                const enabled = getPreferenceEnabled(emailType.type);
+              <div className="space-y-4">
+                {types.map((emailType) => {
+                  const Icon = emailType.icon;
+                  const enabled = getPreferenceEnabled(emailType.type);
 
-                return (
-                  <div
-                    key={emailType.type}
-                    className="flex items-center justify-between p-3 rounded-lg border bg-muted/10"
-                  >
-                    <div className="flex items-start gap-3 flex-1">
-                      <Icon className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <div>
-                        <Label
-                          htmlFor={emailType.type}
-                          className="text-sm font-medium cursor-pointer"
-                        >
-                          {emailType.label}
-                        </Label>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {emailType.description}
-                        </p>
+                  return (
+                    <div
+                      key={emailType.type}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-muted/10"
+                    >
+                      <div className="flex items-start gap-3 flex-1">
+                        <Icon className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        <div>
+                          <Label
+                            htmlFor={emailType.type}
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            {emailType.label}
+                          </Label>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {emailType.description}
+                          </p>
+                        </div>
                       </div>
+                      <Switch
+                        id={emailType.type}
+                        checked={enabled}
+                        onCheckedChange={(checked) =>
+                          handleToggle(emailType.type, checked)
+                        }
+                      />
                     </div>
-                    <Switch
-                      id={emailType.type}
-                      checked={enabled}
-                      onCheckedChange={(checked) =>
-                        handleToggle(emailType.type, checked)
-                      }
-                    />
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              {category !== "System" && <Separator className="mt-6" />}
             </div>
-
-            {category !== "System" && <Separator className="mt-6" />}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-6 pt-4 border-t">
-        <div className="space-y-4">
-          {/* Messages */}
-          {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              <span className="text-red-700">{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <span className="text-green-700">{success}</span>
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <Button onClick={handleSave} disabled={isLoading} className="w-full">
-            <Save className="h-4 w-4 mr-2" />
-            {isLoading ? "Saving..." : "Save Preferences"}
-          </Button>
+          ))}
         </div>
-      </div>
+
+        {/* Messages */}
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+            <span className="text-red-700">{error}</span>
+          </div>
+        )}
+
+        {success && (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <span className="text-green-700">{success}</span>
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <Button onClick={handleSave} disabled={isLoading} className="w-full">
+          <Save className="h-4 w-4 mr-2" />
+          {isLoading ? "Saving..." : "Save Preferences"}
+        </Button>
+      </form>
     </Card>
   );
 }
