@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createStudentChecklistSchema } from "@/lib/validations";
 import { z } from "zod";
-import { apiLog, dbLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,6 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const includeArchived = searchParams.get("includeArchived") === "true";
     const studentId = searchParams.get("studentId"); // For teachers to specify which student
 
     let targetStudentId: string;
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
           { status: 404 }
         );
       }
-      
+
       targetStudentId = studentProfile.id;
     } else if (session.user.role === "TEACHER") {
       if (!studentId) {
@@ -58,9 +57,9 @@ export async function GET(request: NextRequest) {
       }
 
       const studentProfile = await prisma.studentProfile.findFirst({
-        where: { 
+        where: {
           id: studentId,
-          teacherId: teacherProfile.id 
+          teacherId: teacherProfile.id
         },
       });
 
@@ -85,7 +84,6 @@ export async function GET(request: NextRequest) {
 
     const whereClause: any = {
       studentId: targetStudentId,
-      ...(includeArchived ? {} : { isArchived: false }),
     };
 
     // Fetch student checklists

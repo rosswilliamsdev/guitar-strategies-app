@@ -151,7 +151,7 @@ export function StudentDashboard({
           <h3 className="text-lg font-semibold mb-4">Your Learning Goals</h3>
           <p className="text-muted-foreground">{safeStudentProfile.goals}</p>
           <div className="mt-4">
-            <Link href="/settings/profile">
+            <Link href="/settings">
               <Button variant="secondary" size="sm">
                 Update Goals
               </Button>

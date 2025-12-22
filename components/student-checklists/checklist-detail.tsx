@@ -11,8 +11,6 @@ import {
   ArrowLeft,
   Edit2,
   Trash2,
-  Archive,
-  ArchiveRestore,
   CheckCircle2,
   Calendar,
   Clock,
@@ -40,7 +38,6 @@ interface StudentChecklist {
   id: string;
   title: string;
   isActive: boolean;
-  isArchived: boolean;
   items: ChecklistItem[];
   stats: {
     totalItems: number;
@@ -195,26 +192,6 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
     }
   };
 
-  const toggleArchive = async () => {
-    if (!checklist) return;
-
-    try {
-      const response = await fetch(`/api/student-checklists/${checklistId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isArchived: !checklist.isArchived }),
-      });
-
-      if (response.ok) {
-        fetchChecklist();
-      }
-    } catch (error) {
-      log.error('Error toggling archive:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    }
-  };
 
   const deleteChecklist = async () => {
     if (!confirm("Are you sure you want to delete this checklist? This action cannot be undone.")) return;
@@ -281,31 +258,9 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
                   <span>COMPLETED</span>
                 </div>
               )}
-              {checklist.isArchived && (
-                <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700 border border-gray-200">
-                  Archived
-                </span>
-              )}
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={toggleArchive}
-            >
-              {checklist.isArchived ? (
-                <>
-                  <ArchiveRestore className="h-4 w-4 mr-2" />
-                  Restore
-                </>
-              ) : (
-                <>
-                  <Archive className="h-4 w-4 mr-2" />
-                  Archive
-                </>
-              )}
-            </Button>
             <Link href={`/curriculums/my/${checklistId}/edit`}>
               <Button variant="secondary" size="sm">
                 <Edit2 className="h-4 w-4 mr-2" />
@@ -316,7 +271,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
               variant="destructive"
               size="sm"
               onClick={deleteChecklist}
-              
+
             >
               <Trash2 className="h-4 w-4" />
             </Button>

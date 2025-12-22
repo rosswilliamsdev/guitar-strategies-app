@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Copy, Save, AlertCircle } from "lucide-react";
 import { TimePicker } from "@/components/ui/time-picker";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,6 @@ export function WeeklyScheduleGrid({
   loading = false,
   readonly = false,
 }: WeeklyScheduleGridProps) {
-  // Initialize with prop value - the key prop will handle remounting when needed
   const [localAvailability, setLocalAvailability] = useState<
     AvailabilitySlot[]
   >(availability || []);
@@ -43,11 +42,19 @@ export function WeeklyScheduleGrid({
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const successTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync local state when availability prop changes (e.g., after successful save)
   useEffect(() => {
     setLocalAvailability(availability || []);
   }, [availability]);
+
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const slots = readonly ? availability || [] : localAvailability;
 
@@ -72,7 +79,6 @@ export function WeeklyScheduleGrid({
     const updated = [...localAvailability];
     updated[index] = { ...updated[index], [field]: value };
 
-    // Validate the slot
     try {
       availabilitySchema.parse(updated[index]);
       const errorKey = `${index}-${field}`;
@@ -102,12 +108,10 @@ export function WeeklyScheduleGrid({
       (slot) => slot.dayOfWeek === dayOfWeek
     );
 
-    // Copy to all other days
     const newSlots: AvailabilitySlot[] = [];
     for (let day = 0; day < 7; day++) {
       if (day === dayOfWeek) continue;
 
-      // Add copied slots for this day
       daySlots.forEach((slot) => {
         newSlots.push({
           ...slot,
@@ -116,7 +120,6 @@ export function WeeklyScheduleGrid({
       });
     }
 
-    // Keep only the source day's slots and add the new copied slots
     const updated = [
       ...localAvailability.filter((slot) => slot.dayOfWeek === dayOfWeek),
       ...newSlots,
@@ -128,17 +131,32 @@ export function WeeklyScheduleGrid({
 
   const handleSave = async () => {
     if (!onSave) return;
+
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+
     setSuccess("");
     setError("");
-
     setSaving(true);
+
     try {
       await onSave(localAvailability);
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       setSuccess("Availability updated successfully!");
-      setTimeout(() => setSuccess(""), 3000);
+
+      successTimeoutRef.current = setTimeout(() => {
+        setSuccess("");
+        successTimeoutRef.current = null;
+      }, 3000);
     } catch (err: any) {
       setError(err.message || "Failed to save availability");
-      setTimeout(() => setError(""), 5000);
+      setTimeout(() => {
+        setError("");
+      }, 3000);
     } finally {
       setSaving(false);
     }

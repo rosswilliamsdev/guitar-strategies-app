@@ -499,7 +499,6 @@ export const updateStudentChecklistSchema = createStudentChecklistSchema
   .extend({
     id: z.string().min(1, "Checklist ID is required"),
     isActive: z.boolean().optional(),
-    isArchived: z.boolean().optional(),
   });
 
 export const createStudentChecklistItemSchema = z.object({

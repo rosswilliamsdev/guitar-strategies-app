@@ -279,9 +279,9 @@ export function TeacherSettingsForm({
   };
 
   const handleSaveAvailability = async (newAvailability: any[]) => {
-    try {
-      setSchedulingLoading(true);
+    setSchedulingLoading(true);
 
+    try {
       log.info("Saving availability...", {
         slotCount: newAvailability.length,
         slots: newAvailability,
@@ -315,18 +315,16 @@ export function TeacherSettingsForm({
         data: data,
       });
 
+      // Update the availability state to reflect saved data
       setAvailability(data.data?.availability || []);
-      setSuccess("Availability saved successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-      setError("");
+      // Success/error messages are handled by WeeklyScheduleGrid component
     } catch (error: any) {
       log.error("Error saving availability", {
         error: error.message,
         stack: error.stack,
       });
-      setError(error.message || "Failed to save availability");
-      setTimeout(() => setError(""), 5000);
-      setSuccess("");
+      // Re-throw the error so WeeklyScheduleGrid can handle the message display
+      throw error;
     } finally {
       setSchedulingLoading(false);
     }
