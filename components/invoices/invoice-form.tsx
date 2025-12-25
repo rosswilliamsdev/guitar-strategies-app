@@ -270,9 +270,13 @@ export function InvoiceForm({
       // The API will handle its own validation
 
       // Prepare the request body
+      // Parse dueDate as local date to avoid timezone shifts
+      const [year, month, day] = dueDate.split("-");
+      const localDueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
       const requestBody: any = {
         month: selectedMonth,
-        dueDate: new Date(dueDate),
+        dueDate: localDueDate,
         items: items.map((item) => ({
           description: item.description,
           quantity: item.quantity,
@@ -444,7 +448,12 @@ export function InvoiceForm({
               <div>
                 <h4 className="font-medium text-foreground mb-4">
                   Lessons for {selectedStudent?.user.name} -{" "}
-                  {format(new Date(selectedMonth + "-01"), "MMMM yyyy")}
+                  {selectedMonth
+                    ? format(
+                        new Date(selectedMonth.split("-")[0], parseInt(selectedMonth.split("-")[1]) - 1, 1),
+                        "MMMM yyyy"
+                      )
+                    : ""}
                 </h4>
 
                 {loadingLessons ? (

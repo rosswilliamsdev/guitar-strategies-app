@@ -134,7 +134,10 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              {invoice.student ? invoice.student.user.name : invoice.customFullName} • {format(new Date(invoice.month + '-01'), 'MMMM yyyy')}
+              {invoice.student ? invoice.student.user.name : invoice.customFullName} • {(() => {
+                const [year, month] = invoice.month.split('-');
+                return format(new Date(parseInt(year), parseInt(month) - 1, 1), 'MMMM yyyy');
+              })()}
             </p>
             <p className="text-xs text-muted-foreground">
               Due: {format(invoice.dueDate, 'MMM d, yyyy')} • {invoice.items.length} lesson{invoice.items.length !== 1 ? 's' : ''}

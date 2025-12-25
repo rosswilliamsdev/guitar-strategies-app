@@ -4,15 +4,10 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  FileText,
-  Download,
-  Send,
-  CheckCircle,
-} from "lucide-react";
+import { FileText, Download, Send, CheckCircle } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { log, emailLog, invoiceLog } from '@/lib/logger';
+import { log, emailLog, invoiceLog } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 interface InvoiceData {
@@ -62,9 +57,10 @@ interface InvoiceTemplateProps {
   compact?: boolean;
 }
 
-// Simple date formatter to avoid date-fns issues
+// Timezone-safe date formatters
 const formatDate = (date: Date | string) => {
-  const d = new Date(date);
+  const d = typeof date === 'string' ? new Date(date) : date;
+  // Display in local timezone (CST/your timezone)
   return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
@@ -73,7 +69,9 @@ const formatDate = (date: Date | string) => {
 };
 
 const formatMonthYear = (monthString: string) => {
-  const date = new Date(monthString + "-01");
+  // Parse "YYYY-MM" format to avoid timezone issues
+  const [year, month] = monthString.split("-");
+  const date = new Date(parseInt(year), parseInt(month) - 1, 1);
   return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -86,7 +84,6 @@ export function InvoiceTemplate({
   compact = false,
 }: InvoiceTemplateProps) {
   const [isLoading, setIsLoading] = useState(false);
-
 
   const handleDownloadPDF = async () => {
     setIsLoading(true);
@@ -157,9 +154,9 @@ export function InvoiceTemplate({
       // Download the PDF
       pdf.save(`${invoice.invoiceNumber}.pdf`);
     } catch (error) {
-      log.error('Error generating PDF:', {
+      log.error("Error generating PDF:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       // Fallback to print dialog if PDF generation fails
       window.print();
@@ -171,22 +168,24 @@ export function InvoiceTemplate({
   const handleSendInvoice = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/invoices/${invoice.id}/send`, { method: "POST" });
+      const response = await fetch(`/api/invoices/${invoice.id}/send`, {
+        method: "POST",
+      });
       const result = await response.json();
-      
+
       if (response.ok) {
         alert(`Invoice sent successfully to ${result.recipient}`);
         // Refresh the page to update invoice status
         window.location.reload();
       } else {
-        alert(result.error || 'Failed to send invoice');
+        alert(result.error || "Failed to send invoice");
       }
     } catch (error) {
-      log.error('Error sending invoice:', {
+      log.error("Error sending invoice:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      alert('Failed to send invoice. Please try again.');
+      alert("Failed to send invoice. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -351,10 +350,13 @@ export function InvoiceTemplate({
             </thead>
             <tbody>
               {invoice.items?.map((item: InvoiceData["items"][0], index) => (
-                <tr key={item.id} className={cn(
-                  "border-b border-border/50",
-                  index % 2 === 1 && "bg-neutral-50/50"
-                )}>
+                <tr
+                  key={item.id}
+                  className={cn(
+                    "border-b border-border/50",
+                    index % 2 === 1 && "bg-neutral-50/50"
+                  )}
+                >
                   <td className="py-3 text-foreground">{item.description}</td>
                   <td className="py-3 text-center text-muted-foreground">
                     {item.lessonDate && formatDate(item.lessonDate)}

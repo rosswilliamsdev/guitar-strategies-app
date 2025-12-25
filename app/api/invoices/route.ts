@@ -174,8 +174,15 @@ async function handlePOST(request: NextRequest) {
     const subtotal = body.items.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0);
     const total = subtotal; // No taxes/fees for now
 
+    // Parse dueDate - it comes as ISO string from client, interpret as local date
+    const dueDateObj = new Date(body.dueDate);
+
+    // Set createdAt to current date at midnight local time to avoid timezone display issues
+    const now = new Date();
+    const createdAtLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     // Use critical retry for invoice creation (financial operation)
-    const invoice = await criticalDbQuery(() => 
+    const invoice = await criticalDbQuery(() =>
       prisma.invoice.create({
         data: {
           teacherId: session.user.teacherProfile!.id,
@@ -184,7 +191,8 @@ async function handlePOST(request: NextRequest) {
           customEmail,
           invoiceNumber,
           month: body.month,
-          dueDate: new Date(body.dueDate),
+          dueDate: dueDateObj,
+          createdAt: createdAtLocal,
           subtotal,
           total,
           items: {
