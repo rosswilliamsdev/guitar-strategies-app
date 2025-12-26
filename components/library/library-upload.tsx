@@ -31,11 +31,10 @@ const categories = [
   { value: "OTHER", label: "Other" },
 ];
 
-const difficulties = [
-  { value: "BEGINNER", label: "Beginner" },
-  { value: "INTERMEDIATE", label: "Intermediate" },
-  { value: "ADVANCED", label: "Advanced" },
-  { value: "PROFESSIONAL", label: "Professional" },
+const instruments = [
+  { value: "GUITAR", label: "Guitar" },
+  { value: "BASS", label: "Bass" },
+  { value: "UKULELE", label: "Ukulele" },
 ];
 
 const allowedFileTypes = [
@@ -71,7 +70,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [difficulty, setDifficulty] = useState("");
+  const [instrument, setInstrument] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +121,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("category", category);
-      formData.append("difficulty", difficulty);
+      formData.append("instrument", instrument);
       formData.append("isPublic", "true");
       formData.append("teacherId", teacherId);
 
@@ -236,7 +235,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
           />
         </div>
 
-        {/* Category and Difficulty */}
+        {/* Category and Instrument */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <Label>Category *</Label>
@@ -255,15 +254,15 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
           </div>
 
           <div>
-            <Label>Difficulty Level</Label>
-            <Select value={difficulty} onValueChange={setDifficulty}>
+            <Label>Instrument</Label>
+            <Select value={instrument} onValueChange={setInstrument}>
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select difficulty (optional)" />
+                <SelectValue placeholder="Select instrument (optional)" />
               </SelectTrigger>
               <SelectContent>
-                {difficulties.map((diff) => (
-                  <SelectItem key={diff.value} value={diff.value}>
-                    {diff.label}
+                {instruments.map((inst) => (
+                  <SelectItem key={inst.value} value={inst.value}>
+                    {inst.label}
                   </SelectItem>
                 ))}
               </SelectContent>

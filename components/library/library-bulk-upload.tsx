@@ -30,6 +30,7 @@ interface BulkUploadFile {
   title: string;
   description: string;
   category: string;
+  instrument: string;
   status: 'pending' | 'uploading' | 'success' | 'error';
   error?: string;
 }
@@ -47,6 +48,12 @@ const categories = [
   { value: "EXERCISES", label: "Exercises" },
   { value: "THEORY", label: "Music Theory" },
   { value: "OTHER", label: "Other" },
+];
+
+const instruments = [
+  { value: "GUITAR", label: "Guitar" },
+  { value: "BASS", label: "Bass" },
+  { value: "UKULELE", label: "Ukulele" },
 ];
 
 const allowedFileTypes = [
@@ -82,6 +89,7 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
   // Bulk settings that apply to all files
   const [bulkCategory, setBulkCategory] = useState("");
   const [bulkDescription, setBulkDescription] = useState("");
+  const [bulkInstrument, setBulkInstrument] = useState("");
 
   const handleFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -117,6 +125,7 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
         title: defaultTitle,
         description: bulkDescription,
         category: bulkCategory,
+        instrument: bulkInstrument,
         status: 'pending'
       });
     });
@@ -139,7 +148,8 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
     setFiles(prev => prev.map(f => ({
       ...f,
       category: bulkCategory || f.category,
-      description: bulkDescription || f.description
+      description: bulkDescription || f.description,
+      instrument: bulkInstrument || f.instrument
     })));
   };
 
@@ -152,6 +162,7 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
       formData.append('title', fileData.title);
       formData.append('description', fileData.description);
       formData.append('category', fileData.category);
+      formData.append('instrument', fileData.instrument);
       formData.append('isPublic', 'true');
 
       const response = await fetch('/api/library/upload', {
@@ -295,7 +306,23 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
               </SelectContent>
             </Select>
           </div>
-          
+
+          <div className="mb-4">
+            <Label>Default Instrument</Label>
+            <Select value={bulkInstrument} onValueChange={setBulkInstrument}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Select instrument (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {instruments.map(inst => (
+                  <SelectItem key={inst.value} value={inst.value}>
+                    {inst.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="mb-4">
             <Label>Default Description</Label>
             <Textarea
@@ -306,7 +333,7 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
               rows={2}
             />
           </div>
-          
+
           <Button onClick={applyBulkSettings} variant="secondary">
             Apply to All Files
           </Button>
