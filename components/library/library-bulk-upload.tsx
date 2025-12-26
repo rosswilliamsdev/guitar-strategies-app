@@ -60,6 +60,17 @@ const allowedFileTypes = [
   ".gif",
   ".midi",
   ".mid",
+  // Guitar tablature formats
+  ".gp",
+  ".gp3",
+  ".gp4",
+  ".gp5",
+  ".gp6",
+  ".gp7",
+  ".gpx",
+  ".ptb",
+  ".ptx",
+  ".tg",
 ];
 
 export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {

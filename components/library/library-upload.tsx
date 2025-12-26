@@ -49,6 +49,17 @@ const allowedFileTypes = [
   ".gif",
   ".midi",
   ".mid",
+  // Guitar tablature formats
+  ".gp",
+  ".gp3",
+  ".gp4",
+  ".gp5",
+  ".gp6",
+  ".gp7",
+  ".gpx",
+  ".ptb",
+  ".ptx",
+  ".tg",
 ];
 
 export function LibraryUpload({ teacherId }: LibraryUploadProps) {
@@ -162,7 +173,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
                     drag and drop
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    PDF, DOC, images, MIDI files (max 10MB)
+                    PDF, DOC, images, MIDI, Guitar Pro, PowerTab, TuxGuitar (max 10MB)
                   </p>
                 </div>
                 <input
