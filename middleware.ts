@@ -4,72 +4,87 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { applySecurityHeaders, defaultSecurityConfig } from "@/lib/security-headers";
+import {
+  applySecurityHeaders,
+  defaultSecurityConfig,
+} from "@/lib/security-headers";
 // import { getCSRFToken, addCSRFCookie, checkCSRF } from "@/lib/csrf"; // Temporarily disabled for Edge Runtime compatibility
 
 // Request size limits (in bytes)
 const LIMITS = {
   // General API requests (JSON payloads)
   DEFAULT: 1024 * 1024 * 1, // 1MB
-  
+
   // File upload endpoints
   FILE_UPLOAD: 1024 * 1024 * 10, // 10MB (matches current library upload limit)
-  
+
   // Rich text content (lesson notes, etc.)
   RICH_TEXT: 1024 * 50, // 50KB (enough for 5000 chars + HTML markup)
-  
+
   // Form submissions
   FORM_DATA: 1024 * 100, // 100KB
 } as const;
 
 // Check request size limits
 function checkRequestSizeLimit(req: NextRequest): NextResponse | null {
-  const contentLength = req.headers.get('content-length');
+  const contentLength = req.headers.get("content-length");
   const { pathname } = req.nextUrl;
   const method = req.method;
-  
+
   // Only check POST, PUT, PATCH requests with content
-  if (!['POST', 'PUT', 'PATCH'].includes(method) || !contentLength) {
+  if (!["POST", "PUT", "PATCH"].includes(method) || !contentLength) {
     return null;
   }
-  
+
   const size = parseInt(contentLength, 10);
   let limit = LIMITS.DEFAULT;
-  
+
   // Set specific limits for different endpoints
-  if (pathname.includes('/api/lessons/attachments') || 
-      pathname.includes('/api/library')) {
+  if (
+    pathname.includes("/api/lessons/attachments") ||
+    pathname.includes("/api/library")
+  ) {
     limit = LIMITS.FILE_UPLOAD;
-  } else if (pathname.includes('/api/lessons') && 
-             (pathname.includes('/notes') || method === 'POST' || method === 'PUT')) {
+  } else if (
+    pathname.includes("/api/lessons") &&
+    (pathname.includes("/notes") || method === "POST" || method === "PUT")
+  ) {
     limit = LIMITS.RICH_TEXT;
-  } else if (pathname.includes('/api/settings') || 
-             pathname.includes('/api/auth') ||
-             pathname.includes('/api/admin')) {
+  } else if (
+    pathname.includes("/api/settings") ||
+    pathname.includes("/api/auth") ||
+    pathname.includes("/api/admin")
+  ) {
     limit = LIMITS.FORM_DATA;
   }
-  
+
   // Check if request exceeds limit
   if (size > limit) {
     // Note: Using console.warn in middleware since Winston doesn't work in Edge Runtime
-    console.warn(`⚠️ Request size limit exceeded: ${pathname} (${Math.round(size / 1024)}KB > ${Math.round(limit / 1024)}KB)`);
-    
+    console.warn(
+      `⚠️ Request size limit exceeded: ${pathname} (${Math.round(
+        size / 1024
+      )}KB > ${Math.round(limit / 1024)}KB)`
+    );
+
     return NextResponse.json(
-      { 
+      {
         error: "Request too large",
-        message: `Request size (${Math.round(size / 1024)}KB) exceeds limit (${Math.round(limit / 1024)}KB)`,
+        message: `Request size (${Math.round(
+          size / 1024
+        )}KB) exceeds limit (${Math.round(limit / 1024)}KB)`,
         limit: limit,
-        size: size
+        size: size,
       },
-      { 
+      {
         status: 413,
         headers: {
-          'Retry-After': '60', // Client can retry after 1 minute
-        }
+          "Retry-After": "60", // Client can retry after 1 minute
+        },
       }
     );
   }
-  
+
   return null;
 }
 
@@ -78,10 +93,10 @@ export default withAuth(
     const { pathname } = req.nextUrl;
     const token = req.nextauth.token;
 
-    console.log('Middleware check:', {
+    console.log("Middleware check:", {
       pathname,
       hasToken: !!token,
-      tokenRole: token?.role
+      tokenRole: token?.role,
     });
 
     // Check request size limits first (security check)
@@ -167,7 +182,7 @@ export default withAuth(
     }
 
     // Create response and apply security headers
-    let response = NextResponse.next();
+    const response = NextResponse.next();
 
     // TODO: Re-enable CSRF token generation after fixing Edge Runtime compatibility
     // Generate and attach CSRF token for authenticated users
@@ -183,10 +198,10 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        console.log('Middleware authorized check:', {
+        console.log("Middleware authorized check:", {
           pathname: req.nextUrl.pathname,
           hasToken: !!token,
-          tokenRole: token?.role
+          tokenRole: token?.role,
         });
         const { pathname } = req.nextUrl;
 
