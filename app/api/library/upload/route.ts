@@ -53,7 +53,7 @@ async function handlePOST(request: NextRequest) {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'text/plain',
       'image/jpeg',
-      'image/jpg', 
+      'image/jpg',
       'image/png',
       'image/gif',
       'audio/mpeg',
@@ -65,7 +65,13 @@ async function handlePOST(request: NextRequest) {
       'video/x-msvideo',
       'video/webm',
       'audio/midi',
-      'audio/x-midi'
+      'audio/x-midi',
+      // Guitar tablature formats
+      'application/x-guitar-pro',      // Guitar Pro (.gp, .gpx, .gp3, .gp4, .gp5, .gp6, .gp7)
+      'application/octet-stream',      // Generic binary (catches .gp, .ptb, .ptx, .tg files)
+      'application/x-ptb',             // PowerTab (.ptb)
+      'application/x-powertab',        // PowerTab alternate MIME type
+      'application/x-tuxguitar'        // TuxGuitar (.tg)
     ];
 
     if (!allowedTypes.includes(file.type)) {
