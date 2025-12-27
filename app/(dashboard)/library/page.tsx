@@ -38,6 +38,7 @@ async function getLibraryData(teacherId: string) {
       isPublic: item.isPublic,
       createdAt: item.createdAt.toLocaleDateString(),
       teacherName: item.teacher.user.name,
+      instrument: item.instrument ?? undefined,
     }));
   } catch (error) {
     log.error('Error fetching library data:', {

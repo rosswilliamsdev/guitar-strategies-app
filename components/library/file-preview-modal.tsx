@@ -14,7 +14,7 @@ interface FilePreviewModalProps {
     fileName: string;
     fileUrl: string;
     fileSize: number;
-    category: string;
+    category: string | null;
     description?: string;
   } | null;
   onDownload: () => void;
