@@ -7,13 +7,14 @@ import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  FileText, 
-  Eye, 
-  DollarSign, 
-  CheckCircle, 
-  Trash2, 
-  CreditCard
+import {
+  FileText,
+  Eye,
+  DollarSign,
+  CheckCircle,
+  Trash2,
+  CreditCard,
+  Edit
 } from 'lucide-react';
 import { MarkPaidModal } from './mark-paid-modal';
 import { DeleteInvoiceModal } from './delete-invoice-modal';
@@ -171,10 +172,19 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
                 View
               </Button>
             </Link>
-            
+
+            {invoice.status === 'PENDING' && (
+              <Link href={`/invoices/${invoice.id}/edit`}>
+                <Button variant="secondary" size="sm">
+                  <Edit className="h-3 w-3 mr-1" />
+                  Edit
+                </Button>
+              </Link>
+            )}
+
             {invoice.status !== 'PAID' && (
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setShowPayModal(true)}
                 className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
@@ -183,9 +193,9 @@ export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
                 Mark Paid
               </Button>
             )}
-            
-            <Button 
-              variant="ghost" 
+
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setShowDeleteModal(true)}
               className="bg-red-50 hover:bg-red-100 text-red-700 border-red-200"

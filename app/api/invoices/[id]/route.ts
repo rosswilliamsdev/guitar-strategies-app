@@ -77,6 +77,7 @@ async function handlePUT(
 
     const existingInvoice = await prisma.invoice.findUnique({
       where: { id: id },
+      include: { items: true },
     });
 
     if (!existingInvoice) {
@@ -89,9 +90,10 @@ async function handlePUT(
 
     const updateData: any = {};
 
+    // Handle status updates (for marking as paid)
     if (body.status) {
       updateData.status = body.status;
-      
+
       if (body.status === 'PAID' && !existingInvoice.paidAt) {
         updateData.paidAt = new Date();
       }
@@ -103,6 +105,57 @@ async function handlePUT(
 
     if (body.paymentNotes) {
       updateData.paymentNotes = body.paymentNotes;
+    }
+
+    // Handle full invoice updates (from edit form)
+    if (body.items) {
+      // Only allow full updates for PENDING invoices
+      if (existingInvoice.status !== 'PENDING') {
+        return NextResponse.json(
+          { error: 'Can only edit PENDING invoices' },
+          { status: 400 }
+        );
+      }
+
+      // Update invoice fields
+      if (body.month) updateData.month = body.month;
+      if (body.dueDate) updateData.dueDate = new Date(body.dueDate);
+
+      // Handle student vs custom invoice
+      if (body.studentId !== undefined) {
+        updateData.studentId = body.studentId;
+        updateData.customFullName = null;
+        updateData.customEmail = null;
+      } else if (body.customFullName && body.customEmail) {
+        updateData.studentId = null;
+        updateData.customFullName = body.customFullName;
+        updateData.customEmail = body.customEmail;
+      }
+
+      // Calculate totals from items
+      const subtotal = body.items.reduce((sum: number, item: any) => sum + item.amount, 0);
+      updateData.subtotal = subtotal;
+      updateData.total = subtotal;
+
+      // Delete all existing items and create new ones
+      await prisma.invoiceItem.deleteMany({
+        where: { invoiceId: id },
+      });
+
+      // Create new items
+      for (const item of body.items) {
+        await prisma.invoiceItem.create({
+          data: {
+            invoiceId: id,
+            description: item.description,
+            quantity: item.quantity,
+            rate: item.rate,
+            amount: item.amount,
+            lessonDate: item.lessonDate ? new Date(item.lessonDate) : null,
+            lessonId: item.lessonId || null,
+          },
+        });
+      }
     }
 
     const invoice = await prisma.invoice.update({
@@ -129,11 +182,11 @@ async function handlePUT(
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-    
+
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    
+
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

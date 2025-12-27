@@ -59,7 +59,7 @@ interface InvoiceTemplateProps {
 
 // Timezone-safe date formatters
 const formatDate = (date: Date | string) => {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = typeof date === "string" ? new Date(date) : date;
   // Display in local timezone (CST/your timezone)
   return d.toLocaleDateString("en-US", {
     year: "numeric",
@@ -246,16 +246,14 @@ export function InvoiceTemplate({
                 <Download className="h-3 w-3 mr-1" />
                 {isLoading ? "Generating..." : "PDF"}
               </Button>
-              {invoice.status === "PENDING" && (
-                <Button
-                  size="sm"
-                  onClick={handleSendInvoice}
-                  disabled={isLoading}
-                >
-                  <Send className="h-3 w-3 mr-1" />
-                  {isLoading ? "Sending..." : "Send"}
-                </Button>
-              )}
+              <Button
+                size="sm"
+                onClick={handleSendInvoice}
+                disabled={isLoading}
+              >
+                <Send className="h-3 w-3 mr-1" />
+                {isLoading ? "Sending..." : "Send"}
+              </Button>
             </div>
           )}
         </div>
