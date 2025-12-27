@@ -31,8 +31,9 @@ interface BulkUploadFile {
   description: string;
   category: string;
   instrument: string;
-  status: 'pending' | 'uploading' | 'success' | 'error';
+  status: 'pending' | 'uploading' | 'success' | 'error' | 'duplicate';
   error?: string;
+  isDuplicate?: boolean;
 }
 
 interface LibraryBulkUploadProps {
@@ -91,12 +92,25 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
   const [bulkDescription, setBulkDescription] = useState("");
   const [bulkInstrument, setBulkInstrument] = useState("GUITAR");
 
-  const handleFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length === 0) return;
 
     const newFiles: BulkUploadFile[] = [];
     let hasErrors = false;
+
+    // Check for duplicates first
+    const fileNamesParam = selectedFiles.map(f => f.name).join(',');
+    let existingFiles: string[] = [];
+
+    try {
+      const response = await fetch(`/api/library/check-duplicate?fileNames=${encodeURIComponent(fileNamesParam)}&teacherId=${teacherId}`);
+      const data = await response.json();
+      existingFiles = data.existingFiles || [];
+    } catch (err) {
+      console.error("Error checking for duplicates:", err);
+      // Continue even if check fails
+    }
 
     selectedFiles.forEach((file) => {
       // Validate file size (10MB limit)
@@ -119,6 +133,9 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
       // Generate filename without extension as default title
       const defaultTitle = file.name.split(".").slice(0, -1).join(".");
 
+      // Check if this file is a duplicate
+      const isDuplicate = existingFiles.includes(file.name);
+
       newFiles.push({
         id: Math.random().toString(36).substr(2, 9),
         file,
@@ -126,13 +143,21 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
         description: bulkDescription,
         category: bulkCategory,
         instrument: bulkInstrument,
-        status: 'pending'
+        status: isDuplicate ? 'duplicate' : 'pending',
+        isDuplicate,
+        error: isDuplicate ? 'File already exists in library' : undefined
       });
     });
 
     if (!hasErrors) {
       setFiles(prev => [...prev, ...newFiles]);
       setGlobalError("");
+
+      // Show warning if duplicates found
+      const duplicateCount = newFiles.filter(f => f.isDuplicate).length;
+      if (duplicateCount > 0) {
+        setGlobalError(`Warning: ${duplicateCount} duplicate file(s) detected. These will be skipped during upload.`);
+      }
     }
   };
 
@@ -197,8 +222,17 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
       return;
     }
 
+    // Filter out duplicate files
+    const filesToUpload = files.filter(f => !f.isDuplicate);
+    const duplicateCount = files.filter(f => f.isDuplicate).length;
+
+    if (filesToUpload.length === 0) {
+      setGlobalError("All selected files are duplicates. No files to upload.");
+      return;
+    }
+
     // Validate that all files have required fields
-    const invalidFiles = files.filter(f => !f.category);
+    const invalidFiles = filesToUpload.filter(f => !f.category);
     if (invalidFiles.length > 0) {
       setGlobalError("All files must have a category selected");
       return;
@@ -210,13 +244,13 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
     // Upload files concurrently (max 3 at a time to avoid overwhelming the server)
     const batchSize = 3;
     const batches: BulkUploadFile[][] = [];
-    
-    for (let i = 0; i < files.length; i += batchSize) {
-      batches.push(files.slice(i, i + batchSize));
+
+    for (let i = 0; i < filesToUpload.length; i += batchSize) {
+      batches.push(filesToUpload.slice(i, i + batchSize));
     }
 
     let successCount = 0;
-    
+
     for (const batch of batches) {
       const promises = batch.map(uploadSingleFile);
       const results = await Promise.all(promises);
@@ -224,12 +258,15 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
     }
 
     setIsUploading(false);
-    
-    if (successCount === files.length) {
+
+    const totalAttempted = filesToUpload.length;
+    const skippedMessage = duplicateCount > 0 ? ` (${duplicateCount} duplicate(s) skipped)` : '';
+
+    if (successCount === totalAttempted) {
       // All uploads successful
       router.push("/library");
     } else {
-      setGlobalError(`${successCount}/${files.length} files uploaded successfully. Check individual file errors below.`);
+      setGlobalError(`${successCount}/${totalAttempted} files uploaded successfully${skippedMessage}. Check individual file errors below.`);
     }
   };
 
@@ -239,6 +276,7 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
       case 'uploading': return <UploadCloud className="h-4 w-4 text-blue-500 animate-pulse" />;
       case 'success': return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case 'error': return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'duplicate': return <AlertCircle className="h-4 w-4 text-yellow-500" />;
       default: return <FileText className="h-4 w-4 text-muted-foreground" />;
     }
   };

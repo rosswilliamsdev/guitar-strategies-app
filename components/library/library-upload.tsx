@@ -72,8 +72,9 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
   const [category, setCategory] = useState("TABLATURE");
   const [instrument, setInstrument] = useState("GUITAR");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDuplicate, setIsDuplicate] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -92,7 +93,23 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
       return;
     }
 
+    // Check for duplicate file
+    try {
+      const response = await fetch(`/api/library/check-duplicate?fileName=${encodeURIComponent(file.name)}&teacherId=${teacherId}`);
+      const data = await response.json();
+
+      if (data.exists) {
+        setIsDuplicate(true);
+        setError(`A file named "${file.name}" already exists in your library. Please rename the file or remove the existing one first.`);
+        return;
+      }
+    } catch (err) {
+      console.error("Error checking for duplicates:", err);
+      // Continue with upload even if duplicate check fails
+    }
+
     setSelectedFile(file);
+    setIsDuplicate(false);
     setError("");
 
     // Auto-fill title if empty (but user can clear it later)
@@ -108,6 +125,11 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
 
     if (!selectedFile || !instrument) {
       setError("Please fill in all required fields and select a file");
+      return;
+    }
+
+    if (isDuplicate) {
+      setError("Cannot upload duplicate file. Please select a different file.");
       return;
     }
 
