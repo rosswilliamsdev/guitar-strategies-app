@@ -69,8 +69,8 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
   // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [instrument, setInstrument] = useState("");
+  const [category, setCategory] = useState("TABLATURE");
+  const [instrument, setInstrument] = useState("GUITAR");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +106,7 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedFile || !title || !category) {
+    if (!selectedFile || !instrument) {
       setError("Please fill in all required fields and select a file");
       return;
     }
@@ -235,18 +235,18 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
           />
         </div>
 
-        {/* Category and Instrument */}
+        {/* Instrument and Category */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label>Category *</Label>
-            <Select value={category} onValueChange={setCategory} required>
+            <Label>Instrument *</Label>
+            <Select value={instrument} onValueChange={setInstrument} required>
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Select instrument" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
+                {instruments.map((inst) => (
+                  <SelectItem key={inst.value} value={inst.value}>
+                    {inst.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -254,15 +254,15 @@ export function LibraryUpload({ teacherId }: LibraryUploadProps) {
           </div>
 
           <div>
-            <Label>Instrument</Label>
-            <Select value={instrument} onValueChange={setInstrument}>
+            <Label>Category</Label>
+            <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select instrument (optional)" />
+                <SelectValue placeholder="Select category (optional)" />
               </SelectTrigger>
               <SelectContent>
-                {instruments.map((inst) => (
-                  <SelectItem key={inst.value} value={inst.value}>
-                    {inst.label}
+                {categories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>

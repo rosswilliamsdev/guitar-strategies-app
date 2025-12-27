@@ -87,9 +87,9 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
   const [files, setFiles] = useState<BulkUploadFile[]>([]);
   
   // Bulk settings that apply to all files
-  const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkCategory, setBulkCategory] = useState("TABLATURE");
   const [bulkDescription, setBulkDescription] = useState("");
-  const [bulkInstrument, setBulkInstrument] = useState("");
+  const [bulkInstrument, setBulkInstrument] = useState("GUITAR");
 
   const handleFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -292,15 +292,15 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
             Apply Settings to All Files
           </h2>
           <div className="mb-4">
-            <Label>Default Category</Label>
-            <Select value={bulkCategory} onValueChange={setBulkCategory}>
+            <Label>Default Instrument *</Label>
+            <Select value={bulkInstrument} onValueChange={setBulkInstrument}>
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Select instrument" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(cat => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
+                {instruments.map(inst => (
+                  <SelectItem key={inst.value} value={inst.value}>
+                    {inst.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -308,15 +308,15 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
           </div>
 
           <div className="mb-4">
-            <Label>Default Instrument</Label>
-            <Select value={bulkInstrument} onValueChange={setBulkInstrument}>
+            <Label>Default Category</Label>
+            <Select value={bulkCategory} onValueChange={setBulkCategory}>
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select instrument (optional)" />
+                <SelectValue placeholder="Select category (optional)" />
               </SelectTrigger>
               <SelectContent>
-                {instruments.map(inst => (
-                  <SelectItem key={inst.value} value={inst.value}>
-                    {inst.label}
+                {categories.map(cat => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
                   </SelectItem>
                 ))}
               </SelectContent>

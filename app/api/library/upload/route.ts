@@ -32,12 +32,13 @@ async function handlePOST(request: NextRequest) {
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
+    const instrument = formData.get('instrument') as string;
     // All resources are now public by default
     const isPublic = true;
 
-    if (!file || !category) {
-      return NextResponse.json({ 
-        error: 'Missing required fields: file and category are required' 
+    if (!file || !instrument) {
+      return NextResponse.json({
+        error: 'Missing required fields: file and instrument are required'
       }, { status: 400 });
     }
 
@@ -109,7 +110,8 @@ async function handlePOST(request: NextRequest) {
           fileSize: file.size,
           fileUrl,
           teacherId: teacherProfile.id,
-          category: category as any,
+          instrument: instrument as any,
+          category: category ? (category as any) : null,
           isPublic,
         }
       });
