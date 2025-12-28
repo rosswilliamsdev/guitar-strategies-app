@@ -13,7 +13,7 @@ type AvailabilitySlot = z.infer<typeof availabilitySchema>;
 interface WeeklyScheduleGridProps {
   availability?: AvailabilitySlot[];
   onChange?: (availability: AvailabilitySlot[]) => void;
-  onSave?: (availability: AvailabilitySlot[]) => Promise<void>;
+  onSave?: (availability: AvailabilitySlot[]) => Promise<AvailabilitySlot[]>;
   loading?: boolean;
   readonly?: boolean;
 }
@@ -132,6 +132,7 @@ export function WeeklyScheduleGrid({
   const handleSave = async () => {
     if (!onSave) return;
 
+    // Clear any pending timeouts
     if (successTimeoutRef.current) {
       clearTimeout(successTimeoutRef.current);
       successTimeoutRef.current = null;
@@ -142,10 +143,13 @@ export function WeeklyScheduleGrid({
     setSaving(true);
 
     try {
-      await onSave(localAvailability);
+      // Get server response - this is the source of truth
+      const savedAvailability = await onSave(localAvailability);
 
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      // Update local state with what server actually saved
+      setLocalAvailability(savedAvailability);
 
+      // NOW show success - no race condition
       setSuccess("Availability updated successfully!");
 
       successTimeoutRef.current = setTimeout(() => {
@@ -154,9 +158,11 @@ export function WeeklyScheduleGrid({
       }, 3000);
     } catch (err: any) {
       setError(err.message || "Failed to save availability");
+
+      // Auto-clear error after 5 seconds
       setTimeout(() => {
         setError("");
-      }, 3000);
+      }, 5000);
     } finally {
       setSaving(false);
     }

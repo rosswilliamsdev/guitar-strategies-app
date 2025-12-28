@@ -315,9 +315,9 @@ export function TeacherSettingsForm({
         data: data,
       });
 
-      // Update the availability state to reflect saved data
-      setAvailability(data.data?.availability || []);
-      // Success/error messages are handled by WeeklyScheduleGrid component
+      // Return the saved data - let child component handle state updates
+      // This prevents race conditions with parent re-renders clearing child messages
+      return data.data?.availability || [];
     } catch (error: any) {
       log.error("Error saving availability", {
         error: error.message,
@@ -562,7 +562,11 @@ export function TeacherSettingsForm({
             </h3>
           </div>
 
-          <form ref={profileFormRef} onSubmit={handleProfileSubmit} className="space-y-6">
+          <form
+            ref={profileFormRef}
+            onSubmit={handleProfileSubmit}
+            className="space-y-6"
+          >
             {/* Basic Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -839,7 +843,11 @@ export function TeacherSettingsForm({
             </h3>
           </div>
 
-          <form ref={passwordFormRef} onSubmit={handlePasswordSubmit} className="space-y-6">
+          <form
+            ref={passwordFormRef}
+            onSubmit={handlePasswordSubmit}
+            className="space-y-6"
+          >
             <div>
               <Label htmlFor="currentPassword">Current Password *</Label>
               <Input
