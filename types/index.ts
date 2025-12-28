@@ -1,10 +1,10 @@
 /**
  * @fileoverview Type definitions for Guitar Strategies application.
- * 
+ *
  * This file contains all TypeScript type definitions used throughout the application,
  * extending Prisma-generated types with additional properties and creating custom
  * interfaces for forms, API responses, and component props.
- * 
+ *
  * Key type categories:
  * - User and profile types (extended from Prisma)
  * - Lesson management types
@@ -141,12 +141,13 @@ export type Invoice = PrismaInvoice & {
   teacher: TeacherProfile;
   student: StudentProfile & { user: User };
   items: InvoiceItem[];
+  customFullName?: string | null;
+  customEmail?: string | null;
 };
 
 export type InvoiceItem = PrismaInvoiceItem & {
   lesson?: Lesson;
 };
-
 
 // ========================================
 // Library Types
@@ -427,7 +428,7 @@ export interface TimeSlot {
 }
 
 export interface RecurringBooking {
-  frequency: 'WEEKLY' | 'BIWEEKLY';
+  frequency: "WEEKLY" | "BIWEEKLY";
   endDate?: Date;
   maxOccurrences?: number;
 }

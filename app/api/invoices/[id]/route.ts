@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
-import { apiLog, dbLog, invoiceLog } from '@/lib/logger';
-import { withApiMiddleware } from '@/lib/api-wrapper';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { apiLog, dbLog, invoiceLog } from "@/lib/logger";
+import { withApiMiddleware } from "@/lib/api-wrapper";
 
 async function handleGET(
   request: NextRequest,
@@ -14,7 +14,7 @@ async function handleGET(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const invoice = await prisma.invoice.findUnique({
@@ -35,25 +35,32 @@ async function handleGET(
     });
 
     if (!invoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     // Check authorization - teachers can see their own invoices, students can see invoices for them
-    const isTeacher = session.user.role === 'TEACHER' && invoice.teacherId === session.user.teacherProfile?.id;
-    const isStudent = session.user.role === 'STUDENT' && invoice.studentId === session.user.studentProfile?.id;
-    const isAdmin = session.user.role === 'ADMIN';
+    const isTeacher =
+      session.user.role === "TEACHER" &&
+      invoice.teacherId === session.user.teacherProfile?.id;
+    const isStudent =
+      session.user.role === "STUDENT" &&
+      invoice.studentId === session.user.studentProfile?.id;
+    const isAdmin = session.user.role === "ADMIN";
 
     if (!isTeacher && !isStudent && !isAdmin) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     return NextResponse.json({ invoice });
   } catch (error) {
-    apiLog.error('Error fetching invoice:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    apiLog.error("Error fetching invoice:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -66,11 +73,14 @@ async function handlePUT(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== 'TEACHER') {
-      return NextResponse.json({ error: 'Access denied. Teachers only.' }, { status: 403 });
+    if (session.user.role !== "TEACHER") {
+      return NextResponse.json(
+        { error: "Access denied. Teachers only." },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -81,11 +91,11 @@ async function handlePUT(
     });
 
     if (!existingInvoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     if (existingInvoice.teacherId !== session.user.teacherProfile?.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const updateData: any = {};
@@ -94,7 +104,7 @@ async function handlePUT(
     if (body.status) {
       updateData.status = body.status;
 
-      if (body.status === 'PAID' && !existingInvoice.paidAt) {
+      if (body.status === "PAID" && !existingInvoice.paidAt) {
         updateData.paidAt = new Date();
       }
     }
@@ -110,9 +120,9 @@ async function handlePUT(
     // Handle full invoice updates (from edit form)
     if (body.items) {
       // Only allow full updates for PENDING invoices
-      if (existingInvoice.status !== 'PENDING') {
+      if (existingInvoice.status !== "PENDING") {
         return NextResponse.json(
-          { error: 'Can only edit PENDING invoices' },
+          { error: "Can only edit PENDING invoices" },
           { status: 400 }
         );
       }
@@ -122,18 +132,23 @@ async function handlePUT(
       if (body.dueDate) updateData.dueDate = new Date(body.dueDate);
 
       // Handle student vs custom invoice
-      if (body.studentId !== undefined) {
+      if (body.studentId !== undefined && body.studentId !== null) {
+        // Regular student invoice
         updateData.studentId = body.studentId;
         updateData.customFullName = null;
         updateData.customEmail = null;
       } else if (body.customFullName && body.customEmail) {
+        // Custom invoice (non-system student)
         updateData.studentId = null;
         updateData.customFullName = body.customFullName;
         updateData.customEmail = body.customEmail;
       }
 
       // Calculate totals from items
-      const subtotal = body.items.reduce((sum: number, item: any) => sum + item.amount, 0);
+      const subtotal = body.items.reduce(
+        (sum: number, item: any) => sum + item.amount,
+        0
+      );
       updateData.subtotal = subtotal;
       updateData.total = subtotal;
 
@@ -178,16 +193,19 @@ async function handlePUT(
 
     return NextResponse.json({ invoice });
   } catch (error) {
-    apiLog.error('Error updating invoice:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+    apiLog.error("Error updating invoice:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -200,11 +218,14 @@ async function handleDELETE(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== 'TEACHER') {
-      return NextResponse.json({ error: 'Access denied. Teachers only.' }, { status: 403 });
+    if (session.user.role !== "TEACHER") {
+      return NextResponse.json(
+        { error: "Access denied. Teachers only." },
+        { status: 403 }
+      );
     }
 
     const existingInvoice = await prisma.invoice.findUnique({
@@ -212,11 +233,11 @@ async function handleDELETE(
     });
 
     if (!existingInvoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     if (existingInvoice.teacherId !== session.user.teacherProfile?.id) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Allow deletion of any invoice that belongs to the teacher
@@ -228,11 +249,14 @@ async function handleDELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    apiLog.error('Error deleting invoice:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    apiLog.error("Error deleting invoice:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
