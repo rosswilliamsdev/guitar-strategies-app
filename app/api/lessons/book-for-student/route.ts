@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { toZonedTime } from "date-fns-tz";
 import {
   createSuccessResponse,
   createAuthErrorResponse,
@@ -45,11 +46,20 @@ export async function POST(request: NextRequest) {
       return createNotFoundResponse("Student or student assignment");
     }
 
-    // Check teacher's availability for the requested time
-    const lessonDate = new Date(validatedData.date);
-    const dayOfWeek = lessonDate.getDay();
-    const hours = lessonDate.getHours();
-    const minutes = lessonDate.getMinutes();
+    // Get teacher's timezone
+    const teacher = await prisma.teacherProfile.findUnique({
+      where: { id: validatedData.teacherId },
+      select: { timezone: true },
+    });
+
+    const teacherTimezone = teacher?.timezone || "America/New_York";
+
+    // Convert UTC date to teacher's timezone for availability checking
+    const lessonDateUTC = new Date(validatedData.date);
+    const lessonDateInTeacherTZ = toZonedTime(lessonDateUTC, teacherTimezone);
+    const dayOfWeek = lessonDateInTeacherTZ.getDay();
+    const hours = lessonDateInTeacherTZ.getHours();
+    const minutes = lessonDateInTeacherTZ.getMinutes();
     const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 
     const availability = await prisma.teacherAvailability.findFirst({
@@ -66,15 +76,15 @@ export async function POST(request: NextRequest) {
       return createBadRequestResponse("This time slot is not within your availability");
     }
 
-    // Check for conflicts
-    const endTime = new Date(lessonDate);
+    // Check for conflicts (use UTC date for DB comparison)
+    const endTime = new Date(lessonDateUTC);
     endTime.setMinutes(endTime.getMinutes() + validatedData.duration);
 
     const conflict = await prisma.lesson.findFirst({
       where: {
         teacherId: validatedData.teacherId,
         date: {
-          gte: lessonDate,
+          gte: lessonDateUTC,
           lt: endTime,
         },
         status: {
@@ -94,7 +104,7 @@ export async function POST(request: NextRequest) {
         where: {
           teacherId: validatedData.teacherId,
           date: {
-            gte: lessonDate,
+            gte: lessonDateUTC,
             lt: endTime,
           },
           status: {
@@ -123,12 +133,12 @@ export async function POST(request: NextRequest) {
         : teacher.lessonSettings.price60Min;
 
       if (validatedData.type === "single") {
-        // Create single lesson
+        // Create single lesson (store in UTC)
         const lesson = await tx.lesson.create({
           data: {
             teacherId: validatedData.teacherId,
             studentId: validatedData.studentId,
-            date: lessonDate,
+            date: lessonDateUTC,
             duration: validatedData.duration,
             status: "SCHEDULED",
           },
@@ -136,12 +146,8 @@ export async function POST(request: NextRequest) {
 
         return { type: "single", lesson };
       } else {
-        // Create indefinite recurring slot
-        const lessonDate = new Date(validatedData.date);
-        const dayOfWeek = lessonDate.getDay();
-        const hours = lessonDate.getHours();
-        const minutes = lessonDate.getMinutes();
-        const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+        // Create indefinite recurring slot (already converted to teacher's timezone above)
+        // Reuse the timezone-converted values from earlier
 
         // Check for existing recurring slot conflicts within transaction
         const existingSlot = await tx.recurringSlot.findFirst({
@@ -171,12 +177,12 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // Create the first lesson for this week
+        // Create the first lesson for this week (store in UTC)
         const firstLesson = await tx.lesson.create({
           data: {
             teacherId: validatedData.teacherId,
             studentId: validatedData.studentId,
-            date: lessonDate,
+            date: lessonDateUTC,
             duration: validatedData.duration,
             status: "SCHEDULED",
             isRecurring: true,
