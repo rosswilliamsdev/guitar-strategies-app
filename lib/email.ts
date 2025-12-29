@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import { withRetry, emailRetryOptions } from './retry';
+import { withRetry, emailRetryOptions, emailRetryOptionsFast } from './retry';
 import { emailLog } from './logger';
 import { prisma } from './db';
 
@@ -132,6 +132,61 @@ export async function sendEmail(data: EmailData): Promise<boolean> {
     
     return false;
   }
+}
+
+/**
+ * Send email with fast retry (for time-sensitive notifications)
+ * Uses reduced retry attempts (2 instead of 5) and shorter delays
+ */
+export async function sendEmailFast(data: EmailData): Promise<boolean> {
+  try {
+    const result = await withRetry(async () => {
+      const emailResult = await resend.emails.send({
+        from: data.from || 'Guitar Strategies <onboarding@resend.dev>',
+        to: [data.to],
+        subject: data.subject,
+        html: data.html,
+      });
+
+      if (emailResult.error) {
+        const error = new Error(emailResult.error.message || 'Email sending failed');
+        (error as any).status = emailResult.error.name === 'rate_limit_exceeded' ? 429 : 500;
+        throw error;
+      }
+
+      return emailResult;
+    }, emailRetryOptionsFast);
+
+    emailLog.info('Fast email sent successfully', {
+      emailId: result.data?.id,
+      to: data.to,
+      subject: data.subject
+    });
+    return true;
+  } catch (error) {
+    emailLog.error('Fast email sending failed after retries', {
+      error: error instanceof Error ? error.message : String(error),
+      to: data.to,
+      subject: data.subject,
+      attempts: emailRetryOptionsFast.maxAttempts
+    });
+    return false;
+  }
+}
+
+/**
+ * Send email asynchronously without blocking (fire-and-forget)
+ * Useful for non-critical notifications that shouldn't delay API responses
+ */
+export function sendEmailAsync(data: EmailData): void {
+  // Fire and forget - don't await
+  sendEmailFast(data).catch((error) => {
+    emailLog.error('Async email failed', {
+      error: error instanceof Error ? error.message : String(error),
+      to: data.to,
+      subject: data.subject
+    });
+  });
 }
 
 /**

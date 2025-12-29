@@ -184,7 +184,7 @@ export const emailRetryOptions: RetryOptions = {
       });
       return true;
     }
-    
+
     // Retry on temporary email service failures
     if (error?.status >= 500 && error?.status < 600) {
       emailLog.warn('Email service error, retrying', {
@@ -193,9 +193,9 @@ export const emailRetryOptions: RetryOptions = {
       });
       return true;
     }
-    
+
     // Retry on network issues
-    if (error?.code === 'ETIMEDOUT' || 
+    if (error?.code === 'ETIMEDOUT' ||
         error?.code === 'ECONNREFUSED' ||
         error?.message?.includes('network')) {
       emailLog.warn('Email network error, retrying', {
@@ -203,7 +203,7 @@ export const emailRetryOptions: RetryOptions = {
       });
       return true;
     }
-    
+
     // Don't retry on invalid email addresses or auth errors
     if (error?.status === 400 || error?.status === 401) {
       return false;
@@ -217,6 +217,25 @@ export const emailRetryOptions: RetryOptions = {
       status: error?.status,
       error: error?.message || String(error),
       stack: error?.stack
+    });
+  }
+};
+
+/**
+ * Fast email retry for time-sensitive notifications (e.g., cancellations)
+ * Reduces retries to 2 attempts with shorter delays
+ */
+export const emailRetryOptionsFast: RetryOptions = {
+  maxAttempts: 2,
+  initialDelay: 500,
+  maxDelay: 2000,
+  backoffMultiplier: 2,
+  shouldRetry: emailRetryOptions.shouldRetry, // Reuse same retry logic
+  onRetry: (error, attempt) => {
+    emailLog.debug('Fast email retry attempt', {
+      attempt,
+      status: error?.status,
+      error: error?.message || String(error)
     });
   }
 };
