@@ -98,7 +98,7 @@ export function DashboardSidebar({
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          className="lg:hidden fixed inset-0 bg-black/50 z-40 overflow-y-auto"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -106,16 +106,17 @@ export function DashboardSidebar({
 
       <aside
         className={cn(
-          "bg-background border-r border-border min-h-screen transition-all duration-300 ease-in-out shadow-recessed bg-gradient-to-t from-gray-200 to-gray-50",
-          // Desktop: always visible, fixed width
-          "lg:w-64 lg:translate-x-0",
-          // Mobile: slide in/out from left
-          "lg:relative fixed inset-y-0 left-0 z-50 w-64",
+          "bg-background border-r border-border transition-all duration-300 ease-in-out shadow-recessed bg-gradient-to-t from-gray-200 to-gray-50",
+          // Desktop: always visible, fixed width, min-height for full page
+          "lg:w-64 lg:translate-x-0 lg:min-h-screen",
+          // Mobile: slide in/out from left, fixed position with max height and scroll
+          "fixed inset-y-0 left-0 z-50 w-64 lg:relative",
+          "flex flex-col max-h-screen lg:max-h-none",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Mobile close button */}
-        <div className="lg:hidden flex justify-between items-center p-4 border-b border-border">
+        <div className="lg:hidden flex justify-between items-center p-4 border-b border-border flex-shrink-0">
           <Link
             href="/dashboard"
             className="text-xl font-semibold text-black"
@@ -123,25 +124,17 @@ export function DashboardSidebar({
           >
             Guitar Strategies
           </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="p-2"
-            aria-label="Close menu"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
 
         {/* Desktop header */}
-        <div className="hidden lg:block p-6">
+        <div className="hidden lg:block p-6 flex-shrink-0">
           <Link href="/dashboard" className="text-xl font-semibold text-black">
             Guitar Strategies
           </Link>
         </div>
 
-        <nav className="px-4 space-y-2 pb-20">
+        {/* Scrollable navigation area */}
+        <nav className="px-4 space-y-2 overflow-y-auto flex-1 lg:flex-none lg:overflow-visible lg:pb-20">
           {filteredNavItems.map((item) => (
             <Link
               key={item.href}
@@ -159,7 +152,8 @@ export function DashboardSidebar({
           ))}
         </nav>
 
-        <div className="absolute bottom-0 w-64 p-4 border-t border-border shadow-sm">
+        {/* Bottom section - fixed on mobile, absolute on desktop */}
+        <div className="p-4 border-t border-border shadow-sm flex-shrink-0 lg:absolute lg:bottom-0 lg:w-64 mt-5">
           <div className="space-y-3">
             <Button
               variant="secondary"
