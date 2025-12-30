@@ -106,7 +106,6 @@ export const authOptions: NextAuthOptions = {
             studentProfile: user.studentProfile,
             isAdmin:
               user.role === "ADMIN" || user.teacherProfile?.isAdmin || false,
-            isOrgFounder: user.teacherProfile?.isOrgFounder || false,
           };
 
           authLog.info("Authorization successful", {
@@ -152,7 +151,6 @@ export const authOptions: NextAuthOptions = {
         token.teacherProfile = user.teacherProfile;
         token.studentProfile = user.studentProfile;
         token.isAdmin = user.isAdmin;
-        token.isOrgFounder = user.isOrgFounder;
       }
 
       authLog.info("JWT token prepared", {
@@ -182,7 +180,6 @@ export const authOptions: NextAuthOptions = {
         session.user.teacherProfile = token.teacherProfile;
         session.user.studentProfile = token.studentProfile;
         session.user.isAdmin = token.isAdmin;
-        session.user.isOrgFounder = token.isOrgFounder;
 
         authLog.info("Session enriched with user data", {
           id: session.user.id,

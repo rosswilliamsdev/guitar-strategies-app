@@ -63,9 +63,6 @@ interface TeacherSettingsFormProps {
     venmoHandle?: string;
     paypalEmail?: string;
     zelleEmail?: string;
-    isSoloTeacher?: boolean;
-    isOrgFounder?: boolean;
-    organizationName?: string;
   };
   emailPreferences?: EmailPreference[];
 }
@@ -106,17 +103,6 @@ export function TeacherSettingsForm({
   );
   const [zelleEmail, setZelleEmail] = useState(teacherProfile.zelleEmail || "");
 
-  // Organization fields
-  const [isSoloTeacher, setIsSoloTeacher] = useState(
-    teacherProfile.isSoloTeacher || false
-  );
-  const [isOrgFounder, setIsOrgFounder] = useState(
-    teacherProfile.isOrgFounder || false
-  );
-  const [organizationName, setOrganizationName] = useState(
-    teacherProfile.organizationName || ""
-  );
-
   // Load current profile data
   const loadProfileData = async () => {
     try {
@@ -139,9 +125,6 @@ export function TeacherSettingsForm({
         setVenmoHandle(data.venmoHandle || "");
         setPaypalEmail(data.paypalEmail || "");
         setZelleEmail(data.zelleEmail || "");
-        setIsSoloTeacher(data.isSoloTeacher || false);
-        setIsOrgFounder(data.isOrgFounder || false);
-        setOrganizationName(data.organizationName || "");
         log.info("Profile state updated with new data");
       } else {
         log.error("Failed to load profile data", {
@@ -644,90 +627,6 @@ export function TeacherSettingsForm({
                 <p className="text-xs text-muted-foreground mt-1">
                   Your timezone is important for accurate lesson scheduling
                 </p>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Organization Settings - Read Only */}
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <Settings2 className="h-6 w-6 text-primary" />
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Organization
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Organization status is set at signup and cannot be changed
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {isSoloTeacher ? (
-                  <div className="bg-turquoise-50 border border-turquoise-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-2xl">✓</span>
-                      <h4 className="font-semibold text-turquoise-900">
-                        Solo Teacher
-                      </h4>
-                    </div>
-                    <p className="text-sm text-turquoise-800">
-                      You have full administrative access to manage students,
-                      billing, and all system features.
-                    </p>
-                  </div>
-                ) : isOrgFounder ? (
-                  <div className="bg-turquoise-50 border border-turquoise-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-2xl">👑</span>
-                      <h4 className="font-semibold text-turquoise-900">
-                        Organization Founder
-                      </h4>
-                    </div>
-                    {organizationName && (
-                      <p className="text-sm text-turquoise-800 mb-2">
-                        <strong>Organization:</strong> {organizationName}
-                      </p>
-                    )}
-                    <p className="text-sm text-turquoise-800">
-                      You have full administrative access to manage your
-                      organization, teachers, students, billing, and all system
-                      features.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
-                    <div className="mb-2">
-                      <h4 className="font-semibold text-neutral-900">
-                        Organization Teacher
-                      </h4>
-                    </div>
-                    {organizationName ? (
-                      <div className="space-y-1">
-                        <p className="text-sm text-neutral-700">
-                          <strong>Organization:</strong> {organizationName}
-                        </p>
-                        <p className="text-xs text-neutral-600 mt-2">
-                          Organization affiliation was set during signup and
-                          cannot be changed.
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-neutral-700">
-                        You are affiliated with an organization.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  <p className="text-xs text-amber-800">
-                    <strong>Note:</strong> Organization status cannot be changed
-                    after signup. If you need to update this, please contact
-                    support.
-                  </p>
-                </div>
               </div>
             </div>
 
