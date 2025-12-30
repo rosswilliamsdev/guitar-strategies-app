@@ -18,13 +18,7 @@ export async function POST(request: Request) {
 
     // Validate input
     const validatedData = registerSchema.parse(body);
-    const {
-      name,
-      email,
-      password,
-      role,
-      teacherId,
-    } = validatedData;
+    const { name, email, password, role, teacherId } = validatedData;
 
     // For students, teacherId is required
     if (role === "STUDENT" && !teacherId) {
@@ -71,7 +65,7 @@ export async function POST(request: Request) {
             teacherProfile: {
               create: {
                 isActive: true,
-                isAdmin: false, // Can be set by admin later if needed
+                isAdmin: true,
               },
             },
           }),

@@ -76,7 +76,7 @@ model TeacherProfile {
   bio             String? @db.Text
   hourlyRate      Int?    // stored in cents
   isActive        Boolean @default(true)
-  isAdmin         Boolean @default(false) // For teachers with admin privileges
+  isAdmin         Boolean @default(true) // All teachers are admin
 
   // Payment methods for invoice generation
   venmoHandle     String? // @username

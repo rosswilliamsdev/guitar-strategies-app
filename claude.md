@@ -116,6 +116,36 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 /* Buttons */
 .btn-primary     /* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
 /* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
+/* Turquoise primary button (bg-primary text-white hover:bg-turquoise-600) */
 .btn-secondary   /* Neutral button with border (bg-background border text-foreground hover:bg-muted) */
 
 /* Cards */
@@ -154,7 +184,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   bio?: string
   hourlyRate?: number         // In cents
   isActive: boolean
-  isAdmin: boolean            // For teachers with admin privileges (default: false)
+  isAdmin: boolean            // For teachers - default to TRUE
 
   // Payment methods for invoice generation
   venmoHandle?: string        // @username
@@ -162,7 +192,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   zelleEmail?: string         // email@example.com or phone number
 
   // Profile settings
-  timezone: string            // Default: "America/New_York"
+  timezone: string            // Default: "America/Chicago"
   phoneNumber?: string
   profileImageUrl?: string
 }
@@ -171,7 +201,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 **Important Notes:**
 
 - **Solo Teacher Model**: All teachers are independent/solo teachers managing their own students
-- **Admin Access**: Teachers can have `isAdmin: true` for administrative privileges if needed
+- **Admin Access**: All teachers have admin access
 - **Payment Methods**: Teachers add their payment info (Venmo/PayPal/Zelle) to include on invoices
 
 ### StudentProfile Model
