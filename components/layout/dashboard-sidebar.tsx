@@ -116,7 +116,7 @@ export function DashboardSidebar({
         )}
       >
         {/* Mobile close button */}
-        <div className="lg:hidden flex justify-between items-center p-4 border-b border-border flex-shrink-0">
+        <div className="lg:hidden flex justify-between items-center p-4 mb-4 border-b border-border flex-shrink-0">
           <Link
             href="/dashboard"
             className="text-xl font-semibold text-black"

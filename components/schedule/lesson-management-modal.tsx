@@ -1,7 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +14,7 @@ import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { User, Calendar, Clock, FileText, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { log, emailLog } from '@/lib/logger';
+import { log, emailLog } from "@/lib/logger";
 
 interface UpcomingLesson {
   id: string;
@@ -65,9 +70,9 @@ export function LessonManagementModal({
       onUpdate();
       onClose();
     } catch (error) {
-      log.error('Error updating lesson:', {
+      log.error("Error updating lesson:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       toast.error("Failed to save notes. Please try again.");
     } finally {
@@ -82,7 +87,7 @@ export function LessonManagementModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reason: "Cancelled by teacher"
+          reason: "Cancelled by teacher",
         }),
       });
 
@@ -95,11 +100,14 @@ export function LessonManagementModal({
       onUpdate();
       onClose();
     } catch (error) {
-      log.error('Error cancelling lesson:', {
+      log.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
-      const errorMessage = error instanceof Error ? error.message : "Failed to cancel lesson. Please try again.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to cancel lesson. Please try again.";
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -108,29 +116,6 @@ export function LessonManagementModal({
 
   const isLessonCancelled = lesson.status === "CANCELLED";
   const isLessonCompleted = lesson.status === "COMPLETED";
-
-  // Check if lesson can be cancelled (same logic as backend)
-  const canCancelLesson = () => {
-    if (lesson.status !== "SCHEDULED") {
-      return { canCancel: false, reason: `Cannot cancel lesson with status: ${lesson.status}` };
-    }
-
-    const now = new Date();
-    const lessonTime = new Date(lesson.date);
-    const bufferTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours buffer
-
-    if (lessonTime <= now) {
-      return { canCancel: false, reason: "Cannot cancel lessons that have already started or passed" };
-    }
-
-    if (lessonTime <= bufferTime) {
-      return { canCancel: false, reason: "Cannot cancel lessons within 2 hours of start time" };
-    }
-
-    return { canCancel: true };
-  };
-
-  const cancellationCheck = canCancelLesson();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -149,12 +134,14 @@ export function LessonManagementModal({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{lesson.student.user.name}</span>
+                  <span className="font-medium">
+                    {lesson.student.user.name}
+                  </span>
                 </div>
-                <Badge 
+                <Badge
                   className={`${
-                    isLessonCancelled 
-                      ? "bg-red-100 text-red-700 border-red-200" 
+                    isLessonCancelled
+                      ? "bg-red-100 text-red-700 border-red-200"
                       : isLessonCompleted
                       ? "bg-green-100 text-green-700 border-green-200"
                       : "bg-blue-100 text-blue-700 border-blue-200"
@@ -163,7 +150,7 @@ export function LessonManagementModal({
                   {lesson.status}
                 </Badge>
               </div>
-              
+
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
@@ -171,7 +158,8 @@ export function LessonManagementModal({
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  {format(new Date(lesson.date), "h:mm a")} ({lesson.duration} min)
+                  {format(new Date(lesson.date), "h:mm a")} ({lesson.duration}{" "}
+                  min)
                 </div>
               </div>
 
@@ -183,49 +171,35 @@ export function LessonManagementModal({
           </Card>
 
           {/* Action Buttons */}
-          {!isLessonCancelled && (
+          {!isLessonCancelled && !isLessonCompleted && (
             <div className="flex items-center gap-3">
               <Button
                 variant={mode === "notes" ? "primary" : "secondary"}
-                onClick={() => mode === "notes" ? handleSaveNotes() : setMode("notes")}
+                onClick={() =>
+                  mode === "notes" ? handleSaveNotes() : setMode("notes")
+                }
                 disabled={isLoading}
                 className="flex items-center gap-2"
               >
                 <FileText className="h-4 w-4" />
-                {mode === "notes" 
-                  ? (isLoading ? "Saving..." : "Save Notes")
-                  : (lesson.notes ? "Edit Notes" : "Add Notes")
-                }
+                {mode === "notes"
+                  ? isLoading
+                    ? "Saving..."
+                    : "Save Notes"
+                  : lesson.notes
+                  ? "Edit Notes"
+                  : "Add Notes"}
               </Button>
-              
-              {cancellationCheck.canCancel ? (
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowCancelConfirm(true)}
-                  className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                >
-                  <AlertTriangle className="h-4 w-4" />
-                  Cancel Lesson
-                </Button>
-              ) : (
-                <div className="flex items-center gap-2 text-gray-400">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span className="text-sm" title={cancellationCheck.reason}>
-                    Cannot Cancel
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Cancellation restriction notice */}
-          {!isLessonCancelled && !cancellationCheck.canCancel && (
-            <Card className="p-3 border-amber-200 bg-amber-50">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <p className="text-sm text-amber-700">{cancellationCheck.reason}</p>
-              </div>
-            </Card>
+              <Button
+                variant="secondary"
+                onClick={() => setShowCancelConfirm(true)}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                Cancel Lesson
+              </Button>
+            </div>
           )}
 
           {/* Notes Section */}
@@ -265,7 +239,7 @@ export function LessonManagementModal({
           {mode === "view" && lesson.notes && (
             <Card className="p-4">
               <h3 className="font-medium mb-3">Lesson Notes</h3>
-              <div 
+              <div
                 className="prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: lesson.notes }}
               />
@@ -281,8 +255,9 @@ export function LessonManagementModal({
                   <h3 className="font-medium text-red-900">Cancel Lesson</h3>
                 </div>
                 <p className="text-sm text-red-700">
-                  Are you sure you want to cancel this lesson? This action cannot be undone.
-                  The student will need to be notified of the cancellation.
+                  Are you sure you want to cancel this lesson? This action
+                  cannot be undone. The student will need to be notified of the
+                  cancellation.
                 </p>
                 <div className="flex items-center justify-end gap-2">
                   <Button

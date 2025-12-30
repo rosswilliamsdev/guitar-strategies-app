@@ -201,73 +201,60 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Build access control conditions based on user role
-    const whereCondition: { id: string; teacherId?: string; studentId?: string } = { id: id };
-    
-    if (session.user.role === 'TEACHER') {
-      // Teachers can cancel lessons they are teaching
-      const teacherProfile = await prisma.teacherProfile.findUnique({
-        where: { userId: session.user.id }
-      });
-      
-      if (!teacherProfile) {
-        return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
-      }
-      
-      whereCondition.teacherId = teacherProfile.id;
-    } else if (session.user.role === 'STUDENT') {
-      // Students can cancel their own lessons
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: session.user.id }
-      });
-      
-      if (!studentProfile) {
-        return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
-      }
-      
-      whereCondition.studentId = studentProfile.id;
-    } else {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
-
-    // Find the lesson to verify access and check if it can be cancelled
-    const lesson = await prisma.lesson.findFirst({
-      where: whereCondition
+    // Find the lesson
+    const lesson = await prisma.lesson.findUnique({
+      where: { id },
+      include: {
+        teacher: { select: { userId: true } },
+        student: { select: { userId: true } },
+      },
     });
 
     if (!lesson) {
-      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+      return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
-    // Check if lesson is in the future and can be cancelled
-    if (lesson.date <= new Date()) {
-      return NextResponse.json({ error: 'Cannot cancel lessons that have already started' }, { status: 400 });
+    // Verify user has access (is either the teacher or the student)
+    const hasAccess =
+      lesson.teacher.userId === session.user.id ||
+      lesson.student.userId === session.user.id;
+
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    if (lesson.status !== 'SCHEDULED') {
-      return NextResponse.json({ error: 'Can only cancel scheduled lessons' }, { status: 400 });
+    // Prevent cancelling already cancelled lessons
+    if (lesson.status === "CANCELLED") {
+      return NextResponse.json(
+        { error: "Lesson already cancelled" },
+        { status: 400 }
+      );
     }
 
-    // Update lesson status to CANCELLED instead of deleting
+    // Cancel the lesson
     await prisma.lesson.update({
-      where: { id: id },
-      data: { status: 'CANCELLED' }
+      where: { id },
+      data: {
+        status: "CANCELLED",
+      },
     });
 
-    // Invalidate related caches after cancelling the lesson
     await invalidateLessonCache(lesson.id, lesson.teacherId, lesson.studentId);
 
-    return NextResponse.json({ message: 'Lesson cancelled successfully' });
+    return NextResponse.json({ message: "Lesson cancelled successfully" });
   } catch (error) {
-    apiLog.error('Error cancelling lesson:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    return NextResponse.json({ error: 'Failed to cancel lesson' }, { status: 500 });
+    apiLog.error("Error cancelling lesson:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      { error: "Failed to cancel lesson" },
+      { status: 500 }
+    );
   }
 }
