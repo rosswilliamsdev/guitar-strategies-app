@@ -119,8 +119,6 @@ export const teacherProfileSchema = z.object({
   venmoHandle: z.string().optional().nullable().transform(val => val === "" ? null : val),
   paypalEmail: z.string().optional().nullable().transform(val => val === "" ? null : val).refine(val => !val || val.includes('@'), "Please enter a valid PayPal email"),
   zelleEmail: z.string().optional().nullable().transform(val => val === "" ? null : val),
-  // Note: Organization fields (isSoloTeacher, organizationName) are set at signup only
-  // and cannot be changed through settings, so they're not in this schema
 });
 
 export const studentProfileSchema = z.object({

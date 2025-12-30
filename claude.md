@@ -154,13 +154,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   bio?: string
   hourlyRate?: number         // In cents
   isActive: boolean
-  isAdmin: boolean            // Solo teachers automatically get admin privileges
-
-  // Organization settings (set at signup, cannot be changed)
-  organizationId?: string     // Reference to Organization (null for solo teachers)
-  organizationName?: string   // Cached org name for display
-  isSoloTeacher: boolean      // Default: false - independent teachers
-  isOrgFounder: boolean       // Default: false - organization founders
+  isAdmin: boolean            // For teachers with admin privileges (default: false)
 
   // Payment methods for invoice generation
   venmoHandle?: string        // @username
@@ -168,7 +162,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   zelleEmail?: string         // email@example.com or phone number
 
   // Profile settings
-  timezone?: string           // Default: "America/New_York"
+  timezone: string            // Default: "America/New_York"
   phoneNumber?: string
   profileImageUrl?: string
 }
@@ -176,13 +170,9 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 
 **Important Notes:**
 
-- **Three Types**: Teachers choose at signup: Solo, Found Organization, or Join Organization
-- **Permanent Choice**: Teacher type and organization affiliation cannot be changed after signup
-- **Admin Privileges**:
-  - Solo teachers: `isSoloTeacher: true, isAdmin: true`
-  - Organization founders: `isOrgFounder: true, isAdmin: true, organizationId: <org>`
-  - Organization members: `isOrgFounder: false, isAdmin: false, organizationId: <org>`
-- **Display Only**: Organization information shown in settings but is read-only
+- **Solo Teacher Model**: All teachers are independent/solo teachers managing their own students
+- **Admin Access**: Teachers can have `isAdmin: true` for administrative privileges if needed
+- **Payment Methods**: Teachers add their payment info (Venmo/PayPal/Zelle) to include on invoices
 
 ### StudentProfile Model
 
@@ -649,66 +639,10 @@ openssl rand -base64 32
 
 ### User Flow Patterns
 
-- **Teacher Registration**: Create account → **Choose solo teacher or organization (permanent)** → Set up availability schedule → Configure lesson settings → Invite students
+- **Teacher Registration**: Create account → Set up availability schedule → Configure lesson settings → Invite students
 - **Student Registration**: Need teacher invitation or teacher ID during signup
 - **Lesson Flow**: Student books time slot in app → Lesson happens → Teacher logs in our app
 - **Payment Flow**: Monthly billing based on number of lessons scheduled/completed in that month
-
-### Organization & Solo Teacher System
-
-**Three Teacher Types at Registration:**
-
-1. **Solo Teacher**
-
-   - Independent teachers managing their own business
-   - Automatically receive `isAdmin: true` for full admin privileges
-   - No organization affiliation
-
-2. **Organization Founder** ✨
-
-   - Creates a new organization during signup
-   - Becomes the organization's founder and admin
-   - Automatically receives `isAdmin: true` and `isOrgFounder: true`
-   - Can manage organization teachers, students, and settings
-   - Organization name must be unique system-wide
-
-3. **Organization Member**
-   - Joins an existing organization by entering its exact name
-   - Standard teacher permissions only
-   - Must enter exact organization name that already exists
-   - Linked to organization via `organizationId`
-
-**Important Rules:**
-
-1. Teacher type is **permanent** - set at signup and cannot be changed
-2. Organization founders automatically get full admin access
-3. Organization names must be unique (enforced at database level)
-4. Teachers joining an organization must enter the exact organization name
-5. Organization status is displayed in settings but read-only after registration
-6. If a teacher needs to change organization status, they must contact support
-
-**Admin Access Hierarchy:**
-
-- Users with role `ADMIN` have full system access
-- Solo teachers (`isSoloTeacher: true`) get admin access
-- Organization founders (`isOrgFounder: true`) get admin access for their org
-- Middleware checks: `role === 'ADMIN'` OR `isAdmin === true`
-
-**Organization Model:**
-
-```typescript
-{
-  id: string
-  name: string              // Unique organization name
-  slug: string              // URL-friendly identifier (unique)
-  founderId: string         // User who created the organization
-  isActive: boolean
-  description?: string
-  website?: string
-  logoUrl?: string
-  teachers: TeacherProfile[] // All teachers in this organization
-}
-```
 
 ## API Route Patterns
 
