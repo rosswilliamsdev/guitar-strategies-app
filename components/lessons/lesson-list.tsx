@@ -23,6 +23,7 @@ import {
   CalendarDays,
   AlertCircle,
   ArrowUpDown,
+  Trash2,
 } from "lucide-react";
 import {
   Dialog,
@@ -32,7 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log} from "@/lib/logger";
+import { log } from "@/lib/logger";
 
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
@@ -87,6 +88,9 @@ export function LessonList({ userRole }: LessonListProps) {
   const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(
     null
   );
+  const [confirmDeleteLesson, setConfirmDeleteLesson] = useState<string | null>(
+    null
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -99,13 +103,12 @@ export function LessonList({ userRole }: LessonListProps) {
         }
         const data = await response.json();
         // Handle paginated response structure
-        const lessonsArray = data.data?.lessons || data.lessons || data.data || [];
+        const lessonsArray =
+          data.data?.lessons || data.lessons || data.data || [];
         // Sort lessons by date in descending order (most recent first)
-        const sortedLessons = lessonsArray.sort(
-          (a: Lesson, b: Lesson) => {
-            return new Date(b.date).getTime() - new Date(a.date).getTime();
-          }
-        );
+        const sortedLessons = lessonsArray.sort((a: Lesson, b: Lesson) => {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
         setLessons(sortedLessons);
       } catch (error) {
         setError("Failed to load lessons");
@@ -122,22 +125,21 @@ export function LessonList({ userRole }: LessonListProps) {
 
     // Refetch when tab becomes visible or window gains focus
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         fetchLessons();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', fetchLessons);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", fetchLessons);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', fetchLessons);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", fetchLessons);
     };
   }, []);
 
   const handleCancelLesson = async (lessonId: string) => {
-    setConfirmCancelLesson(null);
     setCancellingLessons((prev) => new Set(prev).add(lessonId));
 
     try {
@@ -152,6 +154,10 @@ export function LessonList({ userRole }: LessonListProps) {
 
       // Remove the cancelled lesson from the local state
       setLessons((prev) => prev.filter((lesson) => lesson.id !== lessonId));
+
+      // Close modals only after successful deletion
+      setConfirmCancelLesson(null);
+      setConfirmDeleteLesson(null);
     } catch (error: any) {
       log.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
@@ -437,63 +443,72 @@ export function LessonList({ userRole }: LessonListProps) {
                 key={lesson.id}
                 className="p-3 hover:shadow-md transition-shadow"
               >
-                <div className="space-y-1">
-                  {/* Header with date, time, and duration */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>{format(new Date(lesson.date), "MMM d")}</span>
-                      <span>•</span>
-                      <Clock className="h-3 w-3" />
-                      <span>{format(new Date(lesson.date), "h:mm a")}</span>
-                      <span>•</span>
-                      <span>{lesson.duration}min</span>
+                <Link href={`/lessons/${lesson.id}`}>
+                  <div className="space-y-1">
+                    {/* Header with date, time, and duration */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        <span>{format(new Date(lesson.date), "MMM d")}</span>
+                        <span>•</span>
+                        <Clock className="h-3 w-3" />
+                        <span>{format(new Date(lesson.date), "h:mm a")}</span>
+                        <span>•</span>
+                        <span>{lesson.duration}min</span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Student/Teacher name and buttons */}
-                  <div className="flex items-center justify-between space-x-2">
-                    <span className="font-medium text-sm text-foreground truncate flex-1">
-                      {userRole === "TEACHER"
-                        ? lesson.student.user.name
-                        : lesson.teacher.user.name}
-                    </span>
-                    <div className="flex items-center space-x-1">
-                      {/* Cancel button - only show for future lessons and scheduled status */}
-                      {lesson.status === "SCHEDULED" &&
-                        new Date(lesson.date) > new Date() && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => setConfirmCancelLesson(lesson.id)}
-                            disabled={cancellingLessons.has(lesson.id)}
-                            className="text-xs px-2 py-1 h-6"
-                          >
-                            {cancellingLessons.has(lesson.id)
-                              ? "..."
-                              : "Cancel"}
-                          </Button>
-                        )}
-                      <Link href={`/lessons/${lesson.id}`}>
+                    {/* Student/Teacher name and buttons */}
+
+                    <div className="flex items-center justify-between space-x-2">
+                      <span className="font-medium text-sm text-foreground truncate flex-1">
+                        {userRole === "TEACHER"
+                          ? lesson.student.user.name
+                          : lesson.teacher.user.name}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        {/* Cancel button - only show for future lessons and scheduled status */}
+                        {lesson.status === "SCHEDULED" &&
+                          new Date(lesson.date) > new Date() && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => setConfirmCancelLesson(lesson.id)}
+                              disabled={cancellingLessons.has(lesson.id)}
+                              className="text-xs px-2 py-1 h-6"
+                            >
+                              {cancellingLessons.has(lesson.id)
+                                ? "..."
+                                : "Cancel"}
+                            </Button>
+                          )}
+
                         <Button
+                          variant="destructive"
                           size="sm"
-                          className="bg-primary hover:bg-turquoise-600 text-white text-xs px-2 py-1 h-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setConfirmDeleteLesson(lesson.id);
+                          }}
+                          disabled={cancellingLessons.has(lesson.id)}
+                          className="h-6 w-6 p-2"
                         >
-                          View
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
-                      </Link>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Notes preview */}
-                  {lesson.notes && (
-                    <div className="text-xs text-muted-foreground">
-                      <p className="line-clamp-1 leading-tight">
-                        {stripHtml(lesson.notes)}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                    {/* Notes preview */}
+                    {lesson.notes && (
+                      <div className="text-xs text-muted-foreground">
+                        <p className="line-clamp-1 leading-tight">
+                          {stripHtml(lesson.notes)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </Link>
               </Card>
             ))}
           </div>
@@ -527,6 +542,45 @@ export function LessonList({ userRole }: LessonListProps) {
               }
             >
               Cancel Lesson
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Lesson Confirmation Dialog */}
+      <Dialog
+        open={!!confirmDeleteLesson}
+        onOpenChange={() => setConfirmDeleteLesson(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Lesson</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this lesson? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmDeleteLesson(null)}
+            >
+              Keep Lesson
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                confirmDeleteLesson && handleCancelLesson(confirmDeleteLesson)
+              }
+              disabled={
+                confirmDeleteLesson
+                  ? cancellingLessons.has(confirmDeleteLesson)
+                  : false
+              }
+            >
+              {confirmDeleteLesson && cancellingLessons.has(confirmDeleteLesson)
+                ? "Deleting..."
+                : "Delete Lesson"}
             </Button>
           </DialogFooter>
         </DialogContent>
