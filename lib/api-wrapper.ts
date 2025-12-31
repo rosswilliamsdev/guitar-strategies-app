@@ -21,7 +21,12 @@ import {
   handleApiError
 } from '@/lib/api-responses';
 
+// Support both simple and Next.js 15 dynamic route handlers
 type RouteHandler = (request: NextRequest) => Promise<NextResponse>;
+type RouteHandlerWithParams = (
+  request: NextRequest,
+  context: { params: Promise<any> }
+) => Promise<NextResponse>;
 
 interface ApiWrapperOptions {
   rateLimit?: keyof typeof RATE_LIMITS;
@@ -36,11 +41,12 @@ interface ApiWrapperOptions {
 
 /**
  * Wraps an API route handler with standard middleware
+ * Supports both simple handlers and Next.js 15 dynamic route handlers with params
  */
 export function withApiMiddleware(
-  handler: RouteHandler,
+  handler: RouteHandler | RouteHandlerWithParams,
   options: ApiWrapperOptions = {}
-): RouteHandler {
+): RouteHandler | RouteHandlerWithParams {
   const {
     rateLimit = 'API',
     requireAuth = true,
@@ -53,7 +59,7 @@ export function withApiMiddleware(
   } = options;
 
   // Extract handler logic into separate function
-  async function executeHandler(request: NextRequest): Promise<NextResponse> {
+  async function executeHandler(request: NextRequest, context?: { params: Promise<any> }): Promise<NextResponse> {
     const startTime = Date.now();
 
     try {
@@ -98,11 +104,16 @@ export function withApiMiddleware(
         validatedQuery = validation.data;
       }
 
-      // Validate path parameters (extracted from URL)
-      if (paramsSchema) {
-        // This would need to be passed from the route context
-        // For now, we'll skip params validation as it's complex to extract generically
-        // Individual routes can handle this manually
+      // Validate path parameters if schema provided and params available
+      if (paramsSchema && context?.params) {
+        const params = await context.params;
+        const validation = paramsSchema.safeParse(params);
+
+        if (!validation.success) {
+          return createValidationErrorResponse(validation.error);
+        }
+
+        validatedParams = validation.data;
       }
 
       // Check authentication if required
@@ -156,8 +167,15 @@ export function withApiMiddleware(
         (request as any).validatedParams = validatedParams;
       }
 
-      // Call the actual handler
-      const response = await handler(request);
+      // Call the actual handler - support both handler types
+      let response: NextResponse;
+      if (context) {
+        // Next.js 15 dynamic route handler with params
+        response = await (handler as RouteHandlerWithParams)(request, context);
+      } else {
+        // Simple handler without params
+        response = await (handler as RouteHandler)(request);
+      }
 
       // Log the response
       if (logRequest) {
@@ -192,68 +210,71 @@ export function withApiMiddleware(
   }
 
   // Apply rate limiting and CSRF protection
-  const rateLimitedHandler = withRateLimit(async (request: NextRequest) => {
-    // Apply CSRF protection if not skipped
-    if (!skipCSRF) {
-      return withCSRFProtection(request, async () => {
-        return executeHandler(request);
-      });
-    } else {
-      return executeHandler(request);
-    }
-  }, rateLimit);
+  // Return a function that can handle both signatures
+  const wrappedHandler = async (request: NextRequest, context?: { params: Promise<any> }) => {
+    return withRateLimit(async (req: NextRequest) => {
+      // Apply CSRF protection if not skipped
+      if (!skipCSRF) {
+        return withCSRFProtection(req, async () => {
+          return executeHandler(req, context);
+        });
+      } else {
+        return executeHandler(req, context);
+      }
+    }, rateLimit)(request);
+  };
 
-  return rateLimitedHandler;
+  return wrappedHandler as RouteHandler | RouteHandlerWithParams;
 }
 
 /**
  * Shorthand wrappers for common scenarios
  */
-export const withAuth = (handler: RouteHandler) =>
+export const withAuth = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true });
 
-export const withTeacherAuth = (handler: RouteHandler) =>
+export const withTeacherAuth = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true, requireRole: 'TEACHER', rateLimit: 'API' });
 
-export const withStudentAuth = (handler: RouteHandler) =>
+export const withStudentAuth = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true, requireRole: 'STUDENT', rateLimit: 'READ' });
 
-export const withAdminAuth = (handler: RouteHandler) =>
+export const withAdminAuth = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true, requireRole: 'ADMIN', rateLimit: 'API' });
 
-export const withPublic = (handler: RouteHandler) =>
+export const withPublic = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: false, rateLimit: 'API' });
 
-export const withBookingLimit = (handler: RouteHandler) =>
+export const withBookingLimit = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true, rateLimit: 'BOOKING' });
 
-export const withUploadLimit = (handler: RouteHandler) =>
+export const withUploadLimit = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true, rateLimit: 'UPLOAD' });
 
-export const withEmailLimit = (handler: RouteHandler) =>
+export const withEmailLimit = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true, rateLimit: 'EMAIL' });
 
 // Wrappers that skip CSRF protection (for specific use cases like public endpoints)
-export const withPublicNoCSRF = (handler: RouteHandler) =>
+export const withPublicNoCSRF = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: false, rateLimit: 'API', skipCSRF: true });
 
-export const withAuthNoCSRF = (handler: RouteHandler) =>
+export const withAuthNoCSRF = (handler: RouteHandler | RouteHandlerWithParams) =>
   withApiMiddleware(handler, { requireAuth: true, skipCSRF: true });
 
 // Validation-specific wrappers
 export const withValidation = (
-  handler: RouteHandler,
+  handler: RouteHandler | RouteHandlerWithParams,
   options: Pick<ApiWrapperOptions, 'bodySchema' | 'querySchema' | 'paramsSchema'> & Partial<ApiWrapperOptions>
 ) =>
   withApiMiddleware(handler, { ...options });
 
-export const withBodyValidation = (handler: RouteHandler, bodySchema: ZodSchema) =>
+export const withBodyValidation = (handler: RouteHandler | RouteHandlerWithParams, bodySchema: ZodSchema) =>
   withApiMiddleware(handler, { bodySchema });
 
-export const withQueryValidation = (handler: RouteHandler, querySchema: ZodSchema) =>
+export const withQueryValidation = (handler: RouteHandler | RouteHandlerWithParams, querySchema: ZodSchema) =>
   withApiMiddleware(handler, { querySchema });
 
-export const withTeacherValidation = (handler: RouteHandler, bodySchema: ZodSchema) =>
+export const withTeacherValidation = (handler: RouteHandler | RouteHandlerWithParams, bodySchema: ZodSchema) =>
   withApiMiddleware(handler, {
     requireAuth: true,
     requireRole: 'TEACHER',
@@ -262,7 +283,7 @@ export const withTeacherValidation = (handler: RouteHandler, bodySchema: ZodSche
     skipCSRF: true
   });
 
-export const withStudentValidation = (handler: RouteHandler, bodySchema: ZodSchema) =>
+export const withStudentValidation = (handler: RouteHandler | RouteHandlerWithParams, bodySchema: ZodSchema) =>
   withApiMiddleware(handler, {
     requireAuth: true,
     requireRole: 'STUDENT',
@@ -271,7 +292,7 @@ export const withStudentValidation = (handler: RouteHandler, bodySchema: ZodSche
     skipCSRF: true
   });
 
-export const withAdminValidation = (handler: RouteHandler, bodySchema: ZodSchema) =>
+export const withAdminValidation = (handler: RouteHandler | RouteHandlerWithParams, bodySchema: ZodSchema) =>
   withApiMiddleware(handler, {
     requireAuth: true,
     requireRole: 'ADMIN',
