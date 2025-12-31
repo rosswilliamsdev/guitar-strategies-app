@@ -168,8 +168,11 @@ export function ManageStudents({ students }: ManageStudentsProps) {
           const isActive = profile?.isActive ?? true;
 
           return (
-            <Card key={student.id} className="p-4 cursor-pointer hover:shadow-md transition-shadow">
-              <div 
+            <Card
+              key={student.id}
+              className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div
                 className="space-y-3"
                 onClick={() => handleViewDetails(student)}
               >
@@ -177,78 +180,61 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-foreground">{student.name}</h3>
-                      {isActive ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-600" />
-                      )}
+                      <h3 className="font-semibold text-foreground">
+                        {student.name}
+                      </h3>
+                      <div
+                        className="flex gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          size="sm"
+                          variant={isActive ? "secondary" : "primary"}
+                          onClick={() =>
+                            toggleStudentStatus(student.id, isActive)
+                          }
+                        >
+                          {isActive ? (
+                            <>
+                              <EyeOff className="h-3 w-3 mr-1" />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-3 w-3 mr-1" />
+                              Activate
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteClick(student)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">{student.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {student.email}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       Joined {new Date(student.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                    <Button
-                      size="sm"
-                      variant={isActive ? "secondary" : "primary"}
-                      onClick={() => toggleStudentStatus(student.id, isActive)}
-                    >
-                      {isActive ? (
-                        <>
-                          <EyeOff className="h-3 w-3 mr-1" />
-                          Deactivate
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-3 w-3 mr-1" />
-                          Activate
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteClick(student)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
                 </div>
-
-                {/* Teacher Info */}
-                {profile?.teacher && (
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{profile.teacher.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{profile.teacher.user.email}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Student Details */}
                 {profile?.instrument && (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Instrument:</span>
+                    <span className="text-xs text-muted-foreground">
+                      Instrument:
+                    </span>
                     <Badge className="text-xs bg-background border">
                       {profile.instrument}
                     </Badge>
                   </div>
                 )}
 
-                {/* Goals */}
-                {profile?.goals && (
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Goals:</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {profile.goals}
-                    </p>
-                  </div>
-                )}
               </div>
             </Card>
           );
@@ -276,7 +262,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GraduationCap className="h-5 w-5 text-primary" />
-              Student Details: {studentToView?.name}
+              Student Details
             </DialogTitle>
             <DialogDescription>
               Complete information about this student&apos;s profile and learning journey
@@ -334,7 +320,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Assigned Teacher</label>
+                      <label className="text-sm font-medium text-muted-foreground">Teacher</label>
                       <p className="text-sm">
                         {studentToView.studentProfile.teacher 
                           ? studentToView.studentProfile.teacher.user.name
@@ -347,22 +333,6 @@ export function ManageStudents({ students }: ManageStudentsProps) {
                       <p className="text-sm mt-1 p-3 bg-muted rounded-lg">
                         {studentToView.studentProfile.goals || 'No goals specified'}
                       </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Teacher Information */}
-              {studentToView.studentProfile?.teacher && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold border-b pb-2">Assigned Teacher</h3>
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex items-center gap-3">
-                      <Users className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{studentToView.studentProfile.teacher.user.name}</p>
-                        <p className="text-xs text-muted-foreground">{studentToView.studentProfile.teacher.user.email}</p>
-                      </div>
                     </div>
                   </div>
                 </div>
