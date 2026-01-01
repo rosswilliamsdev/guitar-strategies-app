@@ -5,6 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { 
+import {
   Search,
   Users,
   Eye,
@@ -24,9 +27,13 @@ import {
   GraduationCap,
   Trash2,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
+  Edit,
+  X,
+  Save
 } from "lucide-react";
 import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
+import { updateStudentByTeacherSchema, UpdateStudentByTeacherData } from "@/lib/validations";
 
 export interface Student {
   id: string;
@@ -58,10 +65,21 @@ export function ManageStudents({ students }: ManageStudentsProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // Student details modal state
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [studentToView, setStudentToView] = useState<Student | null>(null);
+
+  // Edit mode state for details modal
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState<UpdateStudentByTeacherData>({
+    name: "",
+    email: "",
+    isActive: true,
+    instrument: "",
+    goals: "",
+  });
 
   const filteredStudents = students.filter(student =>
     student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -98,7 +116,80 @@ export function ManageStudents({ students }: ManageStudentsProps) {
 
   const handleViewDetails = (student: Student) => {
     setStudentToView(student);
+    // Initialize edit form with current student data
+    if (student.studentProfile) {
+      setEditForm({
+        name: student.name,
+        email: student.email,
+        isActive: student.studentProfile.isActive,
+        instrument: student.studentProfile.instrument,
+        goals: student.studentProfile.goals || "",
+      });
+    }
+    setIsEditMode(false); // Reset to view mode
     setDetailsModalOpen(true);
+  };
+
+  const handleEditClick = () => {
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    // Reset form to original data
+    if (studentToView?.studentProfile) {
+      setEditForm({
+        name: studentToView.name,
+        email: studentToView.email,
+        isActive: studentToView.studentProfile.isActive,
+        instrument: studentToView.studentProfile.instrument,
+        goals: studentToView.studentProfile.goals || "",
+      });
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!studentToView?.studentProfile) return;
+
+    try {
+      setIsSaving(true);
+
+      // Validate with Zod
+      const validatedData = updateStudentByTeacherSchema.parse(editForm);
+
+      // Use studentProfile.id (not user.id) for the API call
+      const response = await fetch(`/api/students/${studentToView.studentProfile.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(validatedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update student");
+      }
+
+      // Refresh the page to show updated data
+      toast({
+        title: "Success",
+        description: "Student profile updated successfully",
+      });
+
+      window.location.reload();
+    } catch (error) {
+      log.error("Error saving student profile:", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update student profile",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -274,79 +365,200 @@ export function ManageStudents({ students }: ManageStudentsProps) {
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-                    <p className="text-sm">{studentToView.name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Email</label>
-                    <p className="text-sm">{studentToView.email}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
-                    <div className="flex items-center gap-2">
-                      {studentToView.studentProfile?.isActive ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          <span className="text-sm text-green-600">Active</span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-4 w-4 text-red-600" />
-                          <span className="text-sm text-red-600">Inactive</span>
-                        </>
-                      )}
+                {!isEditMode ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                      <p className="text-sm">{studentToView.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Email</label>
+                      <p className="text-sm">{studentToView.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Status</label>
+                      <div className="flex items-center gap-2">
+                        {studentToView.studentProfile?.isActive ? (
+                          <>
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span className="text-sm text-green-600">Active</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4 text-red-600" />
+                            <span className="text-sm text-red-600">Inactive</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Joined</label>
+                      <p className="text-sm">{new Date(studentToView.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Joined</label>
-                    <p className="text-sm">{new Date(studentToView.createdAt).toLocaleDateString()}</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit-name">Full Name</Label>
+                      <Input
+                        id="edit-name"
+                        value={editForm.name}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, name: e.target.value })
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-email">Email</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, email: e.target.value })
+                        }
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit-status">Status</Label>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Switch
+                          id="edit-status"
+                          checked={editForm.isActive}
+                          onCheckedChange={(checked) =>
+                            setEditForm({ ...editForm, isActive: checked })
+                          }
+                        />
+                        <span className="text-sm">{editForm.isActive ? "Active" : "Inactive"}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Joined</label>
+                      <p className="text-sm mt-2">{new Date(studentToView.createdAt).toLocaleDateString()}</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Learning Information */}
               {studentToView.studentProfile && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold border-b pb-2">Learning Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Instrument</label>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-background border">
-                          {studentToView.studentProfile.instrument}
-                        </Badge>
+                  {!isEditMode ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Instrument</label>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-background border">
+                            {studentToView.studentProfile.instrument}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Teacher</label>
+                        <p className="text-sm">
+                          {studentToView.studentProfile.teacher
+                            ? studentToView.studentProfile.teacher.user.name
+                            : 'No teacher assigned'
+                          }
+                        </p>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-sm font-medium text-muted-foreground">Learning Goals</label>
+                        <p className="text-sm mt-1 p-3 bg-muted rounded-lg">
+                          {studentToView.studentProfile.goals || 'No goals specified'}
+                        </p>
                       </div>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Teacher</label>
-                      <p className="text-sm">
-                        {studentToView.studentProfile.teacher 
-                          ? studentToView.studentProfile.teacher.user.name
-                          : 'No teacher assigned'
-                        }
-                      </p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="edit-instrument">Instrument</Label>
+                        <Input
+                          id="edit-instrument"
+                          value={editForm.instrument}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, instrument: e.target.value })
+                          }
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Teacher</label>
+                        <p className="text-sm mt-2">
+                          {studentToView.studentProfile.teacher
+                            ? studentToView.studentProfile.teacher.user.name
+                            : 'No teacher assigned'
+                          }
+                        </p>
+                      </div>
+                      <div className="col-span-2">
+                        <Label htmlFor="edit-goals">Learning Goals</Label>
+                        <Textarea
+                          id="edit-goals"
+                          value={editForm.goals || ""}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, goals: e.target.value })
+                          }
+                          placeholder="Enter student's learning goals..."
+                          rows={3}
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
-                    <div className="col-span-2">
-                      <label className="text-sm font-medium text-muted-foreground">Learning Goals</label>
-                      <p className="text-sm mt-1 p-3 bg-muted rounded-lg">
-                        {studentToView.studentProfile.goals || 'No goals specified'}
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
           <DialogFooter>
-            <Button
-              variant="secondary"
-              onClick={() => setDetailsModalOpen(false)}
-            >
-              Close
-            </Button>
+            {!isEditMode ? (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={handleEditClick}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setDetailsModalOpen(false)}
+                >
+                  Close
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

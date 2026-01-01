@@ -1,31 +1,26 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// NextAuth.js required models
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -46,101 +41,82 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Core application models
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String?
-  name      String
-  role      Role     @default(STUDENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // NextAuth relations
-  accounts Account[]
-  sessions Session[]
-
-  // App-specific relations
-  teacherProfile TeacherProfile?
-  studentProfile StudentProfile?
-  createdChecklists StudentChecklist[] // Checklists created by this user
-  emailPreferences EmailPreference[] // User's email notification preferences
+  id                String             @id @default(cuid())
+  email             String             @unique
+  password          String?
+  name              String
+  role              Role               @default(STUDENT)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  accounts          Account[]
+  emailPreferences  EmailPreference[]
+  sessions          Session[]
+  createdChecklists StudentChecklist[]
+  studentProfile    StudentProfile?
+  teacherProfile    TeacherProfile?
 
   @@index([email])
   @@index([role])
 }
 
 model TeacherProfile {
-  id              String  @id @default(cuid())
-  userId          String  @unique
-  bio             String? @db.Text
-  hourlyRate      Int?    // stored in cents
-  isActive        Boolean @default(true)
-  isAdmin         Boolean @default(true) // All teachers are admin
-
-  // Payment methods for invoice generation
-  venmoHandle     String? // @username
-  paypalEmail     String? // email@example.com
-  zelleEmail      String? // email@example.com or phone number
-
-  // Profile settings
-  timezone        String  @default("America/New_York") // Teacher's timezone (no longer optional)
+  id              String                 @id @default(cuid())
+  userId          String                 @unique
+  bio             String?
+  hourlyRate      Int?
+  isActive        Boolean                @default(true)
+  venmoHandle     String?
+  paypalEmail     String?
+  zelleEmail      String?
+  timezone        String                 @default("America/New_York")
   phoneNumber     String?
   profileImageUrl String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  students        StudentProfile[] @relation("TeacherStudents")
-  lessons         Lesson[]
-  recommendations Recommendation[]
-  libraryItems    LibraryItem[]
-  invoices        Invoice[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  isAdmin         Boolean                @default(false)
   curriculums     Curriculum[]
+  invoices        Invoice[]
+  lessons         Lesson[]
+  libraryItems    LibraryItem[]
+  monthlyBilling  MonthlyBilling[]       @relation("TeacherBilling")
+  recommendations Recommendation[]
+  recurringSlots  RecurringSlot[]        @relation("TeacherSlots")
+  students        StudentProfile[]       @relation("TeacherStudents")
   availability    TeacherAvailability[]
   blockedTimes    TeacherBlockedTime[]
   lessonSettings  TeacherLessonSettings?
-  recurringSlots  RecurringSlot[] @relation("TeacherSlots")
-  monthlyBilling  MonthlyBilling[] @relation("TeacherBilling")
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isActive])
 }
 
 model StudentProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  teacherId String
-  joinedAt  DateTime @default(now())
-  
-  // Student preferences
-  goals             String?    @db.Text
-  instrument        String     @default("guitar")
-  phoneNumber       String?
-  parentEmail       String?    // For minor students
-  emergencyContact  String?
-
-  // Email notification preferences
-  emailOnLessonComplete Boolean @default(true)  // Send email when lesson is logged
-  emailOnLessonReminder Boolean @default(true)  // Send reminder 24h before lesson
-  emailOnInvoice        Boolean @default(true)  // Send email when invoice is generated
-
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  teacher  TeacherProfile @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: Cascade)
-  lessons  Lesson[]
-  invoices Invoice[]
-  studentProgress StudentCurriculumProgress[]
-  studentChecklists StudentChecklist[]
-  recurringSlots RecurringSlot[] @relation("StudentSlots")
-  slotSubscriptions SlotSubscription[] @relation("StudentSubscriptions")
-  monthlyBilling MonthlyBilling[] @relation("StudentBilling")
+  id                    String                      @id @default(cuid())
+  userId                String                      @unique
+  teacherId             String
+  joinedAt              DateTime                    @default(now())
+  goals                 String?
+  instrument            String                      @default("guitar")
+  phoneNumber           String?
+  parentEmail           String?
+  emergencyContact      String?
+  isActive              Boolean                     @default(true)
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
+  emailOnInvoice        Boolean                     @default(true)
+  emailOnLessonComplete Boolean                     @default(true)
+  emailOnLessonReminder Boolean                     @default(true)
+  invoices              Invoice[]
+  lessons               Lesson[]
+  monthlyBilling        MonthlyBilling[]            @relation("StudentBilling")
+  recurringSlots        RecurringSlot[]             @relation("StudentSlots")
+  slotSubscriptions     SlotSubscription[]          @relation("StudentSubscriptions")
+  studentChecklists     StudentChecklist[]
+  studentProgress       StudentCurriculumProgress[]
+  teacher               TeacherProfile              @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: Cascade)
+  user                  User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([teacherId])
@@ -148,42 +124,35 @@ model StudentProfile {
 }
 
 model Lesson {
-  id              String     @id @default(cuid())
+  id              String             @id @default(cuid())
   teacherId       String
   studentId       String
   date            DateTime
-  duration        Int        // 30 or 60 minutes
-  notes           String?    @db.Text
-  homework        String?    @db.Text // assignments for next lesson
-  progress        String?    @db.Text // skill progression notes
-  status          LessonStatus @default(SCHEDULED)
-  
-  // Scheduling fields
-  timezone        String     @default("America/New_York") // Student's timezone for display
-  price           Int        @default(0) // Price paid for this lesson (cents)
-  isRecurring     Boolean    @default(false)
-  recurringId     String?    // Links recurring lessons together
-  recurringSlotId String?    // Links to the recurring slot this lesson belongs to
-  
-  // Lesson details
-  focusAreas      String?    @db.Text // JSON array of focus areas
-  songsPracticed  String?    @db.Text // JSON array of songs
-  nextSteps       String?    @db.Text
-  studentRating   Int?       // 1-5 scale, student feedback
-  teacherRating   Int?       // 1-5 scale, teacher assessment
-  checklistItems  String?    @db.Text // JSON array of checklist item IDs completed in this lesson
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  version   Int      @default(1) // Optimistic locking version
-
-  // Relations
-  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  attachments LessonAttachment[]
-  links LessonLink[]
-  invoiceItems InvoiceItem[]
-  recurringSlot RecurringSlot? @relation("SlotLessons", fields: [recurringSlotId], references: [id])
+  duration        Int
+  notes           String?
+  homework        String?
+  progress        String?
+  status          LessonStatus       @default(SCHEDULED)
+  focusAreas      String?
+  songsPracticed  String?
+  nextSteps       String?
+  studentRating   Int?
+  teacherRating   Int?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  isRecurring     Boolean            @default(false)
+  price           Int                @default(0)
+  recurringId     String?
+  recurringSlotId String?
+  timezone        String             @default("America/New_York")
+  checklistItems  String?
+  version         Int                @default(1)
+  invoiceItems    InvoiceItem[]
+  recurringSlot   RecurringSlot?     @relation("SlotLessons", fields: [recurringSlotId], references: [id])
+  student         StudentProfile     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher         TeacherProfile     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  attachments     LessonAttachment[]
+  links           LessonLink[]
 
   @@index([teacherId, date])
   @@index([studentId, date])
@@ -194,57 +163,48 @@ model Lesson {
 }
 
 model LessonAttachment {
-  id          String @id @default(cuid())
-  lessonId    String
-  fileName    String
+  id           String   @id @default(cuid())
+  lessonId     String
+  fileName     String
   originalName String
-  fileSize    Int
-  mimeType    String
-  fileUrl     String
-  uploadedAt  DateTime @default(now())
-  
-  // Relations
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  
+  fileSize     Int
+  mimeType     String
+  fileUrl      String
+  uploadedAt   DateTime @default(now())
+  lesson       Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
   @@index([lessonId])
 }
 
 model LessonLink {
-  id          String @id @default(cuid())
+  id          String   @id @default(cuid())
   lessonId    String
   title       String
   url         String
   description String?
   linkType    LinkType @default(WEBSITE)
   createdAt   DateTime @default(now())
-  
-  // Relations  
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
   @@index([lessonId])
 }
 
 model LibraryItem {
-  id          String   @id @default(cuid())
-  title       String
-  description String?  @db.Text
-  fileUrl     String   // Vercel Blob URL
-  fileName    String
-  fileSize    Int
-  teacherId   String
-  isPublic    Boolean  @default(false)
-  instrument  Instrument @default(GUITAR)
-  category    LibraryCategory? @default(TABLATURE)
-
-  // Metadata
-  tags        String?     // JSON array of tags
-  downloadCount Int      @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  id            String           @id @default(cuid())
+  title         String
+  description   String?
+  fileUrl       String
+  fileName      String
+  fileSize      Int
+  teacherId     String
+  isPublic      Boolean          @default(false)
+  category      LibraryCategory? @default(TABLATURE)
+  tags          String?
+  downloadCount Int              @default(0)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  instrument    Instrument       @default(GUITAR)
+  teacher       TeacherProfile   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId])
   @@index([isPublic])
@@ -255,56 +215,40 @@ model LibraryItem {
 model Recommendation {
   id          String                 @id @default(cuid())
   title       String
-  description String                 @db.Text
+  description String
   link        String?
   category    RecommendationCategory
   teacherId   String
-  
-  // Additional fields
-  price       String?  // e.g., "$299", "Free", "$50-100"
-  priority    Int      @default(1) // 1-5, higher = more important
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  price       String?
+  priority    Int                    @default(1)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  teacher     TeacherProfile         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId])
   @@index([category])
 }
 
 model Invoice {
-  id        String        @id @default(cuid())
-  teacherId String
-  studentId String?       // Optional for custom invoices
-  
-  // Custom invoice fields (for non-system students)
-  customFullName String?   // Full name for custom invoices
-  customEmail    String?   // Email for custom invoices
-  
-  // Invoice details
-  invoiceNumber String        // INV-2025-001, etc.
-  month         String        // "2025-01" format
-  dueDate       DateTime
-  status        InvoiceStatus @default(PENDING)
-  
-  // Totals (calculated from items)
-  subtotal      Int           // cents
-  total         Int           // cents (same as subtotal for now, room for taxes/fees)
-  
-  // Payment tracking
-  paidAt        DateTime?
-  paymentMethod String?       // "Venmo", "PayPal", "Zelle", "Cash", "Check"
-  paymentNotes  String?       // Reference number, etc.
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  teacher TeacherProfile  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student StudentProfile? @relation(fields: [studentId], references: [id])
-  items   InvoiceItem[]
+  id             String          @id @default(cuid())
+  teacherId      String
+  studentId      String?
+  invoiceNumber  String
+  month          String
+  dueDate        DateTime
+  status         InvoiceStatus   @default(PENDING)
+  subtotal       Int
+  total          Int
+  paidAt         DateTime?
+  paymentMethod  String?
+  paymentNotes   String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  customEmail    String?
+  customFullName String?
+  student        StudentProfile? @relation(fields: [studentId], references: [id])
+  teacher        TeacherProfile  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  items          InvoiceItem[]
 
   @@index([teacherId, month])
   @@index([studentId, month])
@@ -313,384 +257,337 @@ model Invoice {
 }
 
 model InvoiceItem {
-  id          String @id @default(cuid())
+  id          String    @id @default(cuid())
   invoiceId   String
-  
-  // Item details
-  description String // "Guitar Lesson - Jan 15, 2025"
-  quantity    Int    @default(1)
-  rate        Int    // cents (hourly rate)
-  amount      Int    // cents (quantity * rate)
+  description String
+  quantity    Int       @default(1)
+  rate        Int
+  amount      Int
   lessonDate  DateTime?
-  lessonId    String? // Optional reference to actual lesson
-  
-  createdAt DateTime @default(now())
-
-  // Relations
-  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  lesson  Lesson? @relation(fields: [lessonId], references: [id])
+  lessonId    String?
+  createdAt   DateTime  @default(now())
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  lesson      Lesson?   @relation(fields: [lessonId], references: [id])
 
   @@index([invoiceId])
   @@index([lessonId])
 }
 
-// Curriculum models
 model Curriculum {
-  id          String   @id @default(cuid())
-  teacherId   String
-  title       String
-  description String?  @db.Text
-  isActive    Boolean  @default(true)
-  isPublished Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  teacher     TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  sections    CurriculumSection[]
+  id              String                      @id @default(cuid())
+  teacherId       String
+  title           String
+  description     String?
+  isActive        Boolean                     @default(true)
+  isPublished     Boolean                     @default(false)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+  teacher         TeacherProfile              @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  sections        CurriculumSection[]
   studentProgress StudentCurriculumProgress[]
-  
+
   @@index([teacherId])
   @@index([isPublished])
 }
 
 model CurriculumSection {
-  id           String   @id @default(cuid())
+  id           String              @id @default(cuid())
   curriculumId String
   title        String
-  description  String?  @db.Text
-  category     CurriculumCategory?  // Optional - not required for checklists
-  sortOrder    Int      @default(0)
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  description  String?
+  category     CurriculumCategory?
+  sortOrder    Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
   items        CurriculumItem[]
+  curriculum   Curriculum          @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
 
   @@index([curriculumId])
   @@index([sortOrder])
 }
 
 model CurriculumItem {
-  id          String   @id @default(cuid())
-  sectionId   String
-  title       String
-  description String?  @db.Text
-  sortOrder   Int      @default(0)
-  
-  // Optional metadata
-  difficulty  Int?     // 1-10 scale within the curriculum level
-  estimatedMinutes Int? // Estimated time to complete
-  resourceUrl String?  // Link to sheet music, video, etc.
-  notes       String?  @db.Text // Teacher notes about this item
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  section     CurriculumSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  progress    StudentItemProgress[]
-  
+  id               String                @id @default(cuid())
+  sectionId        String
+  title            String
+  description      String?
+  sortOrder        Int                   @default(0)
+  difficulty       Int?
+  estimatedMinutes Int?
+  resourceUrl      String?
+  notes            String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  section          CurriculumSection     @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  progress         StudentItemProgress[]
+
   @@index([sectionId])
   @@index([sortOrder])
 }
 
 model StudentCurriculumProgress {
-  id           String   @id @default(cuid())
-  studentId    String
-  curriculumId String
-  startedAt    DateTime @default(now())
-  completedAt  DateTime?
-  
-  // Progress tracking
-  totalItems      Int @default(0)
-  completedItems  Int @default(0)
-  progressPercent Float @default(0)
-  
-  updatedAt    DateTime @updatedAt
-  
-  // Relations
-  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  curriculum   Curriculum @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
-  itemProgress StudentItemProgress[]
-  
+  id              String                @id @default(cuid())
+  studentId       String
+  curriculumId    String
+  startedAt       DateTime              @default(now())
+  completedAt     DateTime?
+  totalItems      Int                   @default(0)
+  completedItems  Int                   @default(0)
+  progressPercent Float                 @default(0)
+  updatedAt       DateTime              @updatedAt
+  curriculum      Curriculum            @relation(fields: [curriculumId], references: [id], onDelete: Cascade)
+  student         StudentProfile        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  itemProgress    StudentItemProgress[]
+
   @@unique([studentId, curriculumId])
   @@index([studentId])
   @@index([curriculumId])
 }
 
 model StudentItemProgress {
-  id                 String   @id @default(cuid())
+  id                   String                    @id @default(cuid())
   curriculumProgressId String
-  itemId             String
-  
-  status             ProgressStatus @default(NOT_STARTED)
-  startedAt          DateTime?
-  completedAt        DateTime?
-  teacherNotes       String?  @db.Text
-  studentNotes       String?  @db.Text
-  
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  
-  // Relations
-  curriculumProgress StudentCurriculumProgress @relation(fields: [curriculumProgressId], references: [id], onDelete: Cascade)
-  item               CurriculumItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  
+  itemId               String
+  status               ProgressStatus            @default(NOT_STARTED)
+  startedAt            DateTime?
+  completedAt          DateTime?
+  teacherNotes         String?
+  studentNotes         String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  curriculumProgress   StudentCurriculumProgress @relation(fields: [curriculumProgressId], references: [id], onDelete: Cascade)
+  item                 CurriculumItem            @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
   @@unique([curriculumProgressId, itemId])
   @@index([curriculumProgressId])
   @@index([itemId])
   @@index([status])
 }
 
-// Student Personal Checklist models
 model StudentChecklist {
-  id          String   @id @default(cuid())
-  studentId   String
-  title       String
-  createdBy   String?  // User ID of who created this checklist (teacher or student)
-  createdByRole String? // "TEACHER" or "STUDENT" for quick reference
-  
-  // Checklist metadata
-  isActive    Boolean  @default(true)
-  isArchived  Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  creator     User?    @relation(fields: [createdBy], references: [id], onDelete: SetNull)
-  items       StudentChecklistItem[]
-  
+  id            String                 @id @default(cuid())
+  studentId     String
+  title         String
+  isActive      Boolean                @default(true)
+  isArchived    Boolean                @default(false)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  createdBy     String?
+  createdByRole String?
+  creator       User?                  @relation(fields: [createdBy], references: [id])
+  student       StudentProfile         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items         StudentChecklistItem[]
+
   @@index([studentId])
   @@index([isActive])
   @@index([createdBy])
 }
 
 model StudentChecklistItem {
-  id          String   @id @default(cuid())
-  checklistId String
-  title       String
-  description String?  @db.Text
-  sortOrder   Int      @default(0)  // Explicit order for items
-
-  // Item tracking
-  isCompleted Boolean  @default(false)
-  completedAt DateTime?
-  dueDate     DateTime?
-
-  // Optional metadata
-  notes       String?  @db.Text
-  resourceUrl String?  // Link to sheet music, video, etc.
-  estimatedMinutes Int? // Estimated time to complete
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  checklist   StudentChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  id               String           @id @default(cuid())
+  checklistId      String
+  title            String
+  description      String?
+  isCompleted      Boolean          @default(false)
+  completedAt      DateTime?
+  dueDate          DateTime?
+  notes            String?
+  resourceUrl      String?
+  estimatedMinutes Int?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  sortOrder        Int              @default(0)
+  checklist        StudentChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
 
   @@index([checklistId])
   @@index([isCompleted])
   @@index([checklistId, sortOrder])
 }
 
-// Teacher Scheduling Models
 model TeacherLessonSettings {
-  id                 String @id @default(cuid())
-  teacherId          String @unique
-  allows30Min        Boolean @default(true)
-  allows60Min        Boolean @default(true)
-  price30Min         Int     // cents
-  price60Min         Int     // cents
-  advanceBookingDays Int     @default(21) // 3 weeks
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  
+  id                 String         @id @default(cuid())
+  teacherId          String         @unique
+  allows30Min        Boolean        @default(true)
+  allows60Min        Boolean        @default(true)
+  price30Min         Int
+  price60Min         Int
+  advanceBookingDays Int            @default(21)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  teacher            TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
   @@index([teacherId])
 }
 
 model TeacherAvailability {
-  id        String  @id @default(cuid())
+  id        String         @id @default(cuid())
   teacherId String
-  dayOfWeek Int     // 0-6 (Sunday-Saturday)
-  startTime String  // "09:00" in teacher's timezone
-  endTime   String  // "17:00" in teacher's timezone
-  isActive  Boolean @default(true)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  version   Int      @default(1) // Optimistic locking version
-  
-  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  version   Int            @default(1)
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
   @@unique([teacherId, dayOfWeek, startTime, endTime])
   @@index([teacherId])
   @@index([dayOfWeek])
 }
 
 model TeacherBlockedTime {
-  id        String   @id @default(cuid())
+  id        String         @id @default(cuid())
   teacherId String
-  startTime DateTime // UTC
-  endTime   DateTime // UTC
-  reason    String?  // "vacation", "personal", etc.
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  teacher TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  
+  startTime DateTime
+  endTime   DateTime
+  reason    String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
   @@index([teacherId])
   @@index([startTime, endTime])
 }
 
-// Recurring Monthly Slot System Models
 model RecurringSlot {
-  id          String   @id @default(cuid())
-  teacherId   String
-  studentId   String
-  
-  // Slot timing
-  dayOfWeek   Int      // 0-6 (Sunday-Saturday)
-  startTime   String   // "09:00" in teacher's timezone
-  duration    Int      // 30 or 60 minutes
-  
-  // Slot status and lifecycle
-  status      SlotStatus @default(ACTIVE)
-  bookedAt    DateTime @default(now())
-  cancelledAt DateTime?
-  
-  // Pricing
-  perLessonPrice Int   // cents - price per individual lesson
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  version     Int      @default(1) // Optimistic locking version
-  
-  // Relations
-  teacher     TeacherProfile @relation("TeacherSlots", fields: [teacherId], references: [id], onDelete: Cascade)
-  student     StudentProfile @relation("StudentSlots", fields: [studentId], references: [id], onDelete: Cascade)
-  lessons     Lesson[]       @relation("SlotLessons")
-  subscriptions SlotSubscription[]
-  
-  @@unique([teacherId, dayOfWeek, startTime, duration, status]) // Prevent double-booking
+  id             String             @id @default(cuid())
+  teacherId      String
+  studentId      String
+  dayOfWeek      Int
+  startTime      String
+  duration       Int
+  status         SlotStatus         @default(ACTIVE)
+  bookedAt       DateTime           @default(now())
+  cancelledAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  perLessonPrice Int
+  version        Int                @default(1)
+  lessons        Lesson[]           @relation("SlotLessons")
+  student        StudentProfile     @relation("StudentSlots", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher        TeacherProfile     @relation("TeacherSlots", fields: [teacherId], references: [id], onDelete: Cascade)
+  subscriptions  SlotSubscription[]
+
+  @@unique([teacherId, dayOfWeek, startTime, duration, status])
   @@index([teacherId, status])
   @@index([studentId, status])
   @@index([dayOfWeek])
 }
 
 model SlotSubscription {
-  id            String   @id @default(cuid())
-  slotId        String
-  studentId     String
-  
-  // Subscription period
-  startMonth    String   // "2025-01" format
-  endMonth      String?  // null = ongoing, "2025-12" = specific end
-  
-  // Billing details
-  monthlyRate   Int      // cents - locked rate for this subscription
-  status        SubscriptionStatus @default(ACTIVE)
-  
-  // Payment tracking
-  lastBilledMonth String? // "2025-01" - last month that was billed
+  id              String             @id @default(cuid())
+  slotId          String
+  studentId       String
+  startMonth      String
+  endMonth        String?
+  monthlyRate     Int
+  status          SubscriptionStatus @default(ACTIVE)
+  lastBilledMonth String?
   nextBillDate    DateTime?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  // Relations
-  slot          RecurringSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  student       StudentProfile @relation("StudentSubscriptions", fields: [studentId], references: [id], onDelete: Cascade)
-  billingRecords MonthlyBilling[]
-  
-  @@unique([slotId, studentId, startMonth]) // One subscription per slot per student per start month
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  billingRecords  MonthlyBilling[]
+  slot            RecurringSlot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  student         StudentProfile     @relation("StudentSubscriptions", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([slotId, studentId, startMonth])
   @@index([status])
   @@index([nextBillDate])
   @@index([studentId])
 }
 
 model MonthlyBilling {
-  id               String   @id @default(cuid())
-  subscriptionId   String
-  studentId        String
-  teacherId        String
-  
-  // Billing period
-  month            String   // "2025-01" format
-  
-  // Lesson count and pricing
-  expectedLessons  Int      // How many lessons should occur this month
-  actualLessons    Int      @default(0) // How many actually happened
-  ratePerLesson    Int      // cents - calculated from monthly rate
-  totalAmount      Int      // cents - expectedLessons * ratePerLesson
-  
-  // Billing status
-  status           BillingStatus @default(PENDING)
-  billedAt         DateTime?
-  paidAt           DateTime?
-  paymentMethod    String?  // "Venmo", "PayPal", "Zelle", etc.
-  
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  
-  // Relations
-  subscription     SlotSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  student          StudentProfile @relation("StudentBilling", fields: [studentId], references: [id])
-  teacher          TeacherProfile @relation("TeacherBilling", fields: [teacherId], references: [id])
-  
-  @@unique([subscriptionId, month]) // One billing record per subscription per month
+  id              String           @id @default(cuid())
+  subscriptionId  String
+  studentId       String
+  teacherId       String
+  month           String
+  expectedLessons Int
+  actualLessons   Int              @default(0)
+  ratePerLesson   Int
+  totalAmount     Int
+  status          BillingStatus    @default(PENDING)
+  billedAt        DateTime?
+  paidAt          DateTime?
+  paymentMethod   String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  student         StudentProfile   @relation("StudentBilling", fields: [studentId], references: [id])
+  subscription    SlotSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  teacher         TeacherProfile   @relation("TeacherBilling", fields: [teacherId], references: [id])
+
+  @@unique([subscriptionId, month])
   @@index([month])
   @@index([status])
   @@index([studentId, month])
   @@index([teacherId, month])
 }
 
-// System models for admin functionality
 model SystemSettings {
-  id    String @id @default("system")
-  
-  // Platform settings
-  platformFeePercentage   Float   @default(10.0) // Platform fee percentage
-  maxFileSize             Int     @default(10485760) // 10MB in bytes
-  allowedFileTypes        String  @default("pdf,doc,docx,jpg,png") // comma-separated
-  
-  // Feature flags
-  paymentsEnabled         Boolean @default(true)
-  libraryEnabled          Boolean @default(true)
-  recommendationsEnabled  Boolean @default(true)
-  
-  // Tier 1 Admin Settings - Invoice Configuration
-  defaultInvoiceDueDays   Int     @default(14) // Days after generation invoice is due
-  latePaymentReminderDays Int     @default(7)  // Days after due date to send reminder
-  invoiceNumberFormat     String  @default("INV-{YEAR}-{NUMBER}") // Invoice number format
-  
-  // Tier 1 Admin Settings - Email System
-  emailSenderName         String  @default("Guitar Strategies")
-  emailSenderAddress      String  @default("onboarding@resend.dev")
-  enableBookingConfirmations Boolean @default(true)
-  enableInvoiceNotifications Boolean @default(true)
-  enableReminderEmails    Boolean @default(true)
-  emailFooterText         String  @default("Thank you for choosing Guitar Strategies!")
-  
-  // Tier 1 Admin Settings - Lesson Defaults
-  defaultLessonDuration30 Boolean @default(true)  // Enable 30-min lessons
-  defaultLessonDuration60 Boolean @default(true)  // Enable 60-min lessons
-  defaultAdvanceBookingDays Int   @default(14)    // Default advance booking window
-  cancellationPolicyText  String  @default("Please cancel at least 2 hours in advance to avoid charges.")
-  
-  updatedAt DateTime @updatedAt
+  id                         String   @id @default("system")
+  platformFeePercentage      Float    @default(10.0)
+  maxFileSize                Int      @default(10485760)
+  allowedFileTypes           String   @default("pdf,doc,docx,jpg,png")
+  paymentsEnabled            Boolean  @default(true)
+  libraryEnabled             Boolean  @default(true)
+  recommendationsEnabled     Boolean  @default(true)
+  updatedAt                  DateTime @updatedAt
+  cancellationPolicyText     String   @default("Please cancel at least 2 hours in advance to avoid charges.")
+  defaultAdvanceBookingDays  Int      @default(14)
+  defaultInvoiceDueDays      Int      @default(14)
+  defaultLessonDuration30    Boolean  @default(true)
+  defaultLessonDuration60    Boolean  @default(true)
+  emailFooterText            String   @default("Thank you for choosing Guitar Strategies!")
+  emailSenderAddress         String   @default("onboarding@resend.dev")
+  emailSenderName            String   @default("Guitar Strategies")
+  enableBookingConfirmations Boolean  @default(true)
+  enableInvoiceNotifications Boolean  @default(true)
+  enableReminderEmails       Boolean  @default(true)
+  invoiceNumberFormat        String   @default("INV-{YEAR}-{NUMBER}")
+  latePaymentReminderDays    Int      @default(7)
 }
 
-// Enums
+model EmailPreference {
+  id        String    @id @default(cuid())
+  userId    String
+  enabled   Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  type      EmailType
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model EmailTemplate {
+  id          String    @id @default(cuid())
+  type        EmailType @unique
+  subject     String
+  htmlBody    String
+  variables   String
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model BackgroundJobLog {
+  id                String   @id @default(cuid())
+  jobName           String
+  executedAt        DateTime @default(now())
+  success           Boolean
+  lessonsGenerated  Int      @default(0)
+  teachersProcessed Int      @default(0)
+  errors            String?
+
+  @@index([jobName, executedAt])
+}
+
 enum Role {
   STUDENT
   TEACHER
@@ -698,11 +595,11 @@ enum Role {
 }
 
 enum LessonStatus {
-  SCHEDULED   // Future lesson
-  COMPLETED   // Teacher logged completion
-  CANCELLED   // Cancelled by student or teacher
-  NO_SHOW     // Student didn't attend
-  MISSED      // Student didn't attend but not marked no-show
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  MISSED
+  NO_SHOW
 }
 
 enum RecommendationCategory {
@@ -774,82 +671,35 @@ enum ProgressStatus {
 }
 
 enum SlotStatus {
-  ACTIVE      // Slot is currently active and generating lessons
-  CANCELLED   // Student cancelled their recurring slot
-  SUSPENDED   // Temporarily paused (vacation, etc.)
-  EXPIRED     // Slot ended naturally
+  ACTIVE
+  CANCELLED
+  SUSPENDED
+  EXPIRED
 }
 
 enum SubscriptionStatus {
-  ACTIVE      // Subscription is active and billing
-  PAUSED      // Temporarily paused
-  CANCELLED   // Cancelled by student
-  EXPIRED     // Subscription period ended
+  ACTIVE
+  PAUSED
+  CANCELLED
+  EXPIRED
 }
 
 enum BillingStatus {
-  PENDING     // Not yet billed
-  BILLED      // Invoice sent to student
-  PAID        // Student has paid
-  OVERDUE     // Payment past due
-  CANCELLED   // Billing cancelled
+  PENDING
+  BILLED
+  PAID
+  OVERDUE
+  CANCELLED
 }
 
 enum EmailType {
-  LESSON_BOOKING        // Lesson booking confirmations
-  LESSON_CANCELLATION   // Lesson cancellation notifications
-  LESSON_COMPLETED      // Lesson completion summary sent to student
-  LESSON_REMINDER       // Lesson reminders (24h before)
-  INVOICE_GENERATED     // New invoice notifications
-  INVOICE_OVERDUE       // Overdue invoice reminders
-  CHECKLIST_COMPLETION  // Achievement celebration emails
-  STUDENT_WELCOME       // Welcome email for new students
-  SYSTEM_UPDATES        // System announcements
+  LESSON_BOOKING
+  LESSON_CANCELLATION
+  LESSON_REMINDER
+  INVOICE_GENERATED
+  INVOICE_OVERDUE
+  CHECKLIST_COMPLETION
+  SYSTEM_UPDATES
+  STUDENT_WELCOME
+  LESSON_COMPLETED
 }
-
-// Email preferences for notification opt-in/opt-out
-model EmailPreference {
-  id        String   @id @default(cuid())
-  userId    String
-  type      EmailType
-  enabled   Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, type]) // One preference per user per email type
-  @@index([userId])
-}
-
-// Email templates for customizable system emails
-model EmailTemplate {
-  id          String    @id @default(cuid())
-  type        EmailType @unique
-  subject     String
-  htmlBody    String    @db.Text
-  variables   String    @db.Text // JSON string of available variables
-  description String?   @db.Text
-  isActive    Boolean   @default(true)
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([type])
-  @@index([isActive])
-}
-
-// Background job logging for monitoring automatic lesson generation
-model BackgroundJobLog {
-  id                String   @id @default(cuid())
-  jobName           String   // e.g., "generate-future-lessons"
-  executedAt        DateTime @default(now())
-  success           Boolean
-  lessonsGenerated  Int      @default(0)
-  teachersProcessed Int      @default(0)
-  errors            String?  @db.Text // Concatenated error messages
-  
-  @@index([jobName, executedAt])
-}
-

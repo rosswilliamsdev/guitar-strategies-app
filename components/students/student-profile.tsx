@@ -4,6 +4,11 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { format } from "date-fns";
 import {
@@ -18,6 +23,9 @@ import {
   ChevronRight,
   CalendarClock,
   AlertCircle,
+  Edit,
+  X,
+  Save,
 } from "lucide-react";
 import {
   Dialog,
@@ -28,6 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { log } from "@/lib/logger";
+import { updateStudentByTeacherSchema, UpdateStudentByTeacherData } from "@/lib/validations";
 
 interface StudentData {
   student: {
@@ -98,7 +107,8 @@ interface StudentProfileProps {
   teacherId: string;
 }
 
-export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
+export function StudentProfile({ studentId }: StudentProfileProps) {
+  const { toast } = useToast();
   const [data, setData] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +122,17 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState<UpdateStudentByTeacherData>({
+    name: "",
+    email: "",
+    isActive: true,
+    instrument: "",
+    goals: "",
+  });
+
   useEffect(() => {
     fetch(`/api/students/${studentId}`)
       .then((res) => {
@@ -120,7 +141,17 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         }
         return res.json();
       })
-      .then(setData)
+      .then((fetchedData) => {
+        setData(fetchedData);
+        // Initialize edit form with current data
+        setEditForm({
+          name: fetchedData.student.user.name,
+          email: fetchedData.student.user.email,
+          isActive: fetchedData.student.isActive,
+          instrument: fetchedData.student.instrument,
+          goals: fetchedData.student.goals || "",
+        });
+      })
       .catch((err) => {
         setError(err.message);
       })
@@ -128,6 +159,87 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
         setLoading(false);
       });
   }, [studentId]);
+
+  const handleEditClick = () => {
+    if (data) {
+      // Reset form to current data when entering edit mode
+      setEditForm({
+        name: data.student.user.name,
+        email: data.student.user.email,
+        isActive: data.student.isActive,
+        instrument: data.student.instrument,
+        goals: data.student.goals || "",
+      });
+      setIsEditMode(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    // Reset form to original data
+    if (data) {
+      setEditForm({
+        name: data.student.user.name,
+        email: data.student.user.email,
+        isActive: data.student.isActive,
+        instrument: data.student.instrument,
+        goals: data.student.goals || "",
+      });
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      setIsSaving(true);
+
+      // Validate with Zod
+      const validatedData = updateStudentByTeacherSchema.parse(editForm);
+
+      const response = await fetch(`/api/students/${studentId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(validatedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update student");
+      }
+
+      const updatedStudent = await response.json();
+
+      // Update local state with new data
+      if (data) {
+        setData({
+          ...data,
+          student: {
+            ...data.student,
+            ...updatedStudent,
+            user: updatedStudent.user,
+          },
+        });
+      }
+
+      setIsEditMode(false);
+      toast({
+        title: "Success",
+        description: "Student profile updated successfully",
+      });
+    } catch (error) {
+      log.error("Error saving student profile:", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update student profile",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -301,60 +413,157 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
             <p className="text-muted-foreground">Student Profile</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge
-              className={getStatusBadge(
-                student.isActive ? "ACTIVE" : "INACTIVE"
-              )}
-            >
-              {student.isActive ? "Active" : "Inactive"}
-            </Badge>
-            <Link href={`/lessons/new?studentId=${studentId}`}>
-              <Button size="sm">New Lesson</Button>
-            </Link>
+            {!isEditMode && (
+              <>
+                <Badge
+                  className={getStatusBadge(
+                    student.isActive ? "ACTIVE" : "INACTIVE"
+                  )}
+                >
+                  {student.isActive ? "Active" : "Inactive"}
+                </Badge>
+                <Button size="sm" variant="secondary" onClick={handleEditClick}>
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+                <Link href={`/lessons/new?studentId=${studentId}`}>
+                  <Button size="sm">New Lesson</Button>
+                </Link>
+              </>
+            )}
+            {isEditMode && (
+              <>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveEdit} disabled={isSaving}>
+                  <Save className="h-4 w-4 mr-1" />
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Contact Information */}
           <div>
             <h3 className="font-medium text-gray-900 mb-3">
               Contact Information
             </h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{student.user.email}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Phone className="h-4 w-4 text-muted-foreground" />
-                <span>{student.phoneNumber || "Not provided"}</span>
-              </div>
-              {student.parentEmail && (
+            {!isEditMode ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <span>{student.user.name}</span>
+                </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span>Parent: {student.parentEmail}</span>
+                  <span>{student.user.email}</span>
                 </div>
-              )}
-            </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span>{student.phoneNumber || "Not provided"}</span>
+                </div>
+                {student.parentEmail && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span>Parent: {student.parentEmail}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    value={editForm.name}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, name: e.target.value })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, email: e.target.value })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isActive"
+                    checked={editForm.isActive}
+                    onCheckedChange={(checked) =>
+                      setEditForm({ ...editForm, isActive: checked })
+                    }
+                  />
+                  <Label htmlFor="isActive">Active Status</Label>
+                </div>
+              </div>
+            )}
           </div>
 
+          {/* Learning Details */}
           <div>
             <h3 className="font-medium text-gray-900 mb-3">Learning Details</h3>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <Music className="h-4 w-4 text-muted-foreground" />
-                <span>{student.instrument}</span>
+            {!isEditMode ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Music className="h-4 w-4 text-muted-foreground" />
+                  <span>{student.instrument}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span>
+                    Joined {format(new Date(student.joinedAt), "MMMM d, yyyy")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>{student._count.lessons} total lessons</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>
-                  Joined {format(new Date(student.joinedAt), "MMMM d, yyyy")}
-                </span>
+            ) : (
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="instrument">Instrument</Label>
+                  <Input
+                    id="instrument"
+                    value={editForm.instrument}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, instrument: e.target.value })
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>
+                      Joined {format(new Date(student.joinedAt), "MMMM d, yyyy")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>{student._count.lessons} total lessons</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>{student._count.lessons} total lessons</span>
-              </div>
-            </div>
+            )}
           </div>
 
           <div>
@@ -399,17 +608,30 @@ export function StudentProfile({ studentId, teacherId }: StudentProfileProps) {
           </div>
         </div>
 
-        {student.goals && (
-          <div className="mt-6 pt-6 border-t">
-            <div className="flex items-start gap-2">
-              <Target className="h-4 w-4 text-muted-foreground mt-0.5" />
-              <div>
-                <h3 className="font-medium text-gray-900 mb-1">Goals</h3>
-                <p className="text-sm text-gray-600">{student.goals}</p>
-              </div>
+        <div className="mt-6 pt-6 border-t">
+          <div className="flex items-start gap-2">
+            <Target className="h-4 w-4 text-muted-foreground mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-medium text-gray-900 mb-1">Goals</h3>
+              {!isEditMode ? (
+                <p className="text-sm text-gray-600">
+                  {student.goals || "No goals set"}
+                </p>
+              ) : (
+                <Textarea
+                  id="goals"
+                  value={editForm.goals || ""}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, goals: e.target.value })
+                  }
+                  placeholder="Enter student's learning goals..."
+                  rows={3}
+                  className="mt-1"
+                />
+              )}
             </div>
           </div>
-        )}
+        </div>
       </Card>
 
       {/* Quick Stats */}

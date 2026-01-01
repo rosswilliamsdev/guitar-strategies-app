@@ -696,6 +696,19 @@ export const createStudentSchema = z.object({
 });
 
 /**
+ * Schema for teacher updating student profile
+ * Allows editing: name, email, status, instrument, and goals
+ * Teacher ID is locked to prevent reassignment
+ */
+export const updateStudentByTeacherSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().email("Please enter a valid email address"),
+  isActive: z.boolean(),
+  instrument: z.string().min(1, "Instrument is required").max(50),
+  goals: z.string().max(1000).optional().or(z.literal('')).transform(val => val === '' ? null : val),
+});
+
+/**
  * Schema for admin creating a new teacher
  */
 export const createTeacherSchema = z.object({
@@ -760,6 +773,7 @@ export const toggleStatusSchema = z.object({
 
 // Export types for the new schemas
 export type CreateStudentData = z.infer<typeof createStudentSchema>;
+export type UpdateStudentByTeacherData = z.infer<typeof updateStudentByTeacherSchema>;
 export type CreateTeacherData = z.infer<typeof createTeacherSchema>;
 export type AdminSettingsData = z.infer<typeof adminSettingsSchema>;
 export type BulkDeleteData = z.infer<typeof bulkDeleteSchema>;
