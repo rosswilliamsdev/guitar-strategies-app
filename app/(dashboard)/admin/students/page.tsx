@@ -2,7 +2,10 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { ManageStudents, type Student } from "@/components/admin/manage-students";
+import {
+  ManageStudents,
+  type Student,
+} from "@/components/admin/manage-students";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
@@ -15,17 +18,22 @@ export default async function ManageStudentsPage() {
   }
 
   // Check if user has admin access (either ADMIN role or TEACHER with admin flag)
-  const hasAdminAccess = session.user.role === "ADMIN" ||
-    (session.user.role === "TEACHER" && session.user.teacherProfile?.isAdmin === true);
+  const hasAdminAccess =
+    session.user.role === "ADMIN" ||
+    (session.user.role === "TEACHER" &&
+      session.user.teacherProfile?.isAdmin === true);
 
   if (!hasAdminAccess) {
     redirect("/dashboard");
   }
 
-  // Fetch all students with their profiles and teacher info
+  // Fetch current teacher's students
   const students = await prisma.user.findMany({
     where: {
       role: "STUDENT",
+      studentProfile: {
+        teacherId: session.user.teacherProfile?.id,
+      },
     },
     include: {
       studentProfile: {
@@ -52,7 +60,9 @@ export default async function ManageStudentsPage() {
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Manage Students</h1>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Manage Students
+          </h1>
           <p className="text-muted-foreground mt-1">
             View and manage all students in the system
           </p>

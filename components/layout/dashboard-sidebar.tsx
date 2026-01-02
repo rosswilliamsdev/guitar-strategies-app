@@ -36,9 +36,12 @@ const navItems: NavItem[] = [
 
   { label: "Schedule", href: "/schedule", roles: ["TEACHER"] },
   { label: "Invoices", href: "/invoices", roles: ["TEACHER"] },
-  { label: "Manage Teachers", href: "/admin/teachers", roles: ["ADMIN"] },
+
+  // TODO: Re-enable when admin and teacher roles are separate
+  // { label: "Manage Teachers", href: "/admin/teachers", roles: ["ADMIN"] },
   { label: "Manage Students", href: "/admin/students", roles: ["ADMIN"] },
-  { label: "Manage Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
+  // { label: "Manage Lessons", href: "/admin/lessons", roles: ["ADMIN"] },
+
   { label: "Platform Activity", href: "/admin/activity", roles: ["ADMIN"] },
   {
     label: "Background Jobs",

@@ -7,32 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { log, emailLog } from '@/lib/logger';
-
-interface Teacher {
-  id: string;
-  name: string;
-  email: string;
-  teacherProfile: {
-    id: string;
-  };
-}
+import { log } from "@/lib/logger";
 
 interface CreateStudentFormProps {
-  teachers: Teacher[];
+  currentTeacherId: string;
 }
 
-export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
+export function CreateStudentForm({
+  currentTeacherId,
+}: CreateStudentFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    teacherId: "",
+    teacherId: currentTeacherId,
     instrument: "guitar",
     goals: "",
     parentEmail: "",
@@ -55,10 +47,6 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
     }
     if (!formData.password.trim() || formData.password.length < 6) {
       setErrors({ password: "Password must be at least 6 characters" });
-      return;
-    }
-    if (!formData.teacherId) {
-      setErrors({ teacherId: "Please select a teacher" });
       return;
     }
 
@@ -86,12 +74,13 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
 
       router.push("/admin/students");
     } catch (error) {
-      log.error('Error creating student:', {
+      log.error("Error creating student:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       setErrors({
-        submit: error instanceof Error ? error.message : "Failed to create student",
+        submit:
+          error instanceof Error ? error.message : "Failed to create student",
       });
     } finally {
       setLoading(false);
@@ -119,14 +108,18 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
 
         {/* Basic Information */}
         <div className="space-y-4">
-          <h3 className="font-medium text-foreground border-b pb-2">Basic Information</h3>
-          
+          <h3 className="font-medium text-foreground border-b pb-2">
+            Basic Information
+          </h3>
+
           <div>
             <Label htmlFor="name">Full Name *</Label>
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               placeholder="e.g., Alex Smith"
               className={errors.name ? "border-red-500" : ""}
             />
@@ -141,7 +134,9 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               placeholder="e.g., alex@example.com"
               className={errors.email ? "border-red-500" : ""}
             />
@@ -156,7 +151,9 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
               id="password"
               type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               placeholder="At least 6 characters"
               className={errors.password ? "border-red-500" : ""}
             />
@@ -166,44 +163,21 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
           </div>
         </div>
 
-        {/* Teacher Assignment */}
-        <div className="space-y-4">
-          <h3 className="font-medium text-foreground border-b pb-2">Teacher Assignment</h3>
-          
-          <div>
-            <Label htmlFor="teacherId">Assign Teacher *</Label>
-            <Select value={formData.teacherId} onValueChange={(value) => setFormData({ ...formData, teacherId: value })}>
-              <SelectTrigger className={errors.teacherId ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select a teacher" />
-              </SelectTrigger>
-              <SelectContent>
-                {teachers.map((teacher) => (
-                  <SelectItem key={teacher.teacherProfile.id} value={teacher.teacherProfile.id}>
-                    {teacher.name} ({teacher.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.teacherId && (
-              <p className="text-sm text-red-500 mt-1">{errors.teacherId}</p>
-            )}
-            {teachers.length === 0 && (
-              <p className="text-sm text-amber-600 mt-1">No active teachers available</p>
-            )}
-          </div>
-        </div>
-
         {/* Student Details */}
         <div className="space-y-4">
-          <h3 className="font-medium text-foreground border-b pb-2">Student Details</h3>
-          
+          <h3 className="font-medium text-foreground border-b pb-2">
+            Student Details
+          </h3>
+
           <div>
             <Label htmlFor="instrument">Instrument</Label>
             <Input
               id="instrument"
               value={formData.instrument}
-              onChange={(e) => setFormData({ ...formData, instrument: e.target.value })}
-              placeholder="guitar"
+              onChange={(e) =>
+                setFormData({ ...formData, instrument: e.target.value })
+              }
+              placeholder="Guitar"
             />
           </div>
 
@@ -212,7 +186,9 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
             <Textarea
               id="goals"
               value={formData.goals}
-              onChange={(e) => setFormData({ ...formData, goals: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, goals: e.target.value })
+              }
               placeholder="What would you like to learn or achieve?"
               rows={3}
             />
@@ -221,8 +197,10 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
 
         {/* Contact Information */}
         <div className="space-y-4">
-          <h3 className="font-medium text-foreground border-b pb-2">Contact Information (Optional)</h3>
-          
+          <h3 className="font-medium text-foreground border-b pb-2">
+            Contact Information (Optional)
+          </h3>
+
           <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="parentEmail">Parent/Guardian Email</Label>
@@ -230,10 +208,14 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
                 id="parentEmail"
                 type="email"
                 value={formData.parentEmail}
-                onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, parentEmail: e.target.value })
+                }
                 placeholder="parent@example.com"
               />
-              <p className="text-xs text-muted-foreground mt-1">For minor students</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                For minor students
+              </p>
             </div>
 
             <div>
@@ -241,7 +223,9 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
               <Input
                 id="phoneNumber"
                 value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phoneNumber: e.target.value })
+                }
                 placeholder="(555) 123-4567"
               />
             </div>
@@ -254,7 +238,7 @@ export function CreateStudentForm({ teachers }: CreateStudentFormProps) {
               Cancel
             </Button>
           </Link>
-          <Button variant="primary" type="submit" disabled={loading || teachers.length === 0}>
+          <Button variant="primary" type="submit" disabled={loading}>
             <Save className="h-4 w-4 mr-2" />
             {loading ? "Creating..." : "Create Student"}
           </Button>

@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
 import { CreateStudentForm } from "@/components/admin/create-student-form";
 
 export default async function CreateStudentPage() {
@@ -19,31 +18,8 @@ export default async function CreateStudentPage() {
     redirect("/dashboard");
   }
 
-  // Get all active teachers for the dropdown
-  const teachersRaw = await prisma.user.findMany({
-    where: {
-      role: "TEACHER",
-      teacherProfile: {
-        isActive: true,
-      },
-    },
-    include: {
-      teacherProfile: {
-        select: {
-          id: true,
-        },
-      },
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-
-  // Filter out teachers without teacherProfile (shouldn't happen but for type safety)
-  const teachers = teachersRaw.filter(
-    (teacher): teacher is typeof teacher & { teacherProfile: NonNullable<typeof teacher.teacherProfile> } =>
-      teacher.teacherProfile !== null
-  );
+  // Auto-assign to current teacher (solo teacher model)
+  const currentTeacherId = session.user.teacherProfile?.id || "";
 
   return (
     <div className="container max-w-2xl py-6">
@@ -54,7 +30,7 @@ export default async function CreateStudentPage() {
         </p>
       </div>
 
-      <CreateStudentForm teachers={teachers} />
+      <CreateStudentForm currentTeacherId={currentTeacherId} />
     </div>
   );
 }
