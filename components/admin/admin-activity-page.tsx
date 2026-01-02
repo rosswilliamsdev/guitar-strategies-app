@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminActivityView } from "@/components/admin/admin-activity-view";
 import { AdminStats } from "@/lib/dashboard-stats";
-import { Loader2, Filter } from "lucide-react";
-import { log, emailLog, invoiceLog } from '@/lib/logger';
+import { Loader2, Filter, DollarSign, RefreshCw } from "lucide-react";
+import { log } from '@/lib/logger';
 
 interface ActivityFilters {
   dateRange: 'today' | 'week' | 'month' | 'all';
@@ -19,6 +19,7 @@ export function AdminActivityPage() {
   const [activities, setActivities] = useState<AdminStats['recentActivity']>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [generatingInvoices, setGeneratingInvoices] = useState(false);
   const [filters, setFilters] = useState<ActivityFilters>({
     dateRange: 'month',
     activityType: 'all',
@@ -59,8 +60,56 @@ export function AdminActivityPage() {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const triggerInvoiceGeneration = async () => {
+    try {
+      setGeneratingInvoices(true);
+      const response = await fetch('/api/admin/background-jobs/generate-invoices', {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to trigger invoice generation');
+      }
+
+      // Refresh activity after job execution
+      await fetchActivity();
+    } catch (error) {
+      log.error('Error triggering invoice generation:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
+    } finally {
+      setGeneratingInvoices(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Admin Actions */}
+      <Card className="p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <DollarSign className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold">Admin Actions</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Manually trigger automated jobs and system tasks
+        </p>
+
+        <Button
+          onClick={triggerInvoiceGeneration}
+          disabled={generatingInvoices || loading}
+          className="bg-primary hover:bg-primary/90"
+        >
+          {generatingInvoices ? (
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <DollarSign className="mr-2 h-4 w-4" />
+          )}
+          {generatingInvoices ? "Generating..." : "Generate Monthly Invoices"}
+        </Button>
+      </Card>
+
       {/* Filters */}
       <Card className="p-6">
         <div className="flex items-center space-x-2 mb-4">
