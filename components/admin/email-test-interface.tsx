@@ -93,51 +93,6 @@ export default function EmailTestInterface() {
 
   return (
     <div className="space-y-6">
-      {/* Configuration Instructions */}
-      <Card className="p-6">
-        <div className="flex items-start gap-3">
-          <Mail className="h-5 w-5 text-primary mt-1" />
-          <div>
-            <h3 className="font-semibold mb-2">Email Configuration Status</h3>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>
-                <strong>Environment Variable:</strong> RESEND_API_KEY must be
-                set in your .env file
-              </p>
-              <p>
-                <strong>Current Value:</strong>{" "}
-                {process.env.RESEND_API_KEY
-                  ? "✅ Configured"
-                  : "❌ Not configured"}
-              </p>
-              <p>To set up email notifications, you need to:</p>
-              <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>
-                  Sign up for a Resend account at{" "}
-                  <a
-                    href="https://resend.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    resend.com
-                  </a>
-                </li>
-                <li>Get your API key from the Resend dashboard</li>
-                <li>
-                  Add{" "}
-                  <code className="bg-muted px-1 rounded">
-                    RESEND_API_KEY="re_your_key_here"
-                  </code>{" "}
-                  to your .env file
-                </li>
-                <li>Restart your development server</li>
-              </ol>
-            </div>
-          </div>
-        </div>
-      </Card>
-
       {/* Test Email Form */}
       <Card className="p-6">
         <div className="space-y-4">
