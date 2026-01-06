@@ -644,3 +644,41 @@ export function createInvoiceEmail(
   
   return createBaseTemplate(content, `Invoice ${invoiceNumber} - Guitar Strategies`);
 }
+
+// Password Reset Template
+export function createPasswordResetEmail(
+  userName: string,
+  resetLink: string,
+  expirationMinutes: number = 60
+): string {
+  const content = `
+    <h2>🔐 Password Reset Request</h2>
+    <p>Hi ${userName},</p>
+    <p>We received a request to reset your password for your Guitar Strategies account. If you didn't make this request, you can safely ignore this email.</p>
+
+    <div class="info-box">
+      <strong>Important Security Information:</strong><br>
+      • This link is valid for ${expirationMinutes} minutes only<br>
+      • The link can only be used once<br>
+      • If you didn't request this reset, no action is needed
+    </div>
+
+    <p>To reset your password, click the button below:</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${resetLink}" class="button">Reset My Password</a>
+    </div>
+
+    <p>Or copy and paste this link into your browser:</p>
+    <p style="word-break: break-all; color: #14b8b3; font-size: 14px;">${resetLink}</p>
+
+    <div class="warning-box">
+      <strong>⚠️ Security Reminder:</strong><br>
+      Never share your password with anyone. Guitar Strategies staff will never ask for your password via email.
+    </div>
+
+    <p>If you're having trouble resetting your password, please contact your teacher for assistance.</p>
+  `;
+
+  return createBaseTemplate(content, 'Password Reset Request - Guitar Strategies');
+}

@@ -93,6 +93,29 @@ export const passwordChangeSchema = z
     path: ["confirmPassword"],
   });
 
+/**
+ * Schema for forgot password request.
+ * Validates email format for password reset request.
+ */
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+/**
+ * Schema for password reset form validation.
+ * Validates token and new password with confirmation.
+ */
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&)"
+    ),
+});
+
 // ========================================
 // Profile Schemas
 // ========================================

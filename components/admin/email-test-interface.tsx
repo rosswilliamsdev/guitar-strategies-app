@@ -38,6 +38,7 @@ export default function EmailTestInterface() {
     { value: "invoice-overdue", label: "Invoice Overdue Reminder" },
     { value: "invoice-paid", label: "Invoice Payment Confirmation" },
     { value: "invoice-upcoming", label: "Invoice Payment Due Soon" },
+    { value: "password-reset", label: "Password Reset Request" },
   ];
 
   const sendTestEmail = async () => {

@@ -41,10 +41,22 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model PasswordResetToken {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token String @unique
+  expires DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
   password          String?
+  passwordResetTokens PasswordResetToken[]
   name              String
   role              Role               @default(STUDENT)
   createdAt         DateTime           @default(now())
