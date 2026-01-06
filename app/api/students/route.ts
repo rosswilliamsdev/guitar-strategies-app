@@ -103,7 +103,7 @@ async function handleGET(request: NextRequest) {
       return NextResponse.json(paginatedResponse);
     } else if (session.user.role === 'ADMIN') {
       // Admin can view all students with optional teacher filtering
-      let whereClause: any = { isActive: true };
+      const whereClause: any = { isActive: true };
       
       // Apply teacher filter if provided
       if (teacherId) {
