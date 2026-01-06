@@ -211,6 +211,8 @@ export default withAuth(
           pathname.startsWith("/auth") ||
           pathname === "/login" ||
           pathname === "/register" ||
+          pathname === "/forgot-password" ||
+          pathname.startsWith("/reset-password") ||
           pathname.startsWith("/_next") ||
           pathname.startsWith("/.well-known") ||
           pathname.startsWith("/favicon.ico") ||
