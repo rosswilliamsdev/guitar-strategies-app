@@ -682,3 +682,54 @@ export function createPasswordResetEmail(
 
   return createBaseTemplate(content, 'Password Reset Request - Guitar Strategies');
 }
+
+// Student Invitation Template
+export function createStudentInvitationEmail(
+  studentName: string,
+  teacherName: string,
+  teacherBio: string | null,
+  inviteLink: string,
+  expirationDays: number = 7
+): string {
+  const content = `
+    <h2>🎸 Welcome to Guitar Strategies!</h2>
+    <p>Hi ${studentName},</p>
+    <p><strong>${teacherName}</strong> has invited you to join Guitar Strategies, a comprehensive lesson management platform for tracking your guitar learning journey.</p>
+
+    ${teacherBio ? `
+    <div class="info-box">
+      <strong>About Your Teacher:</strong><br>
+      ${teacherBio}
+    </div>
+    ` : ''}
+
+    <p>To get started, create your account by clicking the button below:</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${inviteLink}" class="button">Create Your Account</a>
+    </div>
+
+    <p>Or copy and paste this link into your browser:</p>
+    <p style="word-break: break-all; color: #14b8b3; font-size: 14px;">${inviteLink}</p>
+
+    <div class="info-box">
+      <strong>What You'll Get:</strong><br>
+      • Access to your lesson history and notes<br>
+      • Track your progress with custom checklists<br>
+      • View homework assignments and practice materials<br>
+      • Book lessons directly with ${teacherName}<br>
+      • Manage invoices and payments
+    </div>
+
+    <div class="warning-box">
+      <strong>⏰ Important:</strong><br>
+      This invitation link expires in ${expirationDays} days. If you need a new invitation, please contact ${teacherName}.
+    </div>
+
+    <p>We're excited to have you join! If you have any questions about creating your account, feel free to reach out to ${teacherName}.</p>
+
+    <p>Happy practicing! 🎸</p>
+  `;
+
+  return createBaseTemplate(content, `Invitation from ${teacherName} - Guitar Strategies`);
+}

@@ -214,6 +214,40 @@ export async function POST(request: NextRequest) {
           <p><strong>This is a test email.</strong> No actual password reset has been requested.</p>
         `;
         break;
+
+      case 'student-invitation':
+        subject = 'Test: Student Invitation Email';
+        content = `
+          <h2>🎸 Welcome to Guitar Strategies!</h2>
+          <p>Hi Test Student,</p>
+          <p><strong>Test Teacher</strong> has invited you to join Guitar Strategies, a comprehensive lesson management platform for tracking your guitar learning journey.</p>
+          <div class="info-box">
+            <strong>About Your Teacher:</strong><br>
+            This is a test bio for the teacher. Professional guitar instructor with over 10 years of experience teaching students of all skill levels.
+          </div>
+          <p>To get started, create your account by clicking the button below:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="http://localhost:3000/register?token=test-invite-token-abc123" class="button">Create Your Account</a>
+          </div>
+          <p>Or copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; color: #14b8b3; font-size: 14px;">http://localhost:3000/register?token=test-invite-token-abc123</p>
+          <div class="info-box">
+            <strong>What You'll Get:</strong><br>
+            • Access to your lesson history and notes<br>
+            • Track your progress with custom checklists<br>
+            • View homework assignments and practice materials<br>
+            • Book lessons directly with Test Teacher<br>
+            • Manage invoices and payments
+          </div>
+          <div class="warning-box">
+            <strong>⏰ Important:</strong><br>
+            This invitation link expires in 7 days. If you need a new invitation, please contact Test Teacher.
+          </div>
+          <p>We're excited to have you join! If you have any questions about creating your account, feel free to reach out to Test Teacher.</p>
+          <p>Happy practicing! 🎸</p>
+          <p><strong>This is a test email.</strong> No actual invitation has been sent.</p>
+        `;
+        break;
     }
 
     const htmlContent = createBaseTemplate(content, subject);
