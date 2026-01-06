@@ -13,8 +13,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Only allow admins to send test emails
-    if (session.user.role !== 'ADMIN') {
+    // Only allow admins or teachers with admin privileges to send test emails
+    const isAdmin = session.user.role === 'ADMIN' ||
+                    (session.user.role === 'TEACHER' && session.user.teacherProfile?.isAdmin);
+
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
@@ -183,6 +186,32 @@ export async function POST(request: NextRequest) {
           </div>
           <p>Please ensure payment is made by the due date to avoid any late fees or disruption to your lessons.</p>
           <p><strong>This is a test email.</strong> No actual payment is due.</p>
+        `;
+        break;
+
+      case 'password-reset':
+        subject = 'Test: Password Reset Request';
+        content = `
+          <h2>🔐 Password Reset Request (TEST)</h2>
+          <p>Hi Test User,</p>
+          <p>This is a test of the password reset email system.</p>
+          <div class="info-box">
+            <strong>Important Security Information:</strong><br>
+            • This link is valid for 60 minutes only<br>
+            • The link can only be used once<br>
+            • If you didn't request this reset, no action is needed
+          </div>
+          <p>To reset your password, click the button below:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="http://localhost:3000/reset-password/test-token-abc123" class="button">Reset My Password</a>
+          </div>
+          <p>Or copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; color: #14b8b3; font-size: 14px;">http://localhost:3000/reset-password/test-token-abc123</p>
+          <div class="warning-box">
+            <strong>⚠️ Security Reminder:</strong><br>
+            Never share your password with anyone. Guitar Strategies staff will never ask for your password via email.
+          </div>
+          <p><strong>This is a test email.</strong> No actual password reset has been requested.</p>
         `;
         break;
     }

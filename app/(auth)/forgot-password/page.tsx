@@ -1,43 +1,34 @@
 import Link from 'next/link';
-import { LoginForm } from '@/components/auth/login-form';
+import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
 import { Card } from '@/components/ui/card';
 
 export const metadata = {
-  title: 'Login',
-  description: 'Sign in to your Guitar Strategies account',
+  title: 'Forgot Password',
+  description: 'Reset your Guitar Strategies password',
 };
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   return (
     <Card className="p-6">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-semibold text-foreground mb-2">
-          Welcome back
+          Forgot your password?
         </h1>
         <p className="text-muted-foreground">
-          Sign in to your account to continue
+          Enter your email address and we&apos;ll send you a link to reset your password
         </p>
       </div>
 
-      <LoginForm />
-
-      <div className="mt-4 text-center">
-        <Link
-          href="/forgot-password"
-          className="text-sm text-turquoise-600 hover:text-turquoise-700 font-medium"
-        >
-          Forgot your password?
-        </Link>
-      </div>
+      <ForgotPasswordForm />
 
       <div className="mt-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
+          Remember your password?{' '}
           <Link
-            href="/register"
+            href="/login"
             className="text-turquoise-600 hover:text-turquoise-700 font-medium"
           >
-            Sign up
+            Sign in
           </Link>
         </p>
       </div>
