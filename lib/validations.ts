@@ -102,6 +102,21 @@ export const forgotPasswordSchema = z.object({
 });
 
 /**
+ * Schema for accepting student invitation.
+ * Validates invitation token and new password.
+ */
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(32, "Invalid invitation token"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+    ),
+});
+
+/**
  * Schema for password reset form validation.
  * Validates token and new password with confirmation.
  */
