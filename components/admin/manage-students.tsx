@@ -30,7 +30,8 @@ import {
   AlertTriangle,
   Edit,
   X,
-  Save
+  Save,
+  Mail
 } from "lucide-react";
 import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
 import { updateStudentByTeacherSchema, UpdateStudentByTeacherData } from "@/lib/validations";
@@ -42,6 +43,7 @@ export interface Student {
   createdAt: Date;
   studentProfile: {
     id: string;
+    userId: string;
     goals: string | null;
     instrument: string;
     isActive: boolean;
@@ -81,6 +83,10 @@ export function ManageStudents({ students }: ManageStudentsProps) {
     goals: "",
   });
 
+  // Invitation state
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [inviteButtonDisabled, setInviteButtonDisabled] = useState(false);
+
   const filteredStudents = students.filter(student =>
     student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -112,6 +118,56 @@ export function ManageStudents({ students }: ManageStudentsProps) {
   const handleDeleteClick = (student: Student) => {
     setStudentToDelete(student);
     setDeleteModalOpen(true);
+  };
+
+  const handleSendInvite = async () => {
+    if (!studentToView?.studentProfile) return;
+
+    setIsSendingInvite(true);
+    try {
+      const response = await fetch(
+        `/api/students/${studentToView.studentProfile.id}/send-invite`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send invitation");
+      }
+
+      const result = await response.json();
+      emailLog.info("Invitation sent from student details modal", {
+        studentId: studentToView.studentProfile.id,
+        flowType: result.flowType,
+      });
+
+      toast({
+        title: "Invitation Sent",
+        description: `Invitation email sent to ${studentToView.email}`,
+      });
+
+      // Disable button for 5 seconds to prevent spam
+      setInviteButtonDisabled(true);
+      setTimeout(() => {
+        setInviteButtonDisabled(false);
+      }, 5000);
+    } catch (error) {
+      emailLog.error("Error sending invitation from student details modal", {
+        error: error instanceof Error ? error.message : String(error),
+        studentId: studentToView?.studentProfile?.id,
+      });
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to send invitation",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingInvite(false);
+    }
   };
 
   const handleViewDetails = (student: Student) => {
@@ -517,6 +573,26 @@ export function ManageStudents({ students }: ManageStudentsProps) {
           <DialogFooter>
             {!isEditMode ? (
               <>
+                {/* Show Send Invitation button if student has email */}
+                {studentToView?.email && (
+                  <Button
+                    variant="primary"
+                    onClick={handleSendInvite}
+                    disabled={isSendingInvite || inviteButtonDisabled}
+                  >
+                    {isSendingInvite ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="h-4 w-4 mr-2" />
+                        Send Invitation Email
+                      </>
+                    )}
+                  </Button>
+                )}
                 <Button
                   variant="secondary"
                   onClick={handleEditClick}
