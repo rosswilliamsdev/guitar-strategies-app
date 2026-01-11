@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { StudentSettingsForm } from '@/components/settings/student-settings-form';
 import { TeacherSettingsForm } from '@/components/settings/teacher-settings-form';
 import { Card } from '@/components/ui/card';
-import { log, dbLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 export const metadata = {
   title: 'Settings - Guitar Strategies',
@@ -105,9 +105,6 @@ export default async function SettingsPage() {
             venmoHandle: userData.teacherProfile.venmoHandle ?? undefined,
             paypalEmail: userData.teacherProfile.paypalEmail ?? undefined,
             zelleEmail: userData.teacherProfile.zelleEmail ?? undefined,
-            isSoloTeacher: userData.teacherProfile.isSoloTeacher ?? false,
-            isOrgFounder: userData.teacherProfile.isOrgFounder ?? false,
-            organizationName: userData.teacherProfile.organizationName ?? undefined,
           }}
           emailPreferences={userData.emailPreferences || []}
         />
