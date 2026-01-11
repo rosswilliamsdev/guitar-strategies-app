@@ -139,7 +139,7 @@ export interface UpdateLessonData extends Partial<CreateLessonData> {
 // ========================================
 export type Invoice = PrismaInvoice & {
   teacher: TeacherProfile;
-  student: StudentProfile & { user: User };
+  student: (StudentProfile & { user: User }) | null;
   items: InvoiceItem[];
   customFullName?: string | null;
   customEmail?: string | null;
