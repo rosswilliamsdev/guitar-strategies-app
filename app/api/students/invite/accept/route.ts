@@ -26,12 +26,12 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       apiLog.warn('Accept invitation validation failed', {
-        errors: validation.error.errors,
+        errors: validation.error.issues,
       });
       return NextResponse.json(
         {
           error: 'Invalid request data',
-          details: validation.error.errors.map(err => ({
+          details: validation.error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
           }))
