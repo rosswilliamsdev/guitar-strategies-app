@@ -39,6 +39,7 @@ export default function EmailTestInterface() {
     { value: "invoice-paid", label: "Invoice Payment Confirmation" },
     { value: "invoice-upcoming", label: "Invoice Payment Due Soon" },
     { value: "password-reset", label: "Password Reset Request" },
+    { value: "student-invitation", label: "Student Invitation Email" },
   ];
 
   const sendTestEmail = async () => {

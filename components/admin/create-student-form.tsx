@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { log } from "@/lib/logger";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateStudentFormProps {
   currentTeacherId: string;
@@ -19,7 +21,9 @@ export function CreateStudentForm({
   currentTeacherId,
 }: CreateStudentFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [sendInvite, setSendInvite] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -70,6 +74,56 @@ export function CreateStudentForm({
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to create student");
+      }
+
+      const result = await response.json();
+      const createdStudentId = result.studentProfileId;
+
+      // If checkbox was checked, send invitation email
+      if (sendInvite && createdStudentId) {
+        try {
+          const inviteResponse = await fetch(
+            `/api/students/${createdStudentId}/send-invite`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+
+          if (inviteResponse.ok) {
+            toast({
+              title: "Success",
+              description: `Student added. Invitation email sent to ${formData.email.trim()}`,
+            });
+          } else {
+            // Student created but email failed
+            toast({
+              title: "Student Created",
+              description:
+                "Student account created successfully, but failed to send invitation email. You can resend it from the student details page.",
+              variant: "destructive",
+            });
+          }
+        } catch (emailError) {
+          log.error("Error sending invitation email:", {
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : String(emailError),
+            stack: emailError instanceof Error ? emailError.stack : undefined,
+          });
+          toast({
+            title: "Student Created",
+            description:
+              "Student account created successfully, but failed to send invitation email. You can resend it from the student details page.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Success",
+          description: "Student account created successfully",
+        });
       }
 
       router.push("/admin/students");
@@ -161,6 +215,28 @@ export function CreateStudentForm({
               <p className="text-sm text-red-500 mt-1">{errors.password}</p>
             )}
           </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="sendInvite"
+              checked={sendInvite}
+              onCheckedChange={(checked) => setSendInvite(checked === true)}
+              disabled={!formData.email.trim()}
+            />
+            <Label
+              htmlFor="sendInvite"
+              className={`cursor-pointer ${
+                !formData.email.trim() ? "text-muted-foreground" : ""
+              }`}
+            >
+              Send invitation email to student
+            </Label>
+          </div>
+          {!formData.email.trim() && (
+            <p className="text-xs text-muted-foreground">
+              Enter an email address to enable invitation email
+            </p>
+          )}
         </div>
 
         {/* Student Details */}

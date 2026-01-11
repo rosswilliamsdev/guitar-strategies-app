@@ -85,6 +85,7 @@ async function handlePOST(request: NextRequest) {
     return createSuccessResponse(
       {
         id: student.user.id,
+        studentProfileId: student.studentProfile.id,
         name: student.user.name,
         email: student.user.email,
         teacherName: teacher.user.name,
