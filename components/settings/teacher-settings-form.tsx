@@ -168,7 +168,10 @@ export function TeacherSettingsForm({
       setEmailPrefs(data.preferences);
       return data.preferences;
     } catch (error) {
-      log.error("Failed to update email preferences", { error });
+      log.error("Failed to update email preferences", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return null;
     }
   };

@@ -450,7 +450,7 @@ export function InvoiceForm({
                   Lessons for {selectedStudent?.user.name} -{" "}
                   {selectedMonth
                     ? format(
-                        new Date(selectedMonth.split("-")[0], parseInt(selectedMonth.split("-")[1]) - 1, 1),
+                        new Date(parseInt(selectedMonth.split("-")[0]), parseInt(selectedMonth.split("-")[1]) - 1, 1),
                         "MMMM yyyy"
                       )
                     : ""}

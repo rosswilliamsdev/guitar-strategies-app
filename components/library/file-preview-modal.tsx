@@ -182,7 +182,7 @@ export function FilePreviewModal({
             <span className="ml-2">• {fileSize} MB</span>
           </div>
           <div className="text-right">
-            <div className="text-xs uppercase tracking-wide">{file.category.replace('_', ' ')}</div>
+            <div className="text-xs uppercase tracking-wide">{file.category?.replace('_', ' ') || 'Uncategorized'}</div>
           </div>
         </div>
 
