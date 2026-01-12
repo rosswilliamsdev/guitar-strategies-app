@@ -378,7 +378,7 @@ export function LessonDetails({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => window.open(attachment.fileUrl, "_blank")}
+                  onClick={() => window.open(`/api/lessons/${lessonId}/attachments/${attachment.id}`, "_blank")}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>

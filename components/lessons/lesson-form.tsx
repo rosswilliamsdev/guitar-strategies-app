@@ -345,16 +345,15 @@ export function LessonForm({
 
       // Upload files if any
       if (selectedFiles.length > 0) {
-        log.info('Uploading ${selectedFiles.length} files for lesson ${currentLessonId}');
+        log.info(`Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`);
         const fileFormData = new FormData();
-        selectedFiles.forEach((file, index) => {
-          fileFormData.append(`files`, file);
-          log.info('Added file: ${file.name}, size: ${file.size}');
+        selectedFiles.forEach((file) => {
+          fileFormData.append('files', file);
+          log.info(`Added file: ${file.name}, size: ${file.size}`);
         });
-        fileFormData.append("lessonId", currentLessonId);
 
         try {
-          const fileResponse = await fetch("/api/lessons/attachments", {
+          const fileResponse = await fetch(`/api/lessons/${currentLessonId}/attachments`, {
             method: "POST",
             body: fileFormData,
           });
@@ -362,9 +361,9 @@ export function LessonForm({
           if (!fileResponse.ok) {
             const errorData = await fileResponse.json();
             log.error('File upload failed:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
+              error: errorData instanceof Error ? errorData.message : String(errorData),
+              stack: errorData instanceof Error ? errorData.stack : undefined
+            });
             throw new Error(`File upload failed: ${errorData.error || 'Unknown error'}`);
           }
 
@@ -372,9 +371,9 @@ export function LessonForm({
           log.info('Files uploaded successfully:', fileResult);
         } catch (fileError) {
           log.error('File upload error:', {
-        error: fileError instanceof Error ? fileError.message : String(fileError),
-        stack: fileError instanceof Error ? fileError.stack : undefined
-      });
+            error: fileError instanceof Error ? fileError.message : String(fileError),
+            stack: fileError instanceof Error ? fileError.stack : undefined
+          });
           // Don't fail the entire save, but show a warning
           setError(`Lesson saved but file upload failed: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
         }
@@ -382,33 +381,30 @@ export function LessonForm({
 
       // Handle removed attachments when editing
       if (lessonId && removedAttachmentIds.length > 0) {
-        log.info('Removing ${removedAttachmentIds.length} attachments');
+        log.info(`Removing ${removedAttachmentIds.length} attachments`);
         try {
-          const removeResponse = await fetch("/api/lessons/attachments", {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              lessonId: currentLessonId,
-              removedAttachmentIds: removedAttachmentIds,
-            }),
-          });
+          // Delete each attachment individually
+          for (const attachmentId of removedAttachmentIds) {
+            const removeResponse = await fetch(`/api/lessons/${currentLessonId}/attachments/${attachmentId}`, {
+              method: "DELETE",
+            });
 
-          if (!removeResponse.ok) {
-            const errorData = await removeResponse.json();
-            log.error('Failed to remove attachments:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
-          } else {
-            log.info('Attachments removed successfully');
+            if (!removeResponse.ok) {
+              const errorData = await removeResponse.json();
+              log.error('Failed to remove attachment:', {
+                error: errorData instanceof Error ? errorData.message : String(errorData),
+                stack: errorData instanceof Error ? errorData.stack : undefined,
+                attachmentId
+              });
+            } else {
+              log.info('Attachment removed successfully:', { attachmentId });
+            }
           }
         } catch (removeError) {
           log.error('Error removing attachments:', {
-        error: removeError instanceof Error ? removeError.message : String(removeError),
-        stack: removeError instanceof Error ? removeError.stack : undefined
-      });
+            error: removeError instanceof Error ? removeError.message : String(removeError),
+            stack: removeError instanceof Error ? removeError.stack : undefined
+          });
         }
       }
 
