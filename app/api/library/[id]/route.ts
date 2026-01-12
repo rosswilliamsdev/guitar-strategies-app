@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { apiLog, dbLog } from '@/lib/logger';
+import { deleteFileFromBlob } from '@/lib/blob-storage';
+import { apiLog } from '@/lib/logger';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -43,9 +44,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Not authorized to delete this item' }, { status: 403 });
     }
 
-    // Delete the library item
+    // Delete file from blob storage first
+    await deleteFileFromBlob(libraryItem.fileUrl);
+
+    // Delete the library item from database
     await prisma.libraryItem.delete({
       where: { id }
+    });
+
+    apiLog.info('Library item deleted successfully', {
+      itemId: id,
+      teacherId: teacherProfile.id,
+      fileName: libraryItem.fileName
     });
 
     return NextResponse.json({ success: true }, { status: 200 });

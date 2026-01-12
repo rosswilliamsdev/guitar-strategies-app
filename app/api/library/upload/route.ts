@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { put } from '@vercel/blob';
-import { apiLog, dbLog } from '@/lib/logger';
+import { uploadFileToBlob, buildLibraryPath } from '@/lib/blob-storage';
+import { apiLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
 // Disable caching for this route
@@ -42,94 +42,40 @@ async function handlePOST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate file size (10MB limit)
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File size must be less than 10MB' }, { status: 400 });
-    }
+    // Build storage path for this file
+    const storagePath = buildLibraryPath(teacherProfile.id, file.name);
 
-    // Validate file type
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain',
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/gif',
-      'audio/mpeg',
-      'audio/wav',
-      'audio/mp4',
-      'audio/ogg',
-      'video/mp4',
-      'video/quicktime',
-      'video/x-msvideo',
-      'video/webm',
-      'audio/midi',
-      'audio/x-midi',
-      // Guitar tablature formats
-      'application/x-guitar-pro',      // Guitar Pro (.gp, .gpx, .gp3, .gp4, .gp5, .gp6, .gp7)
-      'application/octet-stream',      // Generic binary (catches .gp, .ptb, .ptx, .tg files)
-      'application/x-ptb',             // PowerTab (.ptb)
-      'application/x-powertab',        // PowerTab alternate MIME type
-      'application/x-tuxguitar'        // TuxGuitar (.tg)
-    ];
+    // Upload file to Vercel Blob using centralized utility
+    const blob = await uploadFileToBlob(file, storagePath);
 
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ 
-        error: 'File type not supported' 
-      }, { status: 400 });
-    }
+    // Use filename as title if no title provided
+    const finalTitle = title && title.trim() ? title.trim() : file.name.split('.').slice(0, -1).join('.');
 
-    try {
-      let fileUrl: string;
-      
-      // Check if Vercel Blob is configured
-      if (process.env.BLOB_READ_WRITE_TOKEN && process.env.BLOB_READ_WRITE_TOKEN !== 'vercel_blob_rw_xxxxxxxxxxxxxxxxxxxx') {
-        // Upload file to Vercel Blob
-        const blob = await put(file.name, file, {
-          access: 'public',
-          addRandomSuffix: true,
-        });
-        fileUrl = blob.url;
-      } else {
-        // For development/testing: use a mock URL
-        apiLog.info('Vercel Blob not configured, using mock file URL');
-        fileUrl = `https://mock-storage.example.com/files/${file.name}`;
+    // Create library item in database
+    const libraryItem = await prisma.libraryItem.create({
+      data: {
+        title: finalTitle,
+        description: description || null,
+        fileName: file.name,
+        fileSize: file.size,
+        fileUrl: blob.url,
+        teacherId: teacherProfile.id,
+        instrument: instrument as any,
+        category: category ? (category as any) : null,
+        isPublic,
       }
+    });
 
-      // Use filename as title if no title provided
-      const finalTitle = title && title.trim() ? title.trim() : file.name.split('.').slice(0, -1).join('.');
+    apiLog.info('Library item created successfully', {
+      itemId: libraryItem.id,
+      teacherId: teacherProfile.id,
+      fileName: file.name
+    });
 
-      // Create library item in database
-      const libraryItem = await prisma.libraryItem.create({
-        data: {
-          title: finalTitle,
-          description: description || null,
-          fileName: file.name,
-          fileSize: file.size,
-          fileUrl,
-          teacherId: teacherProfile.id,
-          instrument: instrument as any,
-          category: category ? (category as any) : null,
-          isPublic,
-        }
-      });
-
-      return NextResponse.json({ 
-        success: true, 
-        item: libraryItem 
-      }, { status: 201 });
-
-    } catch (blobError) {
-      apiLog.error('Error uploading file:', {
-        error: blobError instanceof Error ? blobError.message : String(blobError),
-        stack: blobError instanceof Error ? blobError.stack : undefined
-      });
-      return NextResponse.json({ 
-        error: 'Failed to upload file. Please check your file storage configuration.' 
-      }, { status: 500 });
-    }
+    return NextResponse.json({
+      success: true,
+      item: libraryItem
+    }, { status: 201 });
 
   } catch (error) {
     apiLog.error('Library upload error:', {
