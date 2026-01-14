@@ -11,7 +11,7 @@ import {
   createBadRequestResponse,
   createConflictResponse,
   createValidationErrorResponse,
-  handleApiError
+  handleApiError,
 } from "@/lib/api-responses";
 
 const bookForStudentSchema = z.object({
@@ -60,7 +60,9 @@ export async function POST(request: NextRequest) {
     const dayOfWeek = lessonDateInTeacherTZ.getDay();
     const hours = lessonDateInTeacherTZ.getHours();
     const minutes = lessonDateInTeacherTZ.getMinutes();
-    const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    const timeString = `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
 
     const availability = await prisma.teacherAvailability.findFirst({
       where: {
@@ -73,7 +75,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (!availability) {
-      return createBadRequestResponse("This time slot is not within your availability");
+      return createBadRequestResponse(
+        "This time slot is not within your availability"
+      );
     }
 
     // Check for conflicts (use UTC date for DB comparison)
@@ -94,7 +98,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (conflict) {
-      return createConflictResponse("This time slot already has a lesson scheduled");
+      return createConflictResponse(
+        "This time slot already has a lesson scheduled"
+      );
     }
 
     // Use transaction to ensure atomicity for both single and recurring bookings
@@ -120,17 +126,20 @@ export async function POST(request: NextRequest) {
       // Get teacher's lesson settings for pricing
       const teacher = await tx.teacherProfile.findUnique({
         where: { id: validatedData.teacherId },
-        include: { lessonSettings: true }
+        include: { lessonSettings: true },
       });
 
       if (!teacher?.lessonSettings) {
-        throw new Error("Teacher lesson settings not found");
+        throw new Error(
+          "Please complete your account before booking lessons. Go to Settings to complete your profile, payment methods, lesson settings, and availabilty."
+        );
       }
 
       // Calculate the price based on duration
-      const lessonPrice = validatedData.duration === 30
-        ? teacher.lessonSettings.price30Min
-        : teacher.lessonSettings.price60Min;
+      const lessonPrice =
+        validatedData.duration === 30
+          ? teacher.lessonSettings.price30Min
+          : teacher.lessonSettings.price60Min;
 
       if (validatedData.type === "single") {
         // Create single lesson (store in UTC)
@@ -196,12 +205,15 @@ export async function POST(request: NextRequest) {
 
     // Handle successful transaction result
     if (result.type === "single") {
-      return createSuccessResponse(result.lesson, "Single lesson created successfully");
+      return createSuccessResponse(
+        result.lesson,
+        "Single lesson created successfully"
+      );
     } else {
       return createSuccessResponse(
         {
           recurringSlot: result.recurringSlot,
-          firstLesson: result.firstLesson
+          firstLesson: result.firstLesson,
         },
         "Created indefinite recurring lesson"
       );

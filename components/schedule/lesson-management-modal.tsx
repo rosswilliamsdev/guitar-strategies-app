@@ -10,17 +10,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { User, Calendar, Clock, FileText, AlertTriangle } from "lucide-react";
+import { User, Calendar, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { log, emailLog } from "@/lib/logger";
+import { log } from "@/lib/logger";
 
 interface UpcomingLesson {
   id: string;
   date: Date;
   duration: number;
-  notes?: string;
   status: string;
   student: {
     id: string;
@@ -45,40 +43,8 @@ export function LessonManagementModal({
   onUpdate,
 }: LessonManagementModalProps) {
   const { toast } = useToast();
-  const [mode, setMode] = useState<"view" | "notes" | "cancel">("view");
-  const [notes, setNotes] = useState(lesson.notes || "");
   const [isLoading, setIsLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-
-  const handleSaveNotes = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/lessons/${lesson.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          notes,
-          // Don't change status when saving notes - notes are for reminders, not completion
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update lesson notes");
-      }
-
-      toast.success("Lesson notes saved successfully");
-      onUpdate();
-      onClose();
-    } catch (error) {
-      log.error("Error updating lesson:", {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-      toast.error("Failed to save notes. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleCancelLesson = async () => {
     setIsLoading(true);
@@ -174,24 +140,6 @@ export function LessonManagementModal({
           {!isLessonCancelled && !isLessonCompleted && (
             <div className="flex items-center gap-3">
               <Button
-                variant={mode === "notes" ? "primary" : "secondary"}
-                onClick={() =>
-                  mode === "notes" ? handleSaveNotes() : setMode("notes")
-                }
-                disabled={isLoading}
-                className="flex items-center gap-2"
-              >
-                <FileText className="h-4 w-4" />
-                {mode === "notes"
-                  ? isLoading
-                    ? "Saving..."
-                    : "Save Notes"
-                  : lesson.notes
-                  ? "Edit Notes"
-                  : "Add Notes"}
-              </Button>
-
-              <Button
                 variant="secondary"
                 onClick={() => setShowCancelConfirm(true)}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700"
@@ -200,50 +148,6 @@ export function LessonManagementModal({
                 Cancel Lesson
               </Button>
             </div>
-          )}
-
-          {/* Notes Section */}
-          {mode === "notes" && (
-            <Card className="p-4">
-              <h3 className="font-medium mb-3">Lesson Notes</h3>
-              <div className="space-y-4">
-                <RichTextEditor
-                  content={notes}
-                  onChange={setNotes}
-                  placeholder="Add notes about this lesson..."
-                  className="min-h-[200px]"
-                />
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setMode("view");
-                      setNotes(lesson.notes || "");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleSaveNotes}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Saving..." : "Save Notes"}
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Display existing notes if any */}
-          {mode === "view" && lesson.notes && (
-            <Card className="p-4">
-              <h3 className="font-medium mb-3">Lesson Notes</h3>
-              <div
-                className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: lesson.notes }}
-              />
-            </Card>
           )}
 
           {/* Cancel Confirmation */}

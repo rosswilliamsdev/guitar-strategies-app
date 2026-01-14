@@ -449,8 +449,18 @@ export function TeacherScheduleView({
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to book lesson");
+      const responseText = await response.text();
+
+      let errorMessage = "Failed to book lesson";
+      try {
+        const errorData = JSON.parse(responseText);
+        // API returns { error: "message" } format
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch (e) {
+        errorMessage = `Server error: ${response.status}`;
+      }
+
+      throw new Error(errorMessage);
     }
 
     // Refresh the data to show the new booking while preserving the current view
