@@ -206,6 +206,35 @@ export function LessonForm({
             })) || [];
 
           setStudentCurriculums(transformedChecklists);
+
+          // Auto-select already completed items when checklists load
+          const alreadyCompleted = transformedChecklists.flatMap((curriculum: any) =>
+            curriculum.sections.flatMap((section: any) =>
+              section.items
+                .filter((item: any) => {
+                  // For student checklists, check isCompleted
+                  if (curriculum.createdByRole !== "TEACHER") {
+                    return item.isCompleted === true;
+                  }
+                  // For teacher curriculums, check progress status
+                  const progress = curriculum.studentProgress?.itemProgress?.find(
+                    (p: any) => p.itemId === item.id
+                  );
+                  return progress?.status === "COMPLETED";
+                })
+                .map((item: any) => item.id)
+            )
+          );
+
+          // For editing: merge with existing selections from the lesson
+          // For new lessons: just use the completed items
+          setSelectedCurriculumItems(prev => {
+            // If editing and we already loaded lesson's checklist items, keep those too
+            if (lessonId && prev.length > 0) {
+              return [...new Set([...prev, ...alreadyCompleted])];
+            }
+            return alreadyCompleted;
+          });
         } else {
           const errorData = await response.json();
           log.error("API error:", {
@@ -225,7 +254,7 @@ export function LessonForm({
     };
 
     fetchStudentChecklists();
-  }, [formData.studentId]);
+  }, [formData.studentId, lessonId]);
 
   // File handling
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -519,30 +548,16 @@ export function LessonForm({
 
       // Update checklist/curriculum items as completed
       if (selectedCurriculumItems.length > 0) {
-        console.log("🔍 DEBUG: Starting checklist updates", {
-          totalItems: selectedCurriculumItems.length,
-          itemIds: selectedCurriculumItems,
-        });
-
-        try {
-          for (const itemId of selectedCurriculumItems) {
-            console.log("🔍 DEBUG: Processing item", itemId);
-
+        for (const itemId of selectedCurriculumItems) {
+          try {
             // Find which checklist/curriculum contains this item
             const checklist = studentCurriculums.find((c) =>
               c.sections.some((s) => s.items.some((i) => i.id === itemId))
             );
 
             if (checklist) {
-              console.log("🔍 DEBUG: Found checklist", {
-                checklistId: checklist.id,
-                checklistTitle: checklist.title,
-                createdByRole: checklist.createdByRole,
-              });
-
               // Check if it's a teacher-created curriculum or student checklist
               if (checklist.createdByRole === "TEACHER") {
-                console.log("🔍 DEBUG: Updating teacher curriculum item");
                 // Update curriculum item progress
                 const response = await fetch("/api/curriculums/progress", {
                   method: "POST",
@@ -556,12 +571,17 @@ export function LessonForm({
                     status: "COMPLETED",
                   }),
                 });
-                console.log("🔍 DEBUG: Teacher curriculum response", {
-                  status: response.status,
-                  ok: response.ok,
-                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  log.error("Failed to update curriculum item", {
+                    itemId,
+                    curriculumId: checklist.id,
+                    status: response.status,
+                    error: errorData,
+                  });
+                }
               } else {
-                console.log("🔍 DEBUG: Updating student checklist item");
                 // Update student checklist item
                 const response = await fetch(
                   `/api/student-checklists/items/${itemId}`,
@@ -576,43 +596,36 @@ export function LessonForm({
                     }),
                   }
                 );
-                console.log("🔍 DEBUG: Student checklist response", {
-                  itemId,
-                  status: response.status,
-                  ok: response.ok,
-                });
 
                 if (!response.ok) {
                   const errorData = await response.json();
-                  console.error("❌ DEBUG: Student checklist update FAILED", {
+                  log.error("Failed to update checklist item", {
                     itemId,
+                    checklistId: checklist.id,
                     status: response.status,
                     error: errorData,
                   });
                 }
               }
             } else {
-              console.error(
-                "❌ DEBUG: Could not find checklist for item",
-                itemId
-              );
+              log.error("Could not find checklist/curriculum for item", {
+                itemId,
+              });
             }
+          } catch (progressError) {
+            log.error("Error updating checklist/curriculum item:", {
+              itemId,
+              error:
+                progressError instanceof Error
+                  ? progressError.message
+                  : String(progressError),
+              stack:
+                progressError instanceof Error
+                  ? progressError.stack
+                  : undefined,
+            });
+            // Continue to next item even if this one fails
           }
-          console.log("✅ DEBUG: Finished processing all items");
-        } catch (progressError) {
-          console.error(
-            "❌ DEBUG: Exception during checklist updates",
-            progressError
-          );
-          log.error("Error updating checklist progress:", {
-            error:
-              progressError instanceof Error
-                ? progressError.message
-                : String(progressError),
-            stack:
-              progressError instanceof Error ? progressError.stack : undefined,
-          });
-          // Don't fail the lesson submission if checklist update fails
         }
       }
 
