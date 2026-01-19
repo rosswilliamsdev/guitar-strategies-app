@@ -25,7 +25,7 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
-import { log, emailLog } from '@/lib/logger';
+import { log, emailLog } from "@/lib/logger";
 
 interface LessonFormProps {
   teacherId: string;
@@ -75,10 +75,17 @@ export function LessonForm({
 }: LessonFormProps) {
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
-  const [studentCurriculums, setStudentCurriculums] = useState<StudentCurriculum[]>([]);
-  const [selectedCurriculumItems, setSelectedCurriculumItems] = useState<string[]>([]);
-  const [expandedChecklists, setExpandedChecklists] = useState<Set<string>>(new Set());
-  const [isChecklistSectionExpanded, setIsChecklistSectionExpanded] = useState(false);
+  const [studentCurriculums, setStudentCurriculums] = useState<
+    StudentCurriculum[]
+  >([]);
+  const [selectedCurriculumItems, setSelectedCurriculumItems] = useState<
+    string[]
+  >([]);
+  const [expandedChecklists, setExpandedChecklists] = useState<Set<string>>(
+    new Set()
+  );
+  const [isChecklistSectionExpanded, setIsChecklistSectionExpanded] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -95,7 +102,9 @@ export function LessonForm({
   const [existingAttachments, setExistingAttachments] = useState<any[]>(
     initialData?.existingAttachments || []
   );
-  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
+    []
+  );
   const [links, setLinks] = useState<string[]>([]);
   const [existingLinks, setExistingLinks] = useState(
     initialData?.existingLinks || []
@@ -110,7 +119,7 @@ export function LessonForm({
       );
       setLinks(existingUrls);
     }
-    
+
     // Load previously selected checklist items
     if (initialData?.checklistItems) {
       try {
@@ -119,10 +128,10 @@ export function LessonForm({
           setSelectedCurriculumItems(items);
         }
       } catch (error) {
-        log.error('Error parsing checklist items:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        log.error("Error parsing checklist items:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     }
   }, [initialData]);
@@ -138,10 +147,10 @@ export function LessonForm({
           setStudents(data.data || data.students || []);
         }
       } catch (error) {
-        log.error('Error fetching students:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        log.error("Error fetching students:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     };
 
@@ -158,50 +167,60 @@ export function LessonForm({
       }
 
       try {
-        const response = await fetch(`/api/student-checklists?studentId=${formData.studentId}`);
-        
+        const response = await fetch(
+          `/api/student-checklists?studentId=${formData.studentId}`
+        );
+
         if (response.ok) {
           const data = await response.json();
-          
+
           // Transform the checklist data to match the expected format
-          const transformedChecklists = data.checklists?.map((checklist: any) => ({
+          const transformedChecklists =
+            data.checklists?.map((checklist: any) => ({
               id: checklist.id,
               title: checklist.title,
-              createdByRole: checklist.createdByRole || 'STUDENT',
-              creatorName: checklist.creator?.name || 'Unknown',
-              sections: [{
-                id: 'main',
-                title: 'Checklist Items',
-                category: 'checklist',
-                items: checklist.items?.map((item: any) => ({
-                  id: item.id,
-                  title: item.title,
-                  description: item.description,
-                  isCompleted: item.isCompleted,
-                  completedAt: item.completedAt,
-                })) || []
-              }],
+              createdByRole: checklist.createdByRole || "STUDENT",
+              creatorName: checklist.creator?.name || "Unknown",
+              sections: [
+                {
+                  id: "main",
+                  title: "Checklist Items",
+                  category: "checklist",
+                  items:
+                    checklist.items?.map((item: any) => ({
+                      id: item.id,
+                      title: item.title,
+                      description: item.description,
+                      isCompleted: item.isCompleted,
+                      completedAt: item.completedAt,
+                    })) || [],
+                },
+              ],
               studentProgress: {
-                itemProgress: checklist.items?.map((item: any) => ({
-                  itemId: item.id,
-                  status: item.isCompleted ? "COMPLETED" : "NOT_STARTED"
-                })) || []
-              }
-          })) || [];
-          
+                itemProgress:
+                  checklist.items?.map((item: any) => ({
+                    itemId: item.id,
+                    status: item.isCompleted ? "COMPLETED" : "NOT_STARTED",
+                  })) || [],
+              },
+            })) || [];
+
           setStudentCurriculums(transformedChecklists);
         } else {
           const errorData = await response.json();
-          log.error('API error:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
+          log.error("API error:", {
+            error:
+              errorData instanceof Error
+                ? errorData.message
+                : String(errorData),
+            stack: errorData instanceof Error ? errorData.stack : undefined,
+          });
         }
       } catch (error) {
-        log.error('Error fetching student checklists:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+        log.error("Error fetching student checklists:", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     };
 
@@ -269,16 +288,16 @@ export function LessonForm({
 
   // Curriculum item handling
   const toggleCurriculumItem = (itemId: string) => {
-    setSelectedCurriculumItems((prev: string[]) => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
+    setSelectedCurriculumItems((prev: string[]) =>
+      prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
         : [...prev, itemId]
     );
   };
 
   // Checklist expansion handling
   const toggleChecklistExpansion = (checklistId: string) => {
-    setExpandedChecklists(prev => {
+    setExpandedChecklists((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(checklistId)) {
         newSet.delete(checklistId);
@@ -290,11 +309,13 @@ export function LessonForm({
   };
 
   const toggleChecklistSection = () => {
-    setIsChecklistSectionExpanded(prev => !prev);
+    setIsChecklistSectionExpanded((prev) => !prev);
   };
 
   const getItemProgress = (itemId: string, curriculum: StudentCurriculum) => {
-    return curriculum.studentProgress?.itemProgress?.find(p => p.itemId === itemId);
+    return curriculum.studentProgress?.itemProgress?.find(
+      (p) => p.itemId === itemId
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -316,7 +337,10 @@ export function LessonForm({
         duration: formData.duration,
         notes: formData.notes || "",
         status: formData.status,
-        checklistItems: selectedCurriculumItems.length > 0 ? JSON.stringify(selectedCurriculumItems) : null,
+        checklistItems:
+          selectedCurriculumItems.length > 0
+            ? JSON.stringify(selectedCurriculumItems)
+            : null,
         version: lessonId ? formData.version : undefined, // Only include version for updates
       };
 
@@ -340,16 +364,18 @@ export function LessonForm({
       const currentLessonId = lessonId || lessonResponse.lesson?.id;
 
       if (!currentLessonId) {
-        throw new Error('Failed to get lesson ID from response');
+        throw new Error("Failed to get lesson ID from response");
       }
 
       // Upload files if any
       if (selectedFiles.length > 0) {
-        log.info('Uploading ${selectedFiles.length} files for lesson ${currentLessonId}');
+        log.info(
+          "Uploading ${selectedFiles.length} files for lesson ${currentLessonId}"
+        );
         const fileFormData = new FormData();
         selectedFiles.forEach((file, index) => {
           fileFormData.append(`files`, file);
-          log.info('Added file: ${file.name}, size: ${file.size}');
+          log.info("Added file: ${file.name}, size: ${file.size}");
         });
         fileFormData.append("lessonId", currentLessonId);
 
@@ -361,28 +387,40 @@ export function LessonForm({
 
           if (!fileResponse.ok) {
             const errorData = await fileResponse.json();
-            log.error('File upload failed:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
-            throw new Error(`File upload failed: ${errorData.error || 'Unknown error'}`);
+            log.error("File upload failed:", {
+              error:
+                errorData instanceof Error
+                  ? errorData.message
+                  : String(errorData),
+              stack: errorData instanceof Error ? errorData.stack : undefined,
+            });
+            throw new Error(
+              `File upload failed: ${errorData.error || "Unknown error"}`
+            );
           }
 
           const fileResult = await fileResponse.json();
-          log.info('Files uploaded successfully:', fileResult);
+          log.info("Files uploaded successfully:", fileResult);
         } catch (fileError) {
-          log.error('File upload error:', {
-        error: fileError instanceof Error ? fileError.message : String(fileError),
-        stack: fileError instanceof Error ? fileError.stack : undefined
-      });
+          log.error("File upload error:", {
+            error:
+              fileError instanceof Error
+                ? fileError.message
+                : String(fileError),
+            stack: fileError instanceof Error ? fileError.stack : undefined,
+          });
           // Don't fail the entire save, but show a warning
-          setError(`Lesson saved but file upload failed: ${fileError instanceof Error ? fileError.message : 'Unknown error'}`);
+          setError(
+            `Lesson saved but file upload failed: ${
+              fileError instanceof Error ? fileError.message : "Unknown error"
+            }`
+          );
         }
       }
 
       // Handle removed attachments when editing
       if (lessonId && removedAttachmentIds.length > 0) {
-        log.info('Removing ${removedAttachmentIds.length} attachments');
+        log.info("Removing ${removedAttachmentIds.length} attachments");
         try {
           const removeResponse = await fetch("/api/lessons/attachments", {
             method: "PUT",
@@ -397,18 +435,24 @@ export function LessonForm({
 
           if (!removeResponse.ok) {
             const errorData = await removeResponse.json();
-            log.error('Failed to remove attachments:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
+            log.error("Failed to remove attachments:", {
+              error:
+                errorData instanceof Error
+                  ? errorData.message
+                  : String(errorData),
+              stack: errorData instanceof Error ? errorData.stack : undefined,
+            });
           } else {
-            log.info('Attachments removed successfully');
+            log.info("Attachments removed successfully");
           }
         } catch (removeError) {
-          log.error('Error removing attachments:', {
-        error: removeError instanceof Error ? removeError.message : String(removeError),
-        stack: removeError instanceof Error ? removeError.stack : undefined
-      });
+          log.error("Error removing attachments:", {
+            error:
+              removeError instanceof Error
+                ? removeError.message
+                : String(removeError),
+            stack: removeError instanceof Error ? removeError.stack : undefined,
+          });
         }
       }
 
@@ -427,18 +471,21 @@ export function LessonForm({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             lessonId: currentLessonId,
-            links: linksData 
+            links: linksData,
           }),
         });
 
         if (!linksResponse.ok) {
           const errorData = await linksResponse.json();
-          log.error('Failed to update links:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
+          log.error("Failed to update links:", {
+            error:
+              errorData instanceof Error
+                ? errorData.message
+                : String(errorData),
+            stack: errorData instanceof Error ? errorData.stack : undefined,
+          });
         }
       } else if (links.length > 0) {
         // Creating new lesson - add all links
@@ -460,27 +507,44 @@ export function LessonForm({
 
         if (!linksResponse.ok) {
           const errorData = await linksResponse.json();
-          log.error('Failed to save links:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
+          log.error("Failed to save links:", {
+            error:
+              errorData instanceof Error
+                ? errorData.message
+                : String(errorData),
+            stack: errorData instanceof Error ? errorData.stack : undefined,
+          });
         }
       }
 
       // Update checklist/curriculum items as completed
       if (selectedCurriculumItems.length > 0) {
+        console.log("🔍 DEBUG: Starting checklist updates", {
+          totalItems: selectedCurriculumItems.length,
+          itemIds: selectedCurriculumItems,
+        });
+
         try {
           for (const itemId of selectedCurriculumItems) {
+            console.log("🔍 DEBUG: Processing item", itemId);
+
             // Find which checklist/curriculum contains this item
-            const checklist = studentCurriculums.find(c =>
-              c.sections.some(s => s.items.some(i => i.id === itemId))
+            const checklist = studentCurriculums.find((c) =>
+              c.sections.some((s) => s.items.some((i) => i.id === itemId))
             );
 
             if (checklist) {
+              console.log("🔍 DEBUG: Found checklist", {
+                checklistId: checklist.id,
+                checklistTitle: checklist.title,
+                createdByRole: checklist.createdByRole,
+              });
+
               // Check if it's a teacher-created curriculum or student checklist
               if (checklist.createdByRole === "TEACHER") {
+                console.log("🔍 DEBUG: Updating teacher curriculum item");
                 // Update curriculum item progress
-                await fetch("/api/curriculums/progress", {
+                const response = await fetch("/api/curriculums/progress", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
@@ -492,26 +556,62 @@ export function LessonForm({
                     status: "COMPLETED",
                   }),
                 });
-              } else {
-                // Update student checklist item
-                await fetch(`/api/student-checklists/items/${itemId}`, {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    isCompleted: true,
-                    completedAt: new Date().toISOString(),
-                  }),
+                console.log("🔍 DEBUG: Teacher curriculum response", {
+                  status: response.status,
+                  ok: response.ok,
                 });
+              } else {
+                console.log("🔍 DEBUG: Updating student checklist item");
+                // Update student checklist item
+                const response = await fetch(
+                  `/api/student-checklists/items/${itemId}`,
+                  {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      isCompleted: true,
+                      // Note: completedAt is set automatically by the API when isCompleted is true
+                    }),
+                  }
+                );
+                console.log("🔍 DEBUG: Student checklist response", {
+                  itemId,
+                  status: response.status,
+                  ok: response.ok,
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  console.error("❌ DEBUG: Student checklist update FAILED", {
+                    itemId,
+                    status: response.status,
+                    error: errorData,
+                  });
+                }
               }
+            } else {
+              console.error(
+                "❌ DEBUG: Could not find checklist for item",
+                itemId
+              );
             }
           }
+          console.log("✅ DEBUG: Finished processing all items");
         } catch (progressError) {
-          log.error('Error updating checklist progress:', {
-        error: progressError instanceof Error ? progressError.message : String(progressError),
-        stack: progressError instanceof Error ? progressError.stack : undefined
-      });
+          console.error(
+            "❌ DEBUG: Exception during checklist updates",
+            progressError
+          );
+          log.error("Error updating checklist progress:", {
+            error:
+              progressError instanceof Error
+                ? progressError.message
+                : String(progressError),
+            stack:
+              progressError instanceof Error ? progressError.stack : undefined,
+          });
           // Don't fail the lesson submission if checklist update fails
         }
       }
@@ -581,123 +681,173 @@ export function LessonForm({
               className="flex items-center justify-between w-full p-2 -m-2 hover:bg-muted/30 rounded-lg transition-colors group"
             >
               <div className="flex items-center space-x-2">
-                <svg 
-                  className={`w-4 h-4 transition-transform ${isChecklistSectionExpanded ? 'rotate-90' : ''}`}
-                  fill="none" 
-                  viewBox="0 0 24 24" 
+                <svg
+                  className={`w-4 h-4 transition-transform ${
+                    isChecklistSectionExpanded ? "rotate-90" : ""
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
                 <div className="text-left">
-                  <Label className="text-base font-semibold cursor-pointer">Checklist Progress</Label>
+                  <Label className="text-base font-semibold cursor-pointer">
+                    Checklist Progress
+                  </Label>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {isChecklistSectionExpanded 
+                    {isChecklistSectionExpanded
                       ? "Check off checklist items the student practiced or completed during this lesson"
-                      : `${studentCurriculums.length} checklist${studentCurriculums.length === 1 ? '' : 's'} available`
-                    }
+                      : `${studentCurriculums.length} checklist${
+                          studentCurriculums.length === 1 ? "" : "s"
+                        } available`}
                   </p>
                 </div>
               </div>
               {selectedCurriculumItems.length > 0 && (
                 <span className="px-2 py-1 text-xs bg-turquoise-100 text-turquoise-700 rounded-full border border-turquoise-200">
-                  {selectedCurriculumItems.length} item{selectedCurriculumItems.length === 1 ? '' : 's'} checked
+                  {selectedCurriculumItems.length} item
+                  {selectedCurriculumItems.length === 1 ? "" : "s"} checked
                 </span>
               )}
             </button>
-            
+
             {isChecklistSectionExpanded && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {studentCurriculums.map((curriculum) => {
-                const isTeacherCreated = curriculum.createdByRole === 'TEACHER';
-                const isExpanded = expandedChecklists.has(curriculum.id);
-                return (
-                <Card 
-                  key={curriculum.id} 
-                  className={`p-4 ${isTeacherCreated 
-                    ? 'border-turquoise-200 bg-turquoise-50' 
-                    : 'border-neutral-200 bg-white'}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleChecklistExpansion(curriculum.id)}
-                    className="flex items-center justify-between w-full mb-3 p-1 -m-1 hover:bg-black/5 rounded transition-colors group"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <svg 
-                        className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
+                  {studentCurriculums.map((curriculum) => {
+                    const isTeacherCreated =
+                      curriculum.createdByRole === "TEACHER";
+                    const isExpanded = expandedChecklists.has(curriculum.id);
+                    return (
+                      <Card
+                        key={curriculum.id}
+                        className={`p-4 ${
+                          isTeacherCreated
+                            ? "border-turquoise-200 bg-turquoise-50"
+                            : "border-neutral-200 bg-white"
+                        }`}
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                      <h4 className="font-semibold text-sm cursor-pointer">{curriculum.title}</h4>
-                    </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      isTeacherCreated 
-                        ? 'bg-turquoise-100 text-turquoise-700 border border-turquoise-200' 
-                        : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
-                    }`}>
-                      {isTeacherCreated ? '👨‍🏫 Teacher' : '🎸 Student'}
-                    </span>
-                  </button>
-                  {isExpanded && (
-                    <>
-                      {curriculum.creatorName && (
-                        <p className="text-xs text-muted-foreground mb-3">
-                          Created by {curriculum.creatorName}
-                        </p>
-                      )}
-                      <div className="space-y-3">
-                    {curriculum.sections.map((section) => (
-                      <div key={section.id}>
-                        <h5 className="font-medium text-xs text-muted-foreground mb-2 uppercase tracking-wide">
-                          {section.title}
-                        </h5>
-                        <div className="space-y-1.5 ml-2">
-                          {section.items.map((item) => {
-                            const progress = getItemProgress(item.id, curriculum);
-                            const isCompleted = progress?.status === "COMPLETED" || (item as any)?.isCompleted;
-                            const isSelected = selectedCurriculumItems.includes(item.id);
-                            
-                            // For teacher curricula: show strikethrough when selected
-                            // For student checklists: show strikethrough when completed AND selected
-                            const shouldShowStrikethrough = isTeacherCreated ? isSelected : (isCompleted && isSelected);
-                            
-                            return (
-                              <label
-                                key={item.id}
-                                className="flex items-center space-x-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={() => toggleCurriculumItem(item.id)}
-                                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                                />
-                                <span className={`text-sm flex-1 ${shouldShowStrikethrough ? 'line-through text-muted-foreground' : ''}`}>
-                                  {item.title}
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      ))}
-                      </div>
-                    </>
-                  )}
-                </Card>
-                );
-              })}
-            </div>
-            
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleChecklistExpansion(curriculum.id)
+                          }
+                          className="flex items-center justify-between w-full mb-3 p-1 -m-1 hover:bg-black/5 rounded transition-colors group"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <svg
+                              className={`w-4 h-4 transition-transform ${
+                                isExpanded ? "rotate-90" : ""
+                              }`}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                            <h4 className="font-semibold text-sm cursor-pointer">
+                              {curriculum.title}
+                            </h4>
+                          </div>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              isTeacherCreated
+                                ? "bg-turquoise-100 text-turquoise-700 border border-turquoise-200"
+                                : "bg-neutral-100 text-neutral-600 border border-neutral-200"
+                            }`}
+                          >
+                            {isTeacherCreated ? "👨‍🏫 Teacher" : "🎸 Student"}
+                          </span>
+                        </button>
+                        {isExpanded && (
+                          <>
+                            {curriculum.creatorName && (
+                              <p className="text-xs text-muted-foreground mb-3">
+                                Created by {curriculum.creatorName}
+                              </p>
+                            )}
+                            <div className="space-y-3">
+                              {curriculum.sections.map((section) => (
+                                <div key={section.id}>
+                                  <h5 className="font-medium text-xs text-muted-foreground mb-2 uppercase tracking-wide">
+                                    {section.title}
+                                  </h5>
+                                  <div className="space-y-1.5 ml-2">
+                                    {section.items.map((item) => {
+                                      const progress = getItemProgress(
+                                        item.id,
+                                        curriculum
+                                      );
+                                      const isCompleted =
+                                        progress?.status === "COMPLETED" ||
+                                        (item as any)?.isCompleted;
+                                      const isSelected =
+                                        selectedCurriculumItems.includes(
+                                          item.id
+                                        );
+
+                                      // For teacher curricula: show strikethrough when selected
+                                      // For student checklists: show strikethrough when completed AND selected
+                                      const shouldShowStrikethrough =
+                                        isTeacherCreated
+                                          ? isSelected
+                                          : isCompleted && isSelected;
+
+                                      return (
+                                        <label
+                                          key={item.id}
+                                          className="flex items-center space-x-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() =>
+                                              toggleCurriculumItem(item.id)
+                                            }
+                                            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                          />
+                                          <span
+                                            className={`text-sm flex-1 ${
+                                              shouldShowStrikethrough
+                                                ? "line-through text-muted-foreground"
+                                                : ""
+                                            }`}
+                                          >
+                                            {item.title}
+                                          </span>
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+
                 {selectedCurriculumItems.length > 0 && (
                   <div className="p-3 bg-turquoise-50 border border-turquoise-200 rounded-lg">
                     <p className="text-sm text-turquoise-700">
-                      <span className="font-semibold">{selectedCurriculumItems.length}</span> checklist item(s) will be marked as completed when you save this lesson.
+                      <span className="font-semibold">
+                        {selectedCurriculumItems.length}
+                      </span>{" "}
+                      checklist item(s) will be marked as completed when you
+                      save this lesson.
                     </p>
                   </div>
                 )}
@@ -789,7 +939,6 @@ export function LessonForm({
                         variant="destructive"
                         size="sm"
                         onClick={() => removeLink(index)}
-                        
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -861,7 +1010,6 @@ export function LessonForm({
                         variant="destructive"
                         size="sm"
                         onClick={() => removeExistingAttachment(attachment.id)}
-                        
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -896,7 +1044,6 @@ export function LessonForm({
                       variant="destructive"
                       size="sm"
                       onClick={() => removeFile(index)}
-                     
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
