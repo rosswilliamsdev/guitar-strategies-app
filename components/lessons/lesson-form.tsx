@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -19,14 +18,15 @@ import {
   AlertCircle,
   Save,
   X,
-  Upload,
   Link as LinkIcon,
   FileText,
   Trash2,
   ExternalLink,
 } from "lucide-react";
-import { log, emailLog } from "@/lib/logger";
+import { log } from "@/lib/logger";
 
+// each form is assigned to a teacher and given a lesson id
+// initial data may be needed for populating fields when updating/editing lessons
 interface LessonFormProps {
   teacherId: string;
   lessonId?: string;
