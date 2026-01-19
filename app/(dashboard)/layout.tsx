@@ -1,8 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
-import { DashboardSidebar } from '@/components/layout/dashboard-sidebar';
-import { MobileHeader } from '@/components/layout/mobile-header';
 import { Toaster } from '@/components/ui/toaster';
 import { LoadingIndicator } from '@/components/ui/loading-indicator';
 import { DashboardLayoutProvider } from './dashboard-layout-provider';

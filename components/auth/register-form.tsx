@@ -175,6 +175,9 @@ export function RegisterForm({ callbackUrl }: RegisterFormProps) {
               </option>
             ))}
           </select>
+          <p className="text-xs text-gray-500 mt-1">
+            Don't see your teacher? Ask them to create an account first.
+          </p>
         </div>
       )}
 

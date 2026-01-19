@@ -39,8 +39,9 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         setError('Invalid credentials');
       } else if (result?.ok) {
         console.log('SignIn successful, redirecting to:', callbackUrl || '/dashboard');
-        // Use window.location for a hard redirect to ensure session is properly established
-        window.location.href = callbackUrl || '/dashboard';
+        // Use Next.js router for proper session handling
+        router.push(callbackUrl || '/dashboard');
+        router.refresh(); // Force refresh to load new session
       } else {
         console.log('SignIn failed with unknown result:', result);
         setError('Login failed. Please try again.');

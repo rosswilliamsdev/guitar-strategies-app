@@ -2,18 +2,16 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { MainDashboard } from "./main-dashboard";
-import { TeacherDashboard } from "@/components/dashboard/teacher-dashboard";
 import { StudentDashboard } from "@/components/dashboard/student-dashboard";
-import { getUserStats, getAdminStats } from "@/lib/dashboard-stats";
+import { getAdminStats } from "@/lib/dashboard-stats";
 import { log } from "@/lib/logger";
 
 // Helper function to format dates
 function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -230,50 +228,38 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // If user is a teacher, check if they have admin privileges
+  // All teachers get the dual-role dashboard
   if (session.user.role === "TEACHER") {
     const teacherData = await getTeacherData(session.user.id);
 
     if (teacherData) {
-      // Check if teacher has admin privileges
-      const isTeacherAdmin = session.user.teacherProfile?.isAdmin === true;
-
-      if (isTeacherAdmin) {
-        // For teacher-admins, import and render the dual-role dashboard
-        const { DualRoleDashboard } = await import("./dual-role-dashboard");
-        const adminStats = await getAdminStats();
-        return (
-          <DualRoleDashboard
-            user={session.user}
-            teacherData={teacherData}
-            adminStats={adminStats}
-          />
-        );
-      } else {
-        // Regular teacher dashboard
-        return <TeacherDashboard {...teacherData} />;
-      }
+      const { DualRoleDashboard } = await import("./dual-role-dashboard");
+      const adminStats = await getAdminStats();
+      return (
+        <DualRoleDashboard
+          user={session.user}
+          teacherData={teacherData}
+          adminStats={adminStats}
+        />
+      );
     }
   }
 
-  // If user is a student, render the student-specific dashboard
   if (session.user.role === "STUDENT") {
     const studentData = await getStudentData(session.user.id);
 
     if (studentData) {
       return <StudentDashboard {...studentData} />;
     } else {
-      log.info("Student data not found for user", { userId: session.user.id });
+      log.error("Student profile not found", { userId: session.user.id });
+      redirect("/login?error=profile_not_found");
     }
   }
 
-  // For admin users, show admin-specific dashboard with activity feed
-  if (session.user.role === "ADMIN") {
-    const adminStats = await getAdminStats();
-    return <MainDashboard user={session.user} adminStats={adminStats} />;
-  }
-
-  // For non-specific roles or if data fails to load, use the main dashboard
-  const userStats = await getUserStats();
-  return <MainDashboard user={session.user} userStats={userStats} />;
+  // If we reach here, user has an invalid or unrecognized role
+  log.error("Invalid user role or missing profile", {
+    userId: session.user.id,
+    role: session.user.role,
+  });
+  redirect("/login?error=invalid_role");
 }

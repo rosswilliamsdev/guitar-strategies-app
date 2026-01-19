@@ -14,14 +14,9 @@ export default async function HomePage() {
   const session = await getServerSession(authOptions);
 
   // Redirect authenticated users to their dashboard
+  // All roles now use unified /dashboard route which handles role-based rendering
   if (session) {
-    if (session.user.role === "TEACHER") {
-      redirect("/dashboard/teacher");
-    } else if (session.user.role === "STUDENT") {
-      redirect("/dashboard/student");
-    } else if (session.user.role === "ADMIN") {
-      redirect("/dashboard/admin");
-    }
+    redirect("/dashboard");
   }
 
   return (
