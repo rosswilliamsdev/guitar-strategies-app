@@ -1,26 +1,26 @@
 /**
  * @fileoverview API routes for lesson management.
- * 
+ *
  * Handles CRUD operations for guitar lessons including:
  * - GET: Retrieve lessons with filtering and role-based access
  * - POST: Create new lessons (teachers only)
- * 
+ *
  * Security:
  * - Session-based authentication required
  * - Role-based authorization (teachers can create/view their lessons, students can view their own)
  * - Teacher-student relationship verification
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
-import { createLessonSchema } from '@/lib/validations';
-import { validateJsonSize } from '@/lib/request-validation';
-import { sanitizeRichText, sanitizePlainText } from '@/lib/sanitize';
-import { apiLog, dbLog, emailLog } from '@/lib/logger';
-import { sendEmail } from '@/lib/email';
-import { renderEmailWithFallback } from '@/lib/email-templates';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { createLessonSchema } from "@/lib/validations";
+import { validateJsonSize } from "@/lib/request-validation";
+import { sanitizeRichText, sanitizePlainText } from "@/lib/sanitize";
+import { apiLog, emailLog } from "@/lib/logger";
+import { sendEmail } from "@/lib/email";
+import { renderEmailWithFallback } from "@/lib/email-templates";
 import {
   createCachedResponse,
   generateETag,
@@ -31,16 +31,19 @@ import {
   getCachedData,
   CACHE_DURATIONS,
   invalidateLessonCache,
-  redisCache
-} from '@/lib/cache';
-import { withRateLimit } from '@/lib/rate-limit';
-import { getPaginationParams, getPrismaOffsetPagination, createPaginatedResponse, addPaginationHeaders } from '@/lib/pagination';
+} from "@/lib/cache";
+import {
+  getPaginationParams,
+  getPrismaOffsetPagination,
+  createPaginatedResponse,
+  addPaginationHeaders,
+} from "@/lib/pagination";
 
 /**
  * GET /api/lessons
- * 
+ *
  * Retrieves lessons based on user role and query parameters.
- * 
+ *
  * Query Parameters:
  * - studentId: Filter lessons for specific student (teachers only)
  * - teacherId: Filter lessons for specific teacher (admin only)
@@ -48,30 +51,30 @@ import { getPaginationParams, getPrismaOffsetPagination, createPaginatedResponse
  * - future: If 'true', only return future lessons
  * - dateFrom: Filter lessons from this date (ISO string)
  * - dateTo: Filter lessons up to this date (ISO string)
- * 
+ *
  * Authorization:
  * - TEACHER: Can view all their lessons, optionally filtered by student
  * - STUDENT: Can only view their own lessons
  * - ADMIN: Has full access (implementation pending)
- * 
+ *
  * @param request - Next.js request object with query parameters
  * @returns JSON response with lessons array or error
  */
 async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const studentId = searchParams.get('studentId');
-    const teacherId = searchParams.get('teacherId');
-    const status = searchParams.get('status');
-    const future = searchParams.get('future');
-    const dateFrom = searchParams.get('dateFrom');
-    const dateTo = searchParams.get('dateTo');
+    const studentId = searchParams.get("studentId");
+    const teacherId = searchParams.get("teacherId");
+    const status = searchParams.get("status");
+    const future = searchParams.get("future");
+    const dateFrom = searchParams.get("dateFrom");
+    const dateTo = searchParams.get("dateTo");
 
     // Get pagination parameters
     const paginationParams = getPaginationParams(request);
@@ -85,7 +88,7 @@ async function handleGET(request: NextRequest) {
     }
 
     // Add future filter - only lessons after current date
-    if (future === 'true') {
+    if (future === "true") {
       whereClause.date = { gte: new Date() };
     }
 
@@ -94,53 +97,69 @@ async function handleGET(request: NextRequest) {
       whereClause.date = {
         ...(whereClause.date || {}),
         ...(dateFrom && { gte: new Date(dateFrom) }),
-        ...(dateTo && { lte: new Date(dateTo) })
+        ...(dateTo && { lte: new Date(dateTo) }),
       };
     }
 
-    if (session.user.role === 'TEACHER') {
+    if (session.user.role === "TEACHER") {
       // Get teacher's profile to find associated lessons
       const teacherProfile = await prisma.teacherProfile.findUnique({
-        where: { userId: session.user.id }
+        where: { userId: session.user.id },
       });
-      
+
       if (!teacherProfile) {
-        return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: "Teacher profile not found" },
+          { status: 404 }
+        );
       }
-      
+
       whereClause.teacherId = teacherProfile.id;
-      
+
       // Optional student filter for teachers
       if (studentId) {
         whereClause.studentId = studentId;
       }
-    } else if (session.user.role === 'STUDENT') {
+    } else if (session.user.role === "STUDENT") {
       // Get student's profile to find their lessons
       const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: session.user.id }
+        where: { userId: session.user.id },
       });
-      
+
       if (!studentProfile) {
-        return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: "Student profile not found" },
+          { status: 404 }
+        );
       }
-      
+
       whereClause.studentId = studentProfile.id;
     } else {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     // Generate cache key for Redis/memory caching
-    const profileId = session.user.role === 'TEACHER'
-      ? (await prisma.teacherProfile.findUnique({ where: { userId: session.user.id } }))?.id
-      : (await prisma.studentProfile.findUnique({ where: { userId: session.user.id } }))?.id;
+    const profileId =
+      session.user.role === "TEACHER"
+        ? (
+            await prisma.teacherProfile.findUnique({
+              where: { userId: session.user.id },
+            })
+          )?.id
+        : (
+            await prisma.studentProfile.findUnique({
+              where: { userId: session.user.id },
+            })
+          )?.id;
 
     if (!profileId) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    const cacheKey = session.user.role === 'TEACHER'
-      ? CacheKeys.teacherLessons(profileId, paginationParams.page)
-      : CacheKeys.studentLessons(profileId, paginationParams.page);
+    const cacheKey =
+      session.user.role === "TEACHER"
+        ? CacheKeys.teacherLessons(profileId, paginationParams.page)
+        : CacheKeys.studentLessons(profileId, paginationParams.page);
 
     // Use Redis cache with automatic fallback
     const cachedData = await getCachedData(
@@ -151,16 +170,16 @@ async function handleGET(request: NextRequest) {
             where: whereClause,
             include: {
               student: {
-                include: { user: true }
+                include: { user: true },
               },
               teacher: {
-                include: { user: true }
+                include: { user: true },
               },
               attachments: true,
               links: true,
             },
             orderBy: {
-              date: future === 'true' ? 'asc' : 'desc',
+              date: future === "true" ? "asc" : "desc",
             },
             skip,
             take,
@@ -177,9 +196,16 @@ async function handleGET(request: NextRequest) {
 
     // Generate ETag for HTTP cache validation
     const etag = generateETag({ lessons, timestamp: Date.now() });
-    const lastModified = lessons.length > 0
-      ? new Date(Math.max(...lessons.map(l => new Date(l.updatedAt || l.createdAt).getTime())))
-      : new Date();
+    const lastModified =
+      lessons.length > 0
+        ? new Date(
+            Math.max(
+              ...lessons.map((l) =>
+                new Date(l.updatedAt || l.createdAt).getTime()
+              )
+            )
+          )
+        : new Date();
 
     // Check if client has valid HTTP cache
     if (isCacheValid(request, etag, lastModified)) {
@@ -198,7 +224,7 @@ async function handleGET(request: NextRequest) {
     );
 
     // Create response with cache headers
-    const response = createCachedResponse(paginatedResponse, 'LESSONS', {
+    const response = createCachedResponse(paginatedResponse, "LESSONS", {
       etag,
       lastModified,
     });
@@ -208,19 +234,22 @@ async function handleGET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    apiLog.error('Error fetching lessons:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    apiLog.error("Error fetching lessons:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 
 /**
  * POST /api/lessons
- * 
+ *
  * Creates a new lesson record. Only accessible to teachers.
- * 
+ *
  * Request Body:
  * - studentId: ID of the student (required)
  * - date: Lesson date (required)
@@ -232,63 +261,81 @@ async function handleGET(request: NextRequest) {
  * - songsPracticed: Array of songs practiced (optional)
  * - nextSteps: Next steps for student (optional)
  * - status: Lesson status (optional, defaults to 'COMPLETED')
- * 
+ *
  * Validation:
  * - Uses Zod schema validation for request body
  * - Verifies teacher-student relationship
  * - Ensures student belongs to the requesting teacher
- * 
+ *
  * @param request - Next.js request object with lesson data
  * @returns JSON response with created lesson or error
  */
 async function handlePOST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session || session.user.role !== 'TEACHER') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    if (!session || session.user.role !== "TEACHER") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    
+
     // Validate request size (rich text content can be large)
-    const sizeValidation = validateJsonSize(body, 'RICH_TEXT');
+    const sizeValidation = validateJsonSize(body, "RICH_TEXT");
     if (sizeValidation) {
       return sizeValidation;
     }
-    
+
     const validatedData = createLessonSchema.parse(body);
 
     // Get teacher's profile
     const teacherProfile = await prisma.teacherProfile.findUnique({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
     });
 
     if (!teacherProfile) {
-      return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: "Teacher profile not found" },
+        { status: 404 }
+      );
     }
 
     // Verify student belongs to this teacher (security check)
     const studentProfile = await prisma.studentProfile.findUnique({
-      where: { 
+      where: {
         id: validatedData.studentId,
-        teacherId: teacherProfile.id
-      }
+        teacherId: teacherProfile.id,
+      },
     });
 
     if (!studentProfile) {
-      return NextResponse.json({ error: 'Student not found or not assigned to you' }, { status: 404 });
+      return NextResponse.json(
+        { error: "Student not found or not assigned to you" },
+        { status: 404 }
+      );
     }
 
     // Sanitize rich text fields before saving
-    const sanitizedNotes = validatedData.notes ? sanitizeRichText(validatedData.notes) : null;
-    const sanitizedHomework = validatedData.homework ? sanitizeRichText(validatedData.homework) : null;
-    const sanitizedProgress = validatedData.progress ? sanitizeRichText(validatedData.progress) : null;
-    const sanitizedNextSteps = validatedData.nextSteps ? sanitizeRichText(validatedData.nextSteps) : null;
-    
+    const sanitizedNotes = validatedData.notes
+      ? sanitizeRichText(validatedData.notes)
+      : null;
+    const sanitizedHomework = validatedData.homework
+      ? sanitizeRichText(validatedData.homework)
+      : null;
+    const sanitizedProgress = validatedData.progress
+      ? sanitizeRichText(validatedData.progress)
+      : null;
+    const sanitizedNextSteps = validatedData.nextSteps
+      ? sanitizeRichText(validatedData.nextSteps)
+      : null;
+
     // Sanitize plain text fields
-    const sanitizedFocusAreas = validatedData.focusAreas?.map(area => sanitizePlainText(area));
-    const sanitizedSongsPracticed = validatedData.songsPracticed?.map(song => sanitizePlainText(song));
+    const sanitizedFocusAreas = validatedData.focusAreas?.map((area) =>
+      sanitizePlainText(area)
+    );
+    const sanitizedSongsPracticed = validatedData.songsPracticed?.map((song) =>
+      sanitizePlainText(song)
+    );
 
     // Create lesson with sanitized data
     const lesson = await prisma.lesson.create({
@@ -300,24 +347,28 @@ async function handlePOST(request: NextRequest) {
         notes: sanitizedNotes,
         homework: sanitizedHomework,
         progress: sanitizedProgress,
-        focusAreas: sanitizedFocusAreas?.join(',') || null,
-        songsPracticed: sanitizedSongsPracticed?.join(',') || null,
+        focusAreas: sanitizedFocusAreas?.join(",") || null,
+        songsPracticed: sanitizedSongsPracticed?.join(",") || null,
         nextSteps: sanitizedNextSteps,
-        status: validatedData.status || 'COMPLETED',
+        status: validatedData.status || "COMPLETED",
         checklistItems: body.checklistItems || null, // Store checklist items
       },
       include: {
         student: {
-          include: { user: true }
+          include: { user: true },
         },
         teacher: {
-          include: { user: true }
+          include: { user: true },
         },
       },
     });
 
     // Invalidate related caches after creating a lesson
-    await invalidateLessonCache(lesson.id, teacherProfile.id, validatedData.studentId);
+    await invalidateLessonCache(
+      lesson.id,
+      teacherProfile.id,
+      validatedData.studentId
+    );
 
     // Send lesson completion email to student (if they have it enabled)
     try {
@@ -325,78 +376,85 @@ async function handlePOST(request: NextRequest) {
       const emailPreference = await prisma.emailPreference.findFirst({
         where: {
           userId: studentProfile.userId,
-          type: 'LESSON_COMPLETED',
-          enabled: true
-        }
+          type: "LESSON_COMPLETED",
+          enabled: true,
+        },
       });
 
       if (emailPreference) {
         // Format the lesson date
-        const lessonDate = new Date(lesson.date).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
+        const lessonDate = new Date(lesson.date).toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
         });
 
         // Render the email template with lesson data
-        const emailTemplate = await renderEmailWithFallback('LESSON_COMPLETED', {
-          studentName: lesson.student.user.name,
-          teacherName: lesson.teacher.user.name,
-          lessonDate,
-          duration: lesson.duration.toString(),
-          notes: lesson.notes || 'No notes provided',
-          homework: lesson.homework || 'No homework assigned',
-          progress: lesson.progress || 'No progress update provided'
-        });
+        const emailTemplate = await renderEmailWithFallback(
+          "LESSON_COMPLETED",
+          {
+            studentName: lesson.student.user.name,
+            teacherName: lesson.teacher.user.name,
+            lessonDate,
+            duration: lesson.duration.toString(),
+            notes: lesson.notes || "No notes provided",
+            homework: lesson.homework || "No homework assigned",
+            progress: lesson.progress || "No progress update provided",
+          }
+        );
 
         // Send the email
         const emailSent = await sendEmail({
           to: lesson.student.user.email,
           subject: emailTemplate.subject,
-          html: emailTemplate.html
+          html: emailTemplate.html,
         });
 
         if (emailSent) {
-          emailLog.info('Lesson completion email sent', {
+          emailLog.info("Lesson completion email sent", {
             lessonId: lesson.id,
             studentId: studentProfile.id,
-            studentEmail: lesson.student.user.email
+            studentEmail: lesson.student.user.email,
           });
         } else {
-          emailLog.error('Failed to send lesson completion email', {
+          emailLog.error("Failed to send lesson completion email", {
             lessonId: lesson.id,
             studentId: studentProfile.id,
-            studentEmail: lesson.student.user.email
+            studentEmail: lesson.student.user.email,
           });
         }
       } else {
-        emailLog.info('Student has lesson completion emails disabled', {
+        emailLog.info("Student has lesson completion emails disabled", {
           lessonId: lesson.id,
-          studentId: studentProfile.id
+          studentId: studentProfile.id,
         });
       }
     } catch (emailError) {
       // Log error but don't fail the lesson creation
-      emailLog.error('Error sending lesson completion email', {
+      emailLog.error("Error sending lesson completion email", {
         lessonId: lesson.id,
-        error: emailError instanceof Error ? emailError.message : String(emailError)
+        error:
+          emailError instanceof Error ? emailError.message : String(emailError),
       });
     }
 
     return NextResponse.json({ lesson }, { status: 201 });
   } catch (error) {
-    apiLog.error('Error creating lesson:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    
+    apiLog.error("Error creating lesson:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
     // Handle validation errors from Zod
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }
 // Export handlers directly (rate limiting temporarily disabled for Next.js 15 compatibility)
