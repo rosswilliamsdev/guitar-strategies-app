@@ -83,8 +83,8 @@ export function LessonForm({
   const [selectedCurriculumItems, setSelectedCurriculumItems] = useState<
     string[]
   >([]);
-  const [expandedChecklists, setExpandedChecklists] = useState<Set<string>>(
-    new Set()
+  const [expandedChecklistId, setExpandedChecklistId] = useState<string | null>(
+    null
   );
   const [isChecklistSectionExpanded, setIsChecklistSectionExpanded] =
     useState(false);
@@ -218,27 +218,29 @@ export function LessonForm({
           setStudentCurriculums(transformedChecklists);
 
           // Auto-select already completed items when checklists load
-          const alreadyCompleted = transformedChecklists.flatMap((curriculum: any) =>
-            curriculum.sections.flatMap((section: any) =>
-              section.items
-                .filter((item: any) => {
-                  // For student checklists, check isCompleted
-                  if (curriculum.createdByRole !== "TEACHER") {
-                    return item.isCompleted === true;
-                  }
-                  // For teacher curriculums, check progress status
-                  const progress = curriculum.studentProgress?.itemProgress?.find(
-                    (p: any) => p.itemId === item.id
-                  );
-                  return progress?.status === "COMPLETED";
-                })
-                .map((item: any) => item.id)
-            )
+          const alreadyCompleted = transformedChecklists.flatMap(
+            (curriculum: any) =>
+              curriculum.sections.flatMap((section: any) =>
+                section.items
+                  .filter((item: any) => {
+                    // For student checklists, check isCompleted
+                    if (curriculum.createdByRole !== "TEACHER") {
+                      return item.isCompleted === true;
+                    }
+                    // For teacher curriculums, check progress status
+                    const progress =
+                      curriculum.studentProgress?.itemProgress?.find(
+                        (p: any) => p.itemId === item.id
+                      );
+                    return progress?.status === "COMPLETED";
+                  })
+                  .map((item: any) => item.id)
+              )
           );
 
           // For editing: merge with existing selections from the lesson
           // For new lessons: just use the completed items
-          setSelectedCurriculumItems(prev => {
+          setSelectedCurriculumItems((prev) => {
             // If editing and we already loaded lesson's checklist items, keep those too
             if (lessonId && prev.length > 0) {
               return [...new Set([...prev, ...alreadyCompleted])];
@@ -336,15 +338,9 @@ export function LessonForm({
 
   // Checklist expansion handling
   const toggleChecklistExpansion = (checklistId: string) => {
-    setExpandedChecklists((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(checklistId)) {
-        newSet.delete(checklistId);
-      } else {
-        newSet.add(checklistId);
-      }
-      return newSet;
-    });
+    setExpandedChecklistId((prev) =>
+      prev === checklistId ? null : checklistId
+    );
   };
 
   const toggleChecklistSection = () => {
@@ -408,34 +404,47 @@ export function LessonForm({
 
       // Upload files if any
       if (selectedFiles.length > 0) {
-        log.info(`Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`);
+        log.info(
+          `Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`
+        );
         const fileFormData = new FormData();
         selectedFiles.forEach((file) => {
-          fileFormData.append('files', file);
+          fileFormData.append("files", file);
           log.info(`Added file: ${file.name}, size: ${file.size}`);
         });
 
         try {
-          const fileResponse = await fetch(`/api/lessons/${currentLessonId}/attachments`, {
-            method: "POST",
-            body: fileFormData,
-          });
+          const fileResponse = await fetch(
+            `/api/lessons/${currentLessonId}/attachments`,
+            {
+              method: "POST",
+              body: fileFormData,
+            }
+          );
 
           if (!fileResponse.ok) {
             const errorData = await fileResponse.json();
-            log.error('File upload failed:', {
-              error: errorData instanceof Error ? errorData.message : String(errorData),
-              stack: errorData instanceof Error ? errorData.stack : undefined
+            log.error("File upload failed:", {
+              error:
+                errorData instanceof Error
+                  ? errorData.message
+                  : String(errorData),
+              stack: errorData instanceof Error ? errorData.stack : undefined,
             });
-            throw new Error(`File upload failed: ${errorData.error || 'Unknown error'}`);
+            throw new Error(
+              `File upload failed: ${errorData.error || "Unknown error"}`
+            );
           }
 
           const fileResult = await fileResponse.json();
           log.info("Files uploaded successfully:", fileResult);
         } catch (fileError) {
-          log.error('File upload error:', {
-            error: fileError instanceof Error ? fileError.message : String(fileError),
-            stack: fileError instanceof Error ? fileError.stack : undefined
+          log.error("File upload error:", {
+            error:
+              fileError instanceof Error
+                ? fileError.message
+                : String(fileError),
+            stack: fileError instanceof Error ? fileError.stack : undefined,
           });
           // Don't fail the entire save, but show a warning
           setError(
@@ -452,25 +461,34 @@ export function LessonForm({
         try {
           // Delete each attachment individually
           for (const attachmentId of removedAttachmentIds) {
-            const removeResponse = await fetch(`/api/lessons/${currentLessonId}/attachments/${attachmentId}`, {
-              method: "DELETE",
-            });
+            const removeResponse = await fetch(
+              `/api/lessons/${currentLessonId}/attachments/${attachmentId}`,
+              {
+                method: "DELETE",
+              }
+            );
 
             if (!removeResponse.ok) {
               const errorData = await removeResponse.json();
-              log.error('Failed to remove attachment:', {
-                error: errorData instanceof Error ? errorData.message : String(errorData),
+              log.error("Failed to remove attachment:", {
+                error:
+                  errorData instanceof Error
+                    ? errorData.message
+                    : String(errorData),
                 stack: errorData instanceof Error ? errorData.stack : undefined,
-                attachmentId
+                attachmentId,
               });
             } else {
-              log.info('Attachment removed successfully:', { attachmentId });
+              log.info("Attachment removed successfully:", { attachmentId });
             }
           }
         } catch (removeError) {
-          log.error('Error removing attachments:', {
-            error: removeError instanceof Error ? removeError.message : String(removeError),
-            stack: removeError instanceof Error ? removeError.stack : undefined
+          log.error("Error removing attachments:", {
+            error:
+              removeError instanceof Error
+                ? removeError.message
+                : String(removeError),
+            stack: removeError instanceof Error ? removeError.stack : undefined,
           });
         }
       }
@@ -726,7 +744,7 @@ export function LessonForm({
                   {studentCurriculums.map((curriculum) => {
                     const isTeacherCreated =
                       curriculum.createdByRole === "TEACHER";
-                    const isExpanded = expandedChecklists.has(curriculum.id);
+                    const isExpanded = expandedChecklistId === curriculum.id;
                     return (
                       <Card
                         key={curriculum.id}
