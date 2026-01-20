@@ -227,8 +227,11 @@ export function extractFileNameFromUrl(url: string): string {
     const pathname = urlObj.pathname;
     const parts = pathname.split('/');
     return parts[parts.length - 1] || 'unknown';
-  } catch (error) {
-    log.error('Failed to extract filename from URL', { url, error });
+  } catch (err) {
+    log.error('Failed to extract filename from URL', {
+      url,
+      error: err instanceof Error ? err.message : String(err)
+    });
     return 'unknown';
   }
 }
