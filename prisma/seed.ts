@@ -73,7 +73,7 @@ async function main() {
               hourlyRate: 6000, // $60.00 in cents
               isActive: true,
               isAdmin: true, // All teachers have admin access
-              timezone: 'America/New_York'
+              timezone: 'America/Chicago'
             }
           }
         },

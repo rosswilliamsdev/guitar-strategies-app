@@ -5,8 +5,8 @@
  * that have been processed through the validation middleware.
  */
 
-import { NextRequest } from 'next/server';
-import { z, ZodSchema } from 'zod';
+import { NextRequest } from "next/server";
+import { z, ZodSchema } from "zod";
 
 /**
  * Extended NextRequest interface that includes validated data
@@ -86,9 +86,9 @@ export async function validateRequestBody<T>(
     return result;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new ValidationError('Invalid request body', error.issues);
+      throw new ValidationError("Invalid request body", error.issues);
     }
-    throw new ValidationError('Invalid JSON in request body');
+    throw new ValidationError("Invalid JSON in request body");
   }
 }
 
@@ -106,9 +106,9 @@ export function validateQueryParams<T>(
     return schema.parse(queryParams);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new ValidationError('Invalid query parameters', error.issues);
+      throw new ValidationError("Invalid query parameters", error.issues);
     }
-    throw new ValidationError('Invalid query parameters');
+    throw new ValidationError("Invalid query parameters");
   }
 }
 
@@ -123,9 +123,9 @@ export function validatePathParams<T>(
     return schema.parse(params);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      throw new ValidationError('Invalid path parameters', error.issues);
+      throw new ValidationError("Invalid path parameters", error.issues);
     }
-    throw new ValidationError('Invalid path parameters');
+    throw new ValidationError("Invalid path parameters");
   }
 }
 
@@ -138,7 +138,7 @@ export class ValidationError extends Error {
 
   constructor(message: string, errors?: z.ZodIssue[], field?: string) {
     super(message);
-    this.name = 'ValidationError';
+    this.name = "ValidationError";
     this.errors = errors;
     this.field = field;
   }
@@ -148,7 +148,7 @@ export class ValidationError extends Error {
  * Helper to create common validation schemas for IDs
  */
 export const idSchema = z.object({
-  id: z.string().uuid('Invalid ID format'),
+  id: z.string().uuid("Invalid ID format"),
 });
 
 export const paginationQuerySchema = z.object({
@@ -156,13 +156,13 @@ export const paginationQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(20),
   search: z.string().optional(),
   sortBy: z.string().optional(),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export const dateRangeSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
-  timezone: z.string().default('America/New_York'),
+  timezone: z.string().default("America/Chicago"),
 });
 
 /**
@@ -174,33 +174,32 @@ export const commonSchemas = {
   dateRange: dateRangeSchema,
 
   // Email validation
-  email: z.string().email('Invalid email address'),
+  email: z.string().email("Invalid email address"),
 
   // URL validation
-  url: z.string().url('Invalid URL'),
+  url: z.string().url("Invalid URL"),
 
   // Phone number (basic validation)
-  phone: z.string().regex(
-    /^[\+]?[\d\s\-\(\)]{10,}$/,
-    'Invalid phone number format'
-  ),
+  phone: z
+    .string()
+    .regex(/^[\+]?[\d\s\-\(\)]{10,}$/, "Invalid phone number format"),
 
   // UUID validation
-  uuid: z.string().uuid('Invalid UUID format'),
+  uuid: z.string().uuid("Invalid UUID format"),
 
   // Positive integer
-  positiveInt: z.number().int().positive('Must be a positive integer'),
+  positiveInt: z.number().int().positive("Must be a positive integer"),
 
   // Price in cents
-  priceInCents: z.number().int().min(0, 'Price cannot be negative'),
+  priceInCents: z.number().int().min(0, "Price cannot be negative"),
 
   // Date string (ISO format)
-  dateString: z.string().datetime('Invalid date format'),
+  dateString: z.string().datetime("Invalid date format"),
 
   // Boolean from string (for query params)
   booleanFromString: z
     .string()
-    .transform((val) => val === 'true')
+    .transform((val) => val === "true")
     .pipe(z.boolean()),
 };
 
@@ -227,7 +226,7 @@ export function createValidatedHandler<
   querySchema?: ZodSchema<TQuery>,
   paramsSchema?: ZodSchema<TParams>
 ) {
-  return function<TResponse>(
+  return function <TResponse>(
     handler: (
       request: ValidatedRequest<TBody, TQuery, TParams>
     ) => Promise<TResponse>

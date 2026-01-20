@@ -84,7 +84,7 @@ CREATE TABLE "public"."TeacherProfile" (
     "venmoHandle" TEXT,
     "paypalEmail" TEXT,
     "zelleEmail" TEXT,
-    "timezone" TEXT DEFAULT 'America/New_York',
+    "timezone" TEXT DEFAULT 'America/Chicago',
     "phoneNumber" TEXT,
     "profileImageUrl" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

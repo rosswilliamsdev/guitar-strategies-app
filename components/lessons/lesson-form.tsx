@@ -27,6 +27,7 @@ import { log } from "@/lib/logger";
 
 // each form is assigned to a teacher and given a lesson id
 // initial data may be needed for populating fields when updating/editing lessons
+// TODO: what should initialData's return type be?
 interface LessonFormProps {
   teacherId: string;
   lessonId?: string;
@@ -73,6 +74,7 @@ export function LessonForm({
   lessonId,
   initialData,
 }: LessonFormProps) {
+  // a hook allowing you to route to different pages
   const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
   const [studentCurriculums, setStudentCurriculums] = useState<
@@ -97,24 +99,32 @@ export function LessonForm({
     version: initialData?.version || 1,
   });
 
-  // File and link management
+  // File and link management: tracks state of new attachments and links
+  // also prepopulates previously added attachments and links when updating previous lessons
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  // TODO: what should this return type be?
   const [existingAttachments, setExistingAttachments] = useState<any[]>(
     initialData?.existingAttachments || []
   );
+  // keeps track of what attachments are removed when editing lessons
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
     []
   );
+  // new links, when creating a new lesson
   const [links, setLinks] = useState<string[]>([]);
+
+  // existing links, when editing a lesson
+  // TODO: do I need a separate state just for handling lesson form edits?
   const [existingLinks, setExistingLinks] = useState(
     initialData?.existingLinks || []
   );
   const [currentLink, setCurrentLink] = useState("");
 
-  // Initialize existing links and checklist items for editing
+  // Initialize existing links for editing, if there are any
   useEffect(() => {
     if (initialData?.existingLinks && initialData.existingLinks.length > 0) {
       const existingUrls = initialData.existingLinks.map(
+        //TODO: seems like link should return a string?
         (link: any) => link.url
       );
       setLinks(existingUrls);

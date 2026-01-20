@@ -25,21 +25,22 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Skeleton, SkeletonCalendar } from "@/components/ui/skeleton";
 import { InlineLoading } from "@/components/ui/loading-spinner";
-import { log, schedulerLog } from '@/lib/logger';
+import { log, schedulerLog } from "@/lib/logger";
 
 // Helper function to format timezone names for display
+//TODO: extract this utility function. It is also used in teacher-schedule-view.tsx
 const formatTimezone = (timezone: string): string => {
   const timezoneMap: Record<string, string> = {
+    "America/Chicago": "Central Time (CT)",
     "America/New_York": "Eastern Time (ET)",
-    "America/Chicago": "Central Time (CT)", 
     "America/Denver": "Mountain Time (MT)",
     "America/Los_Angeles": "Pacific Time (PT)",
     "America/Anchorage": "Alaska Time (AKT)",
     "Pacific/Honolulu": "Hawaii Time (HST)",
     "America/Phoenix": "Arizona Time (MST)",
-    "UTC": "UTC",
+    UTC: "UTC",
   };
-  
+
   return timezoneMap[timezone] || timezone;
 };
 
@@ -83,35 +84,44 @@ function BookingConfirmationCard({
   timezone,
 }: BookingConfirmationCardProps) {
   const hasSelection = selectedSlots.length > 0;
-  
+
   return (
-    <Card className={cn(
-      "p-4 transition-colors duration-200",
-      hasSelection 
-        ? "border-primary bg-primary/5" 
-        : "border-border bg-muted/30"
-    )}>
+    <Card
+      className={cn(
+        "p-4 transition-colors duration-200",
+        hasSelection
+          ? "border-primary bg-primary/5"
+          : "border-border bg-muted/30"
+      )}
+    >
       <div className="flex items-center justify-between">
         <div>
-          <h3 className={cn(
-            "font-medium transition-colors duration-200",
-            hasSelection ? "text-foreground" : "text-muted-foreground"
-          )}>
+          <h3
+            className={cn(
+              "font-medium transition-colors duration-200",
+              hasSelection ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
             {bookingMode === "single"
               ? "Confirm Booking"
               : "Confirm Weekly Lesson Time"}
           </h3>
-          <div className={cn(
-            "text-sm transition-colors duration-200",
-            hasSelection ? "text-muted-foreground" : "text-muted-foreground/60"
-          )}>
+          <div
+            className={cn(
+              "text-sm transition-colors duration-200",
+              hasSelection
+                ? "text-muted-foreground"
+                : "text-muted-foreground/60"
+            )}
+          >
             {hasSelection ? (
               bookingMode === "recurring" ? (
                 // For recurring bookings, show day and time without specific date
                 selectedSlots.length === 1 ? (
                   <>
                     Every {format(selectedSlots[0].start, "EEEE")} at{" "}
-                    {format(selectedSlots[0].start, "h:mm a")} {formatTimezone(timezone)}
+                    {format(selectedSlots[0].start, "h:mm a")}{" "}
+                    {formatTimezone(timezone)}
                     <br />
                     (30 minutes weekly)
                   </>
@@ -119,29 +129,30 @@ function BookingConfirmationCard({
                   <>
                     Every {format(selectedSlots[0].start, "EEEE")} from{" "}
                     {format(selectedSlots[0].start, "h:mm a")} to{" "}
-                    {format(selectedSlots[1].end, "h:mm a")} {formatTimezone(timezone)}
+                    {format(selectedSlots[1].end, "h:mm a")}{" "}
+                    {formatTimezone(timezone)}
                     <br />
                     (60 minutes weekly)
                   </>
                 )
+              ) : // For single bookings, show full date and time
+              selectedSlots.length === 1 ? (
+                <>
+                  {format(selectedSlots[0].start, "EEEE, MMMM d")} at{" "}
+                  {format(selectedSlots[0].start, "h:mm a")}{" "}
+                  {formatTimezone(timezone)}
+                  <br />
+                  (30 minutes)
+                </>
               ) : (
-                // For single bookings, show full date and time
-                selectedSlots.length === 1 ? (
-                  <>
-                    {format(selectedSlots[0].start, "EEEE, MMMM d")} at{" "}
-                    {format(selectedSlots[0].start, "h:mm a")} {formatTimezone(timezone)}
-                    <br />
-                    (30 minutes)
-                  </>
-                ) : (
-                  <>
-                    {format(selectedSlots[0].start, "EEEE, MMMM d")} from{" "}
-                    {format(selectedSlots[0].start, "h:mm a")} to{" "}
-                    {format(selectedSlots[1].end, "h:mm a")} {formatTimezone(timezone)}
-                    <br />
-                    (60 minutes)
-                  </>
-                )
+                <>
+                  {format(selectedSlots[0].start, "EEEE, MMMM d")} from{" "}
+                  {format(selectedSlots[0].start, "h:mm a")} to{" "}
+                  {format(selectedSlots[1].end, "h:mm a")}{" "}
+                  {formatTimezone(timezone)}
+                  <br />
+                  (60 minutes)
+                </>
               )
             ) : (
               "Select time slots from the calendar below"
@@ -210,7 +221,7 @@ export function AvailabilityCalendar({
       // For single bookings, use the selected week
       let startDate: Date;
       let endDate: Date;
-      
+
       if (bookingMode === "recurring") {
         // For weekly lessons, always show next week's availability
         // This gives us a full week of availability patterns
@@ -225,48 +236,65 @@ export function AvailabilityCalendar({
         endDate = addDays(currentWeek, 6);
       }
 
-      const url = `/api/availability/${teacherId}?` +
-          `startDate=${startDate.toISOString()}&` +
-          `endDate=${endDate.toISOString()}&` +
-          `timezone=${studentTimezone}`;
-      
-      log.info('🔗 Fetching availability from:', { url });
+      const url =
+        `/api/availability/${teacherId}?` +
+        `startDate=${startDate.toISOString()}&` +
+        `endDate=${endDate.toISOString()}&` +
+        `timezone=${studentTimezone}`;
+
+      log.info("🔗 Fetching availability from:", { url });
       const response = await fetch(url);
 
       if (!response.ok) {
         const errorData = await response.json();
-        log.error('❌ Availability API error:', {
-        error: errorData instanceof Error ? errorData.message : String(errorData),
-        stack: errorData instanceof Error ? errorData.stack : undefined
-      });
+        log.error("❌ Availability API error:", {
+          error:
+            errorData instanceof Error ? errorData.message : String(errorData),
+          stack: errorData instanceof Error ? errorData.stack : undefined,
+        });
         throw new Error(errorData.error || "Failed to load available slots");
       }
 
       const data = await response.json();
-      log.info('✅ Availability data received:', data);
-      console.log('🔍 Data structure:', {
-        hasSlots: 'slots' in data,
+      log.info("✅ Availability data received:", data);
+      console.log("🔍 Data structure:", {
+        hasSlots: "slots" in data,
         slotsType: typeof data.slots,
-        slotsLength: Array.isArray(data.slots) ? data.slots.length : 'not array',
-        keys: Object.keys(data)
+        slotsLength: Array.isArray(data.slots)
+          ? data.slots.length
+          : "not array",
+        keys: Object.keys(data),
       });
 
       // Parse dates from ISO strings - ensure slots exists and is an array
       // The API wraps the response in { success: true, data: { slots: [...] } }
       const slotsArray = data.data?.slots || data.slots || [];
-      const parsedSlots = slotsArray.map((slot: { start: string; end: string; duration: 30 | 60; price: number; available: boolean }) => ({
-        ...slot,
-        start: new Date(slot.start),
-        end: new Date(slot.end),
-      }));
+      const parsedSlots = slotsArray.map(
+        (slot: {
+          start: string;
+          end: string;
+          duration: 30 | 60;
+          price: number;
+          available: boolean;
+        }) => ({
+          ...slot,
+          start: new Date(slot.start),
+          end: new Date(slot.end),
+        })
+      );
 
-      log.info('🔍 Parsed slots:', { totalSlots: parsedSlots.length });
-      log.info('🔍 Available slots:', { availableSlots: parsedSlots.filter((s: any) => s.available).length });
-      log.info('🔍 Sample slots:', { sampleSlots: parsedSlots.slice(0, 3) });
+      log.info("🔍 Parsed slots:", { totalSlots: parsedSlots.length });
+      log.info("🔍 Available slots:", {
+        availableSlots: parsedSlots.filter((s: any) => s.available).length,
+      });
+      log.info("🔍 Sample slots:", { sampleSlots: parsedSlots.slice(0, 3) });
 
       setSlots(parsedSlots);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to load available slots";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to load available slots";
       setError(errorMessage);
       setSlots([]);
     } finally {
@@ -303,7 +331,8 @@ export function AvailabilityCalendar({
       await loadAvailableSlots();
       setSelectedSlots([]);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to book time";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to book time";
       setError(errorMessage);
     }
   };
@@ -371,7 +400,6 @@ export function AvailabilityCalendar({
     setCurrentWeek(startOfWeek(new Date()));
   };
 
-
   const getDaysOfWeek = () => {
     const days = [];
     if (bookingMode === "recurring") {
@@ -391,17 +419,18 @@ export function AvailabilityCalendar({
 
   const getSlotsForDay = (date: Date) => {
     const daySlots = slots
-      .filter(
-        (slot) =>
-          isSameDay(slot.start, date) && slot.available
-      )
+      .filter((slot) => isSameDay(slot.start, date) && slot.available)
       .sort((a, b) => a.start.getTime() - b.start.getTime());
-    
+
     // Debug logging for specific days
-    if (daySlots.length > 0 || date.getDate() === 1) { // Sep 1st or any day with slots
-      log.info(`🔍 Slots for ${date.toDateString()}:`, { slotsCount: daySlots.length, sampleSlots: daySlots.slice(0, 2) });
+    if (daySlots.length > 0 || date.getDate() === 1) {
+      // Sep 1st or any day with slots
+      log.info(`🔍 Slots for ${date.toDateString()}:`, {
+        slotsCount: daySlots.length,
+        sampleSlots: daySlots.slice(0, 2),
+      });
     }
-    
+
     return daySlots;
   };
 
@@ -418,7 +447,6 @@ export function AvailabilityCalendar({
             Select one 30-minute slot, or two consecutive slots for a 60-minute
             session
           </p>
-          
         </div>
 
         <div className="flex items-center gap-2">
@@ -500,12 +528,8 @@ export function AvailabilityCalendar({
         </div>
       ) : (
         // For weekly lessons, show a simple header
-        <div>
-          
-        </div>
+        <div></div>
       )}
-
-
 
       {/* Error Message */}
       {error && (
@@ -553,7 +577,10 @@ export function AvailabilityCalendar({
           {getDaysOfWeek().map((date, index) => {
             const daySlots = getSlotsForDay(date);
             // Only dim past days for single bookings, not for recurring
-            const isPast = bookingMode === "single" && isBefore(date, new Date()) && !isToday(date);
+            const isPast =
+              bookingMode === "single" &&
+              isBefore(date, new Date()) &&
+              !isToday(date);
 
             return (
               <div
@@ -564,7 +591,9 @@ export function AvailabilityCalendar({
                 <div
                   className={cn(
                     "text-center p-2 border rounded-lg bg-muted/50",
-                    bookingMode === "single" && isToday(date) && "border-primary"
+                    bookingMode === "single" &&
+                      isToday(date) &&
+                      "border-primary"
                   )}
                 >
                   {bookingMode === "recurring" ? (
@@ -613,7 +642,9 @@ export function AvailabilityCalendar({
                             "hover:bg-primary/5 hover:border-primary",
                             isSelected && "bg-primary/10 border-primary",
                             isPast && "cursor-not-allowed",
-                            slotIndex % 2 === 1 && !isSelected && "bg-neutral-50/50"
+                            slotIndex % 2 === 1 &&
+                              !isSelected &&
+                              "bg-neutral-50/50"
                           )}
                         >
                           <div className="flex items-center justify-between">

@@ -9,7 +9,11 @@ import Link from "next/link";
 import { BookStudentModal } from "./book-student-modal";
 import { LessonManagementModal } from "./lesson-management-modal";
 import { Skeleton, SkeletonSchedule } from "@/components/ui/skeleton";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
@@ -35,8 +39,8 @@ import {
 // Helper function to format timezone names for display
 const formatTimezone = (timezone: string): string => {
   const timezoneMap: Record<string, string> = {
-    "America/New_York": "Eastern Time (ET)",
     "America/Chicago": "Central Time (CT)",
+    "America/New_York": "Eastern Time (ET)",
     "America/Denver": "Mountain Time (MT)",
     "America/Los_Angeles": "Pacific Time (PT)",
     "America/Anchorage": "Alaska Time (AKT)",
@@ -396,9 +400,9 @@ export function TeacherScheduleView({
     };
 
     checkMobile();
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
 
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookingModal, setBookingModal] = useState<{
@@ -527,10 +531,14 @@ export function TeacherScheduleView({
             {viewMode === "day" && (
               <div>
                 <h3 className="text-base sm:text-lg font-semibold text-foreground">
-                  {format(currentDate, isMobile ? "EEE, MMM d" : "EEEE, MMMM d, yyyy")}
+                  {format(
+                    currentDate,
+                    isMobile ? "EEE, MMM d" : "EEEE, MMMM d, yyyy"
+                  )}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  All times in {isMobile ? timezone.split('/')[1] : formatTimezone(timezone)}
+                  All times in{" "}
+                  {isMobile ? timezone.split("/")[1] : formatTimezone(timezone)}
                 </p>
               </div>
             )}
@@ -540,7 +548,8 @@ export function TeacherScheduleView({
                   Weekly Schedule
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  All times in {isMobile ? timezone.split('/')[1] : formatTimezone(timezone)}
+                  All times in{" "}
+                  {isMobile ? timezone.split("/")[1] : formatTimezone(timezone)}
                 </p>
               </div>
             )}
@@ -701,18 +710,21 @@ export function TeacherScheduleView({
               const isAvailable = dayAvailability.length > 0;
 
               // Generate time slots for this day
-              const dayTimeSlots = dayAvailability.length > 0
-                ? generateTimeSlots(dayAvailability)
-                : [];
+              const dayTimeSlots =
+                dayAvailability.length > 0
+                  ? generateTimeSlots(dayAvailability)
+                  : [];
 
               return (
                 <Collapsible key={day.toISOString()}>
                   <CollapsibleTrigger className="w-full p-3 bg-background border rounded-md hover:bg-muted/50 transition-colors">
                     <div className="flex justify-between items-center">
                       <div className="text-left">
-                        <h3 className={`font-medium text-sm ${
-                          isToday ? "text-primary" : "text-foreground"
-                        }`}>
+                        <h3
+                          className={`font-medium text-sm ${
+                            isToday ? "text-primary" : "text-foreground"
+                          }`}
+                        >
                           {format(day, "EEEE, MMM d")}
                         </h3>
                         {isToday && (
@@ -723,7 +735,8 @@ export function TeacherScheduleView({
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="text-xs">
-                          {dayLessons.length} lesson{dayLessons.length !== 1 ? 's' : ''}
+                          {dayLessons.length} lesson
+                          {dayLessons.length !== 1 ? "s" : ""}
                         </Badge>
                         <ChevronDown className="h-4 w-4 text-muted-foreground" />
                       </div>
@@ -733,11 +746,15 @@ export function TeacherScheduleView({
                     <div className="mt-2 p-3 bg-muted/20 rounded-md">
                       {!isAvailable ? (
                         <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground">No availability set</p>
+                          <p className="text-sm text-muted-foreground">
+                            No availability set
+                          </p>
                         </div>
                       ) : dayTimeSlots.length === 0 ? (
                         <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground">No time slots available</p>
+                          <p className="text-sm text-muted-foreground">
+                            No time slots available
+                          </p>
                         </div>
                       ) : (
                         <div className="space-y-2">

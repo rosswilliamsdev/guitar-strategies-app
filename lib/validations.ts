@@ -1,6 +1,6 @@
 /**
  * @fileoverview Zod validation schemas for form and API validation.
- * 
+ *
  * This file contains comprehensive validation schemas using Zod for:
  * - Authentication and registration forms
  * - User profile updates
@@ -11,7 +11,7 @@
  * - Scheduling and availability
  * - Curriculum and progress tracking
  * - File uploads and API responses
- * 
+ *
  * All schemas include appropriate error messages and data transformation
  * where needed. Validation functions are exported for common use cases.
  */
@@ -64,7 +64,7 @@ export const registerSchema = z
     // Teacher-specific fields
     bio: z.string().optional(),
     hourlyRate: z.number().min(10).max(500).optional(),
-    timezone: z.string().default("America/New_York"),
+    timezone: z.string().default("America/Chicago"),
     // Student-specific fields
     teacherId: z.string().optional(),
     goals: z.string().optional(),
@@ -150,13 +150,33 @@ export const timezoneSchema = z.string().refine(
 export const teacherProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  bio: z.string().max(500, "Bio must be less than 500 characters").optional().nullable(),
+  bio: z
+    .string()
+    .max(500, "Bio must be less than 500 characters")
+    .optional()
+    .nullable(),
   timezone: timezoneSchema,
   phoneNumber: z.string().optional().nullable(),
   // Payment method fields for invoice generation - allow empty strings and convert to null
-  venmoHandle: z.string().optional().nullable().transform(val => val === "" ? null : val),
-  paypalEmail: z.string().optional().nullable().transform(val => val === "" ? null : val).refine(val => !val || val.includes('@'), "Please enter a valid PayPal email"),
-  zelleEmail: z.string().optional().nullable().transform(val => val === "" ? null : val),
+  venmoHandle: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val === "" ? null : val)),
+  paypalEmail: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val === "" ? null : val))
+    .refine(
+      (val) => !val || val.includes("@"),
+      "Please enter a valid PayPal email"
+    ),
+  zelleEmail: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => (val === "" ? null : val)),
 });
 
 export const studentProfileSchema = z.object({
@@ -291,12 +311,14 @@ export const createInvoiceSchema = z.object({
   studentId: z.string().min(1, "Student is required"),
   month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
   dueDate: z.date(),
-  lessons: z.array(z.object({
-    lessonId: z.string(),
-    description: z.string(),
-    rate: z.number().min(0),
-    duration: z.number().min(1), // minutes
-  })),
+  lessons: z.array(
+    z.object({
+      lessonId: z.string(),
+      description: z.string(),
+      rate: z.number().min(0),
+      duration: z.number().min(1), // minutes
+    })
+  ),
 });
 
 export const updateInvoiceSchema = z.object({
@@ -361,8 +383,12 @@ export const searchSchema = z.object({
 // ========================================
 export const availabilitySchema = z.object({
   dayOfWeek: z.number().min(0).max(6), // 0-6 (Sunday-Saturday)
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+  startTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+  endTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
   isActive: z.boolean().default(true),
 });
 
@@ -376,8 +402,8 @@ export const weeklyAvailabilitySchema = z.array(availabilitySchema).refine(
           const end1 = timeToMinutes(slots[i].endTime);
           const start2 = timeToMinutes(slots[j].startTime);
           const end2 = timeToMinutes(slots[j].endTime);
-          
-          if ((start1 < end2 && end1 > start2)) {
+
+          if (start1 < end2 && end1 > start2) {
             return false;
           }
         }
@@ -388,33 +414,35 @@ export const weeklyAvailabilitySchema = z.array(availabilitySchema).refine(
   { message: "Availability slots cannot overlap on the same day" }
 );
 
-export const blockedTimeSchema = z.object({
-  startTime: z.date(),
-  endTime: z.date(),
-  reason: z.string().max(200).optional(),
-  timezone: z.string(),
-}).refine(
-  (data) => data.endTime > data.startTime,
-  { message: "End time must be after start time", path: ["endTime"] }
-);
+export const blockedTimeSchema = z
+  .object({
+    startTime: z.date(),
+    endTime: z.date(),
+    reason: z.string().max(200).optional(),
+    timezone: z.string(),
+  })
+  .refine((data) => data.endTime > data.startTime, {
+    message: "End time must be after start time",
+    path: ["endTime"],
+  });
 
-export const lessonSettingsSchema = z.object({
-  allows30Min: z.boolean(),
-  allows60Min: z.boolean(),
-  price30Min: z.number().min(0),
-  price60Min: z.number().min(0),
-  advanceBookingDays: z.number().min(1).max(90),
-}).refine(
-  (data) => data.allows30Min || data.allows60Min,
-  { message: "At least one lesson duration must be enabled" }
-);
+export const lessonSettingsSchema = z
+  .object({
+    allows30Min: z.boolean(),
+    allows60Min: z.boolean(),
+    price30Min: z.number().min(0),
+    price60Min: z.number().min(0),
+    advanceBookingDays: z.number().min(1).max(90),
+  })
+  .refine((data) => data.allows30Min || data.allows60Min, {
+    message: "At least one lesson duration must be enabled",
+  });
 
 export const bookingSchema = z.object({
   teacherId: z.string().min(1, "Teacher is required"),
-  date: z.union([
-    z.string().datetime(),
-    z.string()
-  ]).transform((val) => new Date(val)),
+  date: z
+    .union([z.string().datetime(), z.string()])
+    .transform((val) => new Date(val)),
   duration: z.literal(30).or(z.literal(60)),
   timezone: z.string(),
   isRecurring: z.boolean().default(false),
@@ -438,7 +466,7 @@ export const timeSlotSchema = z.object({
 
 // Helper function for time validation
 function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
@@ -576,7 +604,6 @@ export function validatePassword(password: string): boolean {
   return passwordRegex.test(password);
 }
 
-
 export function validateMonthFormat(month: string): boolean {
   const monthRegex = /^\d{4}-\d{2}$/;
   if (!monthRegex.test(month)) return false;
@@ -613,8 +640,12 @@ export type UpdateInvoiceData = z.infer<typeof updateInvoiceSchema>;
 export type PaginationParams = z.infer<typeof paginationSchema>;
 export type CreateCurriculumData = z.infer<typeof createCurriculumSchema>;
 export type UpdateCurriculumData = z.infer<typeof updateCurriculumSchema>;
-export type CreateCurriculumSectionData = z.infer<typeof createCurriculumSectionSchema>;
-export type CreateCurriculumItemData = z.infer<typeof createCurriculumItemSchema>;
+export type CreateCurriculumSectionData = z.infer<
+  typeof createCurriculumSectionSchema
+>;
+export type CreateCurriculumItemData = z.infer<
+  typeof createCurriculumItemSchema
+>;
 export type UpdateProgressData = z.infer<typeof updateProgressSchema>;
 
 // ========================================
@@ -622,11 +653,21 @@ export type UpdateProgressData = z.infer<typeof updateProgressSchema>;
 // ========================================
 export const createSlotBookingSchema = z.object({
   teacherId: z.string().min(1, "Teacher is required"),
-  dayOfWeek: z.number().min(0).max(6, "Day of week must be 0-6 (Sunday-Saturday)"),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
+  dayOfWeek: z
+    .number()
+    .min(0)
+    .max(6, "Day of week must be 0-6 (Sunday-Saturday)"),
+  startTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format (HH:MM)"),
   duration: z.literal(30).or(z.literal(60)),
-  startMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
-  endMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format").optional(),
+  startMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  endMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format")
+    .optional(),
 });
 
 export const updateSlotSchema = z.object({
@@ -644,16 +685,24 @@ export const cancelSlotSchema = z.object({
 
 export const slotSubscriptionSchema = z.object({
   slotId: z.string().min(1, "Slot ID is required"),
-  startMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
-  endMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format").optional(),
+  startMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  endMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format")
+    .optional(),
   monthlyRate: z.number().min(0),
-  status: z.nativeEnum(SubscriptionStatus).default('ACTIVE'),
+  status: z.nativeEnum(SubscriptionStatus).default("ACTIVE"),
 });
 
 export const updateSubscriptionSchema = z.object({
   subscriptionId: z.string().min(1, "Subscription ID is required"),
   status: z.nativeEnum(SubscriptionStatus).optional(),
-  endMonth: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format").optional(),
+  endMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format")
+    .optional(),
 });
 
 export const monthlyBillingSchema = z.object({
@@ -663,7 +712,7 @@ export const monthlyBillingSchema = z.object({
   actualLessons: z.number().min(0).default(0),
   ratePerLesson: z.number().min(0),
   totalAmount: z.number().min(0),
-  status: z.nativeEnum(BillingStatus).default('PENDING'),
+  status: z.nativeEnum(BillingStatus).default("PENDING"),
 });
 
 export const updateBillingSchema = z.object({
@@ -685,22 +734,27 @@ export const monthlySlotSummarySchema = z.object({
 });
 
 // Validation for monthly billing calculation
-export const billingCalculationSchema = z.object({
-  slotId: z.string().min(1, "Slot ID is required"),
-  month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
-}).refine(async (data) => {
-  // Custom validation to ensure the month is not in the past
-  const [year, monthNum] = data.month.split("-").map(Number);
-  const monthDate = new Date(year, monthNum - 1, 1);
-  const currentMonth = new Date();
-  currentMonth.setDate(1);
-  currentMonth.setHours(0, 0, 0, 0);
-  
-  return monthDate >= currentMonth;
-}, {
-  message: "Cannot calculate billing for past months",
-  path: ["month"]
-});
+export const billingCalculationSchema = z
+  .object({
+    slotId: z.string().min(1, "Slot ID is required"),
+    month: z.string().regex(/^\d{4}-\d{2}$/, "Month must be in YYYY-MM format"),
+  })
+  .refine(
+    async (data) => {
+      // Custom validation to ensure the month is not in the past
+      const [year, monthNum] = data.month.split("-").map(Number);
+      const monthDate = new Date(year, monthNum - 1, 1);
+      const currentMonth = new Date();
+      currentMonth.setDate(1);
+      currentMonth.setHours(0, 0, 0, 0);
+
+      return monthDate >= currentMonth;
+    },
+    {
+      message: "Cannot calculate billing for past months",
+      path: ["month"],
+    }
+  );
 
 // Export additional type definitions for recurring slots
 export type CreateSlotBookingData = z.infer<typeof createSlotBookingSchema>;
@@ -723,14 +777,16 @@ export type MonthlySlotSummaryParams = z.infer<typeof monthlySlotSummarySchema>;
 export const createStudentSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().email("Please enter a valid email address"),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   teacherId: z.string().min(1, "Teacher ID is required"),
   instrument: z.string().min(1).max(50).default("guitar"),
-  goals: z.string().max(1000).optional().or(z.literal('')),
-  parentEmail: z.string().email("Invalid parent email address").optional().or(z.literal('')),
-  phoneNumber: z.string().optional().or(z.literal('')),
+  goals: z.string().max(1000).optional().or(z.literal("")),
+  parentEmail: z
+    .string()
+    .email("Invalid parent email address")
+    .optional()
+    .or(z.literal("")),
+  phoneNumber: z.string().optional().or(z.literal("")),
 });
 
 /**
@@ -743,7 +799,12 @@ export const updateStudentByTeacherSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   isActive: z.boolean(),
   instrument: z.string().min(1, "Instrument is required").max(50),
-  goals: z.string().max(1000).optional().or(z.literal('')).transform(val => val === '' ? null : val),
+  goals: z
+    .string()
+    .max(1000)
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => (val === "" ? null : val)),
 });
 
 /**
@@ -761,11 +822,11 @@ export const createTeacherSchema = z.object({
     ),
   bio: z.string().max(2000).optional(),
   hourlyRate: z.number().min(10).max(500).optional(),
-  timezone: z.string().default("America/New_York"),
-  phoneNumber: z.string().regex(
-    /^[\+]?[\d\s\-\(\)]{10,}$/,
-    "Invalid phone number format"
-  ).optional(),
+  timezone: z.string().default("America/Chicago"),
+  phoneNumber: z
+    .string()
+    .regex(/^[\+]?[\d\s\-\(\)]{10,}$/, "Invalid phone number format")
+    .optional(),
   venmoHandle: z.string().max(50).optional(),
   paypalEmail: z.string().email("Invalid PayPal email").optional(),
   zelleEmail: z.string().max(100).optional(),
@@ -811,7 +872,9 @@ export const toggleStatusSchema = z.object({
 
 // Export types for the new schemas
 export type CreateStudentData = z.infer<typeof createStudentSchema>;
-export type UpdateStudentByTeacherData = z.infer<typeof updateStudentByTeacherSchema>;
+export type UpdateStudentByTeacherData = z.infer<
+  typeof updateStudentByTeacherSchema
+>;
 export type CreateTeacherData = z.infer<typeof createTeacherSchema>;
 export type AdminSettingsData = z.infer<typeof adminSettingsSchema>;
 export type BulkDeleteData = z.infer<typeof bulkDeleteSchema>;

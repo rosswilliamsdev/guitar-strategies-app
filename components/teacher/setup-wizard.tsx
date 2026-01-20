@@ -7,22 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { 
-  CheckCircle, 
-  Circle, 
-  ChevronRight, 
-  ChevronLeft, 
+import {
+  CheckCircle,
+  Circle,
+  ChevronRight,
+  ChevronLeft,
   AlertCircle,
   DollarSign,
   Calendar,
   Clock,
   CreditCard,
-  User
+  User,
 } from "lucide-react";
 import { TeacherValidationResult, SetupStep } from "@/lib/teacher-validation";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
-import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
+import { log, emailLog, invoiceLog, schedulerLog } from "@/lib/logger";
 
 interface TeacherSetupWizardProps {
   teacherId: string;
@@ -37,10 +37,15 @@ interface WizardStep {
   component: React.ReactNode;
 }
 
-export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetupWizardProps) {
+export function TeacherSetupWizard({
+  teacherId,
+  initialValidation,
+}: TeacherSetupWizardProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
-  const [validation, setValidation] = useState<TeacherValidationResult | null>(initialValidation || null);
+  const [validation, setValidation] = useState<TeacherValidationResult | null>(
+    initialValidation || null
+  );
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -49,7 +54,7 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
     bio: "",
     hourlyRate: "",
     phoneNumber: "",
-    timezone: "America/New_York",
+    timezone: "America/Chicago",
   });
 
   const [paymentData, setPaymentData] = useState({
@@ -73,9 +78,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
         setValidation(data);
       }
     } catch (error) {
-      log.error('Failed to fetch validation:', {
+      log.error("Failed to fetch validation:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     }
   };
@@ -89,7 +94,7 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
           bio: data.bio || "",
           hourlyRate: data.hourlyRate ? (data.hourlyRate / 100).toString() : "",
           phoneNumber: data.phoneNumber || "",
-          timezone: data.timezone || "America/New_York",
+          timezone: data.timezone || "America/Chicago",
         });
         setPaymentData({
           venmoHandle: data.venmoHandle || "",
@@ -98,9 +103,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
         });
       }
     } catch (error) {
-      log.error('Failed to fetch current data:', {
+      log.error("Failed to fetch current data:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     }
   };
@@ -123,9 +128,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
       }
       return false;
     } catch (error) {
-      log.error('Failed to save profile:', {
+      log.error("Failed to save profile:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       return false;
     } finally {
@@ -148,9 +153,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
       }
       return false;
     } catch (error) {
-      log.error('Failed to save payment methods:', {
+      log.error("Failed to save payment methods:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       return false;
     } finally {
@@ -197,7 +202,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
             <Textarea
               id="bio"
               value={profileData.bio}
-              onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+              onChange={(e) =>
+                setProfileData({ ...profileData, bio: e.target.value })
+              }
               placeholder="Tell students about your teaching experience, style, and what they can expect from lessons with you..."
               className="mt-1 min-h-[120px]"
             />
@@ -214,7 +221,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
                 id="hourlyRate"
                 type="number"
                 value={profileData.hourlyRate}
-                onChange={(e) => setProfileData({ ...profileData, hourlyRate: e.target.value })}
+                onChange={(e) =>
+                  setProfileData({ ...profileData, hourlyRate: e.target.value })
+                }
                 placeholder="60"
                 className="pl-9"
                 min="10"
@@ -232,7 +241,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
               id="phoneNumber"
               type="tel"
               value={profileData.phoneNumber}
-              onChange={(e) => setProfileData({ ...profileData, phoneNumber: e.target.value })}
+              onChange={(e) =>
+                setProfileData({ ...profileData, phoneNumber: e.target.value })
+              }
               placeholder="(555) 123-4567"
               className="mt-1"
             />
@@ -246,7 +257,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
             <select
               id="timezone"
               value={profileData.timezone}
-              onChange={(e) => setProfileData({ ...profileData, timezone: e.target.value })}
+              onChange={(e) =>
+                setProfileData({ ...profileData, timezone: e.target.value })
+              }
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
               <option value="America/New_York">Eastern Time</option>
@@ -269,7 +282,7 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
         <div className="space-y-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              Add at least one payment method so it can be included on invoices. 
+              Add at least one payment method so it can be included on invoices.
               Students will pay you directly through these platforms.
             </p>
           </div>
@@ -279,7 +292,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
             <Input
               id="venmoHandle"
               value={paymentData.venmoHandle}
-              onChange={(e) => setPaymentData({ ...paymentData, venmoHandle: e.target.value })}
+              onChange={(e) =>
+                setPaymentData({ ...paymentData, venmoHandle: e.target.value })
+              }
               placeholder="@your-venmo-username"
               className="mt-1"
             />
@@ -291,7 +306,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
               id="paypalEmail"
               type="email"
               value={paymentData.paypalEmail}
-              onChange={(e) => setPaymentData({ ...paymentData, paypalEmail: e.target.value })}
+              onChange={(e) =>
+                setPaymentData({ ...paymentData, paypalEmail: e.target.value })
+              }
               placeholder="your-email@example.com"
               className="mt-1"
             />
@@ -302,22 +319,26 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
             <Input
               id="zelleEmail"
               value={paymentData.zelleEmail}
-              onChange={(e) => setPaymentData({ ...paymentData, zelleEmail: e.target.value })}
+              onChange={(e) =>
+                setPaymentData({ ...paymentData, zelleEmail: e.target.value })
+              }
               placeholder="email@example.com or (555) 123-4567"
               className="mt-1"
             />
           </div>
 
-          {!paymentData.venmoHandle && !paymentData.paypalEmail && !paymentData.zelleEmail && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <div className="flex items-start space-x-2">
-                <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-                <p className="text-sm text-yellow-800">
-                  Please add at least one payment method to continue
-                </p>
+          {!paymentData.venmoHandle &&
+            !paymentData.paypalEmail &&
+            !paymentData.zelleEmail && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <p className="text-sm text-yellow-800">
+                    Please add at least one payment method to continue
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       ),
     },
@@ -341,8 +362,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
         <div>
           <div className="mb-4">
             <p className="text-sm text-muted-foreground">
-              Click and drag on the calendar below to set your available teaching hours. 
-              Students will only be able to book lessons during these times.
+              Click and drag on the calendar below to set your available
+              teaching hours. Students will only be able to book lessons during
+              these times.
             </p>
           </div>
           <WeeklyScheduleGrid />
@@ -357,7 +379,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
   // Check if current step is complete
   const isStepComplete = () => {
     if (!validation) return false;
-    const step = validation.setupSteps.find(s => s.id === currentWizardStep.id);
+    const step = validation.setupSteps.find(
+      (s) => s.id === currentWizardStep.id
+    );
     return step?.isComplete || false;
   };
 
@@ -378,7 +402,8 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
                   : "border-gray-300 bg-white text-gray-400"
               }`}
             >
-              {index < currentStep || (index === currentStep && isStepComplete()) ? (
+              {index < currentStep ||
+              (index === currentStep && isStepComplete()) ? (
                 <CheckCircle className="h-5 w-5" />
               ) : (
                 <span className="text-sm font-medium">{index + 1}</span>
@@ -403,7 +428,9 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
               {currentWizardStep.icon}
             </div>
             <div>
-              <h2 className="text-xl font-semibold">{currentWizardStep.title}</h2>
+              <h2 className="text-xl font-semibold">
+                {currentWizardStep.title}
+              </h2>
               <p className="text-sm text-muted-foreground">
                 {currentWizardStep.description}
               </p>
@@ -411,9 +438,7 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
           </div>
         </div>
 
-        <div className="min-h-[300px]">
-          {currentWizardStep.component}
-        </div>
+        <div className="min-h-[300px]">{currentWizardStep.component}</div>
 
         {/* Navigation */}
         <div className="flex items-center justify-between mt-8 pt-6 border-t">
@@ -435,10 +460,7 @@ export function TeacherSetupWizard({ teacherId, initialValidation }: TeacherSetu
               <CheckCircle className="h-4 w-4 ml-1" />
             </Button>
           ) : (
-            <Button
-              onClick={handleNext}
-              disabled={saving}
-            >
+            <Button onClick={handleNext} disabled={saving}>
               {saving ? "Saving..." : "Save & Continue"}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>

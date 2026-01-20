@@ -81,7 +81,7 @@ model TeacherProfile {
   venmoHandle        String?
   paypalEmail        String?
   zelleEmail         String?
-  timezone           String                 @default("America/New_York")
+  timezone           String                 @default("America/Chicago")
   phoneNumber        String?
   profileImageUrl    String?
   createdAt          DateTime               @default(now())
@@ -158,7 +158,7 @@ model Lesson {
   price           Int                @default(0)
   recurringId     String?
   recurringSlotId String?
-  timezone        String             @default("America/New_York")
+  timezone        String             @default("America/Chicago")
   checklistItems  String?
   version         Int                @default(1)
   invoiceItems    InvoiceItem[]

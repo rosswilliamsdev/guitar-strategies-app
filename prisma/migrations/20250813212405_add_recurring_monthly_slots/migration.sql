@@ -32,7 +32,7 @@ ADD COLUMN     "isRecurring" BOOLEAN NOT NULL DEFAULT false,
 ADD COLUMN     "price" INTEGER NOT NULL DEFAULT 0,
 ADD COLUMN     "recurringId" TEXT,
 ADD COLUMN     "recurringSlotId" TEXT,
-ADD COLUMN     "timezone" TEXT NOT NULL DEFAULT 'America/New_York',
+ADD COLUMN     "timezone" TEXT NOT NULL DEFAULT 'America/Chicago',
 ALTER COLUMN "status" SET DEFAULT 'SCHEDULED';
 
 -- AlterTable

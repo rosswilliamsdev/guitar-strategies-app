@@ -37,8 +37,8 @@ import { log } from "@/lib/logger";
 
 // Common US timezones
 const TIMEZONE_OPTIONS = [
-  { value: "America/New_York", label: "Eastern Time (ET)" },
   { value: "America/Chicago", label: "Central Time (CT)" },
+  { value: "America/New_York", label: "Eastern Time (ET)" },
   { value: "America/Denver", label: "Mountain Time (MT)" },
   { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
   { value: "America/Anchorage", label: "Alaska Time (AKT)" },
@@ -88,7 +88,7 @@ export function TeacherSettingsForm({
   const [email, setEmail] = useState(user.email);
   const [bio, setBio] = useState(teacherProfile.bio || "");
   const [timezone, setTimezone] = useState(
-    teacherProfile.timezone || "America/New_York"
+    teacherProfile.timezone || "America/Chicago"
   );
   const [phoneNumber, setPhoneNumber] = useState(
     teacherProfile.phoneNumber || ""
@@ -120,7 +120,7 @@ export function TeacherSettingsForm({
         setName(data.name || "");
         setEmail(data.email || "");
         setBio(data.bio || "");
-        setTimezone(data.timezone || "America/New_York");
+        setTimezone(data.timezone || "America/Chicago");
         setPhoneNumber(data.phoneNumber || "");
         setVenmoHandle(data.venmoHandle || "");
         setPaypalEmail(data.paypalEmail || "");
@@ -170,7 +170,7 @@ export function TeacherSettingsForm({
     } catch (error) {
       log.error("Failed to update email preferences", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       return null;
     }
