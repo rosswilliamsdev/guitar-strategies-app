@@ -56,14 +56,57 @@ export default async function LibraryPage() {
     redirect('/login');
   }
 
-  // Only teachers can access this page
-  if (session.user.role !== 'TEACHER') {
+  const isTeacher = session.user.role === 'TEACHER';
+  const isStudent = session.user.role === 'STUDENT';
+
+  // Get the appropriate teacherId based on role
+  let teacherId: string | null = null;
+
+  if (isTeacher) {
+    const teacherProfile = await prisma.teacherProfile.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!teacherProfile) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <Card className="p-6">
+            <h1 className="text-2xl font-semibold text-foreground mb-4">Teacher Profile Not Found</h1>
+            <p className="text-muted-foreground">
+              Unable to access library without a teacher profile.
+            </p>
+          </Card>
+        </div>
+      );
+    }
+
+    teacherId = teacherProfile.id;
+  } else if (isStudent) {
+    const studentProfile = await prisma.studentProfile.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!studentProfile) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <Card className="p-6">
+            <h1 className="text-2xl font-semibold text-foreground mb-4">Student Profile Not Found</h1>
+            <p className="text-muted-foreground">
+              Unable to access library without a student profile.
+            </p>
+          </Card>
+        </div>
+      );
+    }
+
+    teacherId = studentProfile.teacherId;
+  } else {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="p-6">
           <h1 className="text-2xl font-semibold text-foreground mb-4">Access Restricted</h1>
           <p className="text-muted-foreground">
-            This page is only available to teachers. 
+            This page is only available to teachers and students.
           </p>
           <div className="mt-4">
             <Link href="/dashboard">
@@ -75,25 +118,7 @@ export default async function LibraryPage() {
     );
   }
 
-  // Get teacher profile to fetch library items
-  const teacherProfile = await prisma.teacherProfile.findUnique({
-    where: { userId: session.user.id }
-  });
-
-  if (!teacherProfile) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="p-6">
-          <h1 className="text-2xl font-semibold text-foreground mb-4">Teacher Profile Not Found</h1>
-          <p className="text-muted-foreground">
-            Unable to access library without a teacher profile.
-          </p>
-        </Card>
-      </div>
-    );
-  }
-
-  const libraryItems = await getLibraryData(teacherProfile.id);
+  const libraryItems = await getLibraryData(teacherId);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -104,26 +129,30 @@ export default async function LibraryPage() {
             Resource Library
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage lesson materials, sheet music, and educational resources
+            {isTeacher
+              ? "Manage lesson materials, sheet music, and educational resources"
+              : "Resources from your teacher"
+            }
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/library/bulk-upload">
-            <Button variant="secondary">
-              Bulk Upload
-            </Button>
-          </Link>
-          <Link href="/library/upload">
-            <Button>
-              Upload New Resource
-            </Button>
-          </Link>
-        </div>
+        {isTeacher && (
+          <div className="flex items-center gap-2">
+            <Link href="/library/bulk-upload">
+              <Button variant="secondary">
+                Bulk Upload
+              </Button>
+            </Link>
+            <Link href="/library/upload">
+              <Button>
+                Upload New Resource
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
 
-
       {/* Library List */}
-      <LibraryList items={libraryItems} />
+      <LibraryList items={libraryItems} studentView={isStudent} />
     </div>
   );
 }

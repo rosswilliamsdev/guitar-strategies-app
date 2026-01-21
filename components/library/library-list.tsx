@@ -54,6 +54,7 @@ interface LibraryItem {
 
 interface LibraryListProps {
   items: LibraryItem[];
+  studentView?: boolean;
 }
 
 const categoryConfig = {
@@ -104,11 +105,14 @@ async function handleDownload(item: LibraryItem) {
     // Increment download count
     await fetch(`/api/library/${item.id}/download`, { method: "POST" });
 
-    // Download the file
+    // Open file in new tab (browser will display or download based on file type)
     const link = document.createElement("a");
     link.href = item.fileUrl;
-    link.download = item.fileName;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   } catch (error) {
     log.error("Error downloading file:", {
       error: error instanceof Error ? error.message : String(error),
@@ -117,7 +121,7 @@ async function handleDownload(item: LibraryItem) {
   }
 }
 
-export function LibraryList({ items }: LibraryListProps) {
+export function LibraryList({ items, studentView = false }: LibraryListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedInstrument, setSelectedInstrument] = useState<string>("all");
@@ -372,11 +376,14 @@ export function LibraryList({ items }: LibraryListProps) {
         // Increment download count
         await fetch(`/api/library/${item.id}/download`, { method: "POST" });
 
-        // Download the file
+        // Open file in new tab (browser will display or download based on file type)
         const link = document.createElement("a");
         link.href = item.fileUrl;
-        link.download = item.fileName;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
 
         // Small delay between downloads to avoid overwhelming the browser
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -494,15 +501,17 @@ export function LibraryList({ items }: LibraryListProps) {
                   <Download className="h-4 w-4 mr-1" />
                   Download
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="h-8"
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
+                {!studentView && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="h-8"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -516,12 +525,16 @@ export function LibraryList({ items }: LibraryListProps) {
             </h3>
             <p className="text-muted-foreground mb-4">
               {items.length === 0
-                ? "You haven't uploaded any resources yet."
+                ? studentView
+                  ? "Your teacher hasn't uploaded any resources yet."
+                  : "You haven't uploaded any resources yet."
                 : "Try adjusting your search or filter criteria."}
             </p>
-            <a href="/library/upload">
-              <Button>Upload First Resource</Button>
-            </a>
+            {!studentView && (
+              <a href="/library/upload">
+                <Button>Upload First Resource</Button>
+              </a>
+            )}
           </Card>
         ) : (
           <div

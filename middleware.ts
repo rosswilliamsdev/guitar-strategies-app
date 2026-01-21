@@ -124,11 +124,10 @@ export default withAuth(
       }
     }
 
-    // Teacher-only routes
+    // Teacher-only routes (library is now accessible to both teachers and students)
     if (
       pathname.startsWith("/students") ||
       pathname.startsWith("/invoices") ||
-      pathname.startsWith("/library") ||
       pathname.startsWith("/new-lesson") ||
       pathname.startsWith("/scheduling")
     ) {
