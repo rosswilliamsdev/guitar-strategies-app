@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { User } from "next-auth";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
-import { LogOut, X } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useViewMode } from "@/app/(dashboard)/dashboard/view-mode-context";
 
 interface DashboardSidebarProps {
@@ -26,7 +26,7 @@ const navItems: NavItem[] = [
 
   { label: "Lessons", href: "/lessons", roles: ["TEACHER", "STUDENT"] },
   { label: "Checklists", href: "/curriculums", roles: ["TEACHER", "STUDENT"] },
-  { label: "Library", href: "/library", roles: ["TEACHER"] },
+  { label: "Library", href: "/library", roles: ["TEACHER", "STUDENT"] },
   {
     label: "Recommendations",
     href: "/recommendations",
