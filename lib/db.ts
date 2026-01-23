@@ -17,16 +17,17 @@ const globalForPrisma = globalThis as unknown as {
 
 /**
  * Singleton Prisma client instance with connection pooling.
- * 
+ *
  * In development:
  * - Logs queries, errors, and warnings for debugging
  * - Uses global variable to prevent multiple instances from hot reloading
  * - Conservative connection pool for local development
- * 
+ *
  * In production:
  * - Only logs errors to reduce noise
  * - Optimized connection pool limits for production workloads
  * - Uses pretty error formatting for better debugging
+ * - Uses Neon's POSTGRES_PRISMA_URL (optimized for Prisma with proper pooling)
  */
 export const prisma =
   globalForPrisma.prisma ??
@@ -38,10 +39,9 @@ export const prisma =
     errorFormat: "pretty",
     datasources: {
       db: {
-        url: process.env.DATABASE_URL + 
-          (process.env.NODE_ENV === "production" 
-            ? "?connection_limit=10&pool_timeout=20&connect_timeout=10" 
-            : "?connection_limit=5&pool_timeout=10&connect_timeout=5")
+        url: process.env.NODE_ENV === "production"
+          ? process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL
+          : process.env.DATABASE_URL
       }
     }
   });
