@@ -36,7 +36,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { log } from "@/lib/logger";
-import { updateStudentByTeacherSchema, UpdateStudentByTeacherData } from "@/lib/validations";
+import {
+  updateStudentByTeacherSchema,
+  UpdateStudentByTeacherData,
+} from "@/lib/validations";
 
 interface StudentData {
   student: {
@@ -115,10 +118,10 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
   const [cancellingSlot, setCancellingSlot] = useState<string | null>(null);
   const [cancellingLesson, setCancellingLesson] = useState<string | null>(null);
   const [confirmCancelSlot, setConfirmCancelSlot] = useState<string | null>(
-    null
+    null,
   );
   const [confirmCancelLesson, setConfirmCancelLesson] = useState<string | null>(
-    null
+    null,
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -233,7 +236,10 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
       });
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update student profile",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update student profile",
         variant: "destructive",
       });
     } finally {
@@ -417,7 +423,7 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
               <>
                 <Badge
                   className={getStatusBadge(
-                    student.isActive ? "ACTIVE" : "INACTIVE"
+                    student.isActive ? "ACTIVE" : "INACTIVE",
                   )}
                 >
                   {student.isActive ? "Active" : "Inactive"}
@@ -554,7 +560,8 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      Joined {format(new Date(student.joinedAt), "MMMM d, yyyy")}
+                      Joined{" "}
+                      {format(new Date(student.joinedAt), "MMMM d, yyyy")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -738,36 +745,38 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
           <p className="text-gray-600">No lessons recorded yet.</p>
         ) : (
           <div className="space-y-2">
-            {recentLessons.map((lesson) => (
-              <div
-                key={lesson.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-              >
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {format(new Date(lesson.date), "MMMM d, yyyy")}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {lesson.duration} minutes • {lesson.teacher.user.name}
-                  </p>
-                  {lesson.notes && (
-                    <p className="text-sm text-gray-600 mt-1 line-clamp-1">
-                      {lesson.notes.replace(/<[^>]*>/g, "")}
+            {recentLessons
+              .filter((lesson) => lesson.status === "COMPLETED")
+              .map((lesson) => (
+                <div
+                  key={lesson.id}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium">
+                      {format(new Date(lesson.date), "MMMM d, yyyy")}
                     </p>
-                  )}
+                    <p className="text-sm text-muted-foreground">
+                      {lesson.duration} minutes • {lesson.teacher.user.name}
+                    </p>
+                    {lesson.notes && (
+                      <p className="text-sm text-gray-600 mt-1 line-clamp-1">
+                        {lesson.notes.replace(/<[^>]*>/g, "")}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusBadge(lesson.status)}>
+                      {lesson.status}
+                    </Badge>
+                    <Link href={`/lessons/${lesson.id}`}>
+                      <Button variant="secondary" size="sm">
+                        View
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusBadge(lesson.status)}>
-                    {lesson.status}
-                  </Badge>
-                  <Link href={`/lessons/${lesson.id}`}>
-                    <Button variant="secondary" size="sm">
-                      View
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </Card>

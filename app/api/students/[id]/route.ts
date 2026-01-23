@@ -66,9 +66,12 @@ export async function GET(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Get recent lessons for this student
+    // Get recent lessons for this student (completed only)
     const recentLessons = await prisma.lesson.findMany({
-      where: { studentId },
+      where: {
+        studentId,
+        status: "COMPLETED"
+      },
       orderBy: { date: "desc" },
       take: 5,
       include: {
