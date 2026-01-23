@@ -97,7 +97,8 @@ export function LessonList({ userRole }: LessonListProps) {
     const fetchLessons = async () => {
       try {
         const timestamp = Date.now();
-        const response = await fetch(`/api/lessons?_t=${timestamp}`, {
+        // Fetch only COMPLETED lessons since that's all we display
+        const response = await fetch(`/api/lessons?status=COMPLETED&_t=${timestamp}`, {
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache',
@@ -213,10 +214,7 @@ export function LessonList({ userRole }: LessonListProps) {
   // Filter lessons based on search term, student, and date
   const filteredLessons = useMemo(() => {
     const filtered = lessons.filter((lesson) => {
-      // Only show completed lessons
-      if (lesson.status !== "COMPLETED") {
-        return false;
-      }
+      // All lessons from API are already COMPLETED status (filtered in fetch)
 
       // Search filter - searches in notes, homework, progress, focusAreas, songsPracticed, nextSteps
       const searchableContent = [
