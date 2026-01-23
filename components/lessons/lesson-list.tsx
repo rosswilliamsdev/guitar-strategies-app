@@ -213,6 +213,17 @@ export function LessonList({ userRole }: LessonListProps) {
 
   // Filter lessons based on search term, student, and date
   const filteredLessons = useMemo(() => {
+    // Log the filtering process for debugging
+    const completedLessons = lessons.filter(l => l.status === "COMPLETED");
+    log.info("Filtering lessons", {
+      total: lessons.length,
+      completed: completedLessons.length,
+      dateFilter,
+      selectedStudent,
+      searchTerm,
+      completedDates: completedLessons.map(l => ({ id: l.id, date: l.date, student: l.student.user.name }))
+    });
+
     const filtered = lessons.filter((lesson) => {
       // All lessons from API are already COMPLETED status (filtered in fetch)
 
@@ -279,7 +290,23 @@ export function LessonList({ userRole }: LessonListProps) {
           matchesDate = true;
       }
 
-      return matchesSearch && matchesStudent && matchesDate;
+      const passes = matchesSearch && matchesStudent && matchesDate;
+
+      // Log why lessons are filtered out
+      if (lesson.status === "COMPLETED" && !passes) {
+        log.info("Completed lesson filtered out", {
+          lessonId: lesson.id,
+          date: lesson.date,
+          student: lesson.student.user.name,
+          matchesSearch,
+          matchesStudent,
+          matchesDate,
+          dateFilter,
+          selectedStudent
+        });
+      }
+
+      return passes;
     });
 
     // Sort filtered lessons by date based on sortOrder
