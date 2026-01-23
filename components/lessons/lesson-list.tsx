@@ -97,14 +97,38 @@ export function LessonList({ userRole }: LessonListProps) {
     const fetchLessons = async () => {
       try {
         const timestamp = Date.now();
-        const response = await fetch(`/api/lessons?_t=${timestamp}`);
+        const response = await fetch(`/api/lessons?_t=${timestamp}`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch lessons");
         }
         const data = await response.json();
+
+        // Log the actual response structure for debugging
+        log.info("Lessons API response received", {
+          hasData: !!data,
+          hasDataField: !!data.data,
+          hasLessonsField: !!data.lessons,
+          dataKeys: data ? Object.keys(data) : [],
+          dataType: typeof data,
+        });
+
         // Handle paginated response structure
-        const lessonsArray =
-          data.data?.lessons || data.lessons || data.data || [];
+        // API returns: { data: Lesson[], pagination: {...} }
+        const lessonsArray = Array.isArray(data.data)
+          ? data.data
+          : (data.lessons || []);
+
+        log.info("Lessons array extracted", {
+          count: lessonsArray.length,
+          isArray: Array.isArray(lessonsArray),
+          firstLessonDate: lessonsArray[0]?.date,
+        });
+
         // Sort lessons by date in descending order (most recent first)
         const sortedLessons = lessonsArray.sort((a: Lesson, b: Lesson) => {
           return new Date(b.date).getTime() - new Date(a.date).getTime();
