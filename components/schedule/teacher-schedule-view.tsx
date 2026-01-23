@@ -154,8 +154,8 @@ const generateTimeSlots = (availability: TeacherAvailability[]): string[] => {
     startMinute < 30
       ? startHour
       : startMinute === 30
-      ? startHour
-      : startHour + 1;
+        ? startHour
+        : startHour + 1;
   let currentMinute = roundedStartMinute;
 
   // If we rounded up past the start hour, adjust
@@ -213,7 +213,7 @@ const generateDefaultTimeSlots = (): string[] => {
 // Check if a time slot is within an availability window
 const isTimeInAvailability = (
   timeSlot: string,
-  availability: TeacherAvailability[]
+  availability: TeacherAvailability[],
 ): boolean => {
   const slotTime = new Date();
   const [time, period] = timeSlot.split(" ");
@@ -234,7 +234,7 @@ const isTimeInAvailability = (
 const getLessonAtTime = (
   day: Date,
   timeSlot: string,
-  lessons: UpcomingLesson[]
+  lessons: UpcomingLesson[],
 ): UpcomingLesson | null => {
   return (
     lessons.find((lesson) => {
@@ -248,7 +248,7 @@ const getLessonAtTime = (
 const isTimeBlocked = (
   day: Date,
   timeSlot: string,
-  blockedTimes: BlockedTime[]
+  blockedTimes: BlockedTime[],
 ): boolean => {
   const slotTime = new Date();
   const [time, period] = timeSlot.split(" ");
@@ -282,7 +282,7 @@ const getSlotStatus = (
   timeSlot: string,
   availability: TeacherAvailability[],
   lessons: UpcomingLesson[],
-  blockedTimes: BlockedTime[]
+  blockedTimes: BlockedTime[],
 ): SlotStatus => {
   // Check if time is within teacher availability
   if (!isTimeInAvailability(timeSlot, availability)) {
@@ -311,7 +311,7 @@ const renderSlotContent = (
   day: Date,
   timeSlot: string,
   onOpenSlotClick?: () => void,
-  onLessonClick?: (lesson: UpcomingLesson) => void
+  onLessonClick?: (lesson: UpcomingLesson) => void,
 ): React.ReactNode => {
   switch (status.type) {
     case "not-available":
@@ -425,7 +425,7 @@ export function TeacherScheduleView({
 
   const handleBookStudent = async (
     studentId: string,
-    type: "single" | "recurring"
+    type: "single" | "recurring",
   ) => {
     if (!bookingModal.date || !bookingModal.time) return;
 
@@ -500,7 +500,7 @@ export function TeacherScheduleView({
   // Get lessons for a specific day
   const getLessonsForDay = (day: Date) => {
     return upcomingLessons.filter((lesson) =>
-      isSameDay(new Date(lesson.date), day)
+      isSameDay(new Date(lesson.date), day),
     );
   };
 
@@ -510,14 +510,14 @@ export function TeacherScheduleView({
     // Monday=0 -> Sunday=1, Tuesday=1 -> Monday=2, ..., Sunday=6 -> Saturday=0
     const jsDay = dayOfWeek === 6 ? 0 : dayOfWeek + 1;
     return availability.filter(
-      (slot) => slot.dayOfWeek === jsDay && slot.isActive
+      (slot) => slot.dayOfWeek === jsDay && slot.isActive,
     );
   };
 
   // Get blocked times for a specific day
   const getBlockedTimesForDay = (day: Date) => {
     return blockedTimes.filter((blocked) =>
-      isSameDay(new Date(blocked.startTime), day)
+      isSameDay(new Date(blocked.startTime), day),
     );
   };
 
@@ -533,7 +533,7 @@ export function TeacherScheduleView({
                 <h3 className="text-base sm:text-lg font-semibold text-foreground">
                   {format(
                     currentDate,
-                    isMobile ? "EEE, MMM d" : "EEEE, MMMM d, yyyy"
+                    isMobile ? "EEE, MMM d" : "EEEE, MMMM d, yyyy",
                   )}
                 </h3>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -627,8 +627,8 @@ export function TeacherScheduleView({
                   ? generateTimeSlots(dayAvailability)
                   : [];
 
-              // Check if there are any lessons booked for this day or if teacher has availability set
-              if (dayLessons.length === 0 && dayTimeSlots.length === 0) {
+              // Check if teacher has availability set for this day
+              if (dayTimeSlots.length === 0) {
                 return (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center space-y-3">
@@ -659,7 +659,7 @@ export function TeacherScheduleView({
                       timeSlot,
                       dayAvailability,
                       dayLessons,
-                      dayBlockedTimes
+                      dayBlockedTimes,
                     );
 
                     return (
@@ -671,7 +671,7 @@ export function TeacherScheduleView({
                         <div
                           className={cn(
                             "w-20 sm:w-24 text-xs sm:text-sm font-medium text-foreground text-left py-2 px-2 sm:px-3 -ml-2 sm:-ml-3 rounded-l",
-                            index % 2 === 1 && "bg-neutral-200/40"
+                            index % 2 === 1 && "bg-neutral-200/40",
                           )}
                         >
                           {timeSlot}
@@ -689,7 +689,8 @@ export function TeacherScheduleView({
                                 date: currentDate,
                                 time: timeSlot,
                               }),
-                            (lesson) => setLessonModal({ isOpen: true, lesson })
+                            (lesson) =>
+                              setLessonModal({ isOpen: true, lesson }),
                           )}
                         </div>
                       </div>
@@ -764,7 +765,7 @@ export function TeacherScheduleView({
                               timeSlot,
                               dayAvailability,
                               dayLessons,
-                              dayBlockedTimes
+                              dayBlockedTimes,
                             );
 
                             return (
@@ -787,7 +788,7 @@ export function TeacherScheduleView({
                                         time: timeSlot,
                                       }),
                                     (lesson) =>
-                                      setLessonModal({ isOpen: true, lesson })
+                                      setLessonModal({ isOpen: true, lesson }),
                                   )}
                                 </div>
                               </div>
@@ -852,7 +853,7 @@ export function TeacherScheduleView({
                 {(() => {
                   // Check if teacher has any availability set
                   const hasAvailability = availability.some(
-                    (slot) => slot.isActive
+                    (slot) => slot.isActive,
                   );
 
                   if (!hasAvailability) {
@@ -890,7 +891,7 @@ export function TeacherScheduleView({
                             "p-2 text-center border-r",
                             slotIndex % 2 === 1
                               ? "bg-neutral-100/90"
-                              : "bg-background"
+                              : "bg-background",
                           )}
                         >
                           <span className="text-xs text-muted-foreground">
@@ -910,7 +911,7 @@ export function TeacherScheduleView({
                             timeSlot,
                             dayAvailability,
                             dayLessons,
-                            dayBlockedTimes
+                            dayBlockedTimes,
                           );
 
                           return (
@@ -929,13 +930,13 @@ export function TeacherScheduleView({
                                     time: timeSlot,
                                   }),
                                 (lesson) =>
-                                  setLessonModal({ isOpen: true, lesson })
+                                  setLessonModal({ isOpen: true, lesson }),
                               )}
                             </div>
                           );
                         })}
                       </React.Fragment>
-                    )
+                    ),
                   );
                 })()}
               </div>
