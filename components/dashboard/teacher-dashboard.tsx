@@ -4,10 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ProfileValidationAlert } from "@/components/teacher/profile-validation-alert";
-import {
-  SkeletonDashboardCard,
-  Skeleton,
-} from "@/components/ui/skeleton";
+import { SkeletonDashboardCard, Skeleton } from "@/components/ui/skeleton";
 
 interface TeacherDashboardProps {
   teacherId: string;
@@ -260,8 +257,8 @@ export function TeacherDashboard({
                         lesson.status === "COMPLETED"
                           ? "bg-green-50 text-green-700 border border-green-200"
                           : lesson.status === "SCHEDULED"
-                          ? "bg-blue-50 text-blue-700 border border-blue-200"
-                          : "bg-gray-50 text-gray-700 border border-gray-200"
+                            ? "bg-blue-50 text-blue-700 border border-blue-200"
+                            : "bg-gray-50 text-gray-700 border border-gray-200"
                       }`}
                     >
                       {lesson.status.toLowerCase()}

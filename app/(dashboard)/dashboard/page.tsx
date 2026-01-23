@@ -85,9 +85,9 @@ export async function getTeacherData(userId: string) {
           ratingsWithValues.length
         : null;
 
-    // Recent lessons (excluding cancelled)
+    // Recent lessons (completed only)
     const recentLessons = teacherProfile.lessons
-      .filter((lesson) => lesson.status !== "CANCELLED")
+      .filter((lesson) => lesson.status === "COMPLETED")
       .slice(0, 5)
       .map((lesson) => ({
         id: lesson.id,
