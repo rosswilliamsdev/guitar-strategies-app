@@ -35,7 +35,7 @@ function generateCSP() {
       'https://api.resend.com', // Email service
       'https://vercel.blob.store', // File storage
     ],
-    'frame-src': ["'self'"],
+    'frame-src': ["'self'", 'https://www.youtube.com', 'https://youtube.com'],
     'object-src': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
