@@ -505,30 +505,9 @@ export function TeacherScheduleView({
 
   // Get lessons for a specific day
   const getLessonsForDay = (day: Date) => {
-    const lessonsForDay = upcomingLessons.filter((lesson) => {
-      const lessonDate = ensureDate(lesson.date);
-      const matches = isSameDay(lessonDate, day);
-
-      // Debug logging
-      if (matches) {
-        console.log('Lesson matched for day:', {
-          day: day.toISOString(),
-          lessonDate: lessonDate.toISOString(),
-          student: lesson.student.user.name,
-        });
-      }
-
-      return matches;
-    });
-
-    console.log('getLessonsForDay:', {
-      day: day.toISOString(),
-      dayString: format(day, 'EEEE, MMM d'),
-      totalLessons: upcomingLessons.length,
-      matchedLessons: lessonsForDay.length,
-    });
-
-    return lessonsForDay;
+    return upcomingLessons.filter((lesson) =>
+      isSameDay(ensureDate(lesson.date), day),
+    );
   };
 
   // Get availability for a specific day of week
