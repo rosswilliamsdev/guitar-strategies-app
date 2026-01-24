@@ -6,6 +6,10 @@ import { TeacherScheduleView } from "@/components/schedule/teacher-schedule-view
 import { startOfWeek, endOfWeek, addWeeks } from "date-fns";
 import { getLessonsWithRecurring } from "@/lib/recurring-lessons";
 
+// Force dynamic rendering and disable caching for this page
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function SchedulePage() {
   const session = await getServerSession(authOptions);
 

@@ -30,7 +30,7 @@ export async function generateRecurringLessons(
   for (const slot of recurringSlots) {
     // Find the first occurrence of this day of week within our date range
     let currentDate = new Date(startDate);
-    
+
     // Move to the first occurrence of the slot's day of week
     while (currentDate.getDay() !== slot.dayOfWeek && currentDate <= endDate) {
       currentDate.setDate(currentDate.getDate() + 1);
