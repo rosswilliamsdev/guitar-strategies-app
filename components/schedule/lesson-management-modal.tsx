@@ -17,7 +17,7 @@ import { log } from "@/lib/logger";
 
 interface UpcomingLesson {
   id: string;
-  date: Date;
+  date: Date | string; // Can be Date object or ISO string from serialization
   duration: number;
   status: string;
   student: {

@@ -54,7 +54,7 @@ const formatTimezone = (timezone: string): string => {
 
 interface UpcomingLesson {
   id: string;
-  date: Date;
+  date: Date | string; // Can be Date object or ISO string from serialization
   duration: number;
   timezone?: string;
   price?: number;
@@ -78,8 +78,8 @@ interface TeacherAvailability {
 
 interface BlockedTime {
   id: string;
-  startTime: Date;
-  endTime: Date;
+  startTime: Date | string; // Can be Date object or ISO string from serialization
+  endTime: Date | string;   // Can be Date object or ISO string from serialization
   reason?: string;
 }
 
@@ -121,6 +121,11 @@ const DAYS_OF_WEEK = [
   "Saturday",
   "Sunday",
 ];
+
+// Helper function to ensure dates are properly converted from ISO strings
+const ensureDate = (date: Date | string): Date => {
+  return typeof date === 'string' ? new Date(date) : date;
+};
 
 // Generate 30-minute time slots based on teacher's availability
 const generateTimeSlots = (availability: TeacherAvailability[]): string[] => {
@@ -238,7 +243,7 @@ const getLessonAtTime = (
 ): UpcomingLesson | null => {
   return (
     lessons.find((lesson) => {
-      const lessonDate = new Date(lesson.date);
+      const lessonDate = ensureDate(lesson.date);
       const lessonTime = format(lessonDate, "h:mm a");
       // Check both day and time match
       return isSameDay(lessonDate, day) && lessonTime === timeSlot;
@@ -252,7 +257,6 @@ const isTimeBlocked = (
   timeSlot: string,
   blockedTimes: BlockedTime[],
 ): boolean => {
-  const slotTime = new Date();
   const [time, period] = timeSlot.split(" ");
   const [hours, minutes] = time.split(":").map(Number);
   let hour24 = hours;
@@ -266,8 +270,8 @@ const isTimeBlocked = (
   slotEnd.setMinutes(slotEnd.getMinutes() + 30);
 
   return blockedTimes.some((blocked) => {
-    const blockedStart = new Date(blocked.startTime);
-    const blockedEnd = new Date(blocked.endTime);
+    const blockedStart = ensureDate(blocked.startTime);
+    const blockedEnd = ensureDate(blocked.endTime);
     return slotStart < blockedEnd && slotEnd > blockedStart;
   });
 };
@@ -502,7 +506,7 @@ export function TeacherScheduleView({
   // Get lessons for a specific day
   const getLessonsForDay = (day: Date) => {
     return upcomingLessons.filter((lesson) =>
-      isSameDay(new Date(lesson.date), day),
+      isSameDay(ensureDate(lesson.date), day),
     );
   };
 
@@ -519,7 +523,7 @@ export function TeacherScheduleView({
   // Get blocked times for a specific day
   const getBlockedTimesForDay = (day: Date) => {
     return blockedTimes.filter((blocked) =>
-      isSameDay(new Date(blocked.startTime), day),
+      isSameDay(ensureDate(blocked.startTime), day),
     );
   };
 

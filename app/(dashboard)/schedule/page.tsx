@@ -115,6 +115,7 @@ export default async function SchedulePage() {
         blockedTimes={blockedTimes}
         lessonSettings={lessonSettings}
         students={students}
+        timezone={teacher.timezone || "America/Chicago"}
       />
     </div>
   );
