@@ -42,6 +42,8 @@ export function generateCSP(config: SecurityHeadersConfig): string {
       'data:', // For base64 images
       'blob:', // For blob URLs (file uploads)
       'https://vercel.blob.store', // Vercel Blob storage
+      'https://i.ytimg.com', // YouTube thumbnails
+      'https://img.youtube.com', // YouTube thumbnails
       ...allowedImageDomains,
     ],
     'font-src': [
@@ -55,7 +57,7 @@ export function generateCSP(config: SecurityHeadersConfig): string {
       'https://api.resend.com', // Email service
       'https://vercel.blob.store', // File storage
     ],
-    'frame-src': ["'self'"],
+    'frame-src': ["'self'", 'https://www.youtube.com', 'https://youtube.com'],
     'object-src': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
@@ -92,7 +94,9 @@ export function applySecurityHeaders(
   }
 
   // X-Frame-Options (prevent clickjacking)
-  response.headers.set('X-Frame-Options', 'DENY');
+  // SAMEORIGIN allows embedding content FROM external sources (like YouTube)
+  // while preventing this site FROM BEING embedded elsewhere
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
 
   // X-Content-Type-Options (prevent MIME type sniffing)
   response.headers.set('X-Content-Type-Options', 'nosniff');

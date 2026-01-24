@@ -23,6 +23,8 @@ function generateCSP() {
       'https://vercel.blob.store', // Vercel Blob storage
       'https://avatars.githubusercontent.com', // GitHub avatars
       'https://lh3.googleusercontent.com', // Google avatars
+      'https://i.ytimg.com', // YouTube thumbnails
+      'https://img.youtube.com', // YouTube thumbnails
     ],
     'font-src': [
       "'self'",
