@@ -238,8 +238,10 @@ const getLessonAtTime = (
 ): UpcomingLesson | null => {
   return (
     lessons.find((lesson) => {
-      const lessonTime = format(new Date(lesson.date), "h:mm a");
-      return lessonTime === timeSlot;
+      const lessonDate = new Date(lesson.date);
+      const lessonTime = format(lessonDate, "h:mm a");
+      // Check both day and time match
+      return isSameDay(lessonDate, day) && lessonTime === timeSlot;
     }) || null
   );
 };
