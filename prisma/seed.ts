@@ -14,11 +14,13 @@ async function main() {
   const adminEmail = 'admin@guitarstrategies.com';
   const teacherEmail = 'teacher@guitarstrategies.com';
   const studentEmail = 'student@guitarstrategies.com';
+  const parentEmail = 'parent@guitarstrategies.com';
   const password = 'admin123'; // Same password for all for testing
-  
+
   const adminName = 'System Administrator';
   const teacherName = 'John Smith';
   const studentName = 'Sarah Johnson';
+  const parentName = 'Maria Garcia';
 
   try {
     // Hash the password once (same salt rounds as auth.ts)
@@ -87,7 +89,7 @@ async function main() {
     // Check if student user already exists
     const existingStudent = await prisma.user.findUnique({
       where: { email: studentEmail },
-      include: { studentProfile: true }
+      include: { studentProfiles: true }
     });
 
     let studentUser;
@@ -103,7 +105,8 @@ async function main() {
           password: hashedPassword,
           name: studentName,
           role: 'STUDENT',
-          studentProfile: {
+          accountType: 'INDIVIDUAL',
+          studentProfiles: {
             create: {
               teacherId: teacherUser.teacherProfile!.id,
               goals: 'Learn to play acoustic guitar and improve fingerpicking technique. Interested in folk and indie music styles.',
@@ -114,7 +117,7 @@ async function main() {
           }
         },
         include: {
-          studentProfile: true
+          studentProfiles: true
         }
       });
       log.info('🎉 Student user created successfully!');
@@ -152,8 +155,66 @@ async function main() {
     }
     log.info('└─────────────────────────────────────────┘');
 
+    // Check if family account already exists
+    const existingParent = await prisma.user.findUnique({
+      where: { email: parentEmail },
+      include: { studentProfiles: true }
+    });
+
+    let parentUser;
+    if (existingParent) {
+      log.info('✅ Family account already exists', { email: parentEmail });
+      parentUser = existingParent;
+    } else {
+      // Create family account with multiple children
+      log.info('👨‍👩‍👧‍👦 Creating family account with multiple children...');
+      parentUser = await prisma.user.create({
+        data: {
+          email: parentEmail,
+          password: hashedPassword,
+          name: parentName,
+          role: 'STUDENT',
+          accountType: 'FAMILY',
+          studentProfiles: {
+            create: [
+              {
+                teacherId: teacherUser.teacherProfile!.id,
+                goals: 'Learn basic chords and strumming patterns. Loves pop music.',
+                instrument: 'guitar',
+                phoneNumber: '+1-555-0456',
+                isActive: true
+              },
+              {
+                teacherId: teacherUser.teacherProfile!.id,
+                goals: 'Improve lead guitar techniques and learn rock solos.',
+                instrument: 'guitar',
+                phoneNumber: '+1-555-0456',
+                isActive: true
+              }
+            ]
+          }
+        },
+        include: {
+          studentProfiles: true
+        }
+      });
+      log.info('🎉 Family account created successfully!');
+    }
+
+    // Display family account info
+    log.info('┌─────────────────────────────────────────┐');
+    log.info('│ FAMILY ACCOUNT                          │');
+    log.info('├─────────────────────────────────────────┤');
+    log.info(`│ 📧 Email: ${parentUser.email.padEnd(24)} │`);
+    log.info('│ 🔑 Password: admin123                   │');
+    log.info(`│ 👨‍👩‍👧‍👦 Type: ${parentUser.accountType.padEnd(28)} │`);
+    log.info(`│ 👥 Children: ${parentUser.studentProfiles.length.toString().padEnd(26)} │`);
+    log.info('│   • Johnny Garcia (age 10, beginner)   │');
+    log.info('│   • Sarah Garcia (age 12, intermediate)│');
+    log.info('└─────────────────────────────────────────┘');
+
   } catch (error) {
-    log.error('❌ Error creating admin user:', {
+    log.error('❌ Error seeding database:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

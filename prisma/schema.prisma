@@ -53,23 +53,25 @@ model PasswordResetToken {
 }
 
 model User {
-  id                String             @id @default(cuid())
-  email             String             @unique
-  password          String?
+  id                  String             @id @default(cuid())
+  email               String             @unique
+  password            String?
   passwordResetTokens PasswordResetToken[]
-  name              String
-  role              Role               @default(STUDENT)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  accounts          Account[]
-  emailPreferences  EmailPreference[]
-  sessions          Session[]
-  createdChecklists StudentChecklist[]
-  studentProfile    StudentProfile?
-  teacherProfile    TeacherProfile?
+  name                String
+  role                Role               @default(STUDENT)
+  accountType         AccountType        @default(INDIVIDUAL)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  accounts            Account[]
+  emailPreferences    EmailPreference[]
+  sessions            Session[]
+  createdChecklists   StudentChecklist[]
+  studentProfiles     StudentProfile[]
+  teacherProfile      TeacherProfile?
 
   @@index([email])
   @@index([role])
+  @@index([accountType])
 }
 
 model TeacherProfile {
@@ -107,7 +109,7 @@ model TeacherProfile {
 
 model StudentProfile {
   id                    String                      @id @default(cuid())
-  userId                String                      @unique
+  userId                String
   teacherId             String
   joinedAt              DateTime                    @default(now())
   goals                 String?
@@ -731,4 +733,9 @@ enum EmailType {
   STUDENT_WELCOME
   STUDENT_INVITATION
   LESSON_COMPLETED
+}
+
+enum AccountType {
+  INDIVIDUAL
+  FAMILY
 }
