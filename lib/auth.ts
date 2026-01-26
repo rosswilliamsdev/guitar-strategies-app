@@ -73,7 +73,7 @@ export const authOptions: NextAuthOptions = {
             },
             include: {
               teacherProfile: true,
-              studentProfile: true,
+              studentProfiles: true,
             },
           });
 
@@ -81,6 +81,8 @@ export const authOptions: NextAuthOptions = {
             found: !!user,
             email: user?.email,
             role: user?.role,
+            accountType: user?.accountType,
+            studentProfilesCount: user?.studentProfiles?.length || 0,
             hasPassword: !!user?.password,
           });
 
@@ -114,8 +116,9 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            accountType: user.accountType,
             teacherProfile: user.teacherProfile,
-            studentProfile: user.studentProfile,
+            studentProfiles: user.studentProfiles,
             isAdmin:
               user.role === "ADMIN" || user.teacherProfile?.isAdmin || false,
           };
@@ -124,6 +127,8 @@ export const authOptions: NextAuthOptions = {
             id: authResult.id,
             email: authResult.email,
             role: authResult.role,
+            accountType: authResult.accountType,
+            studentProfilesCount: authResult.studentProfiles?.length || 0,
             isAdmin: authResult.isAdmin,
           });
 
@@ -155,14 +160,24 @@ export const authOptions: NextAuthOptions = {
         authLog.info("Adding user data to JWT token", {
           id: user.id,
           role: user.role,
+          accountType: user.accountType,
           hasTeacherProfile: !!user.teacherProfile,
-          hasStudentProfile: !!user.studentProfile,
+          studentProfilesCount: user.studentProfiles?.length || 0,
           isAdmin: user.isAdmin,
         });
         token.role = user.role;
+        token.accountType = user.accountType;
         token.teacherProfile = user.teacherProfile;
-        token.studentProfile = user.studentProfile;
+        token.studentProfiles = user.studentProfiles;
         token.isAdmin = user.isAdmin;
+
+        // Auto-set activeStudentProfileId for INDIVIDUAL accounts
+        if (user.accountType === 'INDIVIDUAL' && user.studentProfiles && user.studentProfiles.length === 1) {
+          token.activeStudentProfileId = user.studentProfiles[0].id;
+          authLog.info("Auto-set activeStudentProfileId for INDIVIDUAL account", {
+            activeStudentProfileId: token.activeStudentProfileId,
+          });
+        }
       }
 
       authLog.info("JWT token prepared", {
@@ -189,14 +204,19 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.id = token.sub!;
         session.user.role = token.role;
+        session.user.accountType = token.accountType;
         session.user.teacherProfile = token.teacherProfile;
-        session.user.studentProfile = token.studentProfile;
+        session.user.studentProfiles = token.studentProfiles;
+        session.user.activeStudentProfileId = token.activeStudentProfileId;
         session.user.isAdmin = token.isAdmin;
 
         authLog.info("Session enriched with user data", {
           id: session.user.id,
           role: session.user.role,
+          accountType: session.user.accountType,
           email: session.user.email,
+          studentProfilesCount: session.user.studentProfiles?.length || 0,
+          activeStudentProfileId: session.user.activeStudentProfileId,
           isAdmin: session.user.isAdmin,
         });
       }
