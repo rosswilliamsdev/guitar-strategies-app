@@ -42,9 +42,13 @@ async function handleGET(
     const isTeacher =
       session.user.role === "TEACHER" &&
       invoice.teacherId === session.user.teacherProfile?.id;
+
+    // For students: use activeStudentProfileId (auto-set for INDIVIDUAL, manually set for FAMILY)
     const isStudent =
       session.user.role === "STUDENT" &&
-      invoice.studentId === session.user.studentProfile?.id;
+      session.user.activeStudentProfileId &&
+      invoice.studentId === session.user.activeStudentProfileId;
+
     const isAdmin = session.user.role === "ADMIN";
 
     if (!isTeacher && !isStudent && !isAdmin) {

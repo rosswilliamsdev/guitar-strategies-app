@@ -23,10 +23,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get student profile
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id }
-    });
+    // For FAMILY accounts, use activeStudentProfileId
+    // For INDIVIDUAL accounts, find by userId
+    const studentProfile = session.user.activeStudentProfileId
+      ? await prisma.studentProfile.findUnique({
+          where: { id: session.user.activeStudentProfileId },
+        })
+      : await prisma.studentProfile.findFirst({
+          where: { userId: session.user.id, isActive: true },
+        });
 
     if (!studentProfile) {
       return NextResponse.json(

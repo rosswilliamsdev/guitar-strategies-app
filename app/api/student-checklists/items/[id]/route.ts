@@ -43,9 +43,15 @@ export async function GET(
 
     // Check authorization based on role
     if (session.user.role === "STUDENT") {
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: session.user.id },
-      });
+      // For FAMILY accounts, use activeStudentProfileId
+      // For INDIVIDUAL accounts, find by userId
+      const studentProfile = session.user.activeStudentProfileId
+        ? await prisma.studentProfile.findUnique({
+            where: { id: session.user.activeStudentProfileId },
+          })
+        : await prisma.studentProfile.findFirst({
+            where: { userId: session.user.id, isActive: true },
+          });
 
       if (!studentProfile || item.checklist.studentId !== studentProfile.id) {
         return NextResponse.json(
@@ -117,9 +123,15 @@ export async function PUT(
 
     // Check authorization based on role
     if (session.user.role === "STUDENT") {
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: session.user.id },
-      });
+      // For FAMILY accounts, use activeStudentProfileId
+      // For INDIVIDUAL accounts, find by userId
+      const studentProfile = session.user.activeStudentProfileId
+        ? await prisma.studentProfile.findUnique({
+            where: { id: session.user.activeStudentProfileId },
+          })
+        : await prisma.studentProfile.findFirst({
+            where: { userId: session.user.id, isActive: true },
+          });
 
       if (!studentProfile || item.checklist.studentId !== studentProfile.id) {
         return NextResponse.json(
@@ -211,9 +223,15 @@ export async function DELETE(
 
     // Check authorization based on role
     if (session.user.role === "STUDENT") {
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: session.user.id },
-      });
+      // For FAMILY accounts, use activeStudentProfileId
+      // For INDIVIDUAL accounts, find by userId
+      const studentProfile = session.user.activeStudentProfileId
+        ? await prisma.studentProfile.findUnique({
+            where: { id: session.user.activeStudentProfileId },
+          })
+        : await prisma.studentProfile.findFirst({
+            where: { userId: session.user.id, isActive: true },
+          });
 
       if (!studentProfile || item.checklist.studentId !== studentProfile.id) {
         return NextResponse.json(

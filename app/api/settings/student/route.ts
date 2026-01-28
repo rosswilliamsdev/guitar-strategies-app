@@ -23,10 +23,15 @@ async function handlePUT(request: NextRequest) {
     // Validate the request body
     const validatedData = studentProfileSchema.parse(body);
 
-    // Check if student profile exists
-    const existingProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id }
-    });
+    // For FAMILY accounts, use activeStudentProfileId
+    // For INDIVIDUAL accounts, find by userId
+    const existingProfile = session.user.activeStudentProfileId
+      ? await prisma.studentProfile.findUnique({
+          where: { id: session.user.activeStudentProfileId },
+        })
+      : await prisma.studentProfile.findFirst({
+          where: { userId: session.user.id, isActive: true },
+        });
 
     if (!existingProfile) {
       return NextResponse.json({ error: 'Student profile not found' }, { status: 404 });
@@ -43,9 +48,9 @@ async function handlePUT(request: NextRequest) {
         },
       });
 
-      // Update student profile
+      // Update student profile using the correct ID
       await tx.studentProfile.update({
-        where: { userId: session.user.id },
+        where: { id: existingProfile.id },
         data: {
           goals: validatedData.goals,
           phoneNumber: validatedData.phoneNumber,

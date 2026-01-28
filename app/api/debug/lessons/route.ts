@@ -45,13 +45,21 @@ export async function GET(request: NextRequest) {
       profileId = teacherProfile.id;
       whereClause.teacherId = teacherProfile.id;
     } else if (session.user.role === "STUDENT") {
-      const studentProfile = await prisma.studentProfile.findUnique({
-        where: { userId: session.user.id },
-      });
+      // For FAMILY accounts, use activeStudentProfileId
+      // For INDIVIDUAL accounts, find by userId
+      const studentProfile = session.user.activeStudentProfileId
+        ? await prisma.studentProfile.findUnique({
+            where: { id: session.user.activeStudentProfileId },
+          })
+        : await prisma.studentProfile.findFirst({
+            where: { userId: session.user.id, isActive: true },
+          });
 
       apiLog.info("Student profile lookup", {
         found: !!studentProfile,
         profileId: studentProfile?.id,
+        accountType: session.user.accountType,
+        activeStudentProfileId: session.user.activeStudentProfileId,
       });
 
       if (!studentProfile) {

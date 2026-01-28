@@ -40,6 +40,7 @@ export default function ProfileSelector({
 
       // Force a hard refresh to load the updated session
       window.location.href = "/dashboard";
+      router.push('/dashboard')
 
     } catch (error) {
       alert(
