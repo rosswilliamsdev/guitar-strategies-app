@@ -99,6 +99,27 @@ export default withAuth(
       return sizeCheck;
     }
 
+    // FAMILY account profile selection enforcement
+    // Redirect to profile selector if FAMILY account hasn't selected a profile
+    if (token && token.accountType === 'FAMILY' && !token.activeStudentProfileId) {
+      // Allow access to select-profile page and its API
+      if (pathname !== '/select-profile' && pathname !== '/api/auth/select-profile') {
+        // Also allow logout and NextAuth routes
+        if (!pathname.startsWith('/api/auth/signout') && !pathname.startsWith('/api/auth/session')) {
+          const response = NextResponse.redirect(new URL('/select-profile', req.url));
+          return applySecurityHeaders(response, defaultSecurityConfig);
+        }
+      }
+    }
+
+    // Prevent non-FAMILY accounts from accessing select-profile
+    if (pathname === '/select-profile') {
+      if (!token || token.accountType !== 'FAMILY') {
+        const response = NextResponse.redirect(new URL('/dashboard', req.url));
+        return applySecurityHeaders(response, defaultSecurityConfig);
+      }
+    }
+
     // TODO: Re-enable CSRF protection after fixing Edge Runtime compatibility
     // Check CSRF protection for API routes
     // if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/')) {
@@ -201,12 +222,14 @@ export default withAuth(
           pathname === "/register" ||
           pathname === "/forgot-password" ||
           pathname.startsWith("/reset-password") ||
+          pathname === "/select-profile" || // Profile selection page
           pathname.startsWith("/_next") ||
           pathname.startsWith("/.well-known") ||
           pathname.startsWith("/favicon.ico") ||
           pathname.startsWith("/api/auth") ||
           pathname.startsWith("/api/cron") ||
           pathname.startsWith("/api/health") ||
+          pathname.startsWith("/api/test") || // Test endpoints
           pathname === "/api/teachers" || // Public endpoint for registration
           pathname === "/api/organizations" // Public endpoint for registration
         ) {

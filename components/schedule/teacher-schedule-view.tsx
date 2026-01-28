@@ -79,7 +79,7 @@ interface TeacherAvailability {
 interface BlockedTime {
   id: string;
   startTime: Date | string; // Can be Date object or ISO string from serialization
-  endTime: Date | string;   // Can be Date object or ISO string from serialization
+  endTime: Date | string; // Can be Date object or ISO string from serialization
   reason?: string;
 }
 
@@ -124,7 +124,7 @@ const DAYS_OF_WEEK = [
 
 // Helper function to ensure dates are properly converted from ISO strings
 const ensureDate = (date: Date | string): Date => {
-  return typeof date === 'string' ? new Date(date) : date;
+  return typeof date === "string" ? new Date(date) : date;
 };
 
 // Generate 30-minute time slots based on teacher's availability

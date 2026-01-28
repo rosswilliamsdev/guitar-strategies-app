@@ -124,23 +124,37 @@ export async function getTeacherData(userId: string) {
   }
 }
 
-export async function getStudentData(userId: string) {
+export async function getStudentData(userId: string, activeStudentProfileId?: string) {
   try {
-    log.info("Looking for student with userId", { userId });
+    log.info("Looking for student data", { userId, activeStudentProfileId });
 
-    // Get student profile
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId },
-      include: {
-        user: true,
-        teacher: {
-          include: { user: true },
-        },
-        lessons: {
-          orderBy: { date: "desc" },
-        },
-      },
-    });
+    // For FAMILY accounts, use the activeStudentProfileId
+    // For INDIVIDUAL accounts, find by userId
+    const studentProfile = activeStudentProfileId
+      ? await prisma.studentProfile.findUnique({
+          where: { id: activeStudentProfileId },
+          include: {
+            user: true,
+            teacher: {
+              include: { user: true },
+            },
+            lessons: {
+              orderBy: { date: "desc" },
+            },
+          },
+        })
+      : await prisma.studentProfile.findFirst({
+          where: { userId, isActive: true },
+          include: {
+            user: true,
+            teacher: {
+              include: { user: true },
+            },
+            lessons: {
+              orderBy: { date: "desc" },
+            },
+          },
+        });
 
     log.info("Student profile found", { found: !!studentProfile });
 
@@ -246,7 +260,7 @@ export default async function DashboardPage() {
   }
 
   if (session.user.role === "STUDENT") {
-    const studentData = await getStudentData(session.user.id);
+    const studentData = await getStudentData(session.user.id, session.user.activeStudentProfileId);
 
     if (studentData) {
       return <StudentDashboard {...studentData} />;

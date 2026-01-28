@@ -24,7 +24,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-    updateAge: 24 * 60 * 60, // Update session every 24 hours
+    updateAge: 0, // Allow session updates at any time (required for profile selection)
   },
   jwt: {
     maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
@@ -148,7 +148,7 @@ export const authOptions: NextAuthOptions = {
      * JWT callback - runs whenever a JWT is created, updated, or accessed.
      * Adds user role and profile data to the token for session use.
      */
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, session }) {
       authLog.info("JWT callback triggered", {
         trigger,
         hasUser: !!user,
@@ -178,6 +178,14 @@ export const authOptions: NextAuthOptions = {
             activeStudentProfileId: token.activeStudentProfileId,
           });
         }
+      }
+
+      // Handle session update trigger (for profile selection)
+      if (trigger === "update" && session?.activeStudentProfileId) {
+        token.activeStudentProfileId = session.activeStudentProfileId;
+        authLog.info("Updated activeStudentProfileId via session update", {
+          activeStudentProfileId: token.activeStudentProfileId,
+        });
       }
 
       authLog.info("JWT token prepared", {
