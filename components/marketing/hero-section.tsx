@@ -7,7 +7,7 @@ export function HeroSection() {
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="font-display text-display-xl md:text-6xl text-brand-black mb-6">
-            Transform Your Guitar Teaching with{" "}
+            Transform Your Teaching with{" "}
             <span className="text-brand-orange">Digital Tools</span>
           </h1>
 
@@ -20,7 +20,7 @@ export function HeroSection() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/register">
               <Button size="lg" className="px-8 py-3 text-lg">
-                Start Teaching Today
+                Sign Up Today
               </Button>
             </Link>
             <Link href="/login">
@@ -32,10 +32,6 @@ export function HeroSection() {
                 Sign In
               </Button>
             </Link>
-          </div>
-
-          <div className="mt-12 text-sm text-gray-500">
-            <p>Join hundreds of guitar teachers already using our platform</p>
           </div>
         </div>
       </div>
