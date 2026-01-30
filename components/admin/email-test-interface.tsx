@@ -30,6 +30,7 @@ export default function EmailTestInterface() {
     { value: "basic", label: "Basic Test Email" },
     { value: "lesson-booking", label: "Lesson Booking Notification" },
     { value: "lesson-cancellation", label: "Lesson Cancellation Notification" },
+    { value: "lesson-completed", label: "Lesson Completion Summary" },
     {
       value: "checklist-completion",
       label: "Checklist Completion Notification",
@@ -212,6 +213,10 @@ export default function EmailTestInterface() {
               <li>
                 • <strong>Lesson Cancellations:</strong> Sent to both students
                 and teachers when lessons are cancelled
+              </li>
+              <li>
+                • <strong>Lesson Summaries:</strong> Sent to students when teachers
+                log completed lessons with notes, homework, and attachments
               </li>
               <li>
                 • <strong>Checklist Completions:</strong> Sent to students when

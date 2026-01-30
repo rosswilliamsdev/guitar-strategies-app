@@ -120,6 +120,70 @@ export const DEFAULT_TEMPLATES = {
         </body>
       </html>
     `
+  },
+  LESSON_COMPLETED: {
+    subject: 'Lesson Summary - {{lessonDate}}',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: Inter, system-ui, sans-serif; line-height: 1.6; color: #0a0a0a; margin: 0; padding: 0; background-color: #fafafa; }
+            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+            .header { background-color: #14b8b3; color: #ffffff; padding: 32px 24px; text-align: center; }
+            .content { padding: 32px 24px; }
+            .lesson-info { background-color: #f0fdfc; border-left: 4px solid #14b8b3; padding: 16px; margin: 16px 0; }
+            .section { margin: 24px 0; }
+            .section-title { font-weight: 600; color: #14b8b3; margin-bottom: 8px; font-size: 16px; }
+            .notes-content { background-color: #f5f5f5; padding: 16px; border-radius: 6px; line-height: 1.8; }
+            .button { display: inline-block; background-color: #14b8b3; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500; margin: 8px 0; }
+            .button:hover { background-color: #0d9289; }
+            .attachment-button { display: inline-block; background-color: #ffffff; color: #14b8b3; border: 2px solid #14b8b3; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 500; margin: 8px 4px; }
+            .attachment-button:hover { background-color: #f0fdfc; }
+            .footer { background-color: #f5f5f5; padding: 24px; text-align: center; font-size: 14px; color: #737373; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1 style="margin: 0; font-size: 28px;">🎸 Lesson Complete!</h1>
+            </div>
+            <div class="content">
+              <p>Hi {{studentName}},</p>
+              <p>{{teacherName}} has logged your lesson. Here's a summary of what was covered:</p>
+
+              <div class="lesson-info">
+                <strong>Lesson Details:</strong><br>
+                Date: {{lessonDate}}<br>
+                Duration: {{duration}} minutes
+              </div>
+
+              <div class="section">
+                <div class="section-title">📝 Lesson Notes</div>
+                <div class="notes-content">
+                  {{notes}}
+                </div>
+              </div>
+
+              {{attachmentSection}}
+
+              <p style="margin-top: 24px;">Keep up the great work! See you at your next lesson.</p>
+
+              <div style="text-align: center; margin: 32px 0; padding-top: 24px; border-top: 1px solid #e5e5e5;">
+                <a href="{{appUrl}}/lessons/{{lessonId}}" style="color: #14b8b3; text-decoration: none; font-weight: 500;">
+                  → View Full Lesson Details
+                </a>
+              </div>
+            </div>
+            <div class="footer">
+              <p>Guitar Strategies - Manage Your Music Journey</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
   }
 };
 

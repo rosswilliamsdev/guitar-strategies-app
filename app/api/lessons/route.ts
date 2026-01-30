@@ -360,6 +360,7 @@ async function handlePOST(request: NextRequest) {
         teacher: {
           include: { user: true },
         },
+        attachments: true,
       },
     });
 
@@ -382,6 +383,9 @@ async function handlePOST(request: NextRequest) {
       });
 
       if (emailPreference) {
+        // Get app base URL
+        const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
         // Format the lesson date
         const lessonDate = new Date(lesson.date).toLocaleDateString("en-US", {
           weekday: "long",
@@ -389,6 +393,48 @@ async function handlePOST(request: NextRequest) {
           month: "long",
           day: "numeric",
         });
+
+        // Build attachment data based on count
+        const attachmentCount = lesson.attachments?.length || 0;
+        let attachmentSection = '';
+
+        if (attachmentCount > 0) {
+          if (attachmentCount <= 3) {
+            // Show individual download buttons for 1-3 attachments
+            const attachmentButtons = lesson.attachments
+              .map(att => `
+                <a href="${appUrl}/api/lessons/${lesson.id}/attachments/${att.id}"
+                   class="attachment-button"
+                   style="display: inline-block; background-color: #ffffff; color: #14b8b3; border: 2px solid #14b8b3; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 500; margin: 8px 4px;">
+                  📎 ${att.originalName}
+                </a>
+              `)
+              .join('');
+
+            attachmentSection = `
+              <div class="section">
+                <div class="section-title">📎 Lesson Materials (${attachmentCount})</div>
+                <div style="margin: 16px 0;">
+                  ${attachmentButtons}
+                </div>
+              </div>
+            `;
+          } else {
+            // Show single "View All" button for 4+ attachments
+            attachmentSection = `
+              <div class="section">
+                <div class="section-title">📎 Lesson Materials (${attachmentCount})</div>
+                <div style="text-align: center; margin: 16px 0;">
+                  <a href="${appUrl}/lessons/${lesson.id}"
+                     class="button"
+                     style="display: inline-block; background-color: #14b8b3; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 500;">
+                    View All ${attachmentCount} Materials
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+        }
 
         // Render the email template with lesson data
         const emailTemplate = await renderEmailWithFallback(
@@ -401,6 +447,10 @@ async function handlePOST(request: NextRequest) {
             notes: lesson.notes || "No notes provided",
             homework: lesson.homework || "No homework assigned",
             progress: lesson.progress || "No progress update provided",
+            lessonId: lesson.id,
+            appUrl,
+            attachmentCount: attachmentCount.toString(),
+            attachmentSection,
           }
         );
 
@@ -416,6 +466,7 @@ async function handlePOST(request: NextRequest) {
             lessonId: lesson.id,
             studentId: studentProfile.id,
             studentEmail: lesson.student.user.email,
+            attachmentCount,
           });
         } else {
           emailLog.error("Failed to send lesson completion email", {

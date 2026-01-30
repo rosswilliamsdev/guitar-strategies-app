@@ -215,6 +215,57 @@ export async function POST(request: NextRequest) {
         `;
         break;
 
+      case 'lesson-completed':
+        subject = 'Test: Lesson Summary - January 15, 2025';
+        content = `
+          <h2>🎸 Lesson Complete!</h2>
+          <p>Hi Test Student,</p>
+          <p>Test Teacher has logged your lesson. Here's a summary of what was covered:</p>
+
+          <div class="info-box">
+            <strong>Lesson Details:</strong><br>
+            Date: Wednesday, January 15, 2025<br>
+            Duration: 30 minutes
+          </div>
+
+          <div style="margin: 24px 0;">
+            <div style="font-weight: 600; color: #14b8b3; margin-bottom: 8px; font-size: 16px;">📝 Lesson Notes</div>
+            <div style="background-color: #f5f5f5; padding: 16px; border-radius: 6px; line-height: 1.8;">
+              <p>Today we worked on the A minor pentatonic scale in the 5th position. Great progress on alternate picking! Student is ready to start learning "Stairway to Heaven" intro next week.</p>
+              <ul>
+                <li>A minor pentatonic - 5th position</li>
+                <li>Alternate picking exercises</li>
+                <li>Metronome practice at 80 BPM</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="margin: 24px 0;">
+            <div style="font-weight: 600; color: #14b8b3; margin-bottom: 8px; font-size: 16px;">📎 Lesson Materials (2)</div>
+            <div style="margin: 16px 0;">
+              <a href="http://localhost:3000/api/lessons/test-123/attachments/att-1"
+                 style="display: inline-block; background-color: #ffffff; color: #14b8b3; border: 2px solid #14b8b3; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 500; margin: 8px 4px;">
+                📎 A-Minor-Pentatonic-Chart.pdf
+              </a>
+              <a href="http://localhost:3000/api/lessons/test-123/attachments/att-2"
+                 style="display: inline-block; background-color: #ffffff; color: #14b8b3; border: 2px solid #14b8b3; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 500; margin: 8px 4px;">
+                📎 Stairway-Intro-TAB.pdf
+              </a>
+            </div>
+          </div>
+
+          <p style="margin-top: 24px;">Keep up the great work! See you at your next lesson.</p>
+
+          <div style="text-align: center; margin: 32px 0; padding-top: 24px; border-top: 1px solid #e5e5e5;">
+            <a href="http://localhost:3000/lessons/test-123" style="color: #14b8b3; text-decoration: none; font-weight: 500;">
+              → View Full Lesson Details
+            </a>
+          </div>
+
+          <p><strong>⚠️ This is a test email.</strong> No actual lesson has been logged.</p>
+        `;
+        break;
+
       case 'student-invitation':
         subject = 'Test: Student Invitation Email';
         content = `
