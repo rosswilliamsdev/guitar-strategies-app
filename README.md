@@ -106,15 +106,15 @@ The seeding script creates test accounts for all user roles:
 ```bash
 # Admin Account
 Email: admin@guitarstrategies.com
-Password: admin123
+Password: Admin123!
 
 # Teacher Account
 Email: teacher@guitarstrategies.com
-Password: teacher123
+Password: Admin123!
 
 # Student Account
 Email: student@guitarstrategies.com
-Password: student123
+Password: Admin123!
 ```
 
 ## 🗂️ Project Structure

@@ -1056,18 +1056,18 @@ npm run seed
 # Test user credentials
 Admin:
   Email: admin@guitarstrategies.com
-  Password: admin123
+  Password: Admin123!
   Role: ADMIN
 
 Teacher:
   Email: teacher@guitarstrategies.com
-  Password: teacher123
+  Password: Admin123!
   Role: TEACHER
   Features: Bio, hourly rate ($60/hr), availability schedule
 
 Student:
   Email: student@guitarstrategies.com
-  Password: student123
+  Password: Admin123!
   Role: STUDENT
   Features: Assigned to test teacher, intermediate skill level
 ```
