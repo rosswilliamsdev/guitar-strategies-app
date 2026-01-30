@@ -242,6 +242,11 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // FAMILY accounts must have an active profile selected
+  if (session.user.accountType === 'FAMILY' && !session.user.activeStudentProfileId) {
+    redirect("/select-profile");
+  }
+
   // All teachers get the dual-role dashboard
   if (session.user.role === "TEACHER") {
     const teacherData = await getTeacherData(session.user.id);
@@ -260,12 +265,23 @@ export default async function DashboardPage() {
   }
 
   if (session.user.role === "STUDENT") {
-    const studentData = await getStudentData(session.user.id, session.user.activeStudentProfileId);
+    const studentData = await getStudentData(session.user.id, session.user.activeStudentProfileId ?? undefined);
 
     if (studentData) {
       return <StudentDashboard {...studentData} />;
     } else {
-      log.error("Student profile not found", { userId: session.user.id });
+      log.error("Student profile not found", {
+        userId: session.user.id,
+        activeStudentProfileId: session.user.activeStudentProfileId,
+        accountType: session.user.accountType
+      });
+
+      // For FAMILY accounts, redirect back to profile selector with error
+      if (session.user.accountType === 'FAMILY') {
+        redirect("/select-profile?error=profile_load_failed");
+      }
+
+      // For INDIVIDUAL accounts, this is a critical error
       redirect("/login?error=profile_not_found");
     }
   }

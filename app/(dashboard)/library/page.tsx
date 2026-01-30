@@ -82,8 +82,29 @@ export default async function LibraryPage() {
 
     teacherId = teacherProfile.id;
   } else if (isStudent) {
+    // For FAMILY accounts, activeStudentProfileId must be set via profile selector
+    const activeProfileId = session.user.activeStudentProfileId;
+
+    if (!activeProfileId) {
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <Card className="p-6">
+            <h1 className="text-2xl font-semibold text-foreground mb-4">No Profile Selected</h1>
+            <p className="text-muted-foreground">
+              Please select a student profile to access the library.
+            </p>
+            <div className="mt-4">
+              <Link href="/select-profile">
+                <Button>Select Profile</Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
+      );
+    }
+
     const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id }
+      where: { id: activeProfileId }
     });
 
     if (!studentProfile) {
