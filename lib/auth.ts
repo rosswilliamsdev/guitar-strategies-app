@@ -31,16 +31,16 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      name: `${process.env.NODE_ENV === "production" ? "__Secure-" : ""}next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },
-  useSecureCookies: process.env.NODE_ENV === 'production',
+  useSecureCookies: process.env.NODE_ENV === "production",
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -96,7 +96,7 @@ export const authOptions: NextAuthOptions = {
           // Verify password using bcrypt
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
-            user.password
+            user.password,
           );
 
           authLog.info("Password validation completed", {
@@ -157,6 +157,7 @@ export const authOptions: NextAuthOptions = {
       });
 
       if (user) {
+        // This runs on initial sign-in
         authLog.info("Adding user data to JWT token", {
           id: user.id,
           role: user.role,
@@ -171,21 +172,85 @@ export const authOptions: NextAuthOptions = {
         token.studentProfiles = user.studentProfiles;
         token.isAdmin = user.isAdmin;
 
-        // Auto-set activeStudentProfileId for INDIVIDUAL accounts
-        if (user.accountType === 'INDIVIDUAL' && user.studentProfiles && user.studentProfiles.length === 1) {
-          token.activeStudentProfileId = user.studentProfiles[0].id;
-          authLog.info("Auto-set activeStudentProfileId for INDIVIDUAL account", {
-            activeStudentProfileId: token.activeStudentProfileId,
-          });
+        // Auto-set activeStudentProfileId for INDIVIDUAL accounts only
+        // FAMILY accounts must select profile via /select-profile
+        if (
+          user.accountType === "INDIVIDUAL" &&
+          user.studentProfiles &&
+          user.studentProfiles.length === 1
+        ) {
+          try {
+            token.activeStudentProfileId = user.studentProfiles[0].id;
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { activeStudentProfileId: user.studentProfiles[0].id },
+            });
+            authLog.info(
+              "Auto-set and saved activeStudentProfileId for INDIVIDUAL account",
+              {
+                activeStudentProfileId: token.activeStudentProfileId,
+              },
+            );
+          } catch (error) {
+            authLog.error("Error auto-setting activeStudentProfileId", {
+              error: error instanceof Error ? error.message : String(error),
+              userId: user.id,
+            });
+          }
+        } else if (user.accountType === "FAMILY") {
+          // Clear activeStudentProfileId on login - force profile selection each time
+          token.activeStudentProfileId = undefined;
+
+          // Clear from database to ensure fresh selection
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { activeStudentProfileId: null },
+            });
+            authLog.info(
+              "Cleared activeStudentProfileId for FAMILY account login",
+              {
+                userId: user.id,
+                studentProfilesCount: user.studentProfiles?.length || 0,
+              },
+            );
+          } catch (error) {
+            authLog.error("Error clearing activeStudentProfileId", {
+              error: error instanceof Error ? error.message : String(error),
+              userId: user.id,
+            });
+          }
         }
       }
 
-      // Handle session update trigger (for profile selection)
-      if (trigger === "update" && session?.activeStudentProfileId) {
-        token.activeStudentProfileId = session.activeStudentProfileId;
-        authLog.info("Updated activeStudentProfileId via session update", {
-          activeStudentProfileId: token.activeStudentProfileId,
-        });
+      // On subsequent requests (not initial login), ALWAYS check database for activeStudentProfileId
+      // This ensures FAMILY accounts maintain their selected profile across all requests
+      if (!user && token.sub && token.accountType === "FAMILY") {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { activeStudentProfileId: true },
+          });
+
+          // Always sync token with database value (could be null or a profile ID)
+          const previousProfileId = token.activeStudentProfileId;
+          token.activeStudentProfileId = dbUser?.activeStudentProfileId || undefined;
+
+          if (token.activeStudentProfileId !== previousProfileId) {
+            authLog.info(
+              "Updated activeStudentProfileId from database for FAMILY account",
+              {
+                previous: previousProfileId,
+                current: token.activeStudentProfileId,
+              },
+            );
+          }
+        } catch (error) {
+          authLog.error("Error loading activeStudentProfileId from database", {
+            error: error instanceof Error ? error.message : String(error),
+            userId: token.sub,
+          });
+        }
       }
 
       authLog.info("JWT token prepared", {
@@ -209,7 +274,17 @@ export const authOptions: NextAuthOptions = {
         sessionUserEmail: session.user?.email,
       });
 
-      if (token && session.user) {
+      if (!token) {
+        authLog.warn("Session callback called without token");
+        return session;
+      }
+
+      if (!session.user) {
+        authLog.warn("Session callback called without session.user");
+        return session;
+      }
+
+      try {
         session.user.id = token.sub!;
         session.user.role = token.role;
         session.user.accountType = token.accountType;
@@ -226,6 +301,10 @@ export const authOptions: NextAuthOptions = {
           studentProfilesCount: session.user.studentProfiles?.length || 0,
           activeStudentProfileId: session.user.activeStudentProfileId,
           isAdmin: session.user.isAdmin,
+        });
+      } catch (error) {
+        authLog.error("Error enriching session", {
+          error: error instanceof Error ? error.message : String(error),
         });
       }
 
