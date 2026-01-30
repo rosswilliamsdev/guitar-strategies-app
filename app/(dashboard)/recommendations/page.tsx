@@ -146,10 +146,21 @@ export default async function RecommendationsPage() {
       </div>
     );
   } else if (session.user.role === "STUDENT") {
+    // FAMILY accounts must have an active profile selected
+    if (session.user.accountType === 'FAMILY' && !session.user.activeStudentProfileId) {
+      redirect("/select-profile");
+    }
+
     // Student view - view teacher's recommendations
-    const studentProfile = await prisma.studentProfile.findUnique({
-      where: { userId: session.user.id },
-    });
+    // For FAMILY accounts, use activeStudentProfileId
+    // For INDIVIDUAL accounts, find by userId
+    const studentProfile = session.user.activeStudentProfileId
+      ? await prisma.studentProfile.findUnique({
+          where: { id: session.user.activeStudentProfileId },
+        })
+      : await prisma.studentProfile.findFirst({
+          where: { userId: session.user.id, isActive: true },
+        });
 
     if (!studentProfile) {
       return (
