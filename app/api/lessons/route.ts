@@ -133,6 +133,20 @@ async function handleGET(request: NextRequest) {
           });
 
       if (!studentProfile) {
+        // For FAMILY accounts without a selected profile, return empty results
+        // instead of an error (they need to select a profile first)
+        if (session.user.accountType === "FAMILY" && !session.user.activeStudentProfileId) {
+          apiLog.info("FAMILY account without selected profile - returning empty lessons", {
+            userId: session.user.id,
+            accountType: session.user.accountType,
+          });
+
+          // Return empty paginated response
+          const emptyResponse = await createPaginatedResponse([], 1, 20, 0);
+          return NextResponse.json(emptyResponse);
+        }
+
+        // For other cases, this is a real error
         return NextResponse.json(
           { error: "Student profile not found" },
           { status: 404 }
@@ -152,13 +166,25 @@ async function handleGET(request: NextRequest) {
               where: { userId: session.user.id },
             })
           )?.id
-        : (
-            await prisma.studentProfile.findUnique({
-              where: { userId: session.user.id },
-            })
-          )?.id;
+        : session.user.activeStudentProfileId
+          ? session.user.activeStudentProfileId
+          : (
+              await prisma.studentProfile.findFirst({
+                where: { userId: session.user.id, isActive: true },
+              })
+            )?.id;
 
     if (!profileId) {
+      // For FAMILY accounts without a selected profile, return empty results
+      if (session.user.accountType === "FAMILY" && !session.user.activeStudentProfileId) {
+        apiLog.info("FAMILY account without selected profile - returning empty lessons (cache path)", {
+          userId: session.user.id,
+          accountType: session.user.accountType,
+        });
+        const emptyResponse = await createPaginatedResponse([], 1, 20, 0);
+        return NextResponse.json(emptyResponse);
+      }
+
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
