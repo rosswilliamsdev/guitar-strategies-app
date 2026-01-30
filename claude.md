@@ -656,10 +656,20 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   email: string
   name: string
   role: 'STUDENT' | 'TEACHER' | 'ADMIN'
+  accountType?: 'INDIVIDUAL' | 'FAMILY'  // For STUDENT role only
+  activeStudentProfileId?: string        // Currently selected profile (FAMILY accounts)
   teacherProfile?: TeacherProfile
-  studentProfile?: StudentProfile
+  studentProfiles?: StudentProfile[]     // Can have multiple profiles (FAMILY accounts)
 }
 ```
+
+**Account Types (STUDENT role only):**
+- **INDIVIDUAL**: Traditional single student account (1 user = 1 student profile)
+- **FAMILY**: Family account with multiple student profiles (1 parent email = multiple children)
+  - Parent logs in with single email
+  - Selects which child's profile to view via `/select-profile` page
+  - `activeStudentProfileId` tracks currently selected profile
+  - Profile selection persists throughout session (7 days)
 
 ### TeacherProfile Model
 
@@ -695,8 +705,9 @@ text-6xl: 3.75rem (60px)    /* Hero text */
 ````typescript
 {
   id: string
-  userId: string
+  userId: string                  // Parent user ID (can be shared across multiple profiles)
   teacherId: string
+  profileName?: string            // Display name for FAMILY accounts (e.g., "John's Profile")
   joinedAt: DateTime
 
   // Student preferences
@@ -704,11 +715,16 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   goals?: string
   instrument: string              // Default: "guitar"
   phoneNumber?: string
-  parentEmail?: string           // For minor students
+  parentEmail?: string            // For minor students
   emergencyContact?: string
   isActive: boolean
 }
-``` .
+````
+
+**Important Notes:**
+- **userId is NOT unique**: FAMILY accounts have multiple StudentProfiles with the same userId
+- **profileName**: Used to distinguish between children in FAMILY accounts (e.g., "Sarah", "Michael")
+- **One-to-Many Relationship**: One User can have many StudentProfiles (FAMILY accounts)
 
 ### Lesson Model
 
@@ -807,9 +823,207 @@ session.user = {
   email: string
   name: string
   role: Role
+  accountType?: 'INDIVIDUAL' | 'FAMILY'
+  activeStudentProfileId?: string
   teacherProfile?: { id, bio, hourlyRate }
-  studentProfile?: { id, teacherId, skillLevel }
+  studentProfiles?: StudentProfile[]
+  isAdmin: boolean
 }
+```
+
+## FAMILY Account Architecture
+
+### Overview
+
+FAMILY accounts allow a single parent/guardian to manage multiple student profiles (e.g., multiple children) under one email login. This architecture supports:
+
+- **Single Login**: One parent email for entire family
+- **Profile Selection**: Parent selects which child's data to view
+- **Session Persistence**: Selected profile persists throughout session (7 days)
+- **Profile Switching**: Parents can switch between children's profiles
+
+### Authentication Flow
+
+**1. Login (FAMILY account)**
+```
+User enters credentials
+  ↓
+JWT callback clears activeStudentProfileId in database
+  ↓
+Token: { accountType: "FAMILY", activeStudentProfileId: undefined }
+  ↓
+Redirect to /select-profile
+```
+
+**2. Profile Selection**
+```
+Parent clicks on child's profile card
+  ↓
+API saves activeStudentProfileId to database
+  ↓
+useSession().update() triggers JWT callback
+  ↓
+JWT callback loads activeStudentProfileId from database
+  ↓
+Token updated: { activeStudentProfileId: "profile-id" }
+  ↓
+Redirect to /dashboard
+```
+
+**3. Session Persistence**
+```
+On EVERY subsequent request:
+  ↓
+JWT callback runs (updateAge: 0)
+  ↓
+ALWAYS syncs activeStudentProfileId from database
+  ↓
+Token stays updated throughout 7-day session
+```
+
+### Critical Implementation Patterns
+
+**1. API Routes (Student Data)**
+
+ALWAYS use this pattern when fetching student data:
+
+```typescript
+// For FAMILY accounts, use activeStudentProfileId
+// For INDIVIDUAL accounts, find by userId
+const studentProfile = session.user.activeStudentProfileId
+  ? await prisma.studentProfile.findUnique({
+      where: { id: session.user.activeStudentProfileId },
+    })
+  : await prisma.studentProfile.findFirst({
+      where: { userId: session.user.id, isActive: true },
+    });
+
+if (!studentProfile) {
+  // For FAMILY accounts without a profile, return empty results
+  if (session.user.accountType === "FAMILY" && !session.user.activeStudentProfileId) {
+    return NextResponse.json({ data: [] });
+  }
+  return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+}
+```
+
+**2. Server-Side Pages (Student Views)**
+
+Pages should check for `activeStudentProfileId` and show helpful messages:
+
+```typescript
+const session = await getServerSession(authOptions);
+
+// FAMILY accounts must have an active profile selected
+if (session.user.accountType === 'FAMILY' && !session.user.activeStudentProfileId) {
+  return (
+    <Card>
+      <p>Please select a student profile to continue.</p>
+      <Link href="/select-profile"><Button>Select Profile</Button></Link>
+    </Card>
+  );
+}
+
+// Use activeStudentProfileId for data fetching
+const studentData = await getStudentData(
+  session.user.id,
+  session.user.activeStudentProfileId
+);
+```
+
+**3. JWT Callback (lib/auth.ts)**
+
+The JWT callback handles profile synchronization:
+
+```typescript
+// On login: Clear FAMILY account profiles
+if (user.accountType === "FAMILY") {
+  token.activeStudentProfileId = undefined;
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { activeStudentProfileId: null },
+  });
+}
+
+// On every request: Sync from database for FAMILY accounts
+if (!user && token.accountType === "FAMILY") {
+  const dbUser = await prisma.user.findUnique({
+    where: { id: token.sub },
+    select: { activeStudentProfileId: true },
+  });
+  token.activeStudentProfileId = dbUser?.activeStudentProfileId || undefined;
+}
+```
+
+**4. Middleware Approach**
+
+Middleware does NOT enforce FAMILY account profile selection due to token caching in Edge Runtime. Instead, **pages handle their own validation** after the JWT callback runs and provides fresh session data.
+
+### Files Already Implementing FAMILY Support
+
+✅ **Core Auth:**
+- `lib/auth.ts` - JWT callback syncs activeStudentProfileId
+- `middleware.ts` - Simplified to let pages handle checks
+- `components/auth/profile-selector.tsx` - Profile selection UI
+- `app/api/auth/select-profile/route.ts` - Profile selection API
+
+✅ **Student Pages:**
+- `app/(dashboard)/dashboard/page.tsx` - Dashboard with FAMILY support
+- `app/(dashboard)/library/page.tsx` - Library with profile check
+- `app/select-profile/page.tsx` - Profile selection page
+
+✅ **API Routes:**
+- `app/api/lessons/route.ts` - Uses activeStudentProfileId
+- `app/api/student-checklists/route.ts` - Uses activeStudentProfileId
+
+### Key Database Changes
+
+```sql
+-- User table
+ALTER TABLE "User" ADD COLUMN "accountType" TEXT; -- 'INDIVIDUAL' | 'FAMILY'
+ALTER TABLE "User" ADD COLUMN "activeStudentProfileId" TEXT;
+
+-- StudentProfile table (removed unique constraint)
+ALTER TABLE "StudentProfile" DROP CONSTRAINT IF EXISTS "StudentProfile_userId_key";
+ALTER TABLE "StudentProfile" ADD COLUMN "profileName" TEXT;
+```
+
+### Common Pitfalls to Avoid
+
+❌ **Don't** query StudentProfile by userId for FAMILY accounts:
+```typescript
+// WRONG - fails for FAMILY accounts with multiple profiles
+const profile = await prisma.studentProfile.findUnique({
+  where: { userId: session.user.id }
+});
+```
+
+✅ **Do** use activeStudentProfileId:
+```typescript
+// CORRECT - works for both INDIVIDUAL and FAMILY
+const profile = session.user.activeStudentProfileId
+  ? await prisma.studentProfile.findUnique({
+      where: { id: session.user.activeStudentProfileId }
+    })
+  : await prisma.studentProfile.findFirst({
+      where: { userId: session.user.id, isActive: true }
+    });
+```
+
+❌ **Don't** assume userId maps to one student:
+```typescript
+// WRONG - assumes one profile per user
+const lessons = await prisma.lesson.findMany({
+  where: { student: { userId: session.user.id } }
+});
+```
+
+✅ **Do** use the resolved studentProfile.id:
+```typescript
+// CORRECT - uses the specific profile ID
+const lessons = await prisma.lesson.findMany({
+  where: { studentId: studentProfile.id }
+});
 ```
 
 ## Email Notification System Architecture
