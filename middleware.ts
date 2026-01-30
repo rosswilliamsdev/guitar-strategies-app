@@ -100,24 +100,20 @@ export default withAuth(
     }
 
     // FAMILY account profile selection enforcement
-    // Redirect to profile selector if FAMILY account hasn't selected a profile
-    if (token && token.accountType === 'FAMILY' && !token.activeStudentProfileId) {
-      // Allow access to select-profile page and its API
-      if (pathname !== '/select-profile' && pathname !== '/api/auth/select-profile') {
-        // Also allow logout and NextAuth routes
-        if (!pathname.startsWith('/api/auth/signout') && !pathname.startsWith('/api/auth/session')) {
-          const response = NextResponse.redirect(new URL('/select-profile', req.url));
-          return applySecurityHeaders(response, defaultSecurityConfig);
-        }
-      }
-    }
+    // Note: JWT callback syncs activeStudentProfileId from database on every request
+    // Pages will handle their own checks for activeStudentProfileId
+    // Middleware only blocks if explicitly needed (e.g., teacher-only routes)
+    // This prevents redirect loops caused by token caching in withAuth middleware
 
     // Prevent non-FAMILY accounts from accessing select-profile
+    // Let the page handle FAMILY account redirects (avoids middleware/page redirect race)
     if (pathname === '/select-profile') {
       if (!token || token.accountType !== 'FAMILY') {
         const response = NextResponse.redirect(new URL('/dashboard', req.url));
         return applySecurityHeaders(response, defaultSecurityConfig);
       }
+      // Don't check activeStudentProfileId here - let the page handle it
+      // This avoids race conditions with JWT token updates
     }
 
     // TODO: Re-enable CSRF protection after fixing Edge Runtime compatibility
