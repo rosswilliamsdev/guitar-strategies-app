@@ -105,7 +105,8 @@ export function LessonList({ userRole }: LessonListProps) {
           },
         });
         if (!response.ok) {
-          throw new Error("Failed to fetch lessons");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to fetch lessons");
         }
         const data = await response.json();
 

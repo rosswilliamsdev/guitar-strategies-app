@@ -32,24 +32,35 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         redirect: false,
       });
 
-      console.log('SignIn result:', result);
+      console.log('SignIn result:', {
+        ok: result?.ok,
+        error: result?.error,
+        status: result?.status,
+        url: result?.url,
+      });
 
       if (result?.error) {
         console.error('SignIn error:', result.error);
-        setError('Invalid credentials');
+        setError('Invalid credentials. Please check your email and password.');
+        setIsLoading(false);
       } else if (result?.ok) {
         console.log('SignIn successful, redirecting to:', callbackUrl || '/dashboard');
-        // Use Next.js router for proper session handling
-        router.push(callbackUrl || '/dashboard');
-        router.refresh(); // Force refresh to load new session
+
+        // Wait a moment for the session to be established
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Use window.location for a hard redirect to ensure session is loaded
+        window.location.href = callbackUrl || '/dashboard';
+
+        // Keep loading state true since we're redirecting
       } else {
         console.log('SignIn failed with unknown result:', result);
         setError('Login failed. Please try again.');
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('SignIn exception:', error);
       setError('An error occurred. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

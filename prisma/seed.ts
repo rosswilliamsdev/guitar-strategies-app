@@ -109,6 +109,7 @@ async function main() {
           studentProfiles: {
             create: {
               teacherId: teacherUser.teacherProfile!.id,
+              profileName: studentName,
               goals: 'Learn to play acoustic guitar and improve fingerpicking technique. Interested in folk and indie music styles.',
               instrument: 'guitar',
               phoneNumber: '+1-555-0123',
@@ -179,6 +180,7 @@ async function main() {
             create: [
               {
                 teacherId: teacherUser.teacherProfile!.id,
+                profileName: 'Johnny Garcia',
                 goals: 'Learn basic chords and strumming patterns. Loves pop music.',
                 instrument: 'guitar',
                 phoneNumber: '+1-555-0456',
@@ -186,6 +188,7 @@ async function main() {
               },
               {
                 teacherId: teacherUser.teacherProfile!.id,
+                profileName: 'Sarah Garcia',
                 goals: 'Improve lead guitar techniques and learn rock solos.',
                 instrument: 'guitar',
                 phoneNumber: '+1-555-0456',
