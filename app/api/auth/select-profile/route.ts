@@ -51,20 +51,24 @@ export async function POST(req: Request) {
       );
     }
 
-    authLog.info("Profile selected", {
+    // Save the selected profile to the database
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { activeStudentProfileId: profileId },
+    });
+
+    authLog.info("Profile selected and saved to database", {
       userId: session.user.id,
       profileId,
       email: session.user.email,
     });
 
-    // Note: We can't directly update the JWT token here.
-    // Instead, we'll trigger a session update on the client side.
-    // The actual update will happen in the JWT callback when the session is refreshed.
-
+    // Create response with redirect
     return NextResponse.json({
       success: true,
       profileId,
       message: "Profile selected successfully",
+      redirect: "/dashboard",
     });
   } catch (error) {
     authLog.error("Error selecting profile", {

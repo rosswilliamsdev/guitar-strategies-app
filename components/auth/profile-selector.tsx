@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { StudentProfile } from "@prisma/client";
 import { User } from "lucide-react";
@@ -10,18 +9,15 @@ interface ProfileSelectorProps {
   profiles: StudentProfile[];
 }
 
-export default function ProfileSelector({
-  profiles,
-}: ProfileSelectorProps) {
-  const router = useRouter();
-  const { update } = useSession();
+export default function ProfileSelector({ profiles }: ProfileSelectorProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const { update } = useSession();
 
   const handleSelectProfile = async (profileId: string) => {
     setIsLoading(profileId);
 
     try {
-      // Verify the profile belongs to this user via API
+      // Select the profile via API (saves to database)
       const response = await fetch("/api/auth/select-profile", {
         method: "POST",
         headers: {
@@ -35,18 +31,24 @@ export default function ProfileSelector({
         throw new Error(error.message || "Failed to select profile");
       }
 
-      // Update the session with the new activeStudentProfileId
-      await update({ activeStudentProfileId: profileId });
+      const data = await response.json();
 
-      // Force a hard refresh to load the updated session
-      window.location.href = "/dashboard";
-      router.push('/dashboard')
+      console.log("Profile selected, updating session...");
 
+      // Use NextAuth's update() to trigger session refresh
+      // This will cause JWT callback to run and load activeStudentProfileId from database
+      await update();
+
+      console.log("Session updated, redirecting...");
+
+      // Force a complete page reload to ensure middleware sees fresh token
+      window.location.href = data.redirect || "/dashboard";
     } catch (error) {
+      console.error("Profile selection error:", error);
       alert(
         error instanceof Error
           ? error.message
-          : "Failed to select profile. Please try again."
+          : "Failed to select profile. Please try again.",
       );
       setIsLoading(null);
     }
@@ -71,7 +73,7 @@ export default function ProfileSelector({
           {/* Student Info */}
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-neutral-900 mb-2 group-hover:text-primary transition-colors">
-              Student Profile
+              {profile.profileName || "Student Profile"}
             </h3>
 
             {profile.goals && (
@@ -82,13 +84,19 @@ export default function ProfileSelector({
 
             <div className="flex flex-col gap-1 text-sm">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-neutral-700">Instrument:</span>
-                <span className="text-neutral-600 capitalize">{profile.instrument}</span>
+                <span className="font-medium text-neutral-700">
+                  Instrument:
+                </span>
+                <span className="text-neutral-600 capitalize">
+                  {profile.instrument}
+                </span>
               </div>
               {profile.phoneNumber && (
                 <div className="flex items-center gap-2">
                   <span className="font-medium text-neutral-700">Phone:</span>
-                  <span className="text-neutral-600">{profile.phoneNumber}</span>
+                  <span className="text-neutral-600">
+                    {profile.phoneNumber}
+                  </span>
                 </div>
               )}
             </div>
@@ -96,14 +104,17 @@ export default function ProfileSelector({
 
           {/* Action Button */}
           <div className="mt-4">
-            <div className={`
+            <div
+              className={`
               inline-flex items-center justify-center px-4 py-2 rounded-md font-medium text-sm
-              ${isLoading === profile.id
-                ? 'bg-neutral-200 text-neutral-600'
-                : 'bg-primary text-white group-hover:bg-turquoise-600'
+              ${
+                isLoading === profile.id
+                  ? "bg-neutral-200 text-neutral-600"
+                  : "bg-primary text-white group-hover:bg-turquoise-600"
               }
               transition-colors
-            `}>
+            `}
+            >
               {isLoading === profile.id ? "Selecting..." : "Select Profile"}
             </div>
           </div>
