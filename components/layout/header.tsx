@@ -12,33 +12,12 @@ export function Header() {
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link
-              href="#features"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Features
-            </Link>
-            <Link
-              href="#pricing"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="#contact"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Contact
-            </Link>
-          </nav>
-
           <div className="flex items-center space-x-4">
             <Link href="/login">
               <Button variant="secondary">Sign In</Button>
             </Link>
             <Link href="/register">
-              <Button>Get Started</Button>
+              <Button>Sign Up</Button>
             </Link>
           </div>
         </div>

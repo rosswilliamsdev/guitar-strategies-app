@@ -14,36 +14,6 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Platform</h4>
-            <ul className="space-y-2 text-gray-400">
-              <li>
-                <Link
-                  href="/features"
-                  className="hover:text-white transition-colors"
-                >
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/pricing"
-                  className="hover:text-white transition-colors"
-                >
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/support"
-                  className="hover:text-white transition-colors"
-                >
-                  Support
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
             <h4 className="font-semibold mb-4">Account</h4>
             <ul className="space-y-2 text-gray-400">
               <li>
@@ -56,7 +26,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/auth/register"
+                  href="/register"
                   className="hover:text-white transition-colors"
                 >
                   Register
