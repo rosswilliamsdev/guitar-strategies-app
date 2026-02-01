@@ -9,6 +9,7 @@ import { createStudentSchema } from '@/lib/validations';
 import { getValidatedBody } from '@/lib/validated-request';
 import { sendEmail } from '@/lib/email';
 import { renderEmailWithFallback } from '@/lib/email-templates';
+import { createDefaultEmailPreferences } from '@/lib/email-preferences';
 import {
   createSuccessResponse,
   createErrorResponse,
@@ -121,6 +122,9 @@ async function handlePOST(request: NextRequest) {
           }
         }
       });
+
+      // Create default email preferences (all enabled)
+      await createDefaultEmailPreferences(user.id, tx);
 
       return studentProfile;
     });

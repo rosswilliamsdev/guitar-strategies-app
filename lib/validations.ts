@@ -787,6 +787,7 @@ export const createStudentSchema = z.object({
     .optional()
     .or(z.literal("")),
   phoneNumber: z.string().optional().or(z.literal("")),
+  sendInviteEmail: z.boolean().optional().default(false),
 });
 
 /**
