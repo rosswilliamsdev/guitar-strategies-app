@@ -68,6 +68,7 @@ export function CreateStudentForm({
           goals: formData.goals.trim() || undefined,
           parentEmail: formData.parentEmail.trim() || undefined,
           phoneNumber: formData.phoneNumber.trim() || undefined,
+          sendInviteEmail: sendInvite,
         }),
       });
 
@@ -77,54 +78,19 @@ export function CreateStudentForm({
       }
 
       const result = await response.json();
-      const createdStudentId = result.studentProfileId;
 
-      // If checkbox was checked, send invitation email
-      if (sendInvite && createdStudentId) {
-        try {
-          const inviteResponse = await fetch(
-            `/api/students/${createdStudentId}/send-invite`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+      // Check if email was sent successfully
+      const emailStatus = result.data.emailSent
+        ? ` Invitation email sent to ${formData.email.trim()}`
+        : sendInvite
+          ? ` (Email sending failed - check logs)`
+          : '';
 
-          if (inviteResponse.ok) {
-            toast({
-              title: "Success",
-              description: `Student added. Invitation email sent to ${formData.email.trim()}`,
-            });
-          } else {
-            // Student created but email failed
-            toast({
-              title: "Student Created",
-              description:
-                "Student account created successfully, but failed to send invitation email. You can resend it from the student details page.",
-              variant: "destructive",
-            });
-          }
-        } catch (emailError) {
-          log.error("Error sending invitation email:", {
-            error:
-              emailError instanceof Error
-                ? emailError.message
-                : String(emailError),
-            stack: emailError instanceof Error ? emailError.stack : undefined,
-          });
-          toast({
-            title: "Student Created",
-            description:
-              "Student account created successfully, but failed to send invitation email. You can resend it from the student details page.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        toast({
-          title: "Success",
-          description: "Student account created successfully",
-        });
-      }
+      toast({
+        title: "Success",
+        description: `Student account created successfully.${emailStatus}`,
+        variant: result.data.emailSent || !sendInvite ? "default" : "destructive",
+      });
 
       router.push("/admin/students");
     } catch (error) {

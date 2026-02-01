@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { withRetry, emailRetryOptions, emailRetryOptionsFast } from "./retry";
 import { emailLog } from "./logger";
 import { prisma } from "./db";
+import { EmailType } from "@prisma/client";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -11,15 +12,6 @@ export interface EmailData {
   html: string;
   from?: string;
 }
-
-export type EmailType =
-  | "LESSON_BOOKING"
-  | "LESSON_CANCELLATION"
-  | "LESSON_REMINDER"
-  | "INVOICE_GENERATED"
-  | "INVOICE_OVERDUE"
-  | "CHECKLIST_COMPLETION"
-  | "SYSTEM_UPDATES";
 
 /**
  * Check if user has opted-in to receive emails of a specific type

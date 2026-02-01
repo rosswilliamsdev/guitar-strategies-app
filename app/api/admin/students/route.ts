@@ -14,6 +14,9 @@ import {
   handleApiError
 } from '@/lib/api-responses';
 import { getValidatedBody, getValidatedQuery } from '@/lib/validated-request';
+import { sendEmail } from '@/lib/email';
+import { renderEmailWithFallback } from '@/lib/email-templates';
+import { createDefaultEmailPreferences } from '@/lib/email-preferences';
 
 async function handlePOST(request: NextRequest) {
   try {
@@ -32,6 +35,7 @@ async function handlePOST(request: NextRequest) {
       goals,
       parentEmail,
       phoneNumber,
+      sendInviteEmail,
     } = validatedData;
 
     // Check if email already exists
@@ -79,8 +83,51 @@ async function handlePOST(request: NextRequest) {
         },
       });
 
+      // Create default email preferences (all enabled)
+      await createDefaultEmailPreferences(user.id, tx);
+
       return { user, studentProfile };
     });
+
+    // Send welcome email if requested
+    let emailSent = false;
+    if (sendInviteEmail) {
+      try {
+        const loginUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/login`;
+
+        const emailTemplate = await renderEmailWithFallback('STUDENT_WELCOME', {
+          studentName: name,
+          studentEmail: email,
+          temporaryPassword: password,
+          teacherName: teacher.user.name,
+          loginUrl
+        });
+
+        emailSent = await sendEmail({
+          to: email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html
+        });
+
+        if (emailSent) {
+          emailLog.info('Student welcome email sent successfully', {
+            studentEmail: email,
+            teacherId: teacher.id
+          });
+        } else {
+          emailLog.error('Failed to send student welcome email', {
+            studentEmail: email,
+            teacherId: teacher.id
+          });
+        }
+      } catch (emailError) {
+        emailLog.error('Error sending student welcome email', {
+          studentEmail: email,
+          error: emailError instanceof Error ? emailError.message : String(emailError)
+        });
+        // Don't fail the request if email fails
+      }
+    }
 
     return createSuccessResponse(
       {
@@ -89,6 +136,7 @@ async function handlePOST(request: NextRequest) {
         name: student.user.name,
         email: student.user.email,
         teacherName: teacher.user.name,
+        emailSent,
       },
       'Student created successfully',
       201

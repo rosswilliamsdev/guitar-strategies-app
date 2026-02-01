@@ -60,6 +60,31 @@ async function handleDELETE(request: NextRequest, { params }: Params) {
 
     // Perform cascading deletes in a transaction
     await prisma.$transaction(async (tx) => {
+      // 1. Delete VerificationToken records (by email identifier)
+      await tx.verificationToken.deleteMany({
+        where: { identifier: student.email },
+      });
+
+      // 2. Delete Account records (NextAuth)
+      await tx.account.deleteMany({
+        where: { userId: id },
+      });
+
+      // 3. Delete Session records (NextAuth)
+      await tx.session.deleteMany({
+        where: { userId: id },
+      });
+
+      // 4. Delete PasswordResetToken records
+      await tx.passwordResetToken.deleteMany({
+        where: { userId: id },
+      });
+
+      // 5. Delete EmailPreference records
+      await tx.emailPreference.deleteMany({
+        where: { userId: id },
+      });
+
       // Delete all recurring slots for this student
       await tx.recurringSlot.deleteMany({
         where: { studentId: id },

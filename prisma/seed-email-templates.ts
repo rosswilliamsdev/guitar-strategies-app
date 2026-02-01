@@ -1,16 +1,22 @@
-import { PrismaClient, EmailType } from '@prisma/client';
+import { PrismaClient, EmailType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function seedEmailTemplates() {
-  console.log('🌱 Seeding email templates...');
+  console.log("🌱 Seeding email templates...");
 
   const templates = [
     {
-      type: 'STUDENT_WELCOME' as EmailType,
-      subject: 'Welcome to Guitar Strategies - Your Account is Ready!',
-      description: 'Sent when a teacher invites a new student to the platform',
-      variables: JSON.stringify(['studentName', 'studentEmail', 'temporaryPassword', 'teacherName', 'loginUrl']),
+      type: "STUDENT_WELCOME" as EmailType,
+      subject: "Welcome to Guitar Strategies - Your Account is Ready!",
+      description: "Sent when a teacher invites a new student to the platform",
+      variables: JSON.stringify([
+        "studentName",
+        "studentEmail",
+        "temporaryPassword",
+        "teacherName",
+        "loginUrl",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -67,13 +73,19 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'LESSON_BOOKING' as EmailType,
-      subject: 'Lesson Confirmed - {{lessonDate}} at {{lessonTime}}',
-      description: 'Sent when a lesson is booked',
-      variables: JSON.stringify(['studentName', 'teacherName', 'lessonDate', 'lessonTime', 'duration']),
+      type: "LESSON_BOOKING" as EmailType,
+      subject: "Lesson Confirmed - {{lessonDate}} at {{lessonTime}}",
+      description: "Sent when a lesson is booked",
+      variables: JSON.stringify([
+        "studentName",
+        "teacherName",
+        "lessonDate",
+        "lessonTime",
+        "duration",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -113,13 +125,18 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'LESSON_CANCELLATION' as EmailType,
-      subject: 'Lesson Cancelled - {{lessonDate}} at {{lessonTime}}',
-      description: 'Sent when a lesson is cancelled',
-      variables: JSON.stringify(['studentName', 'teacherName', 'lessonDate', 'lessonTime']),
+      type: "LESSON_CANCELLATION" as EmailType,
+      subject: "Lesson Cancelled - {{lessonDate}} at {{lessonTime}}",
+      description: "Sent when a lesson is cancelled",
+      variables: JSON.stringify([
+        "studentName",
+        "teacherName",
+        "lessonDate",
+        "lessonTime",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -158,13 +175,21 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'LESSON_COMPLETED' as EmailType,
-      subject: 'Lesson Summary - {{lessonDate}}',
-      description: 'Sent when a teacher logs a completed lesson',
-      variables: JSON.stringify(['studentName', 'teacherName', 'lessonDate', 'duration', 'notes', 'homework', 'progress']),
+      type: "LESSON_COMPLETED" as EmailType,
+      subject: "Lesson Summary - {{lessonDate}}",
+      description: "Sent when a teacher logs a completed lesson",
+      variables: JSON.stringify([
+        "studentName",
+        "teacherName",
+        "lessonDate",
+        "duration",
+        "notes",
+        "homework",
+        "progress",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -205,20 +230,6 @@ async function seedEmailTemplates() {
           </div>
         </div>
 
-        <div class="section">
-          <div class="section-title">Homework & Practice</div>
-          <div class="notes-content">
-            {{homework}}
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Progress Update</div>
-          <div class="notes-content">
-            {{progress}}
-          </div>
-        </div>
-
         <p style="margin-top: 24px;">Keep up the great work! See you at your next lesson.</p>
       </div>
       <div class="footer">
@@ -227,13 +238,18 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'LESSON_REMINDER' as EmailType,
-      subject: 'Reminder: Lesson Tomorrow with {{teacherName}}',
-      description: 'Sent 24 hours before a lesson',
-      variables: JSON.stringify(['studentName', 'lessonDate', 'lessonTime', 'teacherName']),
+      type: "LESSON_REMINDER" as EmailType,
+      subject: "Reminder: Lesson Tomorrow with {{teacherName}}",
+      description: "Sent 24 hours before a lesson",
+      variables: JSON.stringify([
+        "studentName",
+        "lessonDate",
+        "lessonTime",
+        "teacherName",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -273,13 +289,18 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'INVOICE_GENERATED' as EmailType,
-      subject: 'New Invoice #{{invoiceNumber}} - Due {{dueDate}}',
-      description: 'Sent when a new invoice is created',
-      variables: JSON.stringify(['studentName', 'invoiceNumber', 'amount', 'dueDate']),
+      type: "INVOICE_GENERATED" as EmailType,
+      subject: "New Invoice #{{invoiceNumber}} - Due {{dueDate}}",
+      description: "Sent when a new invoice is created",
+      variables: JSON.stringify([
+        "studentName",
+        "invoiceNumber",
+        "amount",
+        "dueDate",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -319,13 +340,18 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'INVOICE_OVERDUE' as EmailType,
-      subject: 'Payment Reminder - Invoice #{{invoiceNumber}} is Overdue',
-      description: 'Sent for overdue invoices',
-      variables: JSON.stringify(['studentName', 'invoiceNumber', 'amount', 'daysPastDue']),
+      type: "INVOICE_OVERDUE" as EmailType,
+      subject: "Payment Reminder - Invoice #{{invoiceNumber}} is Overdue",
+      description: "Sent for overdue invoices",
+      variables: JSON.stringify([
+        "studentName",
+        "invoiceNumber",
+        "amount",
+        "daysPastDue",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -365,13 +391,17 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'CHECKLIST_COMPLETION' as EmailType,
-      subject: '🎉 Congratulations! You Completed {{checklistName}}',
-      description: 'Sent when a student completes a checklist',
-      variables: JSON.stringify(['studentName', 'checklistName', 'teacherName']),
+      type: "CHECKLIST_COMPLETION" as EmailType,
+      subject: "🎉 Congratulations! You Completed {{checklistName}}",
+      description: "Sent when a student completes a checklist",
+      variables: JSON.stringify([
+        "studentName",
+        "checklistName",
+        "teacherName",
+      ]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -411,13 +441,13 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
+      `.trim(),
     },
     {
-      type: 'SYSTEM_UPDATES' as EmailType,
-      subject: 'Guitar Strategies Update',
-      description: 'System announcements and updates',
-      variables: JSON.stringify(['recipientName', 'updateMessage']),
+      type: "SYSTEM_UPDATES" as EmailType,
+      subject: "Guitar Strategies Update",
+      description: "System announcements and updates",
+      variables: JSON.stringify(["recipientName", "updateMessage"]),
       htmlBody: `
 <!DOCTYPE html>
 <html>
@@ -453,8 +483,8 @@ async function seedEmailTemplates() {
     </div>
   </body>
 </html>
-      `.trim()
-    }
+      `.trim(),
+    },
   ];
 
   let created = 0;
@@ -468,7 +498,7 @@ async function seedEmailTemplates() {
         update: {
           // Only update if template was manually modified by admin
           // Otherwise keep existing content
-        }
+        },
       });
       created++;
       console.log(`✅ Created/updated template: ${template.type}`);
@@ -485,7 +515,7 @@ async function seedEmailTemplates() {
 
 seedEmailTemplates()
   .catch((e) => {
-    console.error('Error seeding email templates:', e);
+    console.error("Error seeding email templates:", e);
     process.exit(1);
   })
   .finally(async () => {

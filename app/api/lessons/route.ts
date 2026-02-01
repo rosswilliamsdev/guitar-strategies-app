@@ -19,7 +19,7 @@ import { createLessonSchema } from "@/lib/validations";
 import { validateJsonSize } from "@/lib/request-validation";
 import { sanitizeRichText, sanitizePlainText } from "@/lib/sanitize";
 import { apiLog, emailLog } from "@/lib/logger";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, checkEmailPreference } from "@/lib/email";
 import { renderEmailWithFallback } from "@/lib/email-templates";
 import {
   createCachedResponse,
@@ -373,15 +373,13 @@ async function handlePOST(request: NextRequest) {
     // Send lesson completion email to student (if they have it enabled)
     try {
       // Check if student has LESSON_COMPLETED email preference enabled
-      const emailPreference = await prisma.emailPreference.findFirst({
-        where: {
-          userId: studentProfile.userId,
-          type: "LESSON_COMPLETED",
-          enabled: true,
-        },
-      });
+      // This defaults to true if no preference record exists
+      const shouldSendEmail = await checkEmailPreference(
+        studentProfile.userId,
+        "LESSON_COMPLETED"
+      );
 
-      if (emailPreference) {
+      if (shouldSendEmail) {
         // Format the lesson date
         const lessonDate = new Date(lesson.date).toLocaleDateString("en-US", {
           weekday: "long",
