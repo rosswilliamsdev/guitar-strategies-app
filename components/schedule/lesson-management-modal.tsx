@@ -14,6 +14,7 @@ import { User, Calendar, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { log } from "@/lib/logger";
+import Link from "next/link";
 
 interface UpcomingLesson {
   id: string;
@@ -139,6 +140,9 @@ export function LessonManagementModal({
           {/* Action Buttons */}
           {!isLessonCancelled && !isLessonCompleted && (
             <div className="flex items-center gap-3">
+              <Link href="/lessons/new">
+                <Button>New Lesson</Button>
+              </Link>
               <Button
                 variant="secondary"
                 onClick={() => setShowCancelConfirm(true)}
