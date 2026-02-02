@@ -78,7 +78,7 @@ async function seedEmailTemplates() {
     {
       type: "LESSON_BOOKING" as EmailType,
       subject: "Lesson Confirmed - {{lessonDate}} at {{lessonTime}}",
-      description: "Sent when a lesson is booked",
+      description: "Sent when a single lesson is booked",
       variables: JSON.stringify([
         "studentName",
         "teacherName",
@@ -118,6 +118,74 @@ async function seedEmailTemplates() {
         </div>
 
         <p>We look forward to seeing you!</p>
+      </div>
+      <div class="footer">
+        <p>Guitar Strategies - Manage Your Music Journey</p>
+      </div>
+    </div>
+  </body>
+</html>
+      `.trim(),
+    },
+    {
+      type: "LESSON_BOOKING_RECURRING" as EmailType,
+      subject: "🎉 Recurring Lessons Confirmed - Every {{lessonDayOfWeek}} at {{lessonTime}}",
+      description: "Sent when recurring weekly lessons are booked",
+      variables: JSON.stringify([
+        "studentName",
+        "teacherName",
+        "lessonDayOfWeek",
+        "lessonDate",
+        "lessonTime",
+        "duration",
+      ]),
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body { font-family: Inter, system-ui, sans-serif; line-height: 1.6; color: #0a0a0a; margin: 0; padding: 0; background-color: #fafafa; }
+      .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+      .header { background-color: #14b8b3; color: #ffffff; padding: 32px 24px; text-align: center; }
+      .content { padding: 32px 24px; }
+      .celebration { background-color: #f0fdfc; border: 2px solid #14b8b3; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+      .lesson-details { background-color: #f5f5f5; border-left: 4px solid #14b8b3; padding: 16px; margin: 16px 0; }
+      .info-box { background-color: #f0fdfc; border-left: 4px solid #14b8b3; padding: 16px; margin: 16px 0; }
+      .footer { background-color: #f5f5f5; padding: 24px; text-align: center; font-size: 14px; color: #737373; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 style="margin: 0; font-size: 28px;">🎉 Congratulations!</h1>
+      </div>
+      <div class="content">
+        <p>Hi {{studentName}},</p>
+
+        <div class="celebration">
+          <h2 style="margin: 0 0 8px 0; color: #14b8b3; font-size: 22px;">You've Booked Recurring Lessons!</h2>
+          <p style="margin: 8px 0 0 0; font-size: 16px; color: #0a0a0a;">Weekly lessons with {{teacherName}} on <strong>{{lessonDayOfWeek}}s at {{lessonTime}}</strong></p>
+        </div>
+
+        <div class="lesson-details">
+          <strong>Weekly Lesson Details:</strong><br>
+          Teacher: {{teacherName}}<br>
+          Day: Every {{lessonDayOfWeek}}<br>
+          Time: {{lessonTime}}<br>
+          Duration: {{duration}} minutes<br>
+          First Lesson: {{lessonDate}}
+        </div>
+
+        <div class="info-box">
+          <strong>📅 What This Means:</strong><br>
+          Your lessons will continue weekly at this time until you decide to cancel. This is a great commitment to your guitar journey!
+        </div>
+
+        <p>We're excited to see you every {{lessonDayOfWeek}}! Your dedication to regular practice and lessons will help you reach your musical goals faster.</p>
+
+        <p style="margin-top: 24px;">See you soon!<br>The Guitar Strategies Team</p>
       </div>
       <div class="footer">
         <p>Guitar Strategies - Manage Your Music Journey</p>

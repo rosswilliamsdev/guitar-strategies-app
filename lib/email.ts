@@ -394,65 +394,9 @@ export function createBaseTemplate(content: string, title: string): string {
   `;
 }
 
-// Lesson Cancellation Templates
-export function createLessonCancellationEmailForStudent(
-  studentName: string,
-  teacherName: string,
-  lessonDate: string,
-  lessonTime: string,
-  duration: number
-): string {
-  const content = `
-    <h2>Lesson Cancellation Notice</h2>
-    <p>Hi ${studentName},</p>
-    <p>We wanted to let you know that your guitar lesson has been cancelled:</p>
-    
-    <div class="info-box">
-      <strong>Cancelled Lesson Details:</strong><br>
-      Teacher: ${teacherName}<br>
-      Date: ${lessonDate}<br>
-      Time: ${lessonTime}<br>
-      Duration: ${duration} minutes
-    </div>
-    
-    <p>If you have any questions about this cancellation or need to reschedule, please contact ${teacherName} directly.</p>
-    
-    <p>Thank you for your understanding.</p>
-  `;
-
-  return createBaseTemplate(content, "Lesson Cancellation - Guitar Strategies");
-}
-
-export function createLessonCancellationEmailForTeacher(
-  teacherName: string,
-  studentName: string,
-  lessonDate: string,
-  lessonTime: string,
-  duration: number
-): string {
-  const content = `
-    <h2>Lesson Cancellation Confirmation</h2>
-    <p>Hi ${teacherName},</p>
-    <p>This confirms that the following lesson has been cancelled:</p>
-    
-    <div class="info-box">
-      <strong>Cancelled Lesson Details:</strong><br>
-      Student: ${studentName}<br>
-      Date: ${lessonDate}<br>
-      Time: ${lessonTime}<br>
-      Duration: ${duration} minutes
-    </div>
-    
-    <p>The student has been notified of this cancellation.</p>
-    
-    <p>You can view your updated schedule in the Guitar Strategies app.</p>
-  `;
-
-  return createBaseTemplate(
-    content,
-    "Lesson Cancellation Confirmation - Guitar Strategies"
-  );
-}
+// Deprecated: These functions have been replaced by database-driven email templates
+// Use renderEmailWithFallback('LESSON_CANCELLATION', variables) instead
+// Kept for reference during migration period
 
 // Checklist Completion Templates
 export function createChecklistCompletionEmail(

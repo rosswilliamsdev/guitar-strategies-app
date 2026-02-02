@@ -3,12 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { canCancelLesson } from "@/lib/lesson-cleanup";
-import {
-  sendEmailAsync,
-  createLessonCancellationEmailForStudent,
-  createLessonCancellationEmailForTeacher,
-} from "@/lib/email";
-import { apiLog } from "@/lib/logger";
+import { sendEmail, checkEmailPreference } from "@/lib/email";
+import { renderEmailWithFallback } from "@/lib/email-templates";
+import { apiLog, emailLog } from "@/lib/logger";
 
 export async function POST(
   request: NextRequest,
@@ -95,38 +92,96 @@ export async function POST(
       hour12: true,
     });
 
-    // Send emails asynchronously in parallel (non-blocking)
-    // This returns immediately without waiting for emails to complete
-    if (lesson.student.user.email) {
-      const studentEmailContent = createLessonCancellationEmailForStudent(
-        lesson.student.user.name || "Student",
-        lesson.teacher.user.name || "Teacher",
-        lessonDate,
-        lessonTime,
-        lesson.duration
+    // Send cancellation email to student with preference checking
+    if (lesson.student.user.email && lesson.student.user.id) {
+      const shouldSendToStudent = await checkEmailPreference(
+        lesson.student.user.id,
+        "LESSON_CANCELLATION"
       );
 
-      sendEmailAsync({
-        to: lesson.student.user.email,
-        subject: `Lesson Cancelled - ${lessonDate}`,
-        html: studentEmailContent,
-      });
+      if (shouldSendToStudent) {
+        // Send email asynchronously (non-blocking)
+        renderEmailWithFallback("LESSON_CANCELLATION", {
+          studentName: lesson.student.user.name || "Student",
+          teacherName: lesson.teacher.user.name || "Teacher",
+          lessonDate,
+          lessonTime,
+        })
+          .then((emailTemplate) =>
+            sendEmail({
+              to: lesson.student.user.email!,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+            })
+          )
+          .then((emailSent) => {
+            if (emailSent) {
+              emailLog.info("Cancellation email sent to student", {
+                studentEmail: lesson.student.user.email,
+                lessonDate,
+              });
+            }
+          })
+          .catch((error) => {
+            emailLog.error("Failed to send cancellation email to student", {
+              error: error instanceof Error ? error.message : String(error),
+              studentEmail: lesson.student.user.email,
+            });
+          });
+      } else {
+        emailLog.info("Cancellation email not sent - student opted out", {
+          studentEmail: lesson.student.user.email,
+        });
+      }
     }
 
-    if (lesson.teacher.user.email) {
-      const teacherEmailContent = createLessonCancellationEmailForTeacher(
-        lesson.teacher.user.name || "Teacher",
-        lesson.student.user.name || "Student",
-        lessonDate,
-        lessonTime,
-        lesson.duration
+    // Send cancellation confirmation to teacher with preference checking
+    if (lesson.teacher.user.email && lesson.teacher.user.id) {
+      const shouldSendToTeacher = await checkEmailPreference(
+        lesson.teacher.user.id,
+        "LESSON_CANCELLATION"
       );
 
-      sendEmailAsync({
-        to: lesson.teacher.user.email,
-        subject: `Lesson Cancellation Confirmation - ${lessonDate}`,
-        html: teacherEmailContent,
-      });
+      if (shouldSendToTeacher) {
+        // Send email asynchronously (non-blocking)
+        renderEmailWithFallback("LESSON_CANCELLATION", {
+          studentName: lesson.teacher.user.name || "Teacher",
+          teacherName: lesson.student.user.name || "Student",
+          lessonDate,
+          lessonTime,
+        })
+          .then((emailTemplate) =>
+            sendEmail({
+              to: lesson.teacher.user.email!,
+              subject: `Lesson Cancellation Confirmation - ${lessonDate}`,
+              html: emailTemplate.html,
+            })
+          )
+          .then((emailSent) => {
+            if (emailSent) {
+              emailLog.info("Cancellation confirmation sent to teacher", {
+                teacherEmail: lesson.teacher.user.email,
+                lessonDate,
+              });
+            }
+          })
+          .catch((error) => {
+            emailLog.error(
+              "Failed to send cancellation confirmation to teacher",
+              {
+                error: error instanceof Error ? error.message : String(error),
+                teacherEmail: lesson.teacher.user.email,
+              }
+            );
+          });
+      } else {
+        emailLog.info(
+          "Cancellation confirmation not sent - teacher opted out",
+          {
+            teacherEmail: lesson.teacher.user.email,
+          }
+        );
+      }
     }
 
     return NextResponse.json({
