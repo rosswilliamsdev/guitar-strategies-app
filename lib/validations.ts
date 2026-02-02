@@ -678,7 +678,11 @@ export const updateSlotSchema = z.object({
 
 export const cancelSlotSchema = z.object({
   slotId: z.string().min(1, "Slot ID is required"),
-  cancelDate: z.date(),
+  cancelDate: z
+    .string()
+    .datetime()
+    .or(z.date())
+    .transform((val) => new Date(val)),
   reason: z.string().max(500).optional(),
   refundAmount: z.number().min(0).optional(),
 });
