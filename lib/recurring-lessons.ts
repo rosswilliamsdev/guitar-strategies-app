@@ -92,7 +92,7 @@ export async function getLessonsWithRecurring(
   // First, generate any missing recurring lessons
   await generateRecurringLessons(teacherId, startDate, endDate);
 
-  // Then fetch all lessons for the date range
+  // Then fetch all lessons for the date range (excluding cancelled lessons)
   const lessons = await prisma.lesson.findMany({
     where: {
       teacherId,
@@ -101,7 +101,7 @@ export async function getLessonsWithRecurring(
         lte: endDate,
       },
       status: {
-        in: ["SCHEDULED", "COMPLETED", "CANCELLED"],
+        in: ["SCHEDULED", "COMPLETED"],
       },
     },
     include: {
