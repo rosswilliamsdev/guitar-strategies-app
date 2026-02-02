@@ -340,21 +340,6 @@ const renderSlotContent = (
       );
 
     case "booked":
-      // Check if the lesson is cancelled
-      if (status.lesson.status === "CANCELLED") {
-        return (
-          <button
-            onClick={() => onLessonClick?.(status.lesson)}
-            className="w-full h-8 bg-red-100 border border-red-300 rounded px-1 sm:px-2 hover:bg-red-200 transition-colors cursor-pointer flex items-center justify-center"
-            title="Click to manage cancelled lesson"
-          >
-            <p className="text-xs font-medium text-red-900 truncate">
-              {status.lesson.student.user.name}
-            </p>
-          </button>
-        );
-      }
-
       return (
         <button
           onClick={() => onLessonClick?.(status.lesson)}
