@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SlotStatus, BillingStatus } from "@/types";
 import { getDayName, formatSlotTime } from "@/lib/slot-helpers";
@@ -59,6 +60,7 @@ interface TeacherRecurringSlotsProps {
 export function TeacherRecurringSlots({
   className,
 }: TeacherRecurringSlotsProps) {
+  const { toast } = useToast();
   const [slots, setSlots] = useState<SlotWithDetails[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
@@ -125,12 +127,24 @@ export function TeacherRecurringSlots({
       // Refresh the slots list
       await loadRecurringSlots();
 
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Weekly slot cancelled successfully",
+      });
+
       // Reset state
       setShowCancelDialog(false);
       setSlotToCancel(null);
       setCancelReason("");
     } catch (error: any) {
-      setError(error.message || "Failed to cancel slot");
+      const errorMessage = error.message || "Failed to cancel slot";
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setCancelling(false);
     }

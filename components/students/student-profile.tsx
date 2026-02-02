@@ -338,6 +338,12 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
         const newData = await res.json();
         setData(newData);
       }
+
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Weekly slot cancelled successfully",
+      });
     } catch (error) {
       log.error("Error cancelling slot:", {
         error: error instanceof Error ? error.message : String(error),
