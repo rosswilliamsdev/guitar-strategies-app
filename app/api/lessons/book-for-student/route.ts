@@ -13,6 +13,9 @@ import {
   createValidationErrorResponse,
   handleApiError,
 } from "@/lib/api-responses";
+import { sendEmail, checkEmailPreference } from "@/lib/email";
+import { renderEmailWithFallback } from "@/lib/email-templates";
+import { emailLog } from "@/lib/logger";
 
 const bookForStudentSchema = z.object({
   teacherId: z.string(),
@@ -202,6 +205,104 @@ export async function POST(request: NextRequest) {
         return { type: "recurring", recurringSlot, firstLesson };
       }
     });
+
+    // Get student and teacher user details for email notification
+    const studentUser = await prisma.user.findUnique({
+      where: { id: student.userId },
+      select: { id: true, email: true, name: true },
+    });
+
+    const teacherUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true },
+    });
+
+    // Format dates for email
+    const lessonDate = lessonDateUTC.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const lessonTime = lessonDateUTC.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    // Get day of week name for recurring lessons (e.g., "Monday", "Tuesday")
+    const dayOfWeekNames = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+    const lessonDayOfWeek = dayOfWeekNames[dayOfWeek];
+
+    // Send confirmation email asynchronously (non-blocking)
+    if (studentUser?.email && studentUser.id) {
+      // Determine email type based on booking type
+      const emailType =
+        validatedData.type === "recurring"
+          ? "LESSON_BOOKING_RECURRING"
+          : "LESSON_BOOKING";
+
+      // Check if student has opted-in to lesson booking emails
+      const shouldSend = await checkEmailPreference(studentUser.id, emailType);
+
+      if (shouldSend) {
+        // Prepare email variables
+        const emailVariables: Record<string, string | number> = {
+          studentName: studentUser.name || "Student",
+          teacherName: teacherUser?.name || "Your Teacher",
+          lessonDate,
+          lessonTime,
+          duration: validatedData.duration,
+        };
+
+        // Add day of week for recurring lessons
+        if (validatedData.type === "recurring") {
+          emailVariables.lessonDayOfWeek = lessonDayOfWeek;
+        }
+
+        // Send email asynchronously (don't await, don't block response)
+        renderEmailWithFallback(emailType as any, emailVariables)
+          .then((emailTemplate) =>
+            sendEmail({
+              to: studentUser.email!,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+            })
+          )
+          .then((emailSent) => {
+            if (emailSent) {
+              emailLog.info("Lesson booking confirmation sent", {
+                studentEmail: studentUser.email,
+                lessonType: validatedData.type,
+                lessonDate,
+              });
+            }
+          })
+          .catch((emailError) => {
+            emailLog.error("Failed to send booking confirmation", {
+              error:
+                emailError instanceof Error
+                  ? emailError.message
+                  : String(emailError),
+              studentEmail: studentUser.email,
+            });
+            // Don't fail the booking if email fails
+          });
+      } else {
+        emailLog.info("Booking confirmation not sent - user opted out", {
+          studentEmail: studentUser.email,
+          emailType: "LESSON_BOOKING",
+        });
+      }
+    }
 
     // Handle successful transaction result
     if (result.type === "single") {
