@@ -4,8 +4,9 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { 
-  Calendar as CalendarIcon, 
+import { useToast } from "@/hooks/use-toast"
+import {
+  Calendar as CalendarIcon,
   Clock,
   DollarSign,
   User,
@@ -50,14 +51,14 @@ interface WeeklyLessonDisplayProps {
   }>
 }
 
-export function WeeklyLessonDisplay({ 
-  recurringSlots, 
+export function WeeklyLessonDisplay({
+  recurringSlots,
   teacherName,
   recurringLessons = []
 }: WeeklyLessonDisplayProps) {
+  const { toast } = useToast()
   const [isCancelling, setIsCancelling] = useState(false)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const router = useRouter()
   
   const formatPrice = (cents: number) => {
@@ -107,6 +108,12 @@ export function WeeklyLessonDisplay({
         throw new Error(errorData.error || 'Failed to cancel recurring lessons')
       }
 
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Weekly lesson time cancelled successfully",
+      })
+
       // Refresh the page to show updated data
       router.refresh()
     } catch (error: unknown) {
@@ -115,7 +122,11 @@ export function WeeklyLessonDisplay({
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-      setErrorMessage(errorMessage || 'Failed to cancel recurring lessons. Please try again.')
+      toast({
+        title: "Error",
+        description: errorMessage || 'Failed to cancel recurring lessons. Please try again.',
+        variant: "destructive",
+      })
     } finally {
       setIsCancelling(false)
     }
@@ -306,24 +317,6 @@ export function WeeklyLessonDisplay({
             >
               Cancel Recurring
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Error Dialog */}
-      <Dialog open={!!errorMessage} onOpenChange={() => setErrorMessage(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              Error
-            </DialogTitle>
-            <DialogDescription className="text-foreground">
-              {errorMessage}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setErrorMessage(null)}>OK</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -234,7 +234,8 @@ export default async function DashboardPage() {
 
     if (teacherData) {
       const { DualRoleDashboard } = await import("./dual-role-dashboard");
-      const adminStats = await getAdminStats();
+      // Pass teacherId to filter admin stats to only this teacher's activity
+      const adminStats = await getAdminStats(teacherData.teacherId);
       return (
         <DualRoleDashboard
           user={session.user}

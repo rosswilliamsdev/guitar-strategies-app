@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getAllActivity } from '@/lib/dashboard-stats';
 import { apiLog, emailLog, invoiceLog } from '@/lib/logger';
+import { prisma } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    
+
     const filters = {
       dateRange: searchParams.get('dateRange') as 'today' | 'week' | 'month' | 'all' || 'month',
       activityType: searchParams.get('activityType') as 'user_created' | 'lesson_completed' | 'teacher_joined' | 'system_event' | 'invoice_generated' | 'email_sent' | 'all' || 'all',
@@ -29,7 +30,17 @@ export async function GET(request: NextRequest) {
       offset: parseInt(searchParams.get('offset') || '0')
     };
 
-    const result = await getAllActivity(filters);
+    // Get teacherId if user is a teacher (to filter their own activity)
+    let teacherId: string | undefined;
+    if (session.user.role === 'TEACHER') {
+      const teacherProfile = await prisma.teacherProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { id: true }
+      });
+      teacherId = teacherProfile?.id;
+    }
+
+    const result = await getAllActivity(filters, teacherId);
 
     return NextResponse.json(result);
   } catch (error) {

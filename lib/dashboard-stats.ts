@@ -32,15 +32,16 @@ export interface UserStats {
 
 /**
  * Get comprehensive admin statistics
+ * @param teacherId - Optional teacher ID to filter activity to only that teacher's students and lessons
  */
-export async function getAdminStats(): Promise<AdminStats> {
+export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
   // Check cache first (temporarily disabled)
   // const cacheKey = 'admin:dashboard:stats';
   // const cached = dashboardCache.get(cacheKey);
   // if (cached) {
   //   return cached;
   // }
-  
+
   try {
     const now = new Date();
     const startOfThisMonth = startOfMonth(now);
@@ -128,7 +129,8 @@ export async function getAdminStats(): Promise<AdminStats> {
           status: 'COMPLETED',
           date: {
             gte: sevenDaysAgo
-          }
+          },
+          ...(teacherId && { teacherId }) // Filter by teacher if provided
         },
         include: {
           student: {
@@ -147,42 +149,61 @@ export async function getAdminStats(): Promise<AdminStats> {
         },
         take: 5
       }),
-      
-      // Recent users
-      prisma.user.findMany({
-        where: {
-          createdAt: {
-            gte: sevenDaysAgo
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        },
-        take: 3
-      }),
-      
-      // Recent teachers
-      prisma.teacherProfile.findMany({
-        where: {
-          createdAt: {
-            gte: sevenDaysAgo
-          }
-        },
-        include: {
-          user: true
-        },
-        orderBy: {
-          createdAt: 'desc'
-        },
-        take: 3
-      }),
-      
+
+      // Recent users - only fetch students if teacherId is provided
+      teacherId
+        ? prisma.user.findMany({
+            where: {
+              createdAt: {
+                gte: sevenDaysAgo
+              },
+              role: 'STUDENT',
+              studentProfile: {
+                teacherId
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 3
+          })
+        : prisma.user.findMany({
+            where: {
+              createdAt: {
+                gte: sevenDaysAgo
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 3
+          }),
+
+      // Recent teachers - skip this query if filtering by teacherId
+      teacherId
+        ? Promise.resolve([]) // Return empty array for individual teachers
+        : prisma.teacherProfile.findMany({
+            where: {
+              createdAt: {
+                gte: sevenDaysAgo
+              }
+            },
+            include: {
+              user: true
+            },
+            orderBy: {
+              createdAt: 'desc'
+            },
+            take: 3
+          }),
+
       // Recent invoices
       prisma.invoice.findMany({
         where: {
           createdAt: {
             gte: sevenDaysAgo
-          }
+          },
+          ...(teacherId && { teacherId }) // Filter by teacher if provided
         },
         include: {
           teacher: {
@@ -221,27 +242,34 @@ export async function getAdminStats(): Promise<AdminStats> {
       });
     });
     
-    // Add recent users
+    // Add recent users (only students if filtered by teacherId)
     recentUsers.forEach(user => {
+      // When filtering by teacherId, only show student enrollments, not generic user creation
+      const description = teacherId && user.role === 'STUDENT'
+        ? `${user.name} enrolled as a student`
+        : `New ${user.role.toLowerCase()} account created`;
+
       recentActivity.push({
         id: user.id,
         type: 'user_created',
-        description: `New ${user.role.toLowerCase()} account created`,
+        description,
         timestamp: user.createdAt,
         userEmail: user.email
       });
     });
-    
-    // Add recent teachers
-    recentTeachers.forEach(teacher => {
-      recentActivity.push({
-        id: teacher.id,
-        type: 'teacher_joined',
-        description: `${teacher.user.name} joined as a teacher`,
-        timestamp: teacher.createdAt,
-        userEmail: teacher.user.email
+
+    // Add recent teachers (only if not filtering by teacherId)
+    if (!teacherId) {
+      recentTeachers.forEach(teacher => {
+        recentActivity.push({
+          id: teacher.id,
+          type: 'teacher_joined',
+          description: `${teacher.user.name} joined as a teacher`,
+          timestamp: teacher.createdAt,
+          userEmail: teacher.user.email
+        });
       });
-    });
+    }
     
     // Add recent invoices
     recentInvoices.forEach(invoice => {
@@ -312,6 +340,8 @@ export async function getAdminStats(): Promise<AdminStats> {
 
 /**
  * Get all activity with filtering options for admin activity page
+ * @param filters - Filter options for the activity query
+ * @param teacherId - Optional teacher ID to filter activity to only that teacher's students and lessons
  */
 export async function getAllActivity(filters?: {
   dateRange?: 'today' | 'week' | 'month' | 'all';
@@ -320,7 +350,7 @@ export async function getAllActivity(filters?: {
   userId?: string;
   limit?: number;
   offset?: number;
-}): Promise<{
+}, teacherId?: string): Promise<{
   activities: AdminStats['recentActivity'];
   totalCount: number;
 }> {
@@ -356,13 +386,21 @@ export async function getAllActivity(filters?: {
     // Build where conditions for different activity types
     const lessonWhere: any = {
       ...(startDate && { date: { gte: startDate } }),
-      status: 'COMPLETED'
+      status: 'COMPLETED',
+      ...(teacherId && { teacherId }) // Filter by teacher if provided
     };
 
     const userWhere: any = {
       ...(startDate && { createdAt: { gte: startDate } }),
       ...(userRole !== 'all' && { role: userRole }),
-      ...(userId && { id: userId })
+      ...(userId && { id: userId }),
+      // If filtering by teacherId, only show students of that teacher
+      ...(teacherId && {
+        role: 'STUDENT',
+        studentProfile: {
+          teacherId
+        }
+      })
     };
 
     const teacherWhere: any = {
@@ -403,18 +441,23 @@ export async function getAllActivity(filters?: {
       });
 
       users.forEach(user => {
+        // When filtering by teacherId, only show student enrollments, not generic user creation
+        const description = teacherId && user.role === 'STUDENT'
+          ? `${user.name} enrolled as a student`
+          : `New ${user.role.toLowerCase()} account created`;
+
         activities.push({
           id: user.id,
           type: 'user_created',
-          description: `New ${user.role.toLowerCase()} account created`,
+          description,
           timestamp: user.createdAt,
           userEmail: user.email
         });
       });
     }
 
-    // Get teachers if needed
-    if (activityType === 'all' || activityType === 'teacher_joined') {
+    // Get teachers if needed (skip if filtering by teacherId)
+    if (!teacherId && (activityType === 'all' || activityType === 'teacher_joined')) {
       const teachers = await prisma.teacherProfile.findMany({
         where: teacherWhere,
         include: { user: true },
@@ -435,7 +478,8 @@ export async function getAllActivity(filters?: {
     // Get invoices if needed
     if (activityType === 'all' || activityType === 'invoice_generated') {
       const invoiceWhere: any = {
-        ...(startDate && { createdAt: { gte: startDate } })
+        ...(startDate && { createdAt: { gte: startDate } }),
+        ...(teacherId && { teacherId }) // Filter by teacher if provided
       };
 
       const invoices = await prisma.invoice.findMany({
