@@ -483,7 +483,7 @@ model RecurringSlot {
   teacher        TeacherProfile     @relation("TeacherSlots", fields: [teacherId], references: [id], onDelete: Cascade)
   subscriptions  SlotSubscription[]
 
-  @@unique([teacherId, dayOfWeek, startTime, duration, status])
+  @@unique([teacherId, dayOfWeek, startTime, duration])
   @@index([teacherId, status])
   @@index([studentId, status])
   @@index([dayOfWeek])
