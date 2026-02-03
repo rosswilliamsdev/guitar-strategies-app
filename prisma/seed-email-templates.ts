@@ -68,6 +68,7 @@ async function seedEmailTemplates() {
       </div>
       <div class="footer">
         <p>This email was sent by Guitar Strategies<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a><br>
         If you didn't expect this email, please contact your teacher.</p>
       </div>
     </div>
@@ -120,7 +121,8 @@ async function seedEmailTemplates() {
         <p>We look forward to seeing you!</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -129,7 +131,8 @@ async function seedEmailTemplates() {
     },
     {
       type: "LESSON_BOOKING_RECURRING" as EmailType,
-      subject: "🎉 Recurring Lessons Confirmed - Every {{lessonDayOfWeek}} at {{lessonTime}}",
+      subject:
+        "🎉 Recurring Lessons Confirmed - Every {{lessonDayOfWeek}} at {{lessonTime}}",
       description: "Sent when recurring weekly lessons are booked",
       variables: JSON.stringify([
         "studentName",
@@ -188,7 +191,8 @@ async function seedEmailTemplates() {
         <p style="margin-top: 24px;">See you soon!<br>The Guitar Strategies Team</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -238,7 +242,8 @@ async function seedEmailTemplates() {
         <p>Please contact {{teacherName}} if you need to reschedule.</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -255,8 +260,8 @@ async function seedEmailTemplates() {
         "lessonDate",
         "duration",
         "notes",
-        "homework",
-        "progress",
+        "attachments",
+        "links",
       ]),
       htmlBody: `
 <!DOCTYPE html>
@@ -273,6 +278,14 @@ async function seedEmailTemplates() {
       .section { margin: 24px 0; }
       .section-title { font-weight: 600; color: #14b8b3; margin-bottom: 8px; }
       .notes-content { background-color: #f5f5f5; padding: 16px; border-radius: 6px; }
+      .attachment-item { background-color: #f5f5f5; padding: 0; margin: 8px 0; border-radius: 6px; width: 100%; }
+      .attachment-table { width: 100%; border-collapse: collapse; }
+      .attachment-name { color: #0a0a0a; font-size: 14px; padding: 12px 16px; text-align: left; }
+      .attachment-button-cell { padding: 12px 16px; text-align: right; white-space: nowrap; }
+      .download-button { display: inline-block; background-color: #14b8b3; color: #ffffff !important; text-decoration: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+      .download-button:hover { background-color: #0d9289; }
+      .link-item { background-color: #f0fdfc; padding: 12px 16px; margin: 8px 0; border-radius: 6px; }
+      .link-item a { color: #14b8b3; text-decoration: none; font-weight: 500; }
       .footer { background-color: #f5f5f5; padding: 24px; text-align: center; font-size: 14px; color: #737373; }
     </style>
   </head>
@@ -298,10 +311,15 @@ async function seedEmailTemplates() {
           </div>
         </div>
 
+        {{attachments}}
+
+        {{links}}
+
         <p style="margin-top: 24px;">Keep up the great work! See you at your next lesson.</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -352,7 +370,8 @@ async function seedEmailTemplates() {
         <p>See you soon!</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -403,7 +422,8 @@ async function seedEmailTemplates() {
         <p>Please arrange payment at your earliest convenience.</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -454,7 +474,8 @@ async function seedEmailTemplates() {
         <p>Please arrange payment as soon as possible to avoid service interruption.</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -504,7 +525,8 @@ async function seedEmailTemplates() {
         <p>Ready for your next challenge? Check your dashboard for more checklists.</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -546,7 +568,8 @@ async function seedEmailTemplates() {
         <p>Thank you for using Guitar Strategies!</p>
       </div>
       <div class="footer">
-        <p>Guitar Strategies - Manage Your Music Journey</p>
+        <p>Guitar Strategies - Manage Your Music Journey<br>
+        <a href="https://app.guitarstrategies.com" style="color: #14b8b3; text-decoration: none; font-weight: 500;">Visit App</a></p>
       </div>
     </div>
   </body>
@@ -564,8 +587,10 @@ async function seedEmailTemplates() {
         where: { type: template.type },
         create: template,
         update: {
-          // Only update if template was manually modified by admin
-          // Otherwise keep existing content
+          subject: template.subject,
+          description: template.description,
+          variables: template.variables,
+          htmlBody: template.htmlBody,
         },
       });
       created++;
