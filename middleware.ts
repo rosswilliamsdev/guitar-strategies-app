@@ -47,6 +47,7 @@ function checkRequestSizeLimit(req: NextRequest): NextResponse | null {
     limit = LIMITS.FILE_UPLOAD;
   } else if (
     pathname.includes("/api/lessons") &&
+    !pathname.includes("/attachments") &&
     (pathname.includes("/notes") || method === "POST" || method === "PUT")
   ) {
     limit = LIMITS.RICH_TEXT;
