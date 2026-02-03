@@ -360,6 +360,8 @@ async function handlePOST(request: NextRequest) {
         teacher: {
           include: { user: true },
         },
+        attachments: true,
+        links: true,
       },
     });
 
@@ -370,72 +372,8 @@ async function handlePOST(request: NextRequest) {
       validatedData.studentId
     );
 
-    // Send lesson completion email to student (if they have it enabled)
-    try {
-      // Check if student has LESSON_COMPLETED email preference enabled
-      // This defaults to true if no preference record exists
-      const shouldSendEmail = await checkEmailPreference(
-        studentProfile.userId,
-        "LESSON_COMPLETED"
-      );
-
-      if (shouldSendEmail) {
-        // Format the lesson date
-        const lessonDate = new Date(lesson.date).toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
-        // Render the email template with lesson data
-        const emailTemplate = await renderEmailWithFallback(
-          "LESSON_COMPLETED",
-          {
-            studentName: lesson.student.user.name,
-            teacherName: lesson.teacher.user.name,
-            lessonDate,
-            duration: lesson.duration.toString(),
-            notes: lesson.notes || "No notes provided",
-            homework: lesson.homework || "No homework assigned",
-            progress: lesson.progress || "No progress update provided",
-          }
-        );
-
-        // Send the email
-        const emailSent = await sendEmail({
-          to: lesson.student.user.email,
-          subject: emailTemplate.subject,
-          html: emailTemplate.html,
-        });
-
-        if (emailSent) {
-          emailLog.info("Lesson completion email sent", {
-            lessonId: lesson.id,
-            studentId: studentProfile.id,
-            studentEmail: lesson.student.user.email,
-          });
-        } else {
-          emailLog.error("Failed to send lesson completion email", {
-            lessonId: lesson.id,
-            studentId: studentProfile.id,
-            studentEmail: lesson.student.user.email,
-          });
-        }
-      } else {
-        emailLog.info("Student has lesson completion emails disabled", {
-          lessonId: lesson.id,
-          studentId: studentProfile.id,
-        });
-      }
-    } catch (emailError) {
-      // Log error but don't fail the lesson creation
-      emailLog.error("Error sending lesson completion email", {
-        lessonId: lesson.id,
-        error:
-          emailError instanceof Error ? emailError.message : String(emailError),
-      });
-    }
+    // Note: Email is sent separately after attachments/links are uploaded
+    // See /api/lessons/[id]/send-email endpoint
 
     return NextResponse.json({ lesson }, { status: 201 });
   } catch (error) {
