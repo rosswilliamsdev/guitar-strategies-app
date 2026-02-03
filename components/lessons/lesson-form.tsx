@@ -84,7 +84,7 @@ export function LessonForm({
     string[]
   >([]);
   const [expandedChecklistId, setExpandedChecklistId] = useState<string | null>(
-    null
+    null,
   );
   const [isChecklistSectionExpanded, setIsChecklistSectionExpanded] =
     useState(false);
@@ -104,11 +104,11 @@ export function LessonForm({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   // TODO: what should this return type be?
   const [existingAttachments, setExistingAttachments] = useState<any[]>(
-    initialData?.existingAttachments || []
+    initialData?.existingAttachments || [],
   );
   // keeps track of what attachments are removed when editing lessons
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
-    []
+    [],
   );
   // new links, when creating a new lesson
   const [links, setLinks] = useState<string[]>([]);
@@ -116,7 +116,7 @@ export function LessonForm({
   // existing links, when editing a lesson
   // TODO: do I need a separate state just for handling lesson form edits?
   const [existingLinks, setExistingLinks] = useState(
-    initialData?.existingLinks || []
+    initialData?.existingLinks || [],
   );
   const [currentLink, setCurrentLink] = useState("");
 
@@ -125,7 +125,7 @@ export function LessonForm({
     if (initialData?.existingLinks && initialData.existingLinks.length > 0) {
       const existingUrls = initialData.existingLinks.map(
         //TODO: seems like link should return a string?
-        (link: any) => link.url
+        (link: any) => link.url,
       );
       setLinks(existingUrls);
     }
@@ -178,7 +178,7 @@ export function LessonForm({
 
       try {
         const response = await fetch(
-          `/api/student-checklists?studentId=${formData.studentId}`
+          `/api/student-checklists?studentId=${formData.studentId}`,
         );
 
         if (response.ok) {
@@ -230,12 +230,12 @@ export function LessonForm({
                     // For teacher curriculums, check progress status
                     const progress =
                       curriculum.studentProgress?.itemProgress?.find(
-                        (p: any) => p.itemId === item.id
+                        (p: any) => p.itemId === item.id,
                       );
                     return progress?.status === "COMPLETED";
                   })
-                  .map((item: any) => item.id)
-              )
+                  .map((item: any) => item.id),
+              ),
           );
 
           // For editing: merge with existing selections from the lesson
@@ -290,7 +290,7 @@ export function LessonForm({
 
   const removeExistingAttachment = (attachmentId: string) => {
     setExistingAttachments((prev) =>
-      prev.filter((att) => att.id !== attachmentId)
+      prev.filter((att) => att.id !== attachmentId),
     );
     setRemovedAttachmentIds((prev) => [...prev, attachmentId]);
   };
@@ -332,14 +332,14 @@ export function LessonForm({
     setSelectedCurriculumItems((prev: string[]) =>
       prev.includes(itemId)
         ? prev.filter((id) => id !== itemId)
-        : [...prev, itemId]
+        : [...prev, itemId],
     );
   };
 
   // Checklist expansion handling
   const toggleChecklistExpansion = (checklistId: string) => {
     setExpandedChecklistId((prev) =>
-      prev === checklistId ? null : checklistId
+      prev === checklistId ? null : checklistId,
     );
   };
 
@@ -349,7 +349,7 @@ export function LessonForm({
 
   const getItemProgress = (itemId: string, curriculum: StudentCurriculum) => {
     return curriculum.studentProgress?.itemProgress?.find(
-      (p) => p.itemId === itemId
+      (p) => p.itemId === itemId,
     );
   };
 
@@ -405,7 +405,7 @@ export function LessonForm({
       // Upload files if any
       if (selectedFiles.length > 0) {
         log.info(
-          `Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`
+          `Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`,
         );
         const fileFormData = new FormData();
         selectedFiles.forEach((file) => {
@@ -419,7 +419,7 @@ export function LessonForm({
             {
               method: "POST",
               body: fileFormData,
-            }
+            },
           );
 
           if (!fileResponse.ok) {
@@ -432,7 +432,7 @@ export function LessonForm({
               stack: errorData instanceof Error ? errorData.stack : undefined,
             });
             throw new Error(
-              `File upload failed: ${errorData.error || "Unknown error"}`
+              `File upload failed: ${errorData.error || "Unknown error"}`,
             );
           }
 
@@ -450,7 +450,7 @@ export function LessonForm({
           setError(
             `Lesson saved but file upload failed: ${
               fileError instanceof Error ? fileError.message : "Unknown error"
-            }`
+            }`,
           );
         }
       }
@@ -465,7 +465,7 @@ export function LessonForm({
               `/api/lessons/${currentLessonId}/attachments/${attachmentId}`,
               {
                 method: "DELETE",
-              }
+              },
             );
 
             if (!removeResponse.ok) {
@@ -560,7 +560,7 @@ export function LessonForm({
           try {
             // Find which checklist/curriculum contains this item
             const checklist = studentCurriculums.find((c) =>
-              c.sections.some((s) => s.items.some((i) => i.id === itemId))
+              c.sections.some((s) => s.items.some((i) => i.id === itemId)),
             );
 
             if (checklist) {
@@ -602,7 +602,7 @@ export function LessonForm({
                       isCompleted: true,
                       // Note: completedAt is set automatically by the API when isCompleted is true
                     }),
-                  }
+                  },
                 );
 
                 if (!response.ok) {
@@ -634,6 +634,45 @@ export function LessonForm({
             });
             // Continue to next item even if this one fails
           }
+        }
+      }
+
+      // Send lesson completion email after all uploads are complete
+      // Only send for new lessons (not edits)
+      if (!lessonId && currentLessonId) {
+        try {
+          log.info("Sending lesson completion email", {
+            lessonId: currentLessonId,
+          });
+
+          const emailResponse = await fetch(
+            `/api/lessons/${currentLessonId}/send-email`,
+            {
+              method: "POST",
+            }
+          );
+
+          if (emailResponse.ok) {
+            log.info("Lesson completion email sent successfully", {
+              lessonId: currentLessonId,
+            });
+          } else {
+            // Log error but don't block the redirect
+            const errorData = await emailResponse.json();
+            log.error("Failed to send lesson completion email", {
+              lessonId: currentLessonId,
+              error: errorData.error || "Unknown error",
+            });
+          }
+        } catch (emailError) {
+          // Log error but don't block the redirect
+          log.error("Error sending lesson completion email", {
+            lessonId: currentLessonId,
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : String(emailError),
+          });
         }
       }
 
@@ -808,14 +847,14 @@ export function LessonForm({
                                     {section.items.map((item) => {
                                       const progress = getItemProgress(
                                         item.id,
-                                        curriculum
+                                        curriculum,
                                       );
                                       const isCompleted =
                                         progress?.status === "COMPLETED" ||
                                         (item as any)?.isCompleted;
                                       const isSelected =
                                         selectedCurriculumItems.includes(
-                                          item.id
+                                          item.id,
                                         );
 
                                       // For teacher curricula: show strikethrough when selected
@@ -1090,8 +1129,8 @@ export function LessonForm({
             {isLoading
               ? "Saving..."
               : lessonId
-              ? "Update Lesson"
-              : "Save Lesson"}
+                ? "Update Lesson"
+                : "Save Lesson"}
           </Button>
         </div>
       </form>
