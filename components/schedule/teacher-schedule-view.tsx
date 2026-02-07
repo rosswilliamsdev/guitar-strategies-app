@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { BookStudentModal } from "./book-student-modal";
 import { LessonManagementModal } from "./lesson-management-modal";
-import { Skeleton, SkeletonSchedule } from "@/components/ui/skeleton";
+import { SkeletonSchedule } from "@/components/ui/skeleton";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,8 +17,6 @@ import {
 import { cn } from "@/lib/utils";
 import {
   Calendar,
-  Clock,
-  User,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -116,7 +114,7 @@ const DAYS_OF_WEEK = [
 
 // Helper function to ensure dates are properly converted from ISO strings
 const ensureDate = (date: Date | string): Date => {
-  return typeof date === 'string' ? new Date(date) : date;
+  return typeof date === "string" ? new Date(date) : date;
 };
 
 // Generate 30-minute time slots based on teacher's availability
@@ -320,7 +318,6 @@ export function TeacherScheduleView({
   teacherId,
   upcomingLessons,
   availability,
-  lessonSettings,
   students,
   loading = false,
   timezone = "America/Chicago",
@@ -397,7 +394,7 @@ export function TeacherScheduleView({
         const errorData = JSON.parse(responseText);
         // API returns { error: "message" } format
         errorMessage = errorData.error || errorData.message || errorMessage;
-      } catch (e) {
+      } catch {
         errorMessage = `Server error: ${response.status}`;
       }
 
