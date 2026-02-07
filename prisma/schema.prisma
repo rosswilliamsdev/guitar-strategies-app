@@ -97,7 +97,6 @@ model TeacherProfile {
   studentInvitations StudentInvitation[]
   students           StudentProfile[]       @relation("TeacherStudents")
   availability       TeacherAvailability[]
-  blockedTimes       TeacherBlockedTime[]
   lessonSettings     TeacherLessonSettings?
   user               User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -448,20 +447,6 @@ model TeacherAvailability {
   @@unique([teacherId, dayOfWeek, startTime, endTime])
   @@index([teacherId])
   @@index([dayOfWeek])
-}
-
-model TeacherBlockedTime {
-  id        String         @id @default(cuid())
-  teacherId String
-  startTime DateTime
-  endTime   DateTime
-  reason    String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-
-  @@index([teacherId])
-  @@index([startTime, endTime])
 }
 
 model RecurringSlot {

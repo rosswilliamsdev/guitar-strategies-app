@@ -124,11 +124,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         where: { teacherId: id },
       });
 
-      // Delete teacher blocked time
-      await tx.teacherBlockedTime.deleteMany({
-        where: { teacherId: id },
-      });
-
       // Delete teacher lesson settings
       await tx.teacherLessonSettings.deleteMany({
         where: { teacherId: id },

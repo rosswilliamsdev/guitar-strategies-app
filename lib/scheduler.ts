@@ -89,14 +89,6 @@ export async function getAvailableSlots(
       availability: {
         where: { isActive: true }
       },
-      blockedTimes: {
-        where: {
-          AND: [
-            { startTime: { lte: endDate } },
-            { endTime: { gte: startDate } }
-          ]
-        }
-      },
       lessonSettings: true,
       lessons: {
         where: {
@@ -175,11 +167,10 @@ export async function getAvailableSlots(
         // Generate 30-minute slots only (users select 1 for 30min, 2 consecutive for 60min)
         const slotEnd = addMinutes(slotStart, 30)
         if (slotEnd <= dayEnd) {
-          // Check if slot is available (not blocked or booked)
+          // Check if slot is available (not booked)
           const isAvailable = await isSlotAvailable(
             slotStart,
             slotEnd,
-            teacher.blockedTimes,
             teacher.lessons
           )
 
@@ -212,20 +203,8 @@ export async function getAvailableSlots(
 async function isSlotAvailable(
   slotStart: Date,
   slotEnd: Date,
-  blockedTimes: any[],
   lessons: any[]
 ): Promise<boolean> {
-  // Check if slot overlaps with any blocked time
-  for (const blocked of blockedTimes) {
-    if (
-      (slotStart >= blocked.startTime && slotStart < blocked.endTime) ||
-      (slotEnd > blocked.startTime && slotEnd <= blocked.endTime) ||
-      (slotStart <= blocked.startTime && slotEnd >= blocked.endTime)
-    ) {
-      return false
-    }
-  }
-
   // Check if slot overlaps with any existing lesson
   for (const lesson of lessons) {
     const lessonEnd = addMinutes(lesson.date, lesson.duration)
@@ -676,49 +655,6 @@ export async function validateAvailability(
   return { success: true }
 }
 
-export async function validateBlockedTime(
-  teacherId: string,
-  blockedTime: { startTime: Date; endTime: Date; timezone: string }
-): Promise<{ success: boolean; error?: string }> {
-  // Check if blocked time conflicts with existing lessons
-  const teacher = await prisma.teacherProfile.findUnique({
-    where: { id: teacherId },
-    include: {
-      lessons: {
-        where: {
-          AND: [
-            { date: { gte: blockedTime.startTime } },
-            { date: { lte: blockedTime.endTime } },
-            { status: 'SCHEDULED' }
-          ]
-        }
-      }
-    }
-  })
-
-  if (!teacher) {
-    return { success: false, error: 'Teacher not found' }
-  }
-
-  if (teacher.lessons.length > 0) {
-    return {
-      success: false,
-      error: `Cannot block time: ${teacher.lessons.length} lesson(s) already scheduled during this period`
-    }
-  }
-
-  // Validate times
-  if (blockedTime.startTime >= blockedTime.endTime) {
-    return { success: false, error: 'End time must be after start time' }
-  }
-
-  if (blockedTime.startTime < new Date()) {
-    return { success: false, error: 'Cannot block time in the past' }
-  }
-
-  return { success: true }
-}
-
 export async function validateLessonSettings(settings: {
   allows30Min: boolean
   allows60Min: boolean
@@ -756,7 +692,6 @@ export async function checkSchedulingConflicts(
   hasConflicts: boolean
   conflicts: {
     lessons: number
-    blockedTimes: number
   }
 }> {
   const teacher = await prisma.teacherProfile.findUnique({
@@ -770,14 +705,6 @@ export async function checkSchedulingConflicts(
             { status: { in: ['SCHEDULED'] } }
           ]
         }
-      },
-      blockedTimes: {
-        where: {
-          AND: [
-            { startTime: { lte: endDate } },
-            { endTime: { gte: startDate } }
-          ]
-        }
       }
     }
   })
@@ -785,15 +712,14 @@ export async function checkSchedulingConflicts(
   if (!teacher) {
     return {
       hasConflicts: false,
-      conflicts: { lessons: 0, blockedTimes: 0 }
+      conflicts: { lessons: 0 }
     }
   }
 
   return {
-    hasConflicts: teacher.lessons.length > 0 || teacher.blockedTimes.length > 0,
+    hasConflicts: teacher.lessons.length > 0,
     conflicts: {
-      lessons: teacher.lessons.length,
-      blockedTimes: teacher.blockedTimes.length
+      lessons: teacher.lessons.length
     }
   }
 }

@@ -362,17 +362,6 @@
         "description": "Configure lesson durations, pricing, and booking limits"
       },
       {
-        "name": "BlockedTimeManager",
-        "path": "/components/teacher/BlockedTimeManager.tsx",
-        "type": "client",
-        "props": {
-          "interface": "BlockedTimeManagerProps",
-          "customProps": ["blockedTimes", "onAdd", "onDelete"]
-        },
-        "dependencies": ["@/lib/utils"],
-        "description": "Manage vacation and blocked time periods"
-      },
-      {
         "name": "SetupWizard",
         "path": "/components/teacher/setup-wizard.tsx",
         "type": "client",
