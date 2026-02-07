@@ -45,7 +45,6 @@ export async function validateTeacherProfile(teacherId: string): Promise<Teacher
       include: {
         lessonSettings: true,
         availability: true,
-        blockedTimes: true,
       },
     });
 

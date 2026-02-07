@@ -744,15 +744,6 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   duration: number             // 30 or 60 minutes
   status: 'ACTIVE'             // Only active slots stored
 }
-
-// Teacher Blocked Time
-{
-  id: string
-  teacherId: string
-  startDate: DateTime
-  endDate: DateTime
-  reason?: string              // "Vacation", "Personal", etc.
-}
 ```
 
 ## Authentication Patterns
@@ -1116,7 +1107,7 @@ openssl rand -base64 32
 1. **Availability Setup**: Teachers configure weekly availability in settings (`/settings`)
    - Set available time slots for each day of the week
    - Configure lesson durations (30 or 60 minutes) and pricing
-   - Set advance booking limits and blocked time periods
+   - Set advance booking limits
 2. **Booking**: Teachers book time slots for students directly in the app (`/book-lesson`)
    - View real-time availability calendar
    - Select single lessons or recurring weekly series
@@ -1282,7 +1273,6 @@ import { z } from "zod";
 - Lesson duration configuration (30-minute and 60-minute options)
 - Dynamic pricing per lesson duration
 - Advance booking limits (configurable 1-90 days)
-- Blocked time management for vacations and personal time
 - Timezone-aware scheduling with automatic UTC conversion
 - Real-time slot generation with conflict detection
 - Recurring lesson support (2-52 weeks)

@@ -76,13 +76,6 @@ interface TeacherAvailability {
   isActive: boolean;
 }
 
-interface BlockedTime {
-  id: string;
-  startTime: Date | string; // Can be Date object or ISO string from serialization
-  endTime: Date | string;   // Can be Date object or ISO string from serialization
-  reason?: string;
-}
-
 interface LessonSettings {
   id: string;
   allows30Min: boolean;
@@ -105,7 +98,6 @@ interface TeacherScheduleViewProps {
   teacherId: string;
   upcomingLessons: UpcomingLesson[];
   availability: TeacherAvailability[];
-  blockedTimes: BlockedTime[];
   lessonSettings: LessonSettings | null;
   students: Student[];
   loading?: boolean;
@@ -251,36 +243,10 @@ const getLessonAtTime = (
   );
 };
 
-// Check if time slot is blocked
-const isTimeBlocked = (
-  day: Date,
-  timeSlot: string,
-  blockedTimes: BlockedTime[],
-): boolean => {
-  const [time, period] = timeSlot.split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
-  let hour24 = hours;
-  if (period === "PM" && hours !== 12) hour24 += 12;
-  if (period === "AM" && hours === 12) hour24 = 0;
-
-  const slotStart = new Date(day);
-  slotStart.setHours(hour24, minutes, 0, 0);
-
-  const slotEnd = new Date(slotStart);
-  slotEnd.setMinutes(slotEnd.getMinutes() + 30);
-
-  return blockedTimes.some((blocked) => {
-    const blockedStart = ensureDate(blocked.startTime);
-    const blockedEnd = ensureDate(blocked.endTime);
-    return slotStart < blockedEnd && slotEnd > blockedStart;
-  });
-};
-
 type SlotStatus =
   | { type: "not-available" }
   | { type: "open" }
-  | { type: "booked"; lesson: UpcomingLesson }
-  | { type: "blocked"; reason?: string };
+  | { type: "booked"; lesson: UpcomingLesson };
 
 // Determine the status of a time slot
 const getSlotStatus = (
@@ -288,17 +254,10 @@ const getSlotStatus = (
   timeSlot: string,
   availability: TeacherAvailability[],
   lessons: UpcomingLesson[],
-  blockedTimes: BlockedTime[],
 ): SlotStatus => {
   // Check if time is within teacher availability
   if (!isTimeInAvailability(timeSlot, availability)) {
     return { type: "not-available" };
-  }
-
-  // Check if blocked
-  if (isTimeBlocked(day, timeSlot, blockedTimes)) {
-    const blocked = blockedTimes.find((b) => isTimeBlocked(day, timeSlot, [b]));
-    return { type: "blocked", reason: blocked?.reason };
   }
 
   // Check if booked
@@ -352,18 +311,6 @@ const renderSlotContent = (
         </button>
       );
 
-    case "blocked":
-      return (
-        <div className="w-full h-8 bg-red-50 border border-red-200 rounded flex items-center justify-center">
-          <span
-            className="text-xs text-red-700"
-            title={status.reason || "Blocked"}
-          >
-            🚫
-          </span>
-        </div>
-      );
-
     default:
       return null;
   }
@@ -373,7 +320,6 @@ export function TeacherScheduleView({
   teacherId,
   upcomingLessons,
   availability,
-  blockedTimes,
   lessonSettings,
   students,
   loading = false,
@@ -505,13 +451,6 @@ export function TeacherScheduleView({
     );
   };
 
-  // Get blocked times for a specific day
-  const getBlockedTimesForDay = (day: Date) => {
-    return blockedTimes.filter((blocked) =>
-      isSameDay(ensureDate(blocked.startTime), day),
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Schedule View */}
@@ -610,7 +549,6 @@ export function TeacherScheduleView({
                 currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
               const dayAvailability = getAvailabilityForDay(currentDayIndex);
               const dayLessons = getLessonsForDay(currentDate);
-              const dayBlockedTimes = getBlockedTimesForDay(currentDate);
 
               // Generate time slots for this specific day's availability
               const dayTimeSlots =
@@ -650,7 +588,6 @@ export function TeacherScheduleView({
                       timeSlot,
                       dayAvailability,
                       dayLessons,
-                      dayBlockedTimes,
                     );
 
                     return (
@@ -698,7 +635,6 @@ export function TeacherScheduleView({
               const isToday = isSameDay(day, new Date());
               const dayAvailability = getAvailabilityForDay(dayIndex);
               const dayLessons = getLessonsForDay(day);
-              const dayBlockedTimes = getBlockedTimesForDay(day);
               const isAvailable = dayAvailability.length > 0;
 
               // Generate time slots for this day
@@ -756,7 +692,6 @@ export function TeacherScheduleView({
                               timeSlot,
                               dayAvailability,
                               dayLessons,
-                              dayBlockedTimes,
                             );
 
                             return (
@@ -895,14 +830,12 @@ export function TeacherScheduleView({
                           const dayAvailability =
                             getAvailabilityForDay(dayIndex);
                           const dayLessons = getLessonsForDay(day);
-                          const dayBlockedTimes = getBlockedTimesForDay(day);
 
                           const slotStatus = getSlotStatus(
                             day,
                             timeSlot,
                             dayAvailability,
                             dayLessons,
-                            dayBlockedTimes,
                           );
 
                           return (

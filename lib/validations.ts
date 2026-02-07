@@ -414,18 +414,6 @@ export const weeklyAvailabilitySchema = z.array(availabilitySchema).refine(
   { message: "Availability slots cannot overlap on the same day" }
 );
 
-export const blockedTimeSchema = z
-  .object({
-    startTime: z.date(),
-    endTime: z.date(),
-    reason: z.string().max(200).optional(),
-    timezone: z.string(),
-  })
-  .refine((data) => data.endTime > data.startTime, {
-    message: "End time must be after start time",
-    path: ["endTime"],
-  });
-
 export const lessonSettingsSchema = z
   .object({
     allows30Min: z.boolean(),

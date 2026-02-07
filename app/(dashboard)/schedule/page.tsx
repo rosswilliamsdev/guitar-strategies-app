@@ -54,22 +54,6 @@ export default async function SchedulePage() {
     },
   });
 
-  // Get blocked time slots
-  const blockedTimesData = await prisma.teacherBlockedTime.findMany({
-    where: {
-      teacherId: teacher.id,
-      startTime: {
-        gte: startDate,
-      },
-    },
-  });
-
-  // Convert null to undefined for compatibility
-  const blockedTimes = blockedTimesData.map(bt => ({
-    ...bt,
-    reason: bt.reason ?? undefined,
-  }));
-
   // Get lesson settings
   const lessonSettings = await prisma.teacherLessonSettings.findUnique({
     where: {
@@ -112,7 +96,6 @@ export default async function SchedulePage() {
         teacherId={teacher.id}
         upcomingLessons={upcomingLessons}
         availability={availability}
-        blockedTimes={blockedTimes}
         lessonSettings={lessonSettings}
         students={students}
         timezone={teacher.timezone || "America/Chicago"}
