@@ -40,42 +40,19 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 
 ```css
 /* Neutral Palette (OpenAI Style) */
---neutral-50: #fafafa
---neutral-100: #f5f5f5
---neutral-200: #e5e5e5
---neutral-300: #d4d4d4
---neutral-400: #a3a3a3
---neutral-500: #737373
---neutral-600: #525252
---neutral-700: #404040
---neutral-800: #262626
---neutral-900: #171717
---neutral-950: #0a0a0a
-
-/* Turquoise Accent System */
---turquoise-50: #f0fdfc
---turquoise-100: #ccfbf7
---turquoise-200: #99f6ef
---turquoise-300: #5eebe4
---turquoise-400: #2dd4cc
---turquoise-500: #14b8b3   /* Primary turquoise */
---turquoise-600: #0d9289
---turquoise-700: #0f766e
---turquoise-800: #115e59
---turquoise-900: #134e4a
-
-
-
-/* Semantic Colors */
---primary: #14b8b3        /* turquoise-500 */
---accent: #73EEDC         /* Original turquoise as accent */
---background: #fafafa     /* neutral-50 */
---foreground: #0a0a0a     /* neutral-950 */
---muted: #f5f5f5          /* neutral-100 */
---muted-foreground: #737373 /* neutral-500 */
---border: #e5e5e5         /* neutral-200 */
---input: #ffffff
---ring: #14b8b3           /* Primary focus ring */
+--neutral-50: #fafafa --neutral-100: #f5f5f5 --neutral-200: #e5e5e5
+  --neutral-300: #d4d4d4 --neutral-400: #a3a3a3 --neutral-500: #737373
+  --neutral-600: #525252 --neutral-700: #404040 --neutral-800: #262626
+  --neutral-900: #171717 --neutral-950: #0a0a0a /* Turquoise Accent System */
+  --turquoise-50: #f0fdfc --turquoise-100: #ccfbf7 --turquoise-200: #99f6ef
+  --turquoise-300: #5eebe4 --turquoise-400: #2dd4cc --turquoise-500: #14b8b3
+  /* Primary turquoise */ --turquoise-600: #0d9289 --turquoise-700: #0f766e
+  --turquoise-800: #115e59 --turquoise-900: #134e4a /* Semantic Colors */
+  --primary: #14b8b3 /* turquoise-500 */ --accent: #73eedc
+  /* Original turquoise as accent */ --background: #fafafa /* neutral-50 */
+  --foreground: #0a0a0a /* neutral-950 */ --muted: #f5f5f5 /* neutral-100 */
+  --muted-foreground: #737373 /* neutral-500 */ --border: #e5e5e5
+  /* neutral-200 */ --input: #ffffff --ring: #14b8b3 /* Primary focus ring */;
 ```
 
 #4c5b6e
@@ -1140,10 +1117,10 @@ openssl rand -base64 32
    - Set available time slots for each day of the week
    - Configure lesson durations (30 or 60 minutes) and pricing
    - Set advance booking limits and blocked time periods
-2. **Booking**: Students book time slots directly in the app (`/book-lesson`)
+2. **Booking**: Teachers book time slots for students directly in the app (`/book-lesson`)
    - View real-time availability calendar
    - Select single lessons or recurring weekly series
-   - Receive confirmation with time reservation details
+   - Students receive confirmation with time reservation details
 3. **Teaching**: Lesson happens in person/online
 4. **Logging**: Teacher quickly logs lesson in app (`/lessons/new`):
    - Select student from dropdown
@@ -1300,8 +1277,7 @@ import { z } from "zod";
 
 11. **Custom Scheduling System** ✅
 
-- Replaced Calendly with complete internal availability management
-- Teachers set weekly availability schedules with drag-and-drop interface
+- Teachers set weekly availability schedules
 - Support for multiple time slots per day with customizable hours
 - Lesson duration configuration (30-minute and 60-minute options)
 - Dynamic pricing per lesson duration
@@ -1311,24 +1287,13 @@ import { z } from "zod";
 - Real-time slot generation with conflict detection
 - Recurring lesson support (2-52 weeks)
 
-12. **Refined Booking System** ✅
+1.  **Refined Booking System** ✅
 
 - 30-minute slot standardization for all bookings
 - Consecutive slot selection (1-2 slots) for 30 or 60-minute lessons
-- Simplified interface without pricing display per user request
-- Student-accessible booking API endpoint (`/api/availability/[teacherId]`)
 - Smart duration calculation based on selected slots
-- Clear instructional text for slot selection
 
-13. **UI/UX Improvements** ✅
-
-- Left-aligned daily schedule view for better readability and cleaner appearance
-- Removed duplicate "Book a Lesson" titles from booking interface
-- Fixed hanging "8:30 PM" time slot display issue in weekly view
-- Timezone-corrected availability display (fixed day-of-week mapping)
-- Improved schedule alignment and visual organization
-
-14. **Navigation Consolidation** ✅
+1.  **Navigation Consolidation** ✅
 
 - Integrated "My Checklists" as section within main Checklists page
 - Created unified route structure: `/curriculums/my/*` for personal checklists
@@ -1339,14 +1304,12 @@ import { z } from "zod";
 ### Core Authentication & Dashboards
 
 1. **Authentication System** ✅
-
    - NextAuth.js integration with database sessions
    - Role-based authentication (Student/Teacher/Admin)
    - Secure login/logout with proper redirects
    - Password hashing with bcrypt
 
 2. **Role-Based Dashboards** ✅
-
    - Teacher Dashboard: Stats, recent lessons, student overview
    - Student Dashboard: Assigned teacher, lesson history, progress
    - Admin Dashboard: System overview
@@ -1361,7 +1324,6 @@ import { z } from "zod";
 ### Lesson Management System
 
 4. **Streamlined Lesson Logging** ✅
-
    - Simple form: Student selection + rich text notes
    - Auto-populated date/time (current timestamp)
    - Default 30-minute duration
@@ -1379,7 +1341,6 @@ import { z } from "zod";
 ### Content Management
 
 6. **Library System** ✅
-
    - File upload for lesson materials (sheet music, exercises, etc.)
    - Category system (Sheet Music, TAB, Chord Charts, etc.)
    - Search and filtering capabilities
@@ -1397,7 +1358,6 @@ import { z } from "zod";
 ### Database & API Layer
 
 8. **Complete Database Schema** ✅
-
    - Users, TeacherProfiles, StudentProfiles
    - Lessons, LibraryItems, Recommendations
    - Proper relationships and constraints
@@ -1414,14 +1374,12 @@ import { z } from "zod";
 ### Invoice & Payment System ✅
 
 8. **Simple Invoice Generation** ✅
-
    - Generate monthly invoices based on scheduled lessons
    - Include teacher payment methods (Venmo, PayPal, Zelle)
    - Calculate totals from hourly rate × lesson duration
    - Professional invoice formatting and numbering
 
 9. **Payment Tracking Dashboard** ✅
-
    - Track invoice status (Pending, Sent, Paid, Overdue)
    - Monthly earnings summaries
    - Student payment history
