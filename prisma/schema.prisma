@@ -42,31 +42,31 @@ model VerificationToken {
 }
 
 model PasswordResetToken {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token String @unique
-  expires DateTime
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model User {
-  id                String             @id @default(cuid())
-  email             String             @unique
-  password          String?
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  password            String?
+  name                String
+  role                Role                 @default(STUDENT)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  accounts            Account[]
+  emailPreferences    EmailPreference[]
   passwordResetTokens PasswordResetToken[]
-  name              String
-  role              Role               @default(STUDENT)
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  accounts          Account[]
-  emailPreferences  EmailPreference[]
-  sessions          Session[]
-  createdChecklists StudentChecklist[]
-  studentProfile    StudentProfile?
-  teacherProfile    TeacherProfile?
+  sessions            Session[]
+  createdChecklists   StudentChecklist[]
+  studentProfile      StudentProfile?
+  teacherProfile      TeacherProfile?
 
   @@index([email])
   @@index([role])
@@ -94,8 +94,8 @@ model TeacherProfile {
   monthlyBilling     MonthlyBilling[]       @relation("TeacherBilling")
   recommendations    Recommendation[]
   recurringSlots     RecurringSlot[]        @relation("TeacherSlots")
-  students           StudentProfile[]       @relation("TeacherStudents")
   studentInvitations StudentInvitation[]
+  students           StudentProfile[]       @relation("TeacherStudents")
   availability       TeacherAvailability[]
   blockedTimes       TeacherBlockedTime[]
   lessonSettings     TeacherLessonSettings?
@@ -121,7 +121,6 @@ model StudentProfile {
   emailOnInvoice        Boolean                     @default(true)
   emailOnLessonComplete Boolean                     @default(true)
   emailOnLessonReminder Boolean                     @default(true)
-  invitation            StudentInvitation?
   invoices              Invoice[]
   lessons               Lesson[]
   monthlyBilling        MonthlyBilling[]            @relation("StudentBilling")
@@ -129,6 +128,7 @@ model StudentProfile {
   slotSubscriptions     SlotSubscription[]          @relation("StudentSubscriptions")
   studentChecklists     StudentChecklist[]
   studentProgress       StudentCurriculumProgress[]
+  invitation            StudentInvitation?
   teacher               TeacherProfile              @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: Cascade)
   user                  User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -483,7 +483,6 @@ model RecurringSlot {
   teacher        TeacherProfile     @relation("TeacherSlots", fields: [teacherId], references: [id], onDelete: Cascade)
   subscriptions  SlotSubscription[]
 
-  @@unique([teacherId, dayOfWeek, startTime, duration])
   @@index([teacherId, status])
   @@index([studentId, status])
   @@index([dayOfWeek])
@@ -722,7 +721,6 @@ enum BillingStatus {
 
 enum EmailType {
   LESSON_BOOKING
-  LESSON_BOOKING_RECURRING
   LESSON_CANCELLATION
   LESSON_REMINDER
   INVOICE_GENERATED
@@ -730,6 +728,7 @@ enum EmailType {
   CHECKLIST_COMPLETION
   SYSTEM_UPDATES
   STUDENT_WELCOME
-  STUDENT_INVITATION
   LESSON_COMPLETED
+  STUDENT_INVITATION
+  LESSON_BOOKING_RECURRING
 }
