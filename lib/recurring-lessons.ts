@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { addWeeks } from "date-fns";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 
 /**
  * Generates lessons from active recurring slots for a given date range
@@ -8,8 +9,16 @@ import { addWeeks } from "date-fns";
 export async function generateRecurringLessons(
   teacherId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) {
+  // Get teacher's timezone
+  const teacher = await prisma.teacherProfile.findUnique({
+    where: { id: teacherId },
+    select: { timezone: true },
+  });
+
+  const teacherTimezone = teacher?.timezone || "America/Chicago";
+
   // Get all active recurring slots for this teacher
   const recurringSlots = await prisma.recurringSlot.findMany({
     where: {
@@ -38,17 +47,25 @@ export async function generateRecurringLessons(
 
     // Generate lessons for each week within the date range
     while (currentDate <= endDate) {
-      // Parse the slot's start time
+      // Parse the slot's start time (stored in teacher's timezone)
       const [hours, minutes] = slot.startTime.split(":").map(Number);
-      const lessonDate = new Date(currentDate);
-      lessonDate.setHours(hours, minutes, 0, 0);
+
+      // Create date in teacher's timezone
+      const lessonDateInTeacherTZ = new Date(currentDate);
+      lessonDateInTeacherTZ.setHours(hours, minutes, 0, 0);
+
+      // Convert to UTC for database storage (matches booking API behavior)
+      const lessonDateUTC = fromZonedTime(
+        lessonDateInTeacherTZ,
+        teacherTimezone,
+      );
 
       // Check if a lesson already exists for this date and time
       const existingLesson = await prisma.lesson.findFirst({
         where: {
           teacherId,
           studentId: slot.studentId,
-          date: lessonDate,
+          date: lessonDateUTC,
         },
       });
 
@@ -57,7 +74,7 @@ export async function generateRecurringLessons(
         lessonsToCreate.push({
           teacherId,
           studentId: slot.studentId,
-          date: lessonDate,
+          date: lessonDateUTC,
           duration: slot.duration,
           status: "SCHEDULED" as const,
           isRecurring: true,
@@ -87,7 +104,7 @@ export async function generateRecurringLessons(
 export async function getLessonsWithRecurring(
   teacherId: string,
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) {
   // First, generate any missing recurring lessons
   await generateRecurringLessons(teacherId, startDate, endDate);
