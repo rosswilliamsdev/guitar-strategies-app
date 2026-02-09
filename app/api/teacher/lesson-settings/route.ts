@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { lessonSettingsSchema } from '@/lib/validations';
 import { validateLessonSettings } from '@/lib/scheduler';
-import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 export async function GET() {
   try {

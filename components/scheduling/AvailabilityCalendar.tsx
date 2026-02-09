@@ -14,18 +14,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
-  Clock,
   RefreshCw,
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Skeleton, SkeletonCalendar } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { InlineLoading } from "@/components/ui/loading-spinner";
-import { log, schedulerLog } from "@/lib/logger";
+import { log } from "@/lib/logger";
 
 // Helper function to format timezone names for display
 //TODO: extract this utility function. It is also used in teacher-schedule-view.tsx

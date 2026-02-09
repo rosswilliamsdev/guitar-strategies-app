@@ -120,11 +120,10 @@ const ensureDate = (date: Date | string): Date => {
 // Generate 30-minute time slots based on teacher's availability
 const generateTimeSlots = (availability: TeacherAvailability[]): string[] => {
   if (availability.length === 0) {
-    // Fallback to default hours if no availability set
+    // default time slots (12 PM to 8:30 PM)
     return generateDefaultTimeSlots();
   }
 
-  // Find earliest start time and latest end time from availability
   let earliestStart = "23:59";
   let latestEnd = "00:00";
 
@@ -189,19 +188,11 @@ const generateDefaultTimeSlots = (): string[] => {
   const slots: string[] = [];
   for (let hour = 12; hour <= 20; hour++) {
     for (let minute = 0; minute < 60; minute += 30) {
-      // Skip 8:30 PM in the loop since we'll add it separately
-      if (hour === 20 && minute === 30) continue;
-
       const time = new Date();
       time.setHours(hour, minute, 0, 0);
       slots.push(format(time, "h:mm a"));
     }
   }
-  // Add the final 8:30 PM slot
-  const finalTime = new Date();
-  finalTime.setHours(20, 30, 0, 0);
-  slots.push(format(finalTime, "h:mm a"));
-
   return slots;
 };
 
@@ -320,6 +311,7 @@ export function TeacherScheduleView({
   availability,
   students,
   loading = false,
+  // parent component already passing timezone, cst = fallback
   timezone = "America/Chicago",
 }: TeacherScheduleViewProps) {
   const router = useRouter();
