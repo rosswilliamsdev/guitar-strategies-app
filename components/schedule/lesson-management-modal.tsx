@@ -138,21 +138,29 @@ export function LessonManagementModal({
           </Card>
 
           {/* Action Buttons */}
-          {!isLessonCancelled && !isLessonCompleted && (
-            <div className="flex items-center gap-3">
-              <Link href="/lessons/new">
-                <Button>New Lesson</Button>
-              </Link>
-              <Button
-                variant="secondary"
-                onClick={() => setShowCancelConfirm(true)}
-                className="flex items-center gap-2 text-red-600 hover:text-red-700"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                Cancel Lesson
+          <div className="flex items-center gap-3">
+            <Link href={`/students/${lesson.student.id}`}>
+              <Button variant="secondary" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                View Profile
               </Button>
-            </div>
-          )}
+            </Link>
+            {!isLessonCancelled && !isLessonCompleted && (
+              <>
+                <Link href="/lessons/new">
+                  <Button>New Lesson</Button>
+                </Link>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  Cancel Lesson
+                </Button>
+              </>
+            )}
+          </div>
 
           {/* Cancel Confirmation */}
           {showCancelConfirm && (
