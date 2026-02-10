@@ -20,12 +20,28 @@ export function ProfileValidationAlert({ teacherId }: ProfileValidationAlertProp
 
   useEffect(() => {
     fetchValidation();
+
+    // Auto-refresh validation when user returns to the page
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchValidation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [teacherId]);
 
   const fetchValidation = async () => {
     try {
-      const response = await fetch(`/api/teacher/validate/${teacherId}`, {
+      // Add cache-busting timestamp to ensure fresh data
+      const timestamp = Date.now();
+      const response = await fetch(`/api/teacher/validate/${teacherId}?t=${timestamp}`, {
         credentials: 'include',
+        cache: 'no-store',
       });
       if (response.ok) {
         const data = await response.json();
@@ -228,12 +244,28 @@ export function ProfileValidationBadge({ teacherId }: ProfileValidationAlertProp
 
   useEffect(() => {
     fetchValidation();
+
+    // Auto-refresh validation when user returns to the page
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchValidation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [teacherId]);
 
   const fetchValidation = async () => {
     try {
-      const response = await fetch(`/api/teacher/validate/${teacherId}`, {
+      // Add cache-busting timestamp to ensure fresh data
+      const timestamp = Date.now();
+      const response = await fetch(`/api/teacher/validate/${teacherId}?t=${timestamp}`, {
         credentials: 'include',
+        cache: 'no-store',
       });
       if (response.ok) {
         const data = await response.json();

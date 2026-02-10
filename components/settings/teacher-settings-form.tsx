@@ -34,6 +34,7 @@ import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
 import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
 import { log } from "@/lib/logger";
+import type { Role, TeacherProfileData, AvailabilitySlot } from "@/types";
 
 // Common US timezones
 const TIMEZONE_OPTIONS = [
@@ -52,25 +53,25 @@ interface TeacherSettingsFormProps {
     id: string;
     name: string;
     email: string;
-    role: string;
+    role: Role;
   };
   teacherProfile: {
     id: string;
-    bio?: string;
-    hourlyRate?: number;
-    timezone?: string;
-    phoneNumber?: string;
-    venmoHandle?: string;
-    paypalEmail?: string;
-    zelleEmail?: string;
+    bio: string | null;
+    hourlyRate: number | null;
+    timezone: string;
+    phoneNumber: string | null;
+    venmoHandle: string | null;
+    paypalEmail: string | null;
+    zelleEmail: string | null;
   };
-  emailPreferences?: EmailPreference[];
+  emailPreferences: EmailPreference[];
 }
 
 export function TeacherSettingsForm({
   user,
   teacherProfile,
-  emailPreferences = [],
+  emailPreferences,
 }: TeacherSettingsFormProps) {
   const profileFormRef = useRef<HTMLFormElement>(null);
   const passwordFormRef = useRef<HTMLFormElement>(null);
@@ -104,18 +105,19 @@ export function TeacherSettingsForm({
   const [zelleEmail, setZelleEmail] = useState(teacherProfile.zelleEmail || "");
 
   // Load current profile data
-  const loadProfileData = async () => {
+  const loadProfileData = async (): Promise<void> => {
     try {
       log.info("Loading profile data...");
       const response = await fetch("/api/settings/teacher", {
         credentials: "include",
+        cache: "no-store",
       });
       log.info("Profile data response", {
         status: response.status,
         ok: response.ok,
       });
       if (response.ok) {
-        const data = await response.json();
+        const data: TeacherProfileData = await response.json();
         log.info("Loaded profile data from API", { data });
         setName(data.name || "");
         setEmail(data.email || "");
@@ -177,7 +179,7 @@ export function TeacherSettingsForm({
   };
 
   // Scheduling data state
-  const [availability, setAvailability] = useState<any[]>([]);
+  const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [lessonSettings, setLessonSettings] = useState({
     allows30Min: true,
     allows60Min: true,
@@ -190,11 +192,14 @@ export function TeacherSettingsForm({
   // Load profile data when component mounts
   useEffect(() => {
     loadProfileData();
+    // Also load scheduling data immediately on mount to ensure it's always available
+    loadSchedulingData();
   }, []);
 
-  // Load scheduling data when availability-related tabs are selected
+  // Reload scheduling data when switching to availability-related tabs (for fresh data)
   useEffect(() => {
     if (activeTab === "availability" || activeTab === "lesson-settings") {
+      // Reload to ensure fresh data when user navigates to these tabs
       loadSchedulingData();
     }
   }, [activeTab]);
@@ -264,7 +269,9 @@ export function TeacherSettingsForm({
     }
   };
 
-  const handleSaveAvailability = async (newAvailability: any[]) => {
+  const handleSaveAvailability = async (
+    newAvailability: AvailabilitySlot[]
+  ): Promise<AvailabilitySlot[]> => {
     setSchedulingLoading(true);
 
     try {
@@ -277,6 +284,7 @@ export function TeacherSettingsForm({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ availability: newAvailability }),
+        cache: "no-store",
       });
 
       log.info("Availability save response", {
@@ -399,13 +407,8 @@ export function TeacherSettingsForm({
       log.info("Reloading profile data after save...");
       await loadProfileData();
 
-      // Reset form state to prevent "unsaved changes" warning
-      if (profileFormRef.current) {
-        profileFormRef.current.reset();
-      }
-
-      // Don't call router.refresh() - it reloads the entire page and resets form state
-      // The loadProfileData() call above already updated the form state
+      // Don't reset the form - we want to keep the saved values displayed
+      // The loadProfileData() call above already updated the form state with fresh data
       log.info("Profile update complete");
     } catch (error) {
       log.error("Profile update error", {

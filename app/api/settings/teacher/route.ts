@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { teacherProfileSchema } from '@/lib/validations';
@@ -111,6 +112,11 @@ async function handlePUT(request: NextRequest) {
         },
       });
     });
+
+    // Revalidate settings page and dashboard to refresh server-rendered data
+    revalidatePath('/settings');
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/teacher');
 
     return NextResponse.json({ success: true, message: 'Profile updated successfully' });
   } catch (error) {
