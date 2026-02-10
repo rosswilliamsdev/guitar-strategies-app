@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { LessonStatus } from "@prisma/client";
 import { z } from "zod";
 import { toZonedTime } from "date-fns-tz";
 import { formatDateInTimezone, formatTimeInTimezone } from "@/lib/utils";
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
             lt: endTime,
           },
           status: {
-            in: ["SCHEDULED"],
+            in: [LessonStatus.SCHEDULED],
           },
         },
       });
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
             studentId: validatedData.studentId,
             date: lessonDateUTC,
             duration: validatedData.duration,
-            status: "SCHEDULED",
+            status: LessonStatus.SCHEDULED,
           },
         });
 
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest) {
             studentId: validatedData.studentId,
             date: lessonDateUTC,
             duration: validatedData.duration,
-            status: "SCHEDULED",
+            status: LessonStatus.SCHEDULED,
             isRecurring: true,
             recurringSlotId: recurringSlot.id,
           },
@@ -215,7 +216,7 @@ export async function POST(request: NextRequest) {
             studentId: validatedData.studentId,
             date: new Date(nextLessonDate), // Create new Date instance to avoid mutation
             duration: validatedData.duration,
-            status: "SCHEDULED",
+            status: LessonStatus.SCHEDULED,
             isRecurring: true,
             recurringSlotId: recurringSlot.id,
           });
