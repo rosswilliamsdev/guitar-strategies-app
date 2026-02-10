@@ -6,6 +6,7 @@ import { sendEmail, createInvoiceEmail } from '@/lib/email';
 import { format } from 'date-fns';
 import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
+import { formatDateInTimezone } from '@/lib/utils';
 
 async function handlePOST(
   request: NextRequest,
@@ -68,12 +69,16 @@ async function handlePOST(
     // Format month for display
     const monthDisplay = format(new Date(invoice.month + '-01'), 'MMMM yyyy');
 
+    // Format due date in teacher's timezone
+    const teacherTimezone = invoice.teacher.timezone || 'America/Chicago';
+    const formattedDueDate = formatDateInTimezone(invoice.dueDate, teacherTimezone);
+
     // Create email content
     const emailHtml = createInvoiceEmail(
       recipientName,
       invoice.invoiceNumber,
       invoice.total,
-      format(invoice.dueDate, 'MMMM d, yyyy'),
+      formattedDueDate,
       invoice.teacher.user.name,
       monthDisplay,
       invoice.items.length,

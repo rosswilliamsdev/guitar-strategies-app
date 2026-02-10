@@ -6,6 +6,7 @@ import { canCancelLesson } from "@/lib/lesson-cleanup";
 import { sendEmail, checkEmailPreference } from "@/lib/email";
 import { renderEmailWithFallback } from "@/lib/email-templates";
 import { apiLog, emailLog } from "@/lib/logger";
+import { formatDateInTimezone, formatTimeInTimezone } from "@/lib/utils";
 
 export async function POST(
   request: NextRequest,
@@ -79,18 +80,12 @@ export async function POST(
       },
     });
 
-    // Prepare email data (format dates once)
-    const lessonDate = lesson.date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const lessonTime = lesson.date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    // Get teacher's timezone for formatting
+    const teacherTimezone = lesson.teacher.timezone || "America/Chicago";
+
+    // Prepare email data (format dates in teacher's timezone)
+    const lessonDate = formatDateInTimezone(lesson.date, teacherTimezone);
+    const lessonTime = formatTimeInTimezone(lesson.date, teacherTimezone);
 
     // Send cancellation email to student with preference checking
     if (lesson.student.user.email && lesson.student.user.id) {

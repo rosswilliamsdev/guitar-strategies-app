@@ -11,7 +11,8 @@
 
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { log } from '@/lib/logger';
+import { formatInTimeZone } from 'date-fns-tz';
+import { format } from 'date-fns';
 
 /**
  * Utility function to merge Tailwind CSS classes with proper precedence.
@@ -93,18 +94,104 @@ export function generateId(): string {
 
 /**
  * Creates a promise that resolves after the specified delay.
- * 
+ *
  * Useful for adding delays in async functions, testing, or animations.
- * 
+ *
  * @param ms - Delay in milliseconds
  * @returns Promise that resolves after the delay
- * 
+ *
  * @example
  * ```tsx
  * await sleep(1000); // Wait 1 second
- * log.info('This runs after 1 second');
+ * console.log('This runs after 1 second');
  * ```
  */
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Get timezone abbreviation (CST, EST, PST, etc.) from IANA timezone
+ *
+ * @param timezone - IANA timezone identifier (e.g., "America/Chicago")
+ * @param date - Date to check (for DST awareness)
+ * @returns Timezone abbreviation (e.g., "CST" or "CDT")
+ *
+ * @example
+ * ```tsx
+ * getTimezoneAbbreviation('America/Chicago', new Date()) // "CST" or "CDT"
+ * getTimezoneAbbreviation('America/New_York', new Date()) // "EST" or "EDT"
+ * ```
+ */
+export function getTimezoneAbbreviation(timezone: string, date: Date = new Date()): string {
+  try {
+    const formatted = formatInTimeZone(date, timezone, 'zzz');
+    return formatted;
+  } catch {
+    return 'UTC';
+  }
+}
+
+/**
+ * Formats a date and time in a specific timezone with timezone abbreviation.
+ *
+ * Server-safe: Unlike toLocaleDateString/toLocaleTimeString which use server timezone (UTC in production),
+ * this function formats dates in the specified timezone.
+ *
+ * @param date - Date to format
+ * @param timezone - IANA timezone identifier (e.g., "America/Chicago")
+ * @returns Formatted string (e.g., "Tuesday, December 10, 2024 at 4:00 PM CST")
+ *
+ * @example
+ * ```tsx
+ * formatDateTimeInTimezone(new Date(), 'America/Chicago')
+ * // "Tuesday, December 10, 2024 at 4:00 PM CST"
+ * ```
+ */
+export function formatDateTimeInTimezone(date: Date, timezone: string): string {
+  const formattedDate = formatInTimeZone(date, timezone, 'EEEE, MMMM d, yyyy');
+  const formattedTime = formatInTimeZone(date, timezone, 'h:mm a');
+  const tzAbbr = getTimezoneAbbreviation(timezone, date);
+
+  return `${formattedDate} at ${formattedTime} ${tzAbbr}`;
+}
+
+/**
+ * Formats just the date portion in a specific timezone.
+ *
+ * @param date - Date to format
+ * @param timezone - IANA timezone identifier
+ * @returns Formatted date (e.g., "Tuesday, December 10, 2024")
+ *
+ * @example
+ * ```tsx
+ * formatDateInTimezone(new Date(), 'America/Chicago')
+ * // "Tuesday, December 10, 2024"
+ * ```
+ */
+export function formatDateInTimezone(date: Date, timezone: string): string {
+  return formatInTimeZone(date, timezone, 'EEEE, MMMM d, yyyy');
+}
+
+/**
+ * Formats just the time portion in a specific timezone with timezone abbreviation.
+ *
+ * Server-safe: Unlike toLocaleTimeString which uses server timezone,
+ * this function formats time in the specified timezone.
+ *
+ * @param date - Date to format
+ * @param timezone - IANA timezone identifier (e.g., "America/Chicago")
+ * @returns Formatted time with timezone (e.g., "4:00 PM CST")
+ *
+ * @example
+ * ```tsx
+ * formatTimeInTimezone(new Date(), 'America/Chicago')
+ * // "4:00 PM CST"
+ * ```
+ */
+export function formatTimeInTimezone(date: Date, timezone: string): string {
+  const formattedTime = formatInTimeZone(date, timezone, 'h:mm a');
+  const tzAbbr = getTimezoneAbbreviation(timezone, date);
+
+  return `${formattedTime} ${tzAbbr}`;
 }

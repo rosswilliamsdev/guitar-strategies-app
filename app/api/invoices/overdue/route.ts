@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sendEmail, createOverdueInvoiceEmail } from '@/lib/email';
 import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
+import { formatDateInTimezone } from '@/lib/utils';
 
 // POST /api/invoices/overdue - Send overdue invoice notifications
 export async function POST(request: NextRequest) {
@@ -101,16 +102,16 @@ export async function POST(request: NextRequest) {
           zelleEmail: invoice.teacher.zelleEmail || undefined,
         };
 
+        // Format due date in teacher's timezone
+        const teacherTimezone = invoice.teacher.timezone || 'America/Chicago';
+        const formattedDueDate = formatDateInTimezone(invoice.dueDate, teacherTimezone);
+
         // Create email content
         const emailContent = createOverdueInvoiceEmail(
           invoice.student.user.name || 'Student',
           invoice.invoiceNumber,
           invoice.total,
-          invoice.dueDate.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          }),
+          formattedDueDate,
           invoice.teacher.user.name || 'Teacher',
           paymentMethods
         );

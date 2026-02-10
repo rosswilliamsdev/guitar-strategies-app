@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { toZonedTime } from "date-fns-tz";
+import { formatDateInTimezone, formatTimeInTimezone } from "@/lib/utils";
 import {
   createSuccessResponse,
   createAuthErrorResponse,
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
       select: { timezone: true },
     });
 
-    const teacherTimezone = teacher?.timezone || "America/New_York";
+    const teacherTimezone = teacher?.timezone || "America/Chicago";
 
     // Convert UTC date to teacher's timezone for availability checking
     const lessonDateUTC = new Date(validatedData.date);
@@ -79,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     if (!availability) {
       return createBadRequestResponse(
-        "This time slot is not within your availability"
+        "This time slot is not within your availability",
       );
     }
 
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     if (conflict) {
       return createConflictResponse(
-        "This time slot already has a lesson scheduled"
+        "This time slot already has a lesson scheduled",
       );
     }
 
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
 
       if (!teacher?.lessonSettings) {
         throw new Error(
-          "Please complete your account before booking lessons. Go to Settings to complete your profile, payment methods, lesson settings, and availabilty."
+          "Please complete your account before booking lessons. Go to Settings to complete your profile, payment methods, lesson settings, and availabilty.",
         );
       }
 
@@ -217,18 +218,9 @@ export async function POST(request: NextRequest) {
       select: { name: true },
     });
 
-    // Format dates for email
-    const lessonDate = lessonDateUTC.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const lessonTime = lessonDateUTC.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    // Format dates for email in teacher's timezone
+    const lessonDate = formatDateInTimezone(lessonDateUTC, teacherTimezone);
+    const lessonTime = formatTimeInTimezone(lessonDateUTC, teacherTimezone);
 
     // Get day of week name for recurring lessons (e.g., "Monday", "Tuesday")
     const dayOfWeekNames = [
@@ -275,7 +267,7 @@ export async function POST(request: NextRequest) {
               to: studentUser.email!,
               subject: emailTemplate.subject,
               html: emailTemplate.html,
-            })
+            }),
           )
           .then((emailSent) => {
             if (emailSent) {
@@ -308,7 +300,7 @@ export async function POST(request: NextRequest) {
     if (result.type === "single") {
       return createSuccessResponse(
         result.lesson,
-        "Single lesson created successfully"
+        "Single lesson created successfully",
       );
     } else {
       return createSuccessResponse(
@@ -316,7 +308,7 @@ export async function POST(request: NextRequest) {
           recurringSlot: result.recurringSlot,
           firstLesson: result.firstLesson,
         },
-        "Created indefinite recurring lesson"
+        "Created indefinite recurring lesson",
       );
     }
   } catch (error) {

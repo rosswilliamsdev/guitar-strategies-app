@@ -118,6 +118,10 @@ async function seedEmailTemplates() {
           Duration: {{duration}} minutes
         </div>
 
+        <p style="margin: 16px 0; padding: 12px; background-color: #f0fdfc; border-radius: 6px; font-size: 14px; color: #525252;">
+          ⏰ <strong>Note:</strong> Time shown is in your teacher's timezone.
+        </p>
+
         <p>We look forward to seeing you!</p>
       </div>
       <div class="footer">
@@ -181,6 +185,10 @@ async function seedEmailTemplates() {
           First Lesson: {{lessonDate}}
         </div>
 
+        <p style="margin: 16px 0; padding: 12px; background-color: #f0fdfc; border-radius: 6px; font-size: 14px; color: #525252;">
+          ⏰ <strong>Note:</strong> All times shown are in your teacher's timezone. The time will be the same for you each week.
+        </p>
+
         <div class="info-box">
           <strong>📅 What This Means:</strong><br>
           Your lessons will continue weekly at this time until you decide to cancel. This is a great commitment to your guitar journey!
@@ -238,6 +246,10 @@ async function seedEmailTemplates() {
           Date: {{lessonDate}}<br>
           Time: {{lessonTime}}
         </div>
+
+        <p style="margin: 16px 0; padding: 12px; background-color: #f5f5f5; border-radius: 6px; font-size: 14px; color: #525252;">
+          ⏰ <strong>Note:</strong> Time shown is in your teacher's timezone.
+        </p>
 
         <p>Please contact {{teacherName}} if you need to reschedule.</p>
       </div>
