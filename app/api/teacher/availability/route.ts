@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { weeklyAvailabilitySchema } from '@/lib/validations';
@@ -196,6 +197,12 @@ async function handlePUT(request: NextRequest) {
       slotCount: updatedAvailability.length,
       slots: updatedAvailability
     });
+
+    // Revalidate settings page and dashboard to refresh server-rendered data
+    revalidatePath('/settings');
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard/teacher');
+    revalidatePath('/schedule');
 
     log.info('API: Returning success response');
     return createSuccessResponse({

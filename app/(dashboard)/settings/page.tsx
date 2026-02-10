@@ -98,15 +98,15 @@ export default async function SettingsPage() {
           user={userData}
           teacherProfile={{
             id: userData.teacherProfile.id,
-            bio: userData.teacherProfile.bio ?? undefined,
-            hourlyRate: userData.teacherProfile.hourlyRate ?? undefined,
-            timezone: userData.teacherProfile.timezone ?? undefined,
-            phoneNumber: userData.teacherProfile.phoneNumber ?? undefined,
-            venmoHandle: userData.teacherProfile.venmoHandle ?? undefined,
-            paypalEmail: userData.teacherProfile.paypalEmail ?? undefined,
-            zelleEmail: userData.teacherProfile.zelleEmail ?? undefined,
+            bio: userData.teacherProfile.bio ?? null,
+            hourlyRate: userData.teacherProfile.hourlyRate ?? null,
+            timezone: userData.teacherProfile.timezone ?? 'America/Chicago',
+            phoneNumber: userData.teacherProfile.phoneNumber ?? null,
+            venmoHandle: userData.teacherProfile.venmoHandle ?? null,
+            paypalEmail: userData.teacherProfile.paypalEmail ?? null,
+            zelleEmail: userData.teacherProfile.zelleEmail ?? null,
           }}
-          emailPreferences={userData.emailPreferences || []}
+          emailPreferences={userData.emailPreferences ?? []}
         />
       ) : (
         <Card className="p-6">

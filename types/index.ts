@@ -267,6 +267,28 @@ export interface ProfileUpdateData {
   timezone?: string;
 }
 
+export interface TeacherProfileData {
+  name: string;
+  email: string;
+  bio: string | null;
+  timezone: string;
+  phoneNumber: string | null;
+  venmoHandle: string | null;
+  paypalEmail: string | null;
+  zelleEmail: string | null;
+}
+
+export interface TeacherProfileUpdateData {
+  name: string;
+  email: string;
+  bio?: string | null;
+  timezone: string;
+  phoneNumber?: string | null;
+  venmoHandle?: string | null;
+  paypalEmail?: string | null;
+  zelleEmail?: string | null;
+}
+
 export interface PasswordChangeData {
   currentPassword: string;
   newPassword: string;
@@ -416,6 +438,17 @@ export interface FormState<T = any> extends LoadingState {
 // ========================================
 // Scheduling Types
 // ========================================
+export interface AvailabilitySlot {
+  dayOfWeek: number; // 0-6 (Sunday-Saturday)
+  startTime: string; // "HH:MM" format
+  endTime: string; // "HH:MM" format
+  isActive: boolean;
+}
+
+export interface AvailabilityData {
+  availability: AvailabilitySlot[];
+}
+
 export interface TimeSlot {
   id: string;
   startTime: Date;
