@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { toZonedTime } from "date-fns-tz";
 import { formatDateInTimezone, formatTimeInTimezone } from "@/lib/utils";
+import { addWeeks } from "date-fns";
 import {
   createSuccessResponse,
   createAuthErrorResponse,
@@ -202,6 +203,31 @@ export async function POST(request: NextRequest) {
             recurringSlotId: recurringSlot.id,
           },
         });
+
+        // Generate the next 11 weeks of lessons (12 weeks total including first lesson)
+        const futureLessons = [];
+        let nextLessonDate = new Date(lessonDateUTC);
+
+        for (let week = 1; week <= 11; week++) {
+          nextLessonDate = addWeeks(nextLessonDate, 1);
+          futureLessons.push({
+            teacherId: validatedData.teacherId,
+            studentId: validatedData.studentId,
+            date: new Date(nextLessonDate), // Create new Date instance to avoid mutation
+            duration: validatedData.duration,
+            status: "SCHEDULED",
+            isRecurring: true,
+            recurringSlotId: recurringSlot.id,
+          });
+        }
+
+        // Create all future lessons in one batch
+        if (futureLessons.length > 0) {
+          await tx.lesson.createMany({
+            data: futureLessons,
+            skipDuplicates: true,
+          });
+        }
 
         return { type: "recurring", recurringSlot, firstLesson };
       }

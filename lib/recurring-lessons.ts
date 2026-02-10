@@ -37,20 +37,21 @@ export async function generateRecurringLessons(
   const lessonsToCreate = [];
 
   for (const slot of recurringSlots) {
-    // Find the first occurrence of this day of week within our date range
-    let currentDate = new Date(startDate);
+    // Convert startDate to teacher's timezone for day-of-week matching
+    let currentDate = toZonedTime(startDate, teacherTimezone);
+    const endDateInTeacherTZ = toZonedTime(endDate, teacherTimezone);
 
-    // Move to the first occurrence of the slot's day of week
-    while (currentDate.getDay() !== slot.dayOfWeek && currentDate <= endDate) {
+    // Move to the first occurrence of the slot's day of week (in teacher's timezone)
+    while (currentDate.getDay() !== slot.dayOfWeek && currentDate <= endDateInTeacherTZ) {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
     // Generate lessons for each week within the date range
-    while (currentDate <= endDate) {
+    while (currentDate <= endDateInTeacherTZ) {
       // Parse the slot's start time (stored in teacher's timezone)
       const [hours, minutes] = slot.startTime.split(":").map(Number);
 
-      // Create date in teacher's timezone
+      // Create date with time in teacher's timezone
       const lessonDateInTeacherTZ = new Date(currentDate);
       lessonDateInTeacherTZ.setHours(hours, minutes, 0, 0);
 
@@ -82,7 +83,7 @@ export async function generateRecurringLessons(
         });
       }
 
-      // Move to next week
+      // Move to next week (in teacher's timezone)
       currentDate = addWeeks(currentDate, 1);
     }
   }
