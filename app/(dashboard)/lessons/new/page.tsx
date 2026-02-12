@@ -25,6 +25,21 @@ export default async function NewLessonPage() {
     redirect("/dashboard");
   }
 
+  const students = await prisma.studentProfile.findMany({
+    where: {
+      teacherId: teacherProfile.id,
+      isActive: true,
+    },
+    include: {
+      user: true,
+    },
+    orderBy: {
+      user: {
+        name: "asc",
+      },
+    },
+  });
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       <div>
@@ -34,7 +49,7 @@ export default async function NewLessonPage() {
         </p>
       </div>
 
-      <LessonForm teacherId={teacherProfile.id} />
+      <LessonForm teacherId={teacherProfile.id} students={students} />
     </div>
   );
 }

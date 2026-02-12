@@ -1,50 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-interface Student {
-  id: string;
-  instrument: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
+import type { StudentProfile, User } from "@/types";
 
 interface StudentListProps {
   teacherId: string;
+  students: (StudentProfile & { user: User })[];
 }
 
-export function StudentList({ teacherId }: StudentListProps) {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/students")
-      .then((res) => res.json())
-      .then((data) => {
-        // API returns paginated response with data.data
-        setStudents(data.data || data.students || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching students:", error);
-        setLoading(false);
-      });
-  }, [teacherId]);
-
-  if (loading) {
-    return (
-      <Card className="p-8 text-center">
-        <p>Loading students...</p>
-      </Card>
-    );
-  }
-
+export function StudentList({ teacherId, students }: StudentListProps) {
   if (students.length === 0) {
     return (
       <Card className="p-8 text-center">

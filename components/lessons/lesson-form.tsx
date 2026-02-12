@@ -24,22 +24,16 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { log } from "@/lib/logger";
+import type { StudentProfile, User } from "@/types";
 
 // each form is assigned to a teacher and given a lesson id
 // initial data may be needed for populating fields when updating/editing lessons
 // TODO: what should initialData's return type be?
 interface LessonFormProps {
   teacherId: string;
+  students: (StudentProfile & { user: User })[];
   lessonId?: string;
   initialData?: any;
-}
-
-interface Student {
-  id: string;
-  user: {
-    name: string;
-    email: string;
-  };
 }
 
 interface CurriculumItem {
@@ -72,11 +66,11 @@ interface StudentCurriculum {
 export function LessonForm({
   teacherId,
   lessonId,
+  students,
   initialData,
 }: LessonFormProps) {
   // a hook allowing you to route to different pages
   const router = useRouter();
-  const [students, setStudents] = useState<Student[]>([]);
   const [studentCurriculums, setStudentCurriculums] = useState<
     StudentCurriculum[]
   >([]);
@@ -145,27 +139,6 @@ export function LessonForm({
       }
     }
   }, [initialData]);
-
-  // Fetch teacher's students
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await fetch(`/api/students?teacherId=${teacherId}`);
-        if (response.ok) {
-          const data = await response.json();
-          // API returns paginated response with data.data
-          setStudents(data.data || data.students || []);
-        }
-      } catch (error) {
-        log.error("Error fetching students:", {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-        });
-      }
-    };
-
-    fetchStudents();
-  }, [teacherId]);
 
   // Fetch student's checklists when student is selected
   useEffect(() => {
@@ -649,7 +622,7 @@ export function LessonForm({
             `/api/lessons/${currentLessonId}/send-email`,
             {
               method: "POST",
-            }
+            },
           );
 
           if (emailResponse.ok) {
