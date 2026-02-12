@@ -1,8 +1,8 @@
-import { getServerSession } from 'next-auth';
-import { redirect, notFound } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
-import { LessonForm } from '@/components/lessons/lesson-form';
+import { getServerSession } from "next-auth";
+import { redirect, notFound } from "next/navigation";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { LessonForm } from "@/components/lessons/lesson-form";
 
 interface EditLessonPageProps {
   params: Promise<{
@@ -11,8 +11,8 @@ interface EditLessonPageProps {
 }
 
 export const metadata = {
-  title: 'Edit Lesson',
-  description: 'Edit lesson details and content',
+  title: "Edit Lesson",
+  description: "Edit lesson details and content",
 };
 
 export default async function EditLessonPage({ params }: EditLessonPageProps) {
@@ -20,11 +20,11 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect('/login');
+    redirect("/login");
   }
 
-  if (session.user.role !== 'TEACHER') {
-    redirect('/login');
+  if (session.user.role !== "TEACHER") {
+    redirect("/login");
   }
 
   // Fetch the lesson data
@@ -32,10 +32,10 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
     where: { id: id },
     include: {
       student: {
-        include: { user: true }
+        include: { user: true },
       },
       teacher: {
-        include: { user: true }
+        include: { user: true },
       },
       attachments: true,
       links: true,
@@ -48,18 +48,34 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
 
   // Verify teacher owns this lesson
   if (lesson.teacher.userId !== session.user.id) {
-    redirect('/lessons');
+    redirect("/lessons");
   }
+
+  // Fetch teacher's students for the form
+  const students = await prisma.studentProfile.findMany({
+    where: {
+      teacherId: lesson.teacherId,
+      isActive: true,
+    },
+    include: {
+      user: true,
+    },
+    orderBy: {
+      user: {
+        name: "asc",
+      },
+    },
+  });
 
   // Transform the data for the form
   const initialData = {
     studentId: lesson.studentId,
-    notes: lesson.notes || '',
-    homework: lesson.homework || '',
-    progress: lesson.progress || '',
-    focusAreas: lesson.focusAreas || '',
-    songsPracticed: lesson.songsPracticed || '',
-    nextSteps: lesson.nextSteps || '',
+    notes: lesson.notes || "",
+    homework: lesson.homework || "",
+    progress: lesson.progress || "",
+    focusAreas: lesson.focusAreas || "",
+    songsPracticed: lesson.songsPracticed || "",
+    nextSteps: lesson.nextSteps || "",
     duration: lesson.duration,
     status: lesson.status,
     checklistItems: lesson.checklistItems || null,
@@ -78,6 +94,7 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
 
       <LessonForm
         teacherId={lesson.teacherId}
+        students={students}
         lessonId={id}
         initialData={initialData}
       />
