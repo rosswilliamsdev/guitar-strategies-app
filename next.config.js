@@ -2,55 +2,51 @@
 
 // Inline CSP generation to avoid module resolution issues
 function generateCSP() {
-  const isDevelopment = process.env.NODE_ENV === 'development';
-  
+  const isDevelopment = process.env.NODE_ENV === "development";
+
   const directives = {
-    'default-src': ["'self'"],
-    'script-src': [
+    "default-src": ["'self'"],
+    "script-src": [
       "'self'",
       ...(isDevelopment ? ["'unsafe-eval'", "'unsafe-inline'"] : []),
-      'https://va.vercel-scripts.com', // Vercel Analytics
+      "https://va.vercel-scripts.com", // Vercel Analytics
     ],
-    'style-src': [
+    "style-src": [
       "'self'",
       "'unsafe-inline'", // Required for styled-components and CSS-in-JS
-      'https://fonts.googleapis.com',
+      "https://fonts.googleapis.com",
     ],
-    'img-src': [
+    "img-src": [
       "'self'",
-      'data:', // For base64 images
-      'blob:', // For blob URLs (file uploads)
-      'https://vercel.blob.store', // Vercel Blob storage
-      'https://avatars.githubusercontent.com', // GitHub avatars
-      'https://lh3.googleusercontent.com', // Google avatars
-      'https://i.ytimg.com', // YouTube thumbnails
-      'https://img.youtube.com', // YouTube thumbnails
+      "data:", // For base64 images
+      "blob:", // For blob URLs (file uploads)
+      "https://vercel.blob.store", // Vercel Blob storage
+      "https://avatars.githubusercontent.com", // GitHub avatars
+      "https://lh3.googleusercontent.com", // Google avatars
+      "https://i.ytimg.com", // YouTube thumbnails
+      "https://img.youtube.com", // YouTube thumbnails
     ],
-    'font-src': [
+    "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+    "connect-src": [
       "'self'",
-      'https://fonts.gstatic.com',
-      'data:',
+      ...(isDevelopment ? ["ws:", "wss:"] : []), // WebSocket for dev server
+      "https://api.resend.com", // Email service
+      "https://vercel.blob.store", // File storage
     ],
-    'connect-src': [
-      "'self'",
-      ...(isDevelopment ? ['ws:', 'wss:'] : []), // WebSocket for dev server
-      'https://api.resend.com', // Email service
-      'https://vercel.blob.store', // File storage
-    ],
-    'frame-src': ["'self'", 'https://www.youtube.com', 'https://youtube.com'],
-    'object-src': ["'none'"],
-    'base-uri': ["'self'"],
-    'form-action': ["'self'"],
-    'frame-ancestors': ["'none'"],
-    'manifest-src': ["'self'"],
-    'media-src': ["'self'", 'blob:', 'data:'],
-    'worker-src': ["'self'", 'blob:'],
+    "frame-src": ["'self'", "https://www.youtube.com", "https://youtube.com"],
+    "object-src": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "frame-ancestors": ["'none'"],
+    "manifest-src": ["'self'"],
+    "media-src": ["'self'", "blob:", "data:"],
+    "worker-src": ["'self'", "blob:"],
   };
 
   // Convert directives to CSP string
   return Object.entries(directives)
-    .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
-    .join('; ');
+    .map(([directive, sources]) => `${directive} ${sources.join(" ")}`)
+    .join("; ");
 }
 
 const nextConfig = {
@@ -62,10 +58,7 @@ const nextConfig = {
 
   experimental: {
     // Enable optimized bundling
-    optimizePackageImports: [
-      '@radix-ui/react-icons',
-      'lucide-react',
-    ],
+    optimizePackageImports: ["@radix-ui/react-icons", "lucide-react"],
 
     // Enhanced security features
     strictNextHead: true,
@@ -73,10 +66,9 @@ const nextConfig = {
 
   // Image optimization
   images: {
-    formats: ['image/webp', 'image/avif'],
+    formats: ["image/webp", "image/avif"],
     minimumCacheTTL: 86400, // 24 hours
     dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
   // Comprehensive headers combining performance caching and security
@@ -84,93 +76,99 @@ const nextConfig = {
     return [
       {
         // Apply comprehensive security headers to all routes
-        source: '/(.*)',
+        source: "/(.*)",
         headers: [
           {
-            key: 'Content-Security-Policy',
+            key: "Content-Security-Policy",
             value: generateCSP(),
           },
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'off',
+            key: "X-DNS-Prefetch-Control",
+            value: "off",
           },
           {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            key: "Referrer-Policy",
+            value: "origin-when-cross-origin",
           },
           {
-            key: 'X-Download-Options',
-            value: 'noopen',
+            key: "X-Download-Options",
+            value: "noopen",
           },
           {
-            key: 'X-Permitted-Cross-Domain-Policies',
-            value: 'none',
+            key: "X-Permitted-Cross-Domain-Policies",
+            value: "none",
           },
           {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()',
+            key: "Permissions-Policy",
+            value:
+              "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()",
           },
         ],
       },
       // Production-only HSTS header
-      ...(process.env.NODE_ENV === 'production' ? [{
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload',
-          }
-        ],
-      }] : []),
+      ...(process.env.NODE_ENV === "production"
+        ? [
+            {
+              source: "/(.*)",
+              headers: [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=31536000; includeSubDomains; preload",
+                },
+              ],
+            },
+          ]
+        : []),
       {
         // Cache static assets
-        source: '/_next/static/(.*)',
+        source: "/_next/static/(.*)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },
       {
         // Cache images
-        source: '/_next/image(.*)',
+        source: "/_next/image(.*)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=86400, s-maxage=31536000',
+            key: "Cache-Control",
+            value: "public, max-age=86400, s-maxage=31536000",
           },
         ],
       },
       {
         // No caching for scheduling-related endpoints (change frequently)
-        source: '/api/(teacher/availability|teacher/lesson-settings|teacher/blocked-time|teacher/recurring-slots|teacher/:teacherId*/available-slots|availability/:teacherId*|lessons|lessons/:path*)',
+        source:
+          "/api/(teacher/availability|teacher/lesson-settings|teacher/blocked-time|teacher/recurring-slots|teacher/:teacherId*/available-slots|availability/:teacherId*|lessons|lessons/:path*)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, max-age=0',
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, max-age=0",
           },
         ],
       },
       {
         // API routes caching headers (can be overridden by individual routes)
-        source: '/api/(.*)',
+        source: "/api/(.*)",
         headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=300, max-age=60',
+            key: "Cache-Control",
+            value: "public, s-maxage=300, max-age=60",
           },
           {
-            key: 'Vary',
-            value: 'Accept, Authorization, Accept-Encoding',
+            key: "Vary",
+            value: "Accept, Authorization, Accept-Encoding",
           },
         ],
       },
@@ -181,8 +179,8 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/dashboard/main',
-        destination: '/dashboard',
+        source: "/dashboard/main",
+        destination: "/dashboard",
         permanent: true,
       },
     ];
@@ -204,28 +202,28 @@ const nextConfig = {
         util: false,
         winston: false, // Specifically exclude Winston from client-side
       };
-      
+
       // Ignore Winston modules on client side
       config.externals = config.externals || [];
-      config.externals.push('winston');
+      config.externals.push("winston");
     }
 
     // Bundle analyzer in development
-    if (dev && process.env.ANALYZE === 'true') {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+    if (dev && process.env.ANALYZE === "true") {
+      const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
       config.plugins.push(
         new BundleAnalyzerPlugin({
-          analyzerMode: 'server',
+          analyzerMode: "server",
           analyzerPort: isServer ? 8888 : 8889,
           openAnalyzer: true,
-        })
+        }),
       );
     }
 
     // Optimize bundle splitting (production only)
     if (!dev) {
       config.optimization.splitChunks = {
-        chunks: 'all',
+        chunks: "all",
         cacheGroups: {
           default: {
             minChunks: 2,
@@ -239,14 +237,14 @@ const nextConfig = {
           },
           react: {
             test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-            name: 'react',
-            chunks: 'all',
+            name: "react",
+            chunks: "all",
             priority: 10,
           },
           ui: {
             test: /[\\/]node_modules[\\/]@radix-ui[\\/]/,
-            name: 'ui',
-            chunks: 'all',
+            name: "ui",
+            chunks: "all",
             priority: 5,
           },
         },
@@ -274,7 +272,7 @@ const nextConfig = {
 };
 
 // Sentry integration
-const { withSentryConfig } = require('@sentry/nextjs');
+const { withSentryConfig } = require("@sentry/nextjs");
 
 const sentryOptions = {
   // For all available options, see:
@@ -286,11 +284,13 @@ const sentryOptions = {
   project: process.env.SENTRY_PROJECT,
 
   // Only upload source maps in production
-  dryRun: process.env.NODE_ENV !== 'production',
+  dryRun: process.env.NODE_ENV !== "production",
 
   // Enables automatic instrumentation of Vercel Cron Monitors.
   automaticVercelMonitors: true,
 };
 
 // Make sure adding Sentry options is the last code to run before exporting
-module.exports = process.env.SENTRY_DSN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
+module.exports = process.env.SENTRY_DSN
+  ? withSentryConfig(nextConfig, sentryOptions)
+  : nextConfig;

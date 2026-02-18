@@ -110,24 +110,38 @@ export function DashboardSidebar({
           // Mobile: slide in/out from left, fixed position with max height and scroll
           "fixed inset-y-0 left-0 z-50 w-64 lg:relative",
           "flex flex-col max-h-screen lg:max-h-none",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {/* Mobile close button */}
-        <div className="lg:hidden flex justify-between items-center p-4 mb-4 border-b border-border flex-shrink-0">
+        <div className="lg:hidden flex justify-between items-center p-4 mb-4 border-b border-border flex-shrink-0 mx-auto">
           <Link
             href="/dashboard"
             className="text-xl font-semibold text-black"
             onClick={handleNavClick}
           >
-            Guitar Strategies
+            <img
+              src="/GS_logo_noBG.png"
+              alt="Guitar Strategies Logo"
+              width={100}
+              height={80}
+            />
           </Link>
         </div>
 
         {/* Desktop header */}
-        <div className="hidden lg:block p-6 flex-shrink-0">
-          <Link href="/dashboard" className="text-xl font-semibold text-black">
-            Guitar Strategies
+        <div className="hidden lg:block p-4 flex-shrink-0 mx-auto">
+          <Link
+            href="/dashboard"
+            className="text-xl font-semibold text-black"
+            onClick={handleNavClick}
+          >
+            <img
+              src="/GS_logo_noBG.png"
+              alt="Guitar Strategies Logo"
+              width={100}
+              height={80}
+            />
           </Link>
         </div>
 
@@ -142,7 +156,7 @@ export function DashboardSidebar({
                 "flex items-center px-3 py-2 text-sm rounded-md transition-colors",
                 pathname === item.href || pathname.startsWith(item.href + "/")
                   ? "bg-turquoise-100 text-black font-medium shadow-md"
-                  : "text-black hover:bg-muted hover:text-black"
+                  : "text-black hover:bg-muted hover:text-black",
               )}
             >
               {item.label}

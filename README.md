@@ -206,41 +206,11 @@ This project is currently in **active development**. While not ready for externa
 
 This project is currently **private** and in development. License will be determined before public release.
 
-## 🔮 Roadmap
-
-### Phase 1: Core MVP ✅
-
-- [x] Authentication & user management
-- [x] Basic lesson logging
-- [x] Dashboard views
-- [x] Settings management
-
-### Phase 2: Enhanced Features ✅
-
-- [x] Rich text lesson notes
-- [x] Library system
-- [x] Recommendations engine
-- [x] Internal scheduling system
-- [x] Invoice generation and payment tracking
-- [x] Email notification system
-- [x] Student progress checklists
-
-### Phase 3: Production Ready ✅
-
-- [x] Admin dashboard and user management
-- [x] Production architecture (rate limiting, caching, error handling)
-- [x] Professional UI with OpenAI-inspired design
-- [x] Performance optimization
-- [x] Email preferences and notification system
-
----
-
 ## 📞 Support
 
 For development questions or issues:
 
 - Review the [CLAUDE.md](./CLAUDE.md) development guide
-- Check [CHANGELOG.md](./CHANGELOG.md) for recent changes
 - Open an issue for bugs or feature requests
 
 **Built with ❤️ for music teachers and students everywhere** 🎸
