@@ -26,20 +26,42 @@ import {
 import { log } from "@/lib/logger";
 import type { StudentProfile, User } from "@/types";
 
-// each form is assigned to a teacher and given a lesson id
-// initial data may be needed for populating fields when updating/editing lessons
-// TODO: what should initialData's return type be?
+// TODO: can these interfaces be extracted?
+
+interface Attachment {
+  id: string;
+  originalName: string;
+  fileSize: number;
+  mimeType: string;
+  fileUrl: string;
+}
+
+interface InitialData {
+  studentId: string;
+  notes?: string;
+  checklistItems?: string | null;
+  existingAttachments?: Attachment[];
+  existingLinks?: {
+    url: string;
+  }[];
+  duration?: number;
+  status?: string;
+  version?: number;
+}
+
 interface LessonFormProps {
   teacherId: string;
   students: (StudentProfile & { user: User })[];
   lessonId?: string;
-  initialData?: any;
+  initialData?: InitialData;
 }
 
 interface CurriculumItem {
   id: string;
   title: string;
   description?: string;
+  isCompleted?: boolean,
+  completedAt?: Date | null;
 }
 
 interface CurriculumSection {
@@ -97,7 +119,7 @@ export function LessonForm({
   // also prepopulates previously added attachments and links when updating previous lessons
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   // TODO: what should this return type be?
-  const [existingAttachments, setExistingAttachments] = useState<any[]>(
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>(
     initialData?.existingAttachments || [],
   );
   // keeps track of what attachments are removed when editing lessons
@@ -107,11 +129,6 @@ export function LessonForm({
   // new links, when creating a new lesson
   const [links, setLinks] = useState<string[]>([]);
 
-  // existing links, when editing a lesson
-  // TODO: do I need a separate state just for handling lesson form edits?
-  const [existingLinks, setExistingLinks] = useState(
-    initialData?.existingLinks || [],
-  );
   const [currentLink, setCurrentLink] = useState("");
 
   // Initialize existing links for editing, if there are any
@@ -119,7 +136,7 @@ export function LessonForm({
     if (initialData?.existingLinks && initialData.existingLinks.length > 0) {
       const existingUrls = initialData.existingLinks.map(
         //TODO: seems like link should return a string?
-        (link: any) => link.url,
+        (link: {url: string}) => link.url,
       );
       setLinks(existingUrls);
     }
@@ -141,6 +158,7 @@ export function LessonForm({
   }, [initialData]);
 
   // Fetch student's checklists when student is selected
+  // Using any types for now because 
   useEffect(() => {
     const fetchStudentChecklists = async () => {
       if (!formData.studentId) {
@@ -170,7 +188,7 @@ export function LessonForm({
                   title: "Checklist Items",
                   category: "checklist",
                   items:
-                    checklist.items?.map((item: any) => ({
+                    checklist.items?.map((item: CurriculumItem) => ({
                       id: item.id,
                       title: item.title,
                       description: item.description,
@@ -181,7 +199,7 @@ export function LessonForm({
               ],
               studentProgress: {
                 itemProgress:
-                  checklist.items?.map((item: any) => ({
+                  checklist.items?.map((item: CurriculumItem) => ({
                     itemId: item.id,
                     status: item.isCompleted ? "COMPLETED" : "NOT_STARTED",
                   })) || [],
@@ -1010,7 +1028,7 @@ export function LessonForm({
                 <Label className="text-sm font-medium">
                   Current Attachments:
                 </Label>
-                {existingAttachments.map((attachment: any) => (
+                {existingAttachments.map((attachment) => (
                   <div
                     key={attachment.id}
                     className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg"

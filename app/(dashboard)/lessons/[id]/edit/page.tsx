@@ -71,11 +71,6 @@ export default async function EditLessonPage({ params }: EditLessonPageProps) {
   const initialData = {
     studentId: lesson.studentId,
     notes: lesson.notes || "",
-    homework: lesson.homework || "",
-    progress: lesson.progress || "",
-    focusAreas: lesson.focusAreas || "",
-    songsPracticed: lesson.songsPracticed || "",
-    nextSteps: lesson.nextSteps || "",
     duration: lesson.duration,
     status: lesson.status,
     checklistItems: lesson.checklistItems || null,
