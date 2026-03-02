@@ -5,10 +5,11 @@ import { prisma } from "@/lib/db";
 import { getUpcomingLessonsWithCleanup } from "@/lib/lesson-cleanup";
 import { apiLog } from "@/lib/logger";
 import { updateStudentByTeacherSchema } from "@/lib/validations";
+import { z } from "zod";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -70,7 +71,7 @@ export async function GET(
     const recentLessons = await prisma.lesson.findMany({
       where: {
         studentId,
-        status: "COMPLETED"
+        status: "COMPLETED",
       },
       orderBy: { date: "desc" },
       take: 5,
@@ -155,14 +156,14 @@ export async function GET(
     });
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -243,10 +244,10 @@ export async function PUT(
 
     return NextResponse.json(updatedStudent);
   } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error },
-        { status: 400 }
+        { error: "Validation failed", details: error.issues },
+        { status: 400 },
       );
     }
 
@@ -256,7 +257,7 @@ export async function PUT(
     });
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
