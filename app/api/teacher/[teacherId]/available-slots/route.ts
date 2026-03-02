@@ -29,7 +29,7 @@ export async function GET(
     // Get query parameters
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
-    const studentTimezone = searchParams.get('timezone') || 'America/New_York';
+    const timezone = searchParams.get('timezone') || 'America/New_York';
 
     // Default to next 21 days if no dates provided
     const startDate = startDateParam 
@@ -54,7 +54,7 @@ export async function GET(
       teacherId,
       startDate,
       endDate,
-      studentTimezone
+      timezone
     );
 
     return createSuccessResponse({
@@ -62,7 +62,7 @@ export async function GET(
       dateRange: {
         start: startDate.toISOString(),
         end: endDate.toISOString(),
-        timezone: studentTimezone
+        timezone: timezone
       }
     });
 

@@ -39,7 +39,7 @@ interface SchedulingClientProps {
   recurringSlots: RecurringSlot[];
   recurringLessons: RecurringLesson[];
   studentId: string;
-  studentTimezone: string;
+  timezone: string;
 }
 
 export function SchedulingClient({
@@ -48,7 +48,7 @@ export function SchedulingClient({
   recurringSlots,
   recurringLessons,
   studentId,
-  studentTimezone,
+  timezone,
 }: SchedulingClientProps) {
   return (
     <div className="container mx-auto px-4 py-8">
@@ -85,7 +85,7 @@ export function SchedulingClient({
           teacherId={teacherId}
           teacherName={teacherName}
           hasRecurringSlots={recurringSlots.length > 0 || recurringLessons.length > 0}
-          studentTimezone={studentTimezone}
+          timezone={timezone}
         />
       </div>
     </div>

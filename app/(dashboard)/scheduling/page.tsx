@@ -110,7 +110,7 @@ export default async function SchedulingPage() {
       recurringSlots={recurringSlots}
       recurringLessons={recurringLessons}
       studentId={userData.studentProfile.id}
-      studentTimezone={teacher.timezone || "America/Chicago"}
+      timezone={teacher.timezone || "America/Chicago"}
     />
   );
 }

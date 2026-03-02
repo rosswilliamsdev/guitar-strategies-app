@@ -19,18 +19,18 @@ interface TimeSlot {
 interface BookingInterfaceProps {
   teacherId: string;
   teacherName: string;
-  studentTimezone?: string;
+  timezone?: string;
   onSelectionChange?: (
     hasSelection: boolean,
     selectedSlots: any[],
-    bookingMode: "single" | "recurring"
+    bookingMode: "single" | "recurring",
   ) => void;
 }
 
 export function BookingInterface({
   teacherId,
   teacherName,
-  studentTimezone = "America/Chicago",
+  timezone = "America/Chicago",
   onSelectionChange,
 }: BookingInterfaceProps) {
   const { toast } = useToast();
@@ -56,7 +56,7 @@ export function BookingInterface({
           teacherId,
           date: slots[0].start, // Use the first slot's start time
           duration,
-          timezone: studentTimezone || "America/Chicago",
+          timezone: timezone || "America/Chicago",
           isRecurring: false,
         }),
       });
@@ -89,7 +89,7 @@ export function BookingInterface({
     setSuccess("");
 
     try {
-      const response = await fetch("/api/lessons/book", {
+      const response = await fetch("/api/lessons/book-for-student", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,7 +98,7 @@ export function BookingInterface({
           teacherId,
           date: slots[0].start, // Use the first slot's start time
           duration,
-          timezone: studentTimezone || "America/Chicago",
+          timezone: timezone || "America/Chicago",
           isRecurring: true,
         }),
       });
@@ -118,7 +118,7 @@ export function BookingInterface({
       });
       setShowSuccessModal(true);
       setSuccess(
-        data.message || "Successfully booked your weekly lesson time!"
+        data.message || "Successfully booked your weekly lesson time!",
       );
     } catch (error: any) {
       setError(error.message || "Failed to book weekly lesson time");
@@ -151,7 +151,7 @@ export function BookingInterface({
       {/* Availability Calendar */}
       <AvailabilityCalendar
         teacherId={teacherId}
-        studentTimezone={studentTimezone}
+        timezone={timezone}
         onBookSlot={handleBookSlot}
         onBookRecurring={handleBookRecurring}
         loading={loading}

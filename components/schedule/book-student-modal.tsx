@@ -37,7 +37,9 @@ export function BookStudentModal({
   onBook,
 }: BookStudentModalProps) {
   const [selectedStudent, setSelectedStudent] = useState<string>("");
-  const [bookingType, setBookingType] = useState<"single" | "recurring">("single");
+  const [bookingType, setBookingType] = useState<"single" | "recurring">(
+    "single",
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -45,7 +47,7 @@ export function BookStudentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedStudent) {
       setError("Please select a student");
       return;
@@ -96,7 +98,10 @@ export function BookStudentModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="student">Select Student</Label>
-            <Select.Root value={selectedStudent} onValueChange={setSelectedStudent}>
+            <Select.Root
+              value={selectedStudent}
+              onValueChange={setSelectedStudent}
+            >
               <Select.Trigger className="w-full px-3 py-2 border rounded-md bg-background flex items-center justify-between">
                 <Select.Value placeholder="Choose a student..." />
                 <ChevronDown className="h-4 w-4" />
@@ -105,8 +110,8 @@ export function BookStudentModal({
                 <Select.Content className="bg-background border rounded-md shadow-lg z-50">
                   <Select.Viewport className="p-1">
                     {students.map((student) => (
-                      <Select.Item 
-                        key={student.id} 
+                      <Select.Item
+                        key={student.id}
                         value={student.id}
                         className="px-3 py-2 hover:bg-muted cursor-pointer rounded flex items-center gap-2"
                       >
@@ -129,7 +134,12 @@ export function BookStudentModal({
 
           <div>
             <Label>Booking Type</Label>
-            <RadioGroup value={bookingType} onValueChange={(value) => setBookingType(value as "single" | "recurring")}>
+            <RadioGroup
+              value={bookingType}
+              onValueChange={(value) =>
+                setBookingType(value as "single" | "recurring")
+              }
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="single" id="single" />
                 <Label htmlFor="single" className="font-normal cursor-pointer">
@@ -138,13 +148,15 @@ export function BookStudentModal({
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="recurring" id="recurring" />
-                <Label htmlFor="recurring" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor="recurring"
+                  className="font-normal cursor-pointer"
+                >
                   Recurring weekly lesson
                 </Label>
               </div>
             </RadioGroup>
           </div>
-
 
           {error && (
             <div className="text-sm text-red-500 bg-red-50 p-2 rounded">

@@ -52,7 +52,7 @@ interface TimeSlot {
 
 interface AvailabilityCalendarProps {
   teacherId: string;
-  studentTimezone?: string;
+  timezone?: string;
   onBookSlot?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>;
   onBookRecurring?: (slots: TimeSlot[], duration: 30 | 60) => Promise<void>;
   loading?: boolean;
@@ -60,7 +60,7 @@ interface AvailabilityCalendarProps {
   onSelectionChange?: (
     hasSelection: boolean,
     selectedSlots: TimeSlot[],
-    bookingMode: "single" | "recurring"
+    bookingMode: "single" | "recurring",
   ) => void;
 }
 
@@ -89,7 +89,7 @@ function BookingConfirmationCard({
         "p-4 transition-colors duration-200",
         hasSelection
           ? "border-primary bg-primary/5"
-          : "border-border bg-muted/30"
+          : "border-border bg-muted/30",
       )}
     >
       <div className="flex items-center justify-between">
@@ -97,7 +97,7 @@ function BookingConfirmationCard({
           <h3
             className={cn(
               "font-medium transition-colors duration-200",
-              hasSelection ? "text-foreground" : "text-muted-foreground"
+              hasSelection ? "text-foreground" : "text-muted-foreground",
             )}
           >
             {bookingMode === "single"
@@ -109,7 +109,7 @@ function BookingConfirmationCard({
               "text-sm transition-colors duration-200",
               hasSelection
                 ? "text-muted-foreground"
-                : "text-muted-foreground/60"
+                : "text-muted-foreground/60",
             )}
           >
             {hasSelection ? (
@@ -173,7 +173,7 @@ function BookingConfirmationCard({
               "transition-all duration-200 min-w-[120px]",
               hasSelection
                 ? "bg-primary hover:bg-turquoise-600"
-                : "bg-muted-foreground/20 hover:bg-muted-foreground/20 cursor-not-allowed"
+                : "bg-muted-foreground/20 hover:bg-muted-foreground/20 cursor-not-allowed",
             )}
           >
             {loading ? (
@@ -193,7 +193,7 @@ function BookingConfirmationCard({
 
 export function AvailabilityCalendar({
   teacherId,
-  studentTimezone = "America/Chicago",
+  timezone = "America/Chicago",
   onBookSlot,
   onBookRecurring,
   loading = false,
@@ -207,7 +207,7 @@ export function AvailabilityCalendar({
   const [error, setError] = useState<string>("");
   const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([]);
   const [bookingMode, setBookingMode] = useState<"single" | "recurring">(
-    "single"
+    "single",
   );
 
   const loadAvailableSlots = useCallback(async () => {
@@ -238,7 +238,7 @@ export function AvailabilityCalendar({
         `/api/availability/${teacherId}?` +
         `startDate=${startDate.toISOString()}&` +
         `endDate=${endDate.toISOString()}&` +
-        `timezone=${studentTimezone}`;
+        `timezone=${timezone}`;
 
       log.info("🔗 Fetching availability from:", { url });
       const response = await fetch(url);
@@ -278,7 +278,7 @@ export function AvailabilityCalendar({
           ...slot,
           start: new Date(slot.start),
           end: new Date(slot.end),
-        })
+        }),
       );
 
       log.info("🔍 Parsed slots:", { totalSlots: parsedSlots.length });
@@ -298,7 +298,7 @@ export function AvailabilityCalendar({
     } finally {
       setSlotsLoading(false);
     }
-  }, [currentWeek, teacherId, studentTimezone, bookingMode]);
+  }, [currentWeek, teacherId, timezone, bookingMode]);
 
   // Load available slots when dependencies change
   useEffect(() => {
@@ -339,13 +339,13 @@ export function AvailabilityCalendar({
     if (readonly || !slot.available) return;
 
     const isSelected = selectedSlots.some(
-      (s) => s.start.getTime() === slot.start.getTime()
+      (s) => s.start.getTime() === slot.start.getTime(),
     );
 
     if (isSelected) {
       // Deselect slot
       setSelectedSlots((prev) =>
-        prev.filter((s) => s.start.getTime() !== slot.start.getTime())
+        prev.filter((s) => s.start.getTime() !== slot.start.getTime()),
       );
     } else {
       // Select slot
@@ -356,14 +356,14 @@ export function AvailabilityCalendar({
         // Second slot selection - must be consecutive
         const firstSlot = selectedSlots[0];
         const timeDiff = Math.abs(
-          slot.start.getTime() - firstSlot.start.getTime()
+          slot.start.getTime() - firstSlot.start.getTime(),
         );
         const thirtyMinutes = 30 * 60 * 1000;
 
         if (timeDiff === thirtyMinutes) {
           // Consecutive slot, add it
           const sortedSlots = [firstSlot, slot].sort(
-            (a, b) => a.start.getTime() - b.start.getTime()
+            (a, b) => a.start.getTime() - b.start.getTime(),
           );
           setSelectedSlots(sortedSlots);
         } else {
@@ -456,7 +456,7 @@ export function AvailabilityCalendar({
                   "px-3 py-1 text-sm rounded transition-colors",
                   bookingMode === "single"
                     ? "bg-background shadow-sm"
-                    : "hover:bg-background/50"
+                    : "hover:bg-background/50",
                 )}
               >
                 Single Session
@@ -467,7 +467,7 @@ export function AvailabilityCalendar({
                   "px-3 py-1 text-sm rounded transition-colors",
                   bookingMode === "recurring"
                     ? "bg-background shadow-sm"
-                    : "hover:bg-background/50"
+                    : "hover:bg-background/50",
                 )}
               >
                 Weekly Lessons
@@ -547,7 +547,7 @@ export function AvailabilityCalendar({
           loading={loading}
           onClear={() => setSelectedSlots([])}
           onBook={handleBookSlots}
-          timezone={studentTimezone}
+          timezone={timezone}
         />
       )}
 
@@ -591,7 +591,7 @@ export function AvailabilityCalendar({
                     "text-center p-2 border rounded-lg bg-muted/50",
                     bookingMode === "single" &&
                       isToday(date) &&
-                      "border-primary"
+                      "border-primary",
                   )}
                 >
                   {bookingMode === "recurring" ? (
@@ -610,7 +610,7 @@ export function AvailabilityCalendar({
                       <div
                         className={cn(
                           "text-lg font-semibold",
-                          isToday(date) && "text-primary"
+                          isToday(date) && "text-primary",
                         )}
                       >
                         {format(date, "d")}
@@ -628,7 +628,7 @@ export function AvailabilityCalendar({
                   ) : (
                     daySlots.map((slot, slotIndex) => {
                       const isSelected = selectedSlots.some(
-                        (s) => s.start.getTime() === slot.start.getTime()
+                        (s) => s.start.getTime() === slot.start.getTime(),
                       );
                       return (
                         <button
@@ -642,7 +642,7 @@ export function AvailabilityCalendar({
                             isPast && "cursor-not-allowed",
                             slotIndex % 2 === 1 &&
                               !isSelected &&
-                              "bg-neutral-50/50"
+                              "bg-neutral-50/50",
                           )}
                         >
                           <div className="flex items-center justify-between">
@@ -687,7 +687,7 @@ export function AvailabilityCalendar({
           loading={loading}
           onClear={() => setSelectedSlots([])}
           onBook={handleBookSlots}
-          timezone={studentTimezone}
+          timezone={timezone}
         />
       )}
     </div>

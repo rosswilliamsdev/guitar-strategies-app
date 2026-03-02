@@ -80,7 +80,7 @@ export async function getAvailableSlots(
   teacherId: string,
   startDate: Date,
   endDate: Date,
-  studentTimezone: string
+  timezone: string
 ): Promise<TimeSlot[]> {
   // Get teacher profile with settings and availability
   const teacher = await prisma.teacherProfile.findUnique({
@@ -116,7 +116,7 @@ export async function getAvailableSlots(
     teacherId,
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
-    studentTimezone,
+    timezone,
     teacherTimezone: teacher.timezone,
     availabilityCount: teacher.availability.length
   });

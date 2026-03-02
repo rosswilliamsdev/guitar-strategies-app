@@ -6,10 +6,10 @@ interface BookingSectionProps {
   teacherId: string
   teacherName: string
   hasRecurringSlots: boolean
-  studentTimezone?: string
+  timezone?: string
 }
 
-export function BookingSection({ teacherId, teacherName, hasRecurringSlots, studentTimezone }: BookingSectionProps) {
+export function BookingSection({ teacherId, teacherName, hasRecurringSlots, timezone }: BookingSectionProps) {
 
   return (
     <div className="space-y-4">
@@ -29,7 +29,7 @@ export function BookingSection({ teacherId, teacherName, hasRecurringSlots, stud
         <BookingInterface
           teacherId={teacherId}
           teacherName={teacherName}
-          studentTimezone={studentTimezone}
+          timezone={timezone}
         />
       </div>
     </div>

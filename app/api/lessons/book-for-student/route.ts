@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
     if (studentUser?.email && studentUser.id) {
       // Determine email type based on booking type
       const emailType =
-        validatedData.type === "recurring"
+        validatedData.type === "weekly"
           ? "LESSON_BOOKING_RECURRING"
           : "LESSON_BOOKING";
 
@@ -283,7 +283,7 @@ export async function POST(request: NextRequest) {
         };
 
         // Add day of week for recurring lessons
-        if (validatedData.type === "recurring") {
+        if (validatedData.type === "weekly") {
           emailVariables.lessonDayOfWeek = lessonDayOfWeek;
         }
 

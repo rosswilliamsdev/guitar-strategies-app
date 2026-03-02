@@ -31,15 +31,15 @@ import { format, addWeeks } from "date-fns";
 const formatTimezone = (timezone: string): string => {
   const timezoneMap: Record<string, string> = {
     "America/New_York": "Eastern Time (ET)",
-    "America/Chicago": "Central Time (CT)", 
+    "America/Chicago": "Central Time (CT)",
     "America/Denver": "Mountain Time (MT)",
     "America/Los_Angeles": "Pacific Time (PT)",
     "America/Anchorage": "Alaska Time (AKT)",
     "Pacific/Honolulu": "Hawaii Time (HST)",
     "America/Phoenix": "Arizona Time (MST)",
-    "UTC": "UTC",
+    UTC: "UTC",
   };
-  
+
   return timezoneMap[timezone] || timezone;
 };
 
@@ -97,7 +97,7 @@ export function BookingSuccessModal({
     router.push("/lessons");
     router.refresh(); // Refresh to show new lessons
   };
-  
+
   const handleClose = () => {
     onClose();
     router.refresh(); // Refresh the page to update availability
@@ -115,7 +115,7 @@ export function BookingSuccessModal({
       const weeklyValue = recurringSlot.perLessonPrice; // This is already the per-lesson price, which equals weekly for once-per-week lessons
       const monthlyValue = weeklyValue * 4; // 4 weeks per month average
       return `${formatPrice(weeklyValue)}/week (~${formatPrice(
-        monthlyValue
+        monthlyValue,
       )}/month)`;
     }
     return null;
@@ -203,23 +203,21 @@ export function BookingSuccessModal({
                       {bookingType === "single" && lesson
                         ? format(
                             new Date(lesson.date),
-                            "EEE, MMM d 'at' h:mm a"
+                            "EEE, MMM d 'at' h:mm a",
                           )
                         : recurringSlot &&
-                          `Every ${dayNames[recurringSlot.dayOfWeek]} at ${
-                            (() => {
-                              const [hours, minutes] = recurringSlot.startTime.split(':');
-                              const hour = parseInt(hours);
-                              const period = hour >= 12 ? 'PM' : 'AM';
-                              const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-                              return `${displayHour}:${minutes} ${period}`;
-                            })()
-                          } ${formatTimezone(timezone)}`}
+                          `Every ${dayNames[recurringSlot.dayOfWeek]} at ${(() => {
+                            const [hours, minutes] =
+                              recurringSlot.startTime.split(":");
+                            const hour = parseInt(hours);
+                            const period = hour >= 12 ? "PM" : "AM";
+                            const displayHour =
+                              hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                            return `${displayHour}:${minutes} ${period}`;
+                          })()} ${formatTimezone(timezone)}`}
                     </p>
                   </div>
                 </div>
-
-                
               </div>
             </CardContent>
           </Card>
@@ -250,8 +248,9 @@ export function BookingSuccessModal({
                             {format(new Date(lesson.date), "EEEE, MMMM d")}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {format(new Date(lesson.date), "h:mm a")} {formatTimezone(timezone)} •{" "}
-                            {lesson.duration} minutes
+                            {format(new Date(lesson.date), "h:mm a")}{" "}
+                            {formatTimezone(timezone)} • {lesson.duration}{" "}
+                            minutes
                           </p>
                         </div>
                       </div>
@@ -300,7 +299,7 @@ export function BookingSuccessModal({
                       bookingType === "recurring" ? "first" : ""
                     } session is on ${format(
                       getNextLessonDate()!,
-                      "EEEE, MMMM d 'at' h:mm a"
+                      "EEEE, MMMM d 'at' h:mm a",
                     )}`}
                 </p>
               </div>
