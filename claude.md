@@ -12,9 +12,10 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 
 ### Core Philosophy: Booking Time, Not Lessons
 
-**Important**: Students are booking and paying for the teacher's TIME, not lessons. This means:
+**Important**: Teachers book TIME for students, not lessons. Students are reserving and paying for the teacher's TIME. This means:
 
 - Use "Book a Time" or "Book Time" instead of "Book a Lesson"
+- **Only teachers book lessons** - Students can view their schedule and cancel recurring time, but cannot book new time slots
 - Students pay for reserved time slots whether they attend or cancel
 - The teacher's time has value regardless of student attendance
 - Language should reflect time reservation: "Reserve your time", "Book additional time", etc.
@@ -27,7 +28,7 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 - **UI Components**: shadcn/ui (built on Radix UI primitives)
 - **Styling**: TailwindCSS 3.4.17 with custom design system + Typography plugin
 - **Database**: PostgreSQL with Prisma ORM 6.13.0
-- **Authentication**: NextAuth.js v4.24.11 with Prisma Adapter
+- **Authentication**: NextAuth.js v4.24.11 with JWT sessions
 - **Rich Text Editor**: Tiptap with React integration
 - **File Storage**: Vercel Blob 1.1.1
 - **Invoicing**: Simple invoice generation and payment tracking (no external payment processor)
@@ -220,7 +221,7 @@ text-6xl: 3.75rem (60px)    /* Hero text */
   allow60Min: boolean          // Enable 60-minute lessons
   price30Min?: number          // Price in cents for 30-min lessons
   price60Min?: number          // Price in cents for 60-min lessons
-  advanceBookingDays: number   // How far in advance students can book (1-90)
+  advanceBookingDays: number   // How far in advance teachers can book for students (1-90)
 }
 
 // Recurring Slots (for indefinite weekly lessons)
@@ -614,7 +615,7 @@ openssl rand -base64 32
 
 - **Teacher Registration**: Create account → Set up availability schedule → Configure lesson settings → Invite students
 - **Student Registration**: Need teacher invitation or teacher ID during signup
-- **Lesson Flow**: Student books time slot in app → Lesson happens → Teacher logs in our app
+- **Lesson Flow**: Teacher books time slot for student in app → Lesson happens → Teacher logs in our app
 - **Payment Flow**: Monthly billing based on number of lessons scheduled/completed in that month
 
 ## API Route Patterns
@@ -783,7 +784,8 @@ import { z } from "zod";
 ### Core Authentication & Dashboards
 
 1. **Authentication System** ✅
-   - NextAuth.js integration with database sessions
+   - NextAuth.js integration with JWT sessions (stateless)
+   - Session enrichment via callbacks (profile data cached in token)
    - Role-based authentication (Student/Teacher/Admin)
    - Secure login/logout with proper redirects
    - Password hashing with bcrypt
