@@ -1,37 +1,39 @@
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Plus, FileText } from 'lucide-react';
-import { InvoiceFilters } from '@/components/invoices/invoice-filters';
-import { InvoiceCard } from '@/components/invoices/invoice-card';
-import type { InvoiceStatus } from '@/types';
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus, FileText } from "lucide-react";
+import { InvoiceFilters } from "@/components/invoices/invoice-filters";
+import { InvoiceCard } from "@/components/invoices/invoice-card";
+import type { InvoiceStatus } from "@/types";
 
 interface InvoicesPageProps {
-  searchParams: Promise<{ 
-    student?: string; 
-    status?: InvoiceStatus; 
+  searchParams: Promise<{
+    student?: string;
+    status?: InvoiceStatus;
     month?: string;
     page?: string;
   }>;
 }
 
-export default async function InvoicesPage({ searchParams }: InvoicesPageProps) {
+export default async function InvoicesPage({
+  searchParams,
+}: InvoicesPageProps) {
   const params = await searchParams;
   const session = await getServerSession(authOptions);
 
-  if (!session?.user || session.user.role !== 'TEACHER') {
-    redirect('/login');
+  if (!session?.user || session.user.role !== "TEACHER") {
+    redirect("/login");
   }
 
   if (!session.user.teacherProfile?.id) {
-    redirect('/settings');
+    redirect("/settings");
   }
 
-  const page = parseInt(params.page || '1');
+  const page = parseInt(params.page || "1");
   const limit = 10;
 
   // Build where clause for invoices
@@ -74,7 +76,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         items: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -91,14 +93,13 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       },
       orderBy: {
         user: {
-          name: 'asc',
+          name: "asc",
         },
       },
     }),
   ]);
 
   const totalPages = Math.ceil(total / limit);
-
 
   return (
     <div className="space-y-6">
@@ -107,7 +108,7 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
         <div>
           <h1 className="text-3xl font-semibold text-foreground">Invoices</h1>
           <p className="text-muted-foreground mt-2">
-            Manage and track your student invoices
+            Manage and track all invoices
           </p>
         </div>
         <Link href="/invoices/new">
@@ -125,8 +126,8 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       {invoices.length > 0 ? (
         <div className="space-y-4">
           {invoices.map((invoice) => (
-            <InvoiceCard 
-              key={invoice.id} 
+            <InvoiceCard
+              key={invoice.id}
               invoice={invoice}
               hourlyRate={session.user.teacherProfile?.hourlyRate ?? undefined}
             />
@@ -135,11 +136,13 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       ) : (
         <Card className="p-8 text-center">
           <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-medium text-foreground mb-2">No Invoices Found</h3>
+          <h3 className="font-medium text-foreground mb-2">
+            No Invoices Found
+          </h3>
           <p className="text-muted-foreground mb-4">
             {params.student || params.month || params.status
-              ? 'No invoices match your current filters.'
-              : 'You haven\'t created any invoices yet.'}
+              ? "No invoices match your current filters."
+              : "You haven't created any invoices yet."}
           </p>
           <Link href="/invoices/new">
             <Button>
@@ -153,19 +156,21 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center space-x-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-            <Link
-              key={pageNum}
-              href={`/invoices?page=${pageNum}${params.student ? `&student=${params.student}` : ''}${params.status ? `&status=${params.status}` : ''}${params.month ? `&month=${params.month}` : ''}`}
-            >
-              <Button
-                variant={page === pageNum ? 'primary' : 'secondary'}
-                size="sm"
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+            (pageNum) => (
+              <Link
+                key={pageNum}
+                href={`/invoices?page=${pageNum}${params.student ? `&student=${params.student}` : ""}${params.status ? `&status=${params.status}` : ""}${params.month ? `&month=${params.month}` : ""}`}
               >
-                {pageNum}
-              </Button>
-            </Link>
-          ))}
+                <Button
+                  variant={page === pageNum ? "primary" : "secondary"}
+                  size="sm"
+                >
+                  {pageNum}
+                </Button>
+              </Link>
+            ),
+          )}
         </div>
       )}
     </div>
@@ -173,6 +178,6 @@ export default async function InvoicesPage({ searchParams }: InvoicesPageProps) 
 }
 
 export const metadata = {
-  title: 'Invoices | Guitar Strategies',
-  description: 'Manage and track student invoices',
+  title: "Invoices | Guitar Strategies",
+  description: "Manage and track student invoices",
 };
