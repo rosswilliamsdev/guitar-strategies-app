@@ -322,21 +322,21 @@ export function LessonList({ userRole }: LessonListProps) {
       <div className="space-y-6">
         {/* Search and Filter Controls Skeleton */}
         <Card className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
+          <div className="flex flex-col gap-4">
+            <div className="w-full">
               <Skeleton className="h-10 w-full" />
             </div>
-            <div className="flex gap-4">
-              {userRole === "TEACHER" && <Skeleton className="h-10 w-48" />}
-              <Skeleton className="h-10 w-48" />
+            <div className="flex flex-col sm:flex-row gap-4">
+              {userRole === "TEACHER" && <Skeleton className="h-10 w-full sm:w-48" />}
+              <Skeleton className="h-10 w-full sm:w-48" />
             </div>
           </div>
         </Card>
 
         {/* Results Header Skeleton */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-10 w-full sm:w-40" />
         </div>
 
         {/* Lesson Cards Skeleton */}
@@ -385,8 +385,8 @@ export function LessonList({ userRole }: LessonListProps) {
     <div className="space-y-6">
       {/* Search and Filter Controls */}
       <Card className="p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
+        <div className="flex flex-col gap-4">
+          <div className="w-full">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -397,13 +397,13 @@ export function LessonList({ userRole }: LessonListProps) {
               />
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             {userRole === "TEACHER" && students.length > 0 && (
               <Select
                 value={selectedStudent}
                 onValueChange={setSelectedStudent}
               >
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <User className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="All Students" />
                 </SelectTrigger>
@@ -419,7 +419,7 @@ export function LessonList({ userRole }: LessonListProps) {
             )}
 
             <Select value={dateFilter} onValueChange={setDateFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <CalendarDays className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="All Time" />
               </SelectTrigger>
@@ -437,7 +437,7 @@ export function LessonList({ userRole }: LessonListProps) {
 
       {/* Results */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             {filteredLessons.length}{" "}
             {filteredLessons.length === 1 ? "Lesson" : "Lessons"}
@@ -449,7 +449,7 @@ export function LessonList({ userRole }: LessonListProps) {
               setSortOrder(value as "latest" | "earliest")
             }
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <ArrowUpDown className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>

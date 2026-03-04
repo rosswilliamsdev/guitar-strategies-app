@@ -19,21 +19,21 @@ export default async function LessonsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-foreground">
             Lessons
           </h1>
           <p className="text-muted-foreground mt-2">
-            {session.user.role === 'TEACHER' 
+            {session.user.role === 'TEACHER'
               ? 'Manage all your student lessons'
               : 'View your lesson history and progress'
             }
           </p>
         </div>
         {session.user.role === 'TEACHER' && (
-          <Link href="/lessons/new">
-            <Button>New Lesson</Button>
+          <Link href="/lessons/new" className="w-full md:w-auto">
+            <Button className="w-full md:w-auto">New Lesson</Button>
           </Link>
         )}
       </div>

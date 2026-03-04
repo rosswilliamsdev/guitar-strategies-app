@@ -60,7 +60,7 @@ export default async function StudentsPage() {
         <div>
           <h1 className="text-3xl font-bold mb-2">Students</h1>
           <p className="text-muted-foreground">
-            Manage your students and track their progress.
+            Manage your students, track their progress.
           </p>
         </div>
         <Link href="/students/invite">
