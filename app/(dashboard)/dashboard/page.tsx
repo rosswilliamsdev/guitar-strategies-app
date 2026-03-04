@@ -45,15 +45,30 @@ export async function getTeacherData(userId: string) {
 
     // Calculate stats
     const now = new Date();
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+    // Debug logging
+    log.info("Dashboard stats calculation", {
+      now: now.toISOString(),
+      startOfWeek: startOfWeek.toISOString(),
+      startOfMonth: startOfMonth.toISOString(),
+      totalLessons: teacherProfile.lessons.length,
+      sampleLessons: teacherProfile.lessons.slice(0, 3).map(l => ({
+        date: l.date.toISOString(),
+        status: l.status,
+      }))
+    });
+
     const lessonsThisWeek = teacherProfile.lessons.filter(
-      (lesson) => new Date(lesson.date) >= startOfWeek
+      (lesson) => lesson.status === 'COMPLETED' && new Date(lesson.date) >= startOfWeek
     ).length;
 
     const lessonsThisMonth = teacherProfile.lessons.filter(
-      (lesson) => new Date(lesson.date) >= startOfMonth
+      (lesson) => lesson.status === 'COMPLETED' && new Date(lesson.date) >= startOfMonth
     ).length;
 
     // Calculate monthly earnings based on actual lesson settings and durations
