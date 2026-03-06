@@ -9,7 +9,7 @@ export function HeroSection() {
         <div className="hidden md:block"></div>
 
         {/* Right column - centered content */}
-        <div className="flex items-center justify-center md:mr-20">
+        <div className="flex items-center justify-center md:mr-40">
           <div className="max-w-2xl text-center px-4">
             <h1 className="font-display text-display-2xl text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-black mb-6 xl:whitespace-nowrap break-words">
               Transform Your Teaching
