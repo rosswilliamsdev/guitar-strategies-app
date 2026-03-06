@@ -17,14 +17,10 @@ function generateCSP() {
       "https://fonts.googleapis.com",
     ],
     "img-src": [
+      "*", // Allow images from any source
       "'self'",
-      "data:", // For base64 images
-      "blob:", // For blob URLs (file uploads)
-      "https://vercel.blob.store", // Vercel Blob storage
-      "https://avatars.githubusercontent.com", // GitHub avatars
-      "https://lh3.googleusercontent.com", // Google avatars
-      "https://i.ytimg.com", // YouTube thumbnails
-      "https://img.youtube.com", // YouTube thumbnails
+      "data:",
+      "blob:",
     ],
     "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
     "connect-src": [
