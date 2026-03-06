@@ -26,7 +26,7 @@ export function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth/register">
+            <Link href="/register">
               <Button
                 size="lg"
                 className="px-8 py-3 text-lg bg-primary text-white hover:bg-turquoise-600 hover:text-white"
