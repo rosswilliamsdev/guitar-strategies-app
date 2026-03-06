@@ -138,6 +138,10 @@ module.exports = {
       minWidth: {
         touch: "44px", // Minimum touch target size for accessibility
       },
+      backgroundImage: {
+        "mobile-hero": "url(/mobile-bg.png)",
+        "desktop-hero": "url(/guitar-hero-4.png)",
+      },
       keyframes: {
         shimmer: {
           "0%": { transform: "translateX(-100%)" },
