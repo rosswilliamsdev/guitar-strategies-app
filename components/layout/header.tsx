@@ -3,17 +3,17 @@ import { Button } from "@/components/ui/button";
 
 export function Header() {
   return (
-    <header className="absolute top-0 left-0 right-0 z-20 bg-transparent text-white">
-      <div className="container mx-auto px-4 ">
-        <div className="flex h-16 items-center justify-between">
+    <header className="absolute top-0 left-0 right-0 z-20 bg-transparent text-black">
+      <div className="container mx-auto px-4 py-2 sm:py-0">
+        <div className="flex min-h-16 items-center justify-between gap-4">
           <div className="flex items-center space-x-4 ">
             <Link href="/" className="flex items-center space-x-3">
               <img
                 src="/logo.png"
                 alt="Guitar Strategies Logo"
-                className="w-[40px] h-auto"
+                className="w-[50px] h-auto"
               />
-              <span className="font-serif text-2xl font-semibold">
+              <span className="font-serif text-3xl font-semibold text-black">
                 Guitar Strategies
               </span>
             </Link>
@@ -23,7 +23,7 @@ export function Header() {
             <Link href="/login">
               <Button
                 variant="outline"
-                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+                className="bg-white/10 border-black/30 text-black hover:bg-white/20 hover:text-black"
               >
                 Sign In
               </Button>
