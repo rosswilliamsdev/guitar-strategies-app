@@ -288,7 +288,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Send email asynchronously (don't await, don't block response)
-        renderEmailWithFallback(emailType as any, emailVariables)
+        renderEmailWithFallback(emailType, emailVariables)
           .then((emailTemplate) =>
             sendEmail({
               to: studentUser.email!,

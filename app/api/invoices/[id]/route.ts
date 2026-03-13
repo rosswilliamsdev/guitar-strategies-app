@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { apiLog, dbLog, invoiceLog } from "@/lib/logger";
 import { withApiMiddleware } from "@/lib/api-wrapper";
 
@@ -98,7 +99,7 @@ async function handlePUT(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.InvoiceUpdateInput = {};
 
     // Handle status updates (for marking as paid)
     if (body.status) {
@@ -134,19 +135,22 @@ async function handlePUT(
       // Handle student vs custom invoice
       if (body.studentId !== undefined && body.studentId !== null) {
         // Regular student invoice
-        updateData.studentId = body.studentId;
+        updateData.student = { connect: { id: body.studentId } };
         updateData.customFullName = null;
         updateData.customEmail = null;
       } else if (body.customFullName && body.customEmail) {
         // Custom invoice (non-system student)
-        updateData.studentId = null;
+        updateData.student = { disconnect: true };
         updateData.customFullName = body.customFullName;
         updateData.customEmail = body.customEmail;
       }
 
       // Calculate totals from items
+      interface InvoiceItemInput {
+        amount: number;
+      }
       const subtotal = body.items.reduce(
-        (sum: number, item: any) => sum + item.amount,
+        (sum: number, item: InvoiceItemInput) => sum + item.amount,
         0
       );
       updateData.subtotal = subtotal;

@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sendEmail, createOverdueInvoiceEmail } from '@/lib/email';
-import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 import { formatDateInTimezone } from '@/lib/utils';
+import { Prisma } from '@prisma/client';
 
 // POST /api/invoices/overdue - Send overdue invoice notifications
 export async function POST(request: NextRequest) {
@@ -194,8 +195,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    let where: any = {
-      status: 'OVERDUE'
+    const where = {
+      status: 'OVERDUE' as const
     };
 
     // If teacher, only show their invoices

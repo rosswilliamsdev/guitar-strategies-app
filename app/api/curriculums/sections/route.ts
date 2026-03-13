@@ -3,11 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
+  CreateCurriculumItemData,
   createCurriculumSectionSchema,
   updateCurriculumSectionSchema,
 } from "@/lib/validations";
 import { apiLog } from "@/lib/logger";
 import { sanitizePlainText, sanitizeRichText } from "@/lib/sanitize";
+import { CurriculumCategory } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,7 +44,13 @@ export async function POST(request: NextRequest) {
       : null;
 
     // Build data object conditionally to avoid undefined category
-    const createData: any = {
+    const createData: {
+      curriculumId: string;
+      title: string;
+      description: string | null;
+      sortOrder: number;
+      category?: CurriculumCategory;
+    } = {
       curriculumId: validatedData.curriculumId,
       title: sanitizedTitle,
       description: sanitizedDescription,

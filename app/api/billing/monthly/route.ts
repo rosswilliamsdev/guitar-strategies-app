@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { monthlyBillingSchema, updateBillingSchema } from "@/lib/validations";
-import { calculateMonthlyBilling, calculateMonthlyOccurrences } from "@/lib/slot-helpers";
-import { format } from 'date-fns';
-import { apiLog, dbLog } from '@/lib/logger';
+import { calculateMonthlyBilling } from "@/lib/slot-helpers";
+import { apiLog } from '@/lib/logger';
+import { Prisma } from "@prisma/client";
 
 // Generate monthly billing for all active subscriptions
 export async function POST(request: NextRequest) {
@@ -137,7 +136,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause based on user role and filters
-    const whereClause: any = { month };
+    const whereClause: Prisma.MonthlyBillingWhereInput = { month };
 
     if (session.user.role === 'TEACHER') {
       whereClause.teacherId = session.user.teacherProfile?.id;
