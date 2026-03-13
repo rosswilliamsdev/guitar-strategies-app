@@ -142,7 +142,7 @@ export async function PUT(
 
     const updateData: Prisma.RecurringSlotUpdateInput = {};
     if (status !== undefined) updateData.status = status;
-    if (monthlyRate !== undefined) updateData.monthlyRate = monthlyRate;
+    if (monthlyRate !== undefined) updateData.perLessonPrice = monthlyRate;
 
     const updatedSlot = await prisma.recurringSlot.update({
       where: { id: slotId },

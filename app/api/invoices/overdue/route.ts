@@ -195,8 +195,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const where = {
-      status: 'OVERDUE' as const
+    const where: Prisma.InvoiceWhereInput = {
+      status: 'OVERDUE'
     };
 
     // If teacher, only show their invoices
