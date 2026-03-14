@@ -37,6 +37,18 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 - **Styling Utils**: clsx + tailwind-merge (cn utility)
 - **Logging**: Winston 3.x with structured logging and domain-specific loggers
 
+## TypeScript Standards
+
+See `.claude/rules/typescript-guidelines.md` for comprehensive guidelines on resolving `any` types and TypeScript best practices.
+
+**Quick Reference:**
+- Always use `unknown` over `any` for type safety
+- Use Prisma generated types for all database operations
+- Use Zod schema inference (`z.infer<typeof schema>`) for forms and validation
+- Create type guard functions for critical/reusable error handling
+- Use safe type assertions (optional properties + fallbacks) for simple error handling
+- Define shared types globally in `types/index.ts`
+
 ## Design System Colors (OpenAI-Inspired)
 
 ```css
