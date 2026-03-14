@@ -176,44 +176,52 @@ export function LessonForm({
           const data = await response.json();
 
           // Transform the checklist data to match the expected format
-          const transformedChecklists =
-            data.checklists?.map((checklist: any) => ({
-              id: checklist.id,
-              title: checklist.title,
-              createdByRole: checklist.createdByRole || "STUDENT",
-              creatorName: checklist.creator?.name || "Unknown",
-              sections: [
-                {
-                  id: "main",
-                  title: "Checklist Items",
-                  category: "checklist",
-                  items:
+          const transformedChecklists: StudentCurriculum[] =
+            data.checklists?.map(
+              (checklist: {
+                id: string;
+                title: string;
+                createdByRole?: string;
+                creator?: { name?: string };
+                items?: CurriculumItem[];
+              }) => ({
+                id: checklist.id,
+                title: checklist.title,
+                createdByRole: checklist.createdByRole || "STUDENT",
+                creatorName: checklist.creator?.name || "Unknown",
+                sections: [
+                  {
+                    id: "main",
+                    title: "Checklist Items",
+                    category: "checklist",
+                    items:
+                      checklist.items?.map((item: CurriculumItem) => ({
+                        id: item.id,
+                        title: item.title,
+                        description: item.description,
+                        isCompleted: item.isCompleted,
+                        completedAt: item.completedAt,
+                      })) || [],
+                  },
+                ],
+                studentProgress: {
+                  itemProgress:
                     checklist.items?.map((item: CurriculumItem) => ({
-                      id: item.id,
-                      title: item.title,
-                      description: item.description,
-                      isCompleted: item.isCompleted,
-                      completedAt: item.completedAt,
+                      itemId: item.id,
+                      status: item.isCompleted ? "COMPLETED" : "NOT_STARTED",
                     })) || [],
                 },
-              ],
-              studentProgress: {
-                itemProgress:
-                  checklist.items?.map((item: CurriculumItem) => ({
-                    itemId: item.id,
-                    status: item.isCompleted ? "COMPLETED" : "NOT_STARTED",
-                  })) || [],
-              },
-            })) || [];
+              }),
+            ) || [];
 
           setStudentCurriculums(transformedChecklists);
 
           // Auto-select already completed items when checklists load
           const alreadyCompleted = transformedChecklists.flatMap(
-            (curriculum: any) =>
-              curriculum.sections.flatMap((section: any) =>
+            (curriculum: StudentCurriculum) =>
+              curriculum.sections.flatMap((section: CurriculumSection) =>
                 section.items
-                  .filter((item: any) => {
+                  .filter((item: CurriculumItem) => {
                     // For student checklists, check isCompleted
                     if (curriculum.createdByRole !== "TEACHER") {
                       return item.isCompleted === true;
@@ -221,11 +229,11 @@ export function LessonForm({
                     // For teacher curriculums, check progress status
                     const progress =
                       curriculum.studentProgress?.itemProgress?.find(
-                        (p: any) => p.itemId === item.id,
+                        (p) => p.itemId === item.id,
                       );
                     return progress?.status === "COMPLETED";
                   })
-                  .map((item: any) => item.id),
+                  .map((item: CurriculumItem) => item.id),
               ),
           );
 

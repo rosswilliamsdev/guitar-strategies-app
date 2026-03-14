@@ -34,7 +34,12 @@ import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
 import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
 import { log } from "@/lib/logger";
-import type { Role, TeacherProfileData, AvailabilitySlot } from "@/types";
+import type {
+  Role,
+  TeacherProfileData,
+  AvailabilitySlot,
+  LessonSettings,
+} from "@/types";
 
 // Common US timezones
 const TIMEZONE_OPTIONS = [
@@ -89,18 +94,18 @@ export function TeacherSettingsForm({
   const [email, setEmail] = useState(user.email);
   const [bio, setBio] = useState(teacherProfile.bio || "");
   const [timezone, setTimezone] = useState(
-    teacherProfile.timezone || "America/Chicago"
+    teacherProfile.timezone || "America/Chicago",
   );
   const [phoneNumber, setPhoneNumber] = useState(
-    teacherProfile.phoneNumber || ""
+    teacherProfile.phoneNumber || "",
   );
 
   // Payment method fields
   const [venmoHandle, setVenmoHandle] = useState(
-    teacherProfile.venmoHandle || ""
+    teacherProfile.venmoHandle || "",
   );
   const [paypalEmail, setPaypalEmail] = useState(
-    teacherProfile.paypalEmail || ""
+    teacherProfile.paypalEmail || "",
   );
   const [zelleEmail, setZelleEmail] = useState(teacherProfile.zelleEmail || "");
 
@@ -149,7 +154,7 @@ export function TeacherSettingsForm({
 
   // Email preferences handler
   const handleEmailPreferencesUpdate = async (
-    preferences: EmailPreference[]
+    preferences: EmailPreference[],
   ): Promise<EmailPreference[] | null> => {
     try {
       const response = await fetch("/api/settings/email-preferences", {
@@ -163,7 +168,7 @@ export function TeacherSettingsForm({
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.error || "Failed to update email preferences"
+          errorData.error || "Failed to update email preferences",
         );
       }
       const data = await response.json();
@@ -220,7 +225,7 @@ export function TeacherSettingsForm({
             Pragma: "no-cache",
             Expires: "0",
           },
-        }
+        },
       );
 
       log.info("Availability response received", {
@@ -270,7 +275,7 @@ export function TeacherSettingsForm({
   };
 
   const handleSaveAvailability = async (
-    newAvailability: AvailabilitySlot[]
+    newAvailability: AvailabilitySlot[],
   ): Promise<AvailabilitySlot[]> => {
     setSchedulingLoading(true);
 
@@ -324,7 +329,7 @@ export function TeacherSettingsForm({
     }
   };
 
-  const handleSaveLessonSettings = async (newSettings: any) => {
+  const handleSaveLessonSettings = async (newSettings: LessonSettings) => {
     try {
       setSchedulingLoading(true);
       const response = await fetch("/api/teacher/lesson-settings", {
@@ -344,7 +349,11 @@ export function TeacherSettingsForm({
       setTimeout(() => setSuccess(""), 3000);
       setError("");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Failed to save lesson settings");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save lesson settings",
+      );
       setTimeout(() => setError(""), 5000);
       setSuccess("");
     } finally {

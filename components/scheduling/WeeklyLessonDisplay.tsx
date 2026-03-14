@@ -13,7 +13,7 @@ import {
   X,
   AlertCircle
 } from "lucide-react"
-import { RecurringSlot, SlotSubscription, MonthlyBilling } from "@/types"
+import { SlotWithDetails } from "@/types"
 import { getDayName, formatSlotTime } from "@/lib/slot-helpers"
 import { useRouter } from "next/navigation"
 import {
@@ -24,37 +24,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { log, schedulerLog } from '@/lib/logger';
-
-interface SlotWithDetails {
-  id: string;
-  dayOfWeek: number;
-  startTime: string;
-  duration: number;
-  perLessonPrice: number;
-  teacher: {
-    user: { name: string }
-  }
-  subscriptions: Array<SlotSubscription & {
-    billingRecords: MonthlyBilling[]
-  }>
-}
+import { log } from '@/lib/logger';
 
 interface WeeklyLessonDisplayProps {
   recurringSlots: SlotWithDetails[]
   teacherName: string
-  recurringLessons?: Array<{
-    id: string
-    date: Date
-    duration: number
-    isRecurring: boolean
-  }>
 }
 
 export function WeeklyLessonDisplay({
   recurringSlots,
   teacherName,
-  recurringLessons = []
 }: WeeklyLessonDisplayProps) {
   const { toast } = useToast()
   const [isCancelling, setIsCancelling] = useState(false)
@@ -132,8 +111,8 @@ export function WeeklyLessonDisplay({
     }
   }
 
-  // Check if there are any recurring lessons (either slots or regular recurring lessons)
-  const hasRecurringTime = recurringSlots.length > 0 || recurringLessons.length > 0
+  // Check if there are any recurring slots
+  const hasRecurringTime = recurringSlots.length > 0
 
   if (!hasRecurringTime) {
     return (
@@ -153,42 +132,20 @@ export function WeeklyLessonDisplay({
     )
   }
 
-  // Use the first recurring slot if available, otherwise use first recurring lesson
+  // Use the first recurring slot
   const activeSlot = recurringSlots[0]
-  const activeLesson = recurringLessons[0]
-  
-  let displayInfo = null
-  
-  if (activeSlot) {
-    const recentBilling = getRecentBilling(activeSlot)
-    const currentMonthOccurrences = calculateCurrentMonthOccurrences(activeSlot.dayOfWeek)
-    // Calculate accurate monthly rate for current month using stored per-lesson price
-    const actualMonthlyRate = activeSlot.perLessonPrice * currentMonthOccurrences
-    
-    displayInfo = {
-      dayName: getDayName(activeSlot.dayOfWeek),
-      time: formatSlotTime(activeSlot.startTime, activeSlot.duration),
-      duration: activeSlot.duration,
-      monthlyRate: actualMonthlyRate,
-      occurrences: currentMonthOccurrences,
-      recentBilling
-    }
-  } else if (activeLesson) {
-    const lessonDate = new Date(activeLesson.date)
-    displayInfo = {
-      dayName: lessonDate.toLocaleDateString('en-US', { weekday: 'long' }),
-      time: lessonDate.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      }),
-      duration: activeLesson.duration,
-      monthlyRate: null,
-      recentBilling: null
-    }
-  }
 
-  if (!displayInfo) return null
+  const recentBilling = getRecentBilling(activeSlot)
+  const currentMonthOccurrences = calculateCurrentMonthOccurrences(activeSlot.dayOfWeek)
+
+  const displayInfo = {
+    dayName: getDayName(activeSlot.dayOfWeek),
+    time: formatSlotTime(activeSlot.startTime, activeSlot.duration),
+    duration: activeSlot.duration,
+    monthlyRate: activeSlot.monthlyRate,
+    occurrences: currentMonthOccurrences,
+    recentBilling
+  }
 
   return (
     <>

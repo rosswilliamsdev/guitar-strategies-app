@@ -1,16 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, DollarSign, Save, AlertTriangle, AlertCircle } from "lucide-react";
+import {
+  Clock,
+  DollarSign,
+  Save,
+  AlertTriangle,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { lessonSettingsSchema } from "@/lib/validations";
-import type { z } from "zod";
-
-type LessonSettings = z.infer<typeof lessonSettingsSchema>;
+import { ZodError } from "zod";
+import type { LessonSettings } from "@/types";
 
 interface LessonSettingsFormProps {
   settings?: LessonSettings;
@@ -37,7 +42,10 @@ export function LessonSettingsForm({
   const [success, setSuccess] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  const handleChange = (field: keyof LessonSettings, value: any) => {
+  const handleChange = (
+    field: keyof LessonSettings,
+    value: LessonSettings[keyof LessonSettings],
+  ) => {
     const updated = { ...formData, [field]: value };
     setFormData(updated);
 
@@ -65,15 +73,17 @@ export function LessonSettingsForm({
       setSuccess("Lesson settings saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err: unknown) {
-      if (err instanceof Error && 'errors' in err) {
-        const zodError = err as { errors: Array<{ path?: string[]; message: string }> };
+      if (err instanceof ZodError) {
         const newErrors: Record<string, string> = {};
-        zodError.errors.forEach((e) => {
-          newErrors[e.path?.[0] || "general"] = e.message;
+        err.issues.forEach((issue) => {
+          const fieldName = issue.path[0]?.toString() || "general";
+          newErrors[fieldName] = issue.message;
         });
         setErrors(newErrors);
       }
-      setError(err instanceof Error ? err.message : "Failed to save lesson settings");
+      setError(
+        err instanceof Error ? err.message : "Failed to save lesson settings",
+      );
       setTimeout(() => setError(""), 5000);
     } finally {
       setSaving(false);
@@ -109,7 +119,7 @@ export function LessonSettingsForm({
                 id="allows30Min"
                 checked={formData.allows30Min}
                 onCheckedChange={(checked) =>
-                  handleChange("allows30Min", checked)
+                  handleChange("allows30Min", checked === true)
                 }
                 disabled={readonly}
               />
@@ -130,7 +140,7 @@ export function LessonSettingsForm({
                     onChange={(e) =>
                       handleChange(
                         "price30Min",
-                        parsePriceInput(e.target.value)
+                        parsePriceInput(e.target.value),
                       )
                     }
                     placeholder="0.00"
@@ -153,7 +163,7 @@ export function LessonSettingsForm({
                 id="allows60Min"
                 checked={formData.allows60Min}
                 onCheckedChange={(checked) =>
-                  handleChange("allows60Min", checked)
+                  handleChange("allows60Min", checked === true)
                 }
                 disabled={readonly}
               />
@@ -174,7 +184,7 @@ export function LessonSettingsForm({
                     onChange={(e) =>
                       handleChange(
                         "price60Min",
-                        parsePriceInput(e.target.value)
+                        parsePriceInput(e.target.value),
                       )
                     }
                     placeholder="0.00"
@@ -213,7 +223,7 @@ export function LessonSettingsForm({
             <span
               className={cn(
                 formData.allows30Min ? "text-green-600" : "text-red-500",
-                "font-medium"
+                "font-medium",
               )}
             >
               {formData.allows30Min
@@ -226,7 +236,7 @@ export function LessonSettingsForm({
             <span
               className={cn(
                 formData.allows60Min ? "text-green-600" : "text-red-500",
-                "font-medium"
+                "font-medium",
               )}
             >
               {formData.allows60Min
