@@ -24,10 +24,15 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { log } from "@/lib/logger";
-import type { StudentProfile, User } from "@/types";
+import type {
+  StudentProfile,
+  User,
+  StudentProgressItem,
+  ProgressSection,
+  ProgressItemDetail,
+  ChecklistAPIResponse,
+} from "@/types";
 import { StudentChecklistItem } from "@prisma/client";
-
-// TODO: can these interfaces be extracted?
 
 interface Attachment {
   id: string;
@@ -57,35 +62,6 @@ interface LessonFormProps {
   initialData?: InitialData;
 }
 
-interface CurriculumItem {
-  id: string;
-  title: string;
-  description?: string;
-  isCompleted?: boolean;
-  completedAt?: Date | null;
-}
-
-interface CurriculumSection {
-  id: string;
-  title: string;
-  category: string;
-  items: CurriculumItem[];
-}
-
-interface StudentCurriculum {
-  id: string;
-  title: string;
-  createdByRole?: string;
-  creatorName?: string;
-  sections: CurriculumSection[];
-  studentProgress?: {
-    itemProgress: Array<{
-      itemId: string;
-      status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "NEEDS_REVIEW";
-    }>;
-  };
-}
-
 export function LessonForm({
   lessonId,
   students,
@@ -93,13 +69,13 @@ export function LessonForm({
 }: LessonFormProps) {
   // a hook allowing you to route to different pages
   const router = useRouter();
-  const [studentCurriculums, setStudentCurriculums] = useState<
-    StudentCurriculum[]
+  const [studentProgressItems, setStudentProgressItems] = useState<
+    StudentProgressItem[]
   >([]);
-  const [selectedCurriculumItems, setSelectedCurriculumItems] = useState<
+  const [selectedProgressItems, setSelectedProgressItems] = useState<
     string[]
   >([]);
-  const [expandedChecklistId, setExpandedChecklistId] = useState<string | null>(
+  const [expandedProgressItemId, setExpandedProgressItemId] = useState<string | null>(
     null,
   );
   const [isChecklistSectionExpanded, setIsChecklistSectionExpanded] =
@@ -146,7 +122,7 @@ export function LessonForm({
       try {
         const items = JSON.parse(initialData.checklistItems);
         if (Array.isArray(items)) {
-          setSelectedCurriculumItems(items);
+          setSelectedProgressItems(items);
         }
       } catch (error) {
         log.error("Error parsing checklist items:", {
@@ -158,12 +134,11 @@ export function LessonForm({
   }, [initialData]);
 
   // Fetch student's checklists when student is selected
-  // Using any types for now because
   useEffect(() => {
     const fetchStudentChecklists = async () => {
       if (!formData.studentId) {
-        setStudentCurriculums([]);
-        setSelectedCurriculumItems([]);
+        setStudentProgressItems([]);
+        setSelectedProgressItems([]);
         return;
       }
 
@@ -173,11 +148,11 @@ export function LessonForm({
         );
 
         if (response.ok) {
-          const data = await response.json();
+          const data: ChecklistAPIResponse = await response.json();
 
           // Transform the checklist data to match the expected format
-          const transformedChecklists =
-            data.checklists?.map((checklist: any) => ({
+          const transformedChecklists: StudentProgressItem[] =
+            data.checklists?.map((checklist) => ({
               id: checklist.id,
               title: checklist.title,
               createdByRole: checklist.createdByRole || "STUDENT",
@@ -188,50 +163,50 @@ export function LessonForm({
                   title: "Checklist Items",
                   category: "checklist",
                   items:
-                    checklist.items?.map((item: CurriculumItem) => ({
+                    checklist.items?.map((item: StudentChecklistItem) => ({
                       id: item.id,
                       title: item.title,
-                      description: item.description,
+                      description: item.description ?? undefined,
                       isCompleted: item.isCompleted,
-                      completedAt: item.completedAt,
+                      completedAt: item.completedAt ?? undefined,
                     })) || [],
                 },
               ],
               studentProgress: {
                 itemProgress:
-                  checklist.items?.map((item: CurriculumItem) => ({
+                  checklist.items?.map((item: StudentChecklistItem) => ({
                     itemId: item.id,
-                    status: item.isCompleted ? "COMPLETED" : "NOT_STARTED",
+                    status: item.isCompleted ? "COMPLETED" as const : "NOT_STARTED" as const,
                   })) || [],
               },
             })) || [];
 
-          setStudentCurriculums(transformedChecklists);
+          setStudentProgressItems(transformedChecklists);
 
           // Auto-select already completed items when checklists load
           const alreadyCompleted = transformedChecklists.flatMap(
-            (curriculum: any) =>
-              curriculum.sections.flatMap((section: any) =>
+            (progressItem: StudentProgressItem) =>
+              progressItem.sections.flatMap((section: ProgressSection) =>
                 section.items
-                  .filter((item: any) => {
+                  .filter((item: ProgressItemDetail) => {
                     // For student checklists, check isCompleted
-                    if (curriculum.createdByRole !== "TEACHER") {
+                    if (progressItem.createdByRole !== "TEACHER") {
                       return item.isCompleted === true;
                     }
                     // For teacher curriculums, check progress status
                     const progress =
-                      curriculum.studentProgress?.itemProgress?.find(
-                        (p: any) => p.itemId === item.id,
+                      progressItem.studentProgress?.itemProgress?.find(
+                        (p) => p.itemId === item.id,
                       );
                     return progress?.status === "COMPLETED";
                   })
-                  .map((item: any) => item.id),
+                  .map((item: ProgressItemDetail) => item.id),
               ),
           );
 
           // For editing: merge with existing selections from the lesson
           // For new lessons: just use the completed items
-          setSelectedCurriculumItems((prev) => {
+          setSelectedProgressItems((prev: string[]) => {
             // If editing and we already loaded lesson's checklist items, keep those too
             if (lessonId && prev.length > 0) {
               return [...new Set([...prev, ...alreadyCompleted])];
@@ -318,19 +293,19 @@ export function LessonForm({
     setLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Curriculum item handling
-  const toggleCurriculumItem = (itemId: string) => {
-    setSelectedCurriculumItems((prev: string[]) =>
+  // Progress item handling
+  const toggleProgressItem = (itemId: string) => {
+    setSelectedProgressItems((prev: string[]) =>
       prev.includes(itemId)
         ? prev.filter((id) => id !== itemId)
         : [...prev, itemId],
     );
   };
 
-  // Checklist expansion handling
-  const toggleChecklistExpansion = (checklistId: string) => {
-    setExpandedChecklistId((prev) =>
-      prev === checklistId ? null : checklistId,
+  // Progress item expansion handling
+  const toggleProgressItemExpansion = (progressItemId: string) => {
+    setExpandedProgressItemId((prev) =>
+      prev === progressItemId ? null : progressItemId,
     );
   };
 
@@ -338,8 +313,8 @@ export function LessonForm({
     setIsChecklistSectionExpanded((prev) => !prev);
   };
 
-  const getItemProgress = (itemId: string, curriculum: StudentCurriculum) => {
-    return curriculum.studentProgress?.itemProgress?.find(
+  const getItemProgress = (itemId: string, progressItem: StudentProgressItem) => {
+    return progressItem.studentProgress?.itemProgress?.find(
       (p) => p.itemId === itemId,
     );
   };
@@ -364,8 +339,8 @@ export function LessonForm({
         notes: formData.notes || "",
         status: formData.status,
         checklistItems:
-          selectedCurriculumItems.length > 0
-            ? JSON.stringify(selectedCurriculumItems)
+          selectedProgressItems.length > 0
+            ? JSON.stringify(selectedProgressItems)
             : null,
         version: lessonId ? formData.version : undefined, // Only include version for updates
       };
@@ -545,18 +520,18 @@ export function LessonForm({
         }
       }
 
-      // Update checklist/curriculum items as completed
-      if (selectedCurriculumItems.length > 0) {
-        for (const itemId of selectedCurriculumItems) {
+      // Update progress items as completed
+      if (selectedProgressItems.length > 0) {
+        for (const itemId of selectedProgressItems) {
           try {
-            // Find which checklist/curriculum contains this item
-            const checklist = studentCurriculums.find((c) =>
-              c.sections.some((s) => s.items.some((i) => i.id === itemId)),
+            // Find which progress item contains this item
+            const progressItem = studentProgressItems.find((item) =>
+              item.sections.some((s) => s.items.some((i) => i.id === itemId)),
             );
 
-            if (checklist) {
+            if (progressItem) {
               // Check if it's a teacher-created curriculum or student checklist
-              if (checklist.createdByRole === "TEACHER") {
+              if (progressItem.createdByRole === "TEACHER") {
                 // Update curriculum item progress
                 const response = await fetch("/api/curriculums/progress", {
                   method: "POST",
@@ -565,7 +540,7 @@ export function LessonForm({
                   },
                   body: JSON.stringify({
                     studentId: formData.studentId,
-                    curriculumId: checklist.id,
+                    curriculumId: progressItem.id,
                     itemId: itemId,
                     status: "COMPLETED",
                   }),
@@ -575,7 +550,7 @@ export function LessonForm({
                   const errorData = await response.json();
                   log.error("Failed to update curriculum item", {
                     itemId,
-                    curriculumId: checklist.id,
+                    curriculumId: progressItem.id,
                     status: response.status,
                     error: errorData,
                   });
@@ -600,19 +575,19 @@ export function LessonForm({
                   const errorData = await response.json();
                   log.error("Failed to update checklist item", {
                     itemId,
-                    checklistId: checklist.id,
+                    checklistId: progressItem.id,
                     status: response.status,
                     error: errorData,
                   });
                 }
               }
             } else {
-              log.error("Could not find checklist/curriculum for item", {
+              log.error("Could not find progress item for item", {
                 itemId,
               });
             }
           } catch (progressError) {
-            log.error("Error updating checklist/curriculum item:", {
+            log.error("Error updating progress item:", {
               itemId,
               error:
                 progressError instanceof Error
@@ -723,8 +698,8 @@ export function LessonForm({
           </p>
         </div>
 
-        {/* Curriculum Progress */}
-        {formData.studentId && studentCurriculums.length > 0 && (
+        {/* Practice Progress */}
+        {formData.studentId && studentProgressItems.length > 0 && (
           <div className="space-y-4">
             <button
               type="button"
@@ -749,21 +724,21 @@ export function LessonForm({
                 </svg>
                 <div className="text-left">
                   <Label className="text-base font-semibold cursor-pointer">
-                    Checklist Progress
+                    Practice Progress
                   </Label>
                   <p className="text-xs text-muted-foreground mt-1">
                     {isChecklistSectionExpanded
-                      ? "Check off checklist items the student practiced or completed during this lesson"
-                      : `${studentCurriculums.length} checklist${
-                          studentCurriculums.length === 1 ? "" : "s"
+                      ? "Check off items the student practiced or completed during this lesson"
+                      : `${studentProgressItems.length} item${
+                          studentProgressItems.length === 1 ? "" : "s"
                         } available`}
                   </p>
                 </div>
               </div>
-              {selectedCurriculumItems.length > 0 && (
+              {selectedProgressItems.length > 0 && (
                 <span className="px-2 py-1 text-xs bg-turquoise-100 text-turquoise-700 rounded-full border border-turquoise-200">
-                  {selectedCurriculumItems.length} item
-                  {selectedCurriculumItems.length === 1 ? "" : "s"} checked
+                  {selectedProgressItems.length} item
+                  {selectedProgressItems.length === 1 ? "" : "s"} checked
                 </span>
               )}
             </button>
@@ -771,13 +746,13 @@ export function LessonForm({
             {isChecklistSectionExpanded && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {studentCurriculums.map((curriculum) => {
+                  {studentProgressItems.map((progressItem) => {
                     const isTeacherCreated =
-                      curriculum.createdByRole === "TEACHER";
-                    const isExpanded = expandedChecklistId === curriculum.id;
+                      progressItem.createdByRole === "TEACHER";
+                    const isExpanded = expandedProgressItemId === progressItem.id;
                     return (
                       <Card
-                        key={curriculum.id}
+                        key={progressItem.id}
                         className={`p-4 ${
                           isTeacherCreated
                             ? "border-turquoise-200 bg-turquoise-50"
@@ -787,7 +762,7 @@ export function LessonForm({
                         <button
                           type="button"
                           onClick={() =>
-                            toggleChecklistExpansion(curriculum.id)
+                            toggleProgressItemExpansion(progressItem.id)
                           }
                           className="flex items-center justify-between w-full mb-3 p-1 -m-1 hover:bg-black/5 rounded transition-colors group"
                         >
@@ -808,7 +783,7 @@ export function LessonForm({
                               />
                             </svg>
                             <h4 className="font-semibold text-sm cursor-pointer">
-                              {curriculum.title}
+                              {progressItem.title}
                             </h4>
                           </div>
                           <span
@@ -823,13 +798,13 @@ export function LessonForm({
                         </button>
                         {isExpanded && (
                           <>
-                            {curriculum.creatorName && (
+                            {progressItem.creatorName && (
                               <p className="text-xs text-muted-foreground mb-3">
-                                Created by {curriculum.creatorName}
+                                Created by {progressItem.creatorName}
                               </p>
                             )}
                             <div className="space-y-3">
-                              {curriculum.sections.map((section) => (
+                              {progressItem.sections.map((section) => (
                                 <div key={section.id}>
                                   <h5 className="font-medium text-xs text-muted-foreground mb-2 uppercase tracking-wide">
                                     {section.title}
@@ -838,14 +813,14 @@ export function LessonForm({
                                     {section.items.map((item) => {
                                       const progress = getItemProgress(
                                         item.id,
-                                        curriculum,
+                                        progressItem,
                                       );
                                       const isCompleted =
                                         progress?.status === "COMPLETED" ||
                                         (item as StudentChecklistItem)
                                           ?.isCompleted;
                                       const isSelected =
-                                        selectedCurriculumItems.includes(
+                                        selectedProgressItems.includes(
                                           item.id,
                                         );
 
@@ -865,7 +840,7 @@ export function LessonForm({
                                             type="checkbox"
                                             checked={isSelected}
                                             onChange={() =>
-                                              toggleCurriculumItem(item.id)
+                                              toggleProgressItem(item.id)
                                             }
                                             className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                                           />
@@ -892,13 +867,13 @@ export function LessonForm({
                   })}
                 </div>
 
-                {selectedCurriculumItems.length > 0 && (
+                {selectedProgressItems.length > 0 && (
                   <div className="p-3 bg-turquoise-50 border border-turquoise-200 rounded-lg">
                     <p className="text-sm text-turquoise-700">
                       <span className="font-semibold">
-                        {selectedCurriculumItems.length}
+                        {selectedProgressItems.length}
                       </span>{" "}
-                      checklist item(s) will be marked as completed when you
+                      practice item(s) will be marked as completed when you
                       save this lesson.
                     </p>
                   </div>

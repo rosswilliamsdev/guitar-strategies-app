@@ -92,9 +92,9 @@ export async function GET(request: NextRequest) {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: errorMessage || 'Test failed',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }

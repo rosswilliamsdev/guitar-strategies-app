@@ -248,6 +248,12 @@ export function CurriculumDetail({
   const allItems =
     curriculum.sections?.flatMap((section) => section.items || []) || [];
 
+  /**
+   * Teacher Checklist Detail View
+   *
+   * Note: Displays a teacher-created checklist (Curriculum model in database).
+   * Students use this to track their progress through teacher-assigned checklists.
+   */
   return (
     <Card className="p-6">
       {/* Header with title and edit button */}
