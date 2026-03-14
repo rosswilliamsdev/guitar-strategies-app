@@ -186,6 +186,57 @@ export interface InvoiceUpdateRequest {
 }
 
 // ========================================
+// Curriculum & Checklist Types
+// ========================================
+
+/**
+ * Represents items a student can practice during a lesson.
+ * Can be from either:
+ * - Teacher Curriculums (createdByRole === "TEACHER")
+ * - Student Checklists (createdByRole === "STUDENT" or undefined)
+ */
+export interface StudentProgressItem {
+  id: string;
+  title: string;
+  createdByRole?: string;
+  creatorName?: string;
+  sections: ProgressSection[];
+  studentProgress?: {
+    itemProgress: Array<{
+      itemId: string;
+      status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "NEEDS_REVIEW";
+    }>;
+  };
+}
+
+export interface ProgressSection {
+  id: string;
+  title: string;
+  category: string;
+  items: ProgressItemDetail[];
+}
+
+export interface ProgressItemDetail {
+  id: string;
+  title: string;
+  description?: string;
+  isCompleted?: boolean;
+  completedAt?: Date | null;
+}
+
+// API Response type for student checklists endpoint
+export interface ChecklistAPIResponse {
+  checklists: Array<
+    import("@prisma/client").StudentChecklist & {
+      items: import("@prisma/client").StudentChecklistItem[];
+      creator?: {
+        name: string;
+      };
+    }
+  >;
+}
+
+// ========================================
 // Library Types
 // ========================================
 export type LibraryItem = PrismaLibraryItem & {

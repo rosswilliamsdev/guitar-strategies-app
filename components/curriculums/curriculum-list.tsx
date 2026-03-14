@@ -64,6 +64,12 @@ interface CurriculumListProps {
   userRole: string;
 }
 
+/**
+ * Teacher Checklist List
+ *
+ * Note: Displays teacher-created checklists (stored as Curriculum models in database).
+ * User-facing language uses "Checklists" for clarity.
+ */
 export function CurriculumList({ userRole }: CurriculumListProps) {
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
   const [loading, setLoading] = useState(true);

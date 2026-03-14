@@ -552,6 +552,52 @@ openssl rand -base64 32
 # Then update NEXTAUTH_SECRET in .env file
 ```
 
+## Progress Tracking: Curriculums vs Checklists
+
+### Data Models
+
+**Curriculums (Teacher-Created Learning Paths)**
+- **Model**: `Curriculum` with `teacherId`
+- **Ownership**: Created and owned by teachers
+- **Scope**: Can be assigned to multiple students
+- **Progress Tracking**: `StudentCurriculumProgress` → `StudentItemProgress`
+- **Status Values**: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `NEEDS_REVIEW`
+- **Use Case**: Standardized learning paths, technique progressions, theory curricula
+
+**Checklists (Student-Specific Task Lists)**
+- **Model**: `StudentChecklist` with `studentId`
+- **Ownership**: Can be created by student OR teacher
+- **Scope**: Always belong to a specific student
+- **Progress Tracking**: `StudentChecklistItem` with `isCompleted` + `completedAt`
+- **Creator Field**: `createdByRole` indicates "TEACHER" or "STUDENT"
+- **Use Case**: Personalized practice goals, performance pieces, student-specific objectives
+
+### Lesson Logging
+
+When teachers log lessons, they can mark items as completed from BOTH:
+- **Teacher Curriculums** (e.g., "Beginner Guitar Curriculum" → "Open Chords" section)
+- **Student Checklists** (e.g., "Practice Goals for Concert" checklist)
+
+The lesson form combines these as "Practice Progress" or "Student Progress Items" since both represent things the student worked on during the lesson.
+
+**Technical Implementation:**
+- **Database Field**: `Lesson.checklistItems` (JSON string array of item IDs)
+- **Contains**: IDs from BOTH `CurriculumItem` AND `StudentChecklistItem`
+- **Distinction**: Check `createdByRole === "TEACHER"` for Curriculum vs Checklist
+- **API Routes**:
+  - Curriculum progress: `/api/curriculums/progress` (POST)
+  - Checklist items: `/api/student-checklists/items/{id}` (PUT)
+
+### Type Naming Convention
+
+| Context | Type Name | Location |
+|---------|-----------|----------|
+| Teacher-created learning paths | `Curriculum` | Prisma models |
+| Student-specific tasks | `Checklist` | Prisma models |
+| Code handling BOTH types | `StudentProgressItem` | `types/index.ts` |
+| User-facing UI | "Practice Progress" | Lesson logging interface |
+| Database storage | `checklistItems` | `Lesson.checklistItems` field |
+
 ### Invoice Model
 
 ````typescript
