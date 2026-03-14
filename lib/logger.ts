@@ -1,12 +1,14 @@
 /**
  * Structured Logging System
- * 
+ *
  * Provides centralized, structured logging for the Guitar Strategies application.
  * Replaces console.log with proper logging levels, formatting, and production-ready output.
- * 
+ *
  * Server-side: Uses Winston for structured logging
  * Client-side: Falls back to console methods with structured formatting
  */
+
+import winston from 'winston';
 
 // Context-aware logging functions
 interface LogContext {
@@ -27,7 +29,7 @@ interface LogContext {
   error?: string;
   stack?: string;
   domain?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // Check if we're on the server or client
@@ -36,15 +38,23 @@ const isServer = typeof window === 'undefined';
 /**
  * Server-side Winston logger (lazy loaded)
  */
-let winstonInstance: any = null;
+let winstonInstance: WinstonLogger | null = null;
 
-const getWinstonLogger = () => {
+// Type for Winston logger instance
+interface WinstonLogger {
+  log(level: string, message: string, meta?: Record<string, unknown>): void;
+  error(message: string, meta?: Record<string, unknown>): void;
+  warn(message: string, meta?: Record<string, unknown>): void;
+  info(message: string, meta?: Record<string, unknown>): void;
+  http(message: string, meta?: Record<string, unknown>): void;
+  debug(message: string, meta?: Record<string, unknown>): void;
+}
+
+const getWinstonLogger = (): WinstonLogger | null => {
   if (!isServer) return null;
-  
+
   if (!winstonInstance) {
     try {
-      const winston = require('winston');
-      
       // Define log levels and colors
       const logLevels = {
         error: 0,
@@ -70,7 +80,8 @@ const getWinstonLogger = () => {
         winston.format.timestamp({ format: 'HH:mm:ss' }),
         winston.format.errors({ stack: true }),
         winston.format.colorize({ all: true }),
-        winston.format.printf(({ timestamp, level, message, ...meta }: any) => {
+        winston.format.printf((info) => {
+          const { timestamp, level, message, ...meta } = info;
           const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
           return `[${timestamp}] ${level}: ${message}${metaStr}`;
         })
@@ -81,7 +92,7 @@ const getWinstonLogger = () => {
         winston.format.timestamp(),
         winston.format.errors({ stack: true }),
         winston.format.json(),
-        winston.format.printf((info: any) => {
+        winston.format.printf((info) => {
           const { timestamp, level, message, ...meta } = info;
           return JSON.stringify({
             timestamp,

@@ -149,13 +149,19 @@ export const defaultSecurityConfig: SecurityHeadersConfig = {
 /**
  * Validate CSP violations (for CSP reporting)
  */
-export function validateCSPViolation(violation: any): boolean {
-  // Basic validation of CSP violation reports
+export function validateCSPViolation(violation: unknown): boolean {
+  // Basic validation of CSP violation reports with type guard
+  const report = violation as {
+    'csp-report'?: {
+      'document-uri'?: unknown;
+    };
+  };
+
   return (
-    violation &&
+    violation !== null &&
     typeof violation === 'object' &&
-    violation['csp-report'] &&
-    violation['csp-report']['document-uri']
+    report['csp-report'] !== undefined &&
+    report['csp-report']['document-uri'] !== undefined
   );
 }
 

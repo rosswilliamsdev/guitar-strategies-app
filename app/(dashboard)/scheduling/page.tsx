@@ -18,9 +18,9 @@ async function getStudentData(userId: string) {
         studentProfile: {
           include: {
             teacher: {
-              include: { 
+              include: {
                 user: true,
-                lessonSettings: true 
+                lessonSettings: true
               }
             },
             recurringSlots: {
@@ -39,15 +39,6 @@ async function getStudentData(userId: string) {
                   }
                 }
               }
-            },
-            lessons: {
-              where: { 
-                isRecurring: true,
-                status: 'SCHEDULED',
-                date: { gte: new Date() } // Only future recurring lessons
-              },
-              orderBy: { date: 'asc' },
-              take: 1
             }
           }
         }
@@ -96,19 +87,12 @@ export default async function SchedulingPage() {
     ...slot,
     monthlyRate: slot.perLessonPrice * 4, // Convert per-lesson price to monthly (assuming 4 lessons per month)
   }));
-  // Map lessons to convert Date to string for the client component
-  const recurringLessons = (userData.studentProfile.lessons || []).map(lesson => ({
-    ...lesson,
-    date: lesson.date.toISOString(),
-    status: lesson.status as string,
-  }));
 
   return (
     <SchedulingClient
       teacherId={teacher.id}
       teacherName={teacher.user.name}
       recurringSlots={recurringSlots}
-      recurringLessons={recurringLessons}
       studentId={userData.studentProfile.id}
       timezone={teacher.timezone || "America/Chicago"}
     />

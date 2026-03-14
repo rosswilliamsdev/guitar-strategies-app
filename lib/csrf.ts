@@ -5,50 +5,53 @@
  * Provides token generation, validation, and middleware for API routes.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createHash, randomBytes } from 'crypto';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { getCachedData, CACHE_DURATIONS } from '@/lib/cache';
-import { log } from '@/lib/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { createHash, randomBytes } from "crypto";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { getCachedData, CACHE_DURATIONS } from "@/lib/cache";
+import { log } from "@/lib/logger";
+import type { ApiRouteHandler } from "@/types";
 
 // CSRF token configuration
-const CSRF_HEADER_NAME = 'x-csrf-token';
-const CSRF_COOKIE_NAME = '__Host-csrf';
+const CSRF_HEADER_NAME = "x-csrf-token";
+const CSRF_COOKIE_NAME = "__Host-csrf";
 const CSRF_TOKEN_LENGTH = 32;
 const CSRF_TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
-const CSRF_CACHE_PREFIX = 'csrf:';
+const CSRF_CACHE_PREFIX = "csrf:";
 
 // Methods that require CSRF protection
-const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
+const PROTECTED_METHODS = ["POST", "PUT", "PATCH", "DELETE"];
 
 // Paths that are exempt from CSRF protection
 const EXEMPT_PATHS = [
-  '/api/auth/', // NextAuth handles its own CSRF
-  '/api/webhook/', // Webhooks use their own verification
-  '/api/public/', // Public endpoints don't need CSRF
+  "/api/auth/", // NextAuth handles its own CSRF
+  "/api/webhook/", // Webhooks use their own verification
+  "/api/public/", // Public endpoints don't need CSRF
 ];
 
 /**
  * Generate a cryptographically secure CSRF token
  */
 export function generateCSRFToken(): string {
-  return randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
+  return randomBytes(CSRF_TOKEN_LENGTH).toString("hex");
 }
 
 /**
  * Hash a token for secure comparison
  */
 function hashToken(token: string, secret: string): string {
-  return createHash('sha256')
+  return createHash("sha256")
     .update(token + secret)
-    .digest('hex');
+    .digest("hex");
 }
 
 /**
  * Get or create a CSRF token for the current session
  */
-export async function getCSRFToken(request: NextRequest): Promise<string | null> {
+export async function getCSRFToken(
+  request: NextRequest,
+): Promise<string | null> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -73,12 +76,12 @@ export async function getCSRFToken(request: NextRequest): Promise<string | null>
     await getCachedData(
       cacheKey,
       async () => tokenHash,
-      CACHE_DURATIONS.STATIC_MEDIUM // 24 hours
+      CACHE_DURATIONS.STATIC_MEDIUM, // 24 hours
     );
 
     return newToken;
   } catch (error) {
-    log.error('Failed to get CSRF token', { error: (error as Error).message });
+    log.error("Failed to get CSRF token", { error: (error as Error).message });
     return null;
   }
 }
@@ -88,7 +91,7 @@ export async function getCSRFToken(request: NextRequest): Promise<string | null>
  */
 export async function validateCSRFToken(
   request: NextRequest,
-  token: string
+  token: string,
 ): Promise<boolean> {
   try {
     const session = await getServerSession(authOptions);
@@ -101,11 +104,11 @@ export async function validateCSRFToken(
     const storedHash = await getCachedData<string | null>(
       cacheKey,
       async () => null,
-      0
+      0,
     );
 
     if (!storedHash) {
-      log.warn('No CSRF token found in cache', { userId: session.user.id });
+      log.warn("No CSRF token found in cache", { userId: session.user.id });
       return false;
     }
 
@@ -114,15 +117,17 @@ export async function validateCSRFToken(
     const isValid = storedHash === providedHash;
 
     if (!isValid) {
-      log.warn('Invalid CSRF token provided', {
+      log.warn("Invalid CSRF token provided", {
         userId: session.user.id,
-        path: request.nextUrl.pathname
+        path: request.nextUrl.pathname,
       });
     }
 
     return isValid;
   } catch (error) {
-    log.error('CSRF token validation error', { error: (error as Error).message });
+    log.error("CSRF token validation error", {
+      error: (error as Error).message,
+    });
     return false;
   }
 }
@@ -131,7 +136,7 @@ export async function validateCSRFToken(
  * Check if a path is exempt from CSRF protection
  */
 function isExemptPath(pathname: string): boolean {
-  return EXEMPT_PATHS.some(exempt => pathname.startsWith(exempt));
+  return EXEMPT_PATHS.some((exempt) => pathname.startsWith(exempt));
 }
 
 /**
@@ -139,7 +144,7 @@ function isExemptPath(pathname: string): boolean {
  */
 export async function withCSRFProtection(
   request: NextRequest,
-  handler: () => Promise<NextResponse>
+  handler: () => Promise<NextResponse>,
 ): Promise<NextResponse> {
   // Skip CSRF for GET, HEAD, OPTIONS requests
   if (!PROTECTED_METHODS.includes(request.method)) {
@@ -157,23 +162,17 @@ export async function withCSRFProtection(
   const token = headerToken || bodyToken;
 
   if (!token) {
-    log.warn('Missing CSRF token', {
+    log.warn("Missing CSRF token", {
       path: request.nextUrl.pathname,
-      method: request.method
+      method: request.method,
     });
-    return NextResponse.json(
-      { error: 'CSRF token required' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "CSRF token required" }, { status: 403 });
   }
 
   // Validate token
   const isValid = await validateCSRFToken(request, token);
   if (!isValid) {
-    return NextResponse.json(
-      { error: 'Invalid CSRF token' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
   }
 
   // Token is valid, proceed with request
@@ -187,16 +186,16 @@ async function getTokenFromBody(request: NextRequest): Promise<string | null> {
   try {
     // Clone request to avoid consuming the body
     const clonedRequest = request.clone();
-    const contentType = clonedRequest.headers.get('content-type');
+    const contentType = clonedRequest.headers.get("content-type");
 
-    if (contentType?.includes('application/json')) {
+    if (contentType?.includes("application/json")) {
       const body = await clonedRequest.json();
       return body._csrf || body.csrfToken || null;
     }
 
-    if (contentType?.includes('multipart/form-data')) {
+    if (contentType?.includes("multipart/form-data")) {
       const formData = await clonedRequest.formData();
-      const token = formData.get('_csrf') || formData.get('csrfToken');
+      const token = formData.get("_csrf") || formData.get("csrfToken");
       return token as string | null;
     }
 
@@ -215,25 +214,24 @@ export function addCSRFCookie(response: NextResponse, token: string): void {
     name: CSRF_COOKIE_NAME,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
     maxAge: CSRF_TOKEN_EXPIRY / 1000, // Convert to seconds
-    path: '/',
+    path: "/",
   });
 }
 
 /**
  * HOC to wrap API route handlers with CSRF protection
  */
-export function withCSRF<T extends (...args: any[]) => Promise<NextResponse>>(
-  handler: T
-): T {
-  return (async (...args: Parameters<T>) => {
-    const request = args[0] as NextRequest;
-
+export function withCSRF<T extends ApiRouteHandler>(handler: T): T {
+  return (async (
+    request: NextRequest,
+    context?: { params?: Record<string, string | string[]> },
+  ) => {
     // Apply CSRF protection
     return withCSRFProtection(request, async () => {
-      return handler(...args);
+      return handler(request, context);
     });
   }) as T;
 }
@@ -267,7 +265,7 @@ export async function checkCSRF(request: NextRequest): Promise<boolean> {
 export async function getCSRFMetaTags(request: NextRequest): Promise<string> {
   const token = await getCSRFToken(request);
   if (!token) {
-    return '';
+    return "";
   }
 
   return `
@@ -282,12 +280,12 @@ export async function getCSRFMetaTags(request: NextRequest): Promise<string> {
  * This would be used in client components
  */
 export function getCSRFTokenFromMeta(): string | null {
-  if (typeof document === 'undefined') {
+  if (typeof document === "undefined") {
     return null;
   }
 
   const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta?.getAttribute('content') || null;
+  return meta?.getAttribute("content") || null;
 }
 
 /**

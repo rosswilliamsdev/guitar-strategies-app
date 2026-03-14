@@ -15,7 +15,6 @@
  * - UI component types
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   User as PrismaUser,
   TeacherProfile as PrismaTeacherProfile,
@@ -37,6 +36,9 @@ import type {
   SubscriptionStatus,
   BillingStatus,
 } from "@prisma/client";
+import { lessonSettingsSchema } from "@/lib/validations";
+import type { z } from "zod";
+import type { NextRequest, NextResponse } from "next/server";
 
 // ========================================
 // Base Types from Prisma
@@ -301,7 +303,7 @@ export interface StudentDashboardData {
     totalPracticeTime: number;
     completedAssignments: number;
   };
-  upcomingPayments: any[];
+  upcomingPayments: unknown[];
 }
 
 export interface LessonStats {
@@ -383,7 +385,7 @@ export interface PasswordChangeData {
 // ========================================
 // API Response Types
 // ========================================
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -407,6 +409,18 @@ export interface ErrorResponse {
   error: string;
   details?: Record<string, string[]>;
 }
+
+// Type-safe headers for API requests
+export type ApiHeaders = Record<string, string>;
+
+// Request body type constraint - use unknown for type safety
+export type JsonBody = Record<string, unknown> | unknown;
+
+// Next.js API route handler type
+export type ApiRouteHandler = (
+  request: NextRequest,
+  context?: { params?: Record<string, string | string[]> }
+) => Promise<NextResponse>;
 
 // ========================================
 // Navigation & UI Types
@@ -514,7 +528,7 @@ export interface LoadingState {
   error?: string | null;
 }
 
-export interface FormState<T = any> extends LoadingState {
+export interface FormState<T = unknown> extends LoadingState {
   data?: T;
   isDirty?: boolean;
   isValid?: boolean;
@@ -550,6 +564,9 @@ export interface RecurringBooking {
   endDate?: Date;
   maxOccurrences?: number;
 }
+
+// Teacher lesson configuration settings
+export type LessonSettings = z.infer<typeof lessonSettingsSchema>;
 
 // ========================================
 // Recurring Monthly Slot Types
@@ -633,6 +650,17 @@ export interface MonthlyBillingCalculation {
   totalAmount: number; // ratePerLesson * occurrences
 }
 
+// Extended RecurringSlot with computed monthlyRate and required relationships
+export interface SlotWithDetails extends Omit<RecurringSlot, 'teacher'> {
+  monthlyRate: number; // Computed: perLessonPrice * occurrences
+  teacher: {
+    user: { name: string };
+  };
+  subscriptions: Array<SlotSubscription & {
+    billingRecords: MonthlyBilling[];
+  }>;
+}
+
 // ========================================
 // Stripe Integration Types
 // ========================================
@@ -665,7 +693,7 @@ export interface NotificationData {
     name: string;
     role: Role;
   };
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   scheduled_for?: Date;
 }
 

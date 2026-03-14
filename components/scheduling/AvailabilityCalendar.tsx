@@ -283,7 +283,7 @@ export function AvailabilityCalendar({
 
       log.info("🔍 Parsed slots:", { totalSlots: parsedSlots.length });
       log.info("🔍 Available slots:", {
-        availableSlots: parsedSlots.filter((s: any) => s.available).length,
+        availableSlots: parsedSlots.filter((s: TimeSlot) => s.available).length,
       });
       log.info("🔍 Sample slots:", { sampleSlots: parsedSlots.slice(0, 3) });
 

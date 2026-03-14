@@ -74,7 +74,7 @@ export function WeeklyScheduleGrid({
   const handleUpdateSlot = (
     index: number,
     field: keyof AvailabilitySlot,
-    value: any
+    value: string | number | null,
   ) => {
     const updated = [...localAvailability];
     updated[index] = { ...updated[index], [field]: value };
@@ -87,9 +87,11 @@ export function WeeklyScheduleGrid({
       setErrors(newErrors);
     } catch (error: unknown) {
       const errorKey = `${index}-${field}`;
-      const errorMessage = error instanceof Error && 'errors' in error
-        ? (error as { errors: Array<{ message: string }> }).errors[0]?.message || "Invalid input"
-        : "Invalid input";
+      const errorMessage =
+        error instanceof Error && "errors" in error
+          ? (error as { errors: Array<{ message: string }> }).errors[0]
+              ?.message || "Invalid input"
+          : "Invalid input";
       setErrors({
         ...errors,
         [errorKey]: errorMessage,
@@ -108,7 +110,7 @@ export function WeeklyScheduleGrid({
 
   const handleCopyDay = (dayOfWeek: number) => {
     const daySlots = localAvailability.filter(
-      (slot) => slot.dayOfWeek === dayOfWeek
+      (slot) => slot.dayOfWeek === dayOfWeek,
     );
 
     const newSlots: AvailabilitySlot[] = [];
@@ -160,7 +162,9 @@ export function WeeklyScheduleGrid({
         successTimeoutRef.current = null;
       }, 3000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to save availability");
+      setError(
+        err instanceof Error ? err.message : "Failed to save availability",
+      );
 
       // Auto-clear error after 5 seconds
       setTimeout(() => {
@@ -195,7 +199,7 @@ export function WeeklyScheduleGrid({
             className={cn(
               "border rounded-lg p-4",
               !hasSlots(day.value) && "bg-muted/50",
-              dayIndex % 2 === 1 && "bg-neutral-50/50"
+              dayIndex % 2 === 1 && "bg-neutral-50/50",
             )}
           >
             <div className="flex items-center justify-between mb-3">

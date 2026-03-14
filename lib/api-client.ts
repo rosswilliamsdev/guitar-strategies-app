@@ -5,25 +5,27 @@
  * and handles common API patterns.
  */
 
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
 
 // Get CSRF token from meta tag or cookie
 function getCSRFToken(): string | null {
-  if (typeof document === 'undefined') {
+  if (typeof document === "undefined") {
     return null;
   }
 
   // First try meta tag
-  const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const metaToken = document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute("content");
   if (metaToken) {
     return metaToken;
   }
 
   // Fallback to cookie
-  const cookies = document.cookie.split(';');
+  const cookies = document.cookie.split(";");
   for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === '__Host-csrf' || name === 'csrf-token') {
+    const [name, value] = cookie.trim().split("=");
+    if (name === "__Host-csrf" || name === "csrf-token") {
       return decodeURIComponent(value);
     }
   }
@@ -36,45 +38,55 @@ function getCSRFToken(): string | null {
  */
 export async function apiFetch(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<Response> {
-  const method = options.method?.toUpperCase() || 'GET';
-  const needsCSRF = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+  const method = options.method?.toUpperCase() || "GET";
+  const needsCSRF = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
 
-  // Build headers
-  const headers: HeadersInit = {
-    ...options.headers,
-  };
+  // Build headers as a mutable Record for type safety
+  const headerRecord: Record<string, string> = {};
+
+  // Copy existing headers
+  if (options.headers) {
+    const existingHeaders = new Headers(options.headers);
+    existingHeaders.forEach((value, key) => {
+      headerRecord[key.toLowerCase()] = value;
+    });
+  }
 
   // Add CSRF token for state-changing requests
   if (needsCSRF) {
     const csrfToken = getCSRFToken();
     if (csrfToken) {
-      (headers as any)['x-csrf-token'] = csrfToken;
+      headerRecord["x-csrf-token"] = csrfToken;
     } else {
-      console.warn('No CSRF token found for protected request');
+      console.warn("No CSRF token found for protected request");
     }
   }
 
   // Add content-type for JSON if not specified
-  if (options.body && typeof options.body === 'string' && !(headers as any)['content-type']) {
-    (headers as any)['content-type'] = 'application/json';
+  if (
+    options.body &&
+    typeof options.body === "string" &&
+    !headerRecord["content-type"]
+  ) {
+    headerRecord["content-type"] = "application/json";
   }
 
   // Make the request
   const response = await fetch(url, {
     ...options,
-    headers,
-    credentials: 'same-origin', // Include cookies
+    headers: headerRecord,
+    credentials: "same-origin", // Include cookies
   });
 
   // Handle CSRF errors specifically
   if (response.status === 403) {
     const text = await response.text();
-    if (text.includes('CSRF')) {
+    if (text.includes("CSRF")) {
       // CSRF token might be expired, try to refresh
       window.location.reload();
-      throw new Error('Security token expired. Please refresh the page.');
+      throw new Error("Security token expired. Please refresh the page.");
     }
   }
 
@@ -87,17 +99,20 @@ export async function apiFetch(
 export class ApiClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = '') {
+  constructor(baseUrl: string = "") {
     this.baseUrl = baseUrl;
   }
 
   /**
    * Make a GET request
    */
-  async get<T>(path: string, options?: RequestInit): Promise<T> {
+  async get<TResponse = unknown>(
+    path: string,
+    options?: RequestInit,
+  ): Promise<TResponse> {
     const response = await apiFetch(`${this.baseUrl}${path}`, {
       ...options,
-      method: 'GET',
+      method: "GET",
     });
 
     if (!response.ok) {
@@ -110,10 +125,14 @@ export class ApiClient {
   /**
    * Make a POST request
    */
-  async post<T>(path: string, data?: any, options?: RequestInit): Promise<T> {
+  async post<TResponse = unknown, TBody = unknown>(
+    path: string,
+    data?: TBody,
+    options?: RequestInit,
+  ): Promise<TResponse> {
     const response = await apiFetch(`${this.baseUrl}${path}`, {
       ...options,
-      method: 'POST',
+      method: "POST",
       body: data ? JSON.stringify(data) : undefined,
     });
 
@@ -128,10 +147,14 @@ export class ApiClient {
   /**
    * Make a PUT request
    */
-  async put<T>(path: string, data?: any, options?: RequestInit): Promise<T> {
+  async put<TResponse = unknown, TBody = unknown>(
+    path: string,
+    data?: TBody,
+    options?: RequestInit,
+  ): Promise<TResponse> {
     const response = await apiFetch(`${this.baseUrl}${path}`, {
       ...options,
-      method: 'PUT',
+      method: "PUT",
       body: data ? JSON.stringify(data) : undefined,
     });
 
@@ -146,10 +169,14 @@ export class ApiClient {
   /**
    * Make a PATCH request
    */
-  async patch<T>(path: string, data?: any, options?: RequestInit): Promise<T> {
+  async patch<TResponse = unknown, TBody = unknown>(
+    path: string,
+    data?: TBody,
+    options?: RequestInit,
+  ): Promise<TResponse> {
     const response = await apiFetch(`${this.baseUrl}${path}`, {
       ...options,
-      method: 'PATCH',
+      method: "PATCH",
       body: data ? JSON.stringify(data) : undefined,
     });
 
@@ -164,10 +191,13 @@ export class ApiClient {
   /**
    * Make a DELETE request
    */
-  async delete<T>(path: string, options?: RequestInit): Promise<T> {
+  async delete<TResponse = unknown>(
+    path: string,
+    options?: RequestInit,
+  ): Promise<TResponse> {
     const response = await apiFetch(`${this.baseUrl}${path}`, {
       ...options,
-      method: 'DELETE',
+      method: "DELETE",
     });
 
     if (!response.ok) {
@@ -177,28 +207,32 @@ export class ApiClient {
 
     // DELETE might return empty response
     const text = await response.text();
-    return text ? JSON.parse(text) : null as T;
+    return text ? JSON.parse(text) : (null as TResponse);
   }
 
   /**
    * Upload files with CSRF protection
    */
-  async upload<T>(path: string, formData: FormData, options?: RequestInit): Promise<T> {
+  async upload<TResponse = unknown>(
+    path: string,
+    formData: FormData,
+    options?: RequestInit,
+  ): Promise<TResponse> {
     // Add CSRF token to form data
     const csrfToken = getCSRFToken();
     if (csrfToken) {
-      formData.append('_csrf', csrfToken);
+      formData.append("_csrf", csrfToken);
     }
 
     const response = await fetch(`${this.baseUrl}${path}`, {
       ...options,
-      method: 'POST',
+      method: "POST",
       body: formData,
-      credentials: 'same-origin',
+      credentials: "same-origin",
       headers: {
         ...options?.headers,
         // Don't set content-type, let browser set it with boundary for multipart
-        ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
       },
     });
 
@@ -224,7 +258,7 @@ export class ApiClient {
 }
 
 // Default API client instance
-export const api = new ApiClient('/api');
+export const api = new ApiClient("/api");
 
 /**
  * React Hook for API calls with loading state
@@ -233,24 +267,26 @@ export function useApi<T>() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const execute = React.useCallback(async (
-    apiCall: () => Promise<T>
-  ): Promise<T | null> => {
-    setLoading(true);
-    setError(null);
+  const execute = React.useCallback(
+    async (apiCall: () => Promise<T>): Promise<T | null> => {
+      setLoading(true);
+      setError(null);
 
-    try {
-      const result = await apiCall();
-      return result;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
-      setError(message);
-      toast.error(message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        const result = await apiCall();
+        return result;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "An error occurred";
+        setError(message);
+        toast.error(message);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   return { execute, loading, error };
 }
@@ -261,7 +297,7 @@ export function useApi<T>() {
 export async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
-  maxRetries: number = 3
+  maxRetries: number = 3,
 ): Promise<Response> {
   let lastError: Error | null = null;
 
@@ -272,9 +308,9 @@ export async function fetchWithRetry(
       // If CSRF error, refresh token and retry once
       if (response.status === 403 && i === 0) {
         const text = await response.text();
-        if (text.includes('CSRF')) {
+        if (text.includes("CSRF")) {
           // Wait a bit and retry
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
           continue;
         }
       }
@@ -284,19 +320,26 @@ export async function fetchWithRetry(
       lastError = error as Error;
 
       // Don't retry on client errors (4xx except 403)
-      if (error instanceof Response && error.status >= 400 && error.status < 500 && error.status !== 403) {
+      if (
+        error instanceof Response &&
+        error.status >= 400 &&
+        error.status < 500 &&
+        error.status !== 403
+      ) {
         throw error;
       }
 
       // Wait before retry with exponential backoff
       if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.pow(2, i) * 1000),
+        );
       }
     }
   }
 
-  throw lastError || new Error('Request failed after retries');
+  throw lastError || new Error("Request failed after retries");
 }
 
 // Make React import conditional for Next.js
-import * as React from 'react';
+import * as React from "react";

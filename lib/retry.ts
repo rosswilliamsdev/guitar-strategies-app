@@ -10,8 +10,8 @@ export interface RetryOptions {
   initialDelay?: number;
   maxDelay?: number;
   backoffMultiplier?: number;
-  shouldRetry?: (error: any) => boolean;
-  onRetry?: (error: any, attempt: number) => void;
+  shouldRetry?: (error: unknown) => boolean;
+  onRetry?: (error: unknown, attempt: number) => void;
 }
 
 const DEFAULT_OPTIONS: Required<RetryOptions> = {
@@ -20,37 +20,41 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
   maxDelay: 30000, // 30 seconds
   backoffMultiplier: 2,
   shouldRetry: (error) => {
+    // Type guard for error objects
+    const err = error as { code?: string; status?: number; message?: string };
+
     // Retry on network errors, timeouts, and specific database errors
-    if (error?.code === 'ETIMEDOUT' || error?.code === 'ECONNREFUSED') {
+    if (err.code === 'ETIMEDOUT' || err.code === 'ECONNREFUSED') {
       return true;
     }
-    
+
     // Retry on Prisma connection errors
-    if (error?.code === 'P2024' || // Connection pool timeout
-        error?.code === 'P2025' || // Operation timed out
-        error?.code === 'P2034') { // Transaction failed
+    if (err.code === 'P2024' || // Connection pool timeout
+        err.code === 'P2025' || // Operation timed out
+        err.code === 'P2034') { // Transaction failed
       return true;
     }
-    
+
     // Retry on 5xx status codes
-    if (error?.status >= 500 && error?.status < 600) {
+    if (err.status && err.status >= 500 && err.status < 600) {
       return true;
     }
-    
+
     // Retry on specific error messages
-    if (error?.message?.includes('connection') ||
-        error?.message?.includes('timeout') ||
-        error?.message?.includes('ECONNRESET')) {
+    if (err.message?.includes('connection') ||
+        err.message?.includes('timeout') ||
+        err.message?.includes('ECONNRESET')) {
       return true;
     }
-    
+
     return false;
   },
   onRetry: (error, attempt) => {
+    const err = error as { message?: string; stack?: string };
     log.debug('Retry attempt', {
       attempt,
-      error: error?.message || String(error),
-      stack: error?.stack
+      error: err.message || String(error),
+      stack: err.stack
     });
   }
 };
@@ -63,7 +67,7 @@ export async function withRetry<T>(
   options: RetryOptions = {}
 ): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  let lastError: any;
+  let lastError: unknown;
   
   for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {
     try {
@@ -101,13 +105,13 @@ export async function withRetry<T>(
  * Retry decorator for class methods
  */
 export function Retry(options: RetryOptions = {}) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-    
-    descriptor.value = async function (...args: any[]) {
+
+    descriptor.value = async function (...args: unknown[]) {
       return withRetry(() => originalMethod.apply(this, args), options);
     };
-    
+
     return descriptor;
   };
 }
@@ -120,49 +124,52 @@ export const databaseRetryOptions: RetryOptions = {
   initialDelay: 500,
   maxDelay: 5000,
   shouldRetry: (error) => {
+    const err = error as { code?: string; message?: string };
+
     // Retry on connection pool exhaustion
-    if (error?.code === 'P2024') {
+    if (err.code === 'P2024') {
       dbLog.warn('Database connection pool exhausted, retrying', {
         errorCode: 'P2024',
-        message: error?.message
+        message: err.message
       });
       return true;
     }
-    
+
     // Retry on transaction timeouts
-    if (error?.code === 'P2034' || error?.code === 'P2025') {
+    if (err.code === 'P2034' || err.code === 'P2025') {
       dbLog.warn('Database transaction timeout, retrying', {
-        errorCode: error?.code,
-        message: error?.message
+        errorCode: err.code,
+        message: err.message
       });
       return true;
     }
-    
+
     // Retry on deadlocks
-    if (error?.code === 'P2023') {
+    if (err.code === 'P2023') {
       dbLog.warn('Database deadlock detected, retrying', {
         errorCode: 'P2023',
-        message: error?.message
+        message: err.message
       });
       return true;
     }
-    
+
     // Don't retry on validation errors or unique constraints
-    if (error?.code === 'P2002' || // Unique constraint
-        error?.code === 'P2003' || // Foreign key constraint
-        error?.code === 'P2011' || // Null constraint
-        error?.code === 'P2012') { // Missing required value
+    if (err.code === 'P2002' || // Unique constraint
+        err.code === 'P2003' || // Foreign key constraint
+        err.code === 'P2011' || // Null constraint
+        err.code === 'P2012') { // Missing required value
       return false;
     }
-    
+
     return DEFAULT_OPTIONS.shouldRetry(error);
   },
   onRetry: (error, attempt) => {
+    const err = error as { code?: string; message?: string; stack?: string };
     dbLog.debug('Database retry attempt', {
       attempt,
-      errorCode: error?.code,
-      error: error?.message || String(error),
-      stack: error?.stack
+      errorCode: err.code,
+      error: err.message || String(error),
+      stack: err.stack
     });
   }
 };
@@ -176,47 +183,50 @@ export const emailRetryOptions: RetryOptions = {
   maxDelay: 60000,
   backoffMultiplier: 3,
   shouldRetry: (error) => {
+    const err = error as { code?: string; status?: number; message?: string };
+
     // Retry on rate limiting
-    if (error?.status === 429) {
+    if (err.status === 429) {
       emailLog.warn('Email service rate limited, retrying', {
         status: 429,
-        message: error?.message
+        message: err.message
       });
       return true;
     }
 
     // Retry on temporary email service failures
-    if (error?.status >= 500 && error?.status < 600) {
+    if (err.status && err.status >= 500 && err.status < 600) {
       emailLog.warn('Email service error, retrying', {
-        status: error?.status,
-        message: error?.message
+        status: err.status,
+        message: err.message
       });
       return true;
     }
 
     // Retry on network issues
-    if (error?.code === 'ETIMEDOUT' ||
-        error?.code === 'ECONNREFUSED' ||
-        error?.message?.includes('network')) {
+    if (err.code === 'ETIMEDOUT' ||
+        err.code === 'ECONNREFUSED' ||
+        err.message?.includes('network')) {
       emailLog.warn('Email network error, retrying', {
-        error: error?.message || String(error)
+        error: err.message || String(error)
       });
       return true;
     }
 
     // Don't retry on invalid email addresses or auth errors
-    if (error?.status === 400 || error?.status === 401) {
+    if (err.status === 400 || err.status === 401) {
       return false;
     }
-    
+
     return true;
   },
   onRetry: (error, attempt) => {
+    const err = error as { status?: number; message?: string; stack?: string };
     emailLog.debug('Email retry attempt', {
       attempt,
-      status: error?.status,
-      error: error?.message || String(error),
-      stack: error?.stack
+      status: err.status,
+      error: err.message || String(error),
+      stack: err.stack
     });
   }
 };
@@ -232,10 +242,11 @@ export const emailRetryOptionsFast: RetryOptions = {
   backoffMultiplier: 2,
   shouldRetry: emailRetryOptions.shouldRetry, // Reuse same retry logic
   onRetry: (error, attempt) => {
+    const err = error as { status?: number; message?: string };
     emailLog.debug('Fast email retry attempt', {
       attempt,
-      status: error?.status,
-      error: error?.message || String(error)
+      status: err.status,
+      error: err.message || String(error)
     });
   }
 };
@@ -249,32 +260,35 @@ export const criticalRetryOptions: RetryOptions = {
   maxDelay: 30000,
   backoffMultiplier: 2.5,
   shouldRetry: (error) => {
+    const err = error as { code?: string; status?: number; message?: string };
+
     // Be more aggressive about retrying critical operations
-    if (error?.code === 'ETIMEDOUT' || 
-        error?.code === 'ECONNREFUSED' ||
-        error?.code === 'ECONNRESET' ||
-        error?.message?.includes('network') ||
-        error?.message?.includes('connection')) {
+    if (err.code === 'ETIMEDOUT' ||
+        err.code === 'ECONNREFUSED' ||
+        err.code === 'ECONNRESET' ||
+        err.message?.includes('network') ||
+        err.message?.includes('connection')) {
       return true;
     }
-    
+
     // Retry database connection issues
-    if (error?.code?.startsWith('P2')) {
+    if (err.code?.startsWith('P2')) {
       return true;
     }
-    
+
     // Retry 5xx errors
-    if (error?.status >= 500 && error?.status < 600) {
+    if (err.status && err.status >= 500 && err.status < 600) {
       return true;
     }
-    
+
     return false;
   },
   onRetry: (error, attempt) => {
+    const err = error as { message?: string; code?: string };
     log.warn('Critical operation retry attempt', {
       attempt,
       maxAttempts: 5,
-      error: error?.message || error?.code || error,
+      error: err.message || err.code || String(error),
       timestamp: new Date().toISOString()
     });
   }
