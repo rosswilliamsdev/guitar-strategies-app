@@ -75,9 +75,9 @@ export function BookingInterface({
       });
       setShowSuccessModal(true);
       setSuccess(data.message || "Lesson booked successfully!");
-    } catch (error: any) {
-      setError(error.message || "Failed to book lesson");
-      toast.error(error.message || "Failed to book lesson");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Failed to book lesson");
+      toast.error(error instanceof Error ? error.message : "Failed to book lesson");
     } finally {
       setLoading(false);
     }
@@ -120,9 +120,9 @@ export function BookingInterface({
       setSuccess(
         data.message || "Successfully booked your weekly lesson time!",
       );
-    } catch (error: any) {
-      setError(error.message || "Failed to book weekly lesson time");
-      toast.error(error.message || "Failed to book weekly lesson time");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Failed to book weekly lesson time");
+      toast.error(error instanceof Error ? error.message : "Failed to book weekly lesson time");
     } finally {
       setLoading(false);
     }

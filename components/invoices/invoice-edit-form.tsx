@@ -216,7 +216,7 @@ export function InvoiceEditForm({
       router.push(`/invoices/${updatedInvoice.id}`);
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message);
+        setError(error instanceof Error ? error.message : String(error));
       } else {
         setError("An unexpected error occurred");
       }

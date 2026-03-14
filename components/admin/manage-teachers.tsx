@@ -134,7 +134,7 @@ export function ManageTeachers({ teachers }: ManageTeachersProps) {
         window.location.reload();
       } else {
         const error = await response.json();
-        toast.error(error.message || "Failed to delete teacher");
+        toast.error(error instanceof Error ? error.message : "Failed to delete teacher");
       }
     } catch (error) {
       log.error('Error deleting teacher:', {

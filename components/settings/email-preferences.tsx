@@ -152,8 +152,8 @@ export function EmailPreferences({
         setError("Failed to save email preferences");
         setTimeout(() => setError(""), 5000);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to save email preferences");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save email preferences");
       setTimeout(() => setError(""), 5000);
     } finally {
       setIsLoading(false);

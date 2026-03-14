@@ -64,15 +64,16 @@ export function LessonSettingsForm({
       await onSave(validatedData);
       setSuccess("Lesson settings saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
-    } catch (err: any) {
-      if (err.errors) {
+    } catch (err: unknown) {
+      if (err instanceof Error && 'errors' in err) {
+        const zodError = err as { errors: Array<{ path?: string[]; message: string }> };
         const newErrors: Record<string, string> = {};
-        err.errors.forEach((e: any) => {
+        zodError.errors.forEach((e) => {
           newErrors[e.path?.[0] || "general"] = e.message;
         });
         setErrors(newErrors);
       }
-      setError(err.message || "Failed to save lesson settings");
+      setError(err instanceof Error ? err.message : "Failed to save lesson settings");
       setTimeout(() => setError(""), 5000);
     } finally {
       setSaving(false);

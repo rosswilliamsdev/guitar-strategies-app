@@ -312,10 +312,10 @@ export function TeacherSettingsForm({
       // Return the saved data - let child component handle state updates
       // This prevents race conditions with parent re-renders clearing child messages
       return data.data?.availability || [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error("Error saving availability", {
-        error: error.message,
-        stack: error.stack,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
       // Re-throw the error so WeeklyScheduleGrid can handle the message display
       throw error;
@@ -343,8 +343,8 @@ export function TeacherSettingsForm({
       setSuccess("Lesson settings saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
       setError("");
-    } catch (error: any) {
-      setError(error.message || "Failed to save lesson settings");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Failed to save lesson settings");
       setTimeout(() => setError(""), 5000);
       setSuccess("");
     } finally {
@@ -416,7 +416,7 @@ export function TeacherSettingsForm({
         stack: error instanceof Error ? error.stack : undefined,
       });
       if (error instanceof Error) {
-        setError(error.message);
+        setError(error instanceof Error ? error.message : String(error));
       } else {
         setError("An unexpected error occurred");
       }
@@ -470,7 +470,7 @@ export function TeacherSettingsForm({
       }
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message);
+        setError(error instanceof Error ? error.message : String(error));
       } else {
         setError("An unexpected error occurred");
       }

@@ -93,8 +93,8 @@ export function TeacherRecurringSlots({
 
       const data = await response.json();
       setSlots(data.data || []);
-    } catch (error: any) {
-      setError(error.message || "Failed to load recurring slots");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Failed to load recurring slots");
       setSlots([]);
     } finally {
       setLoading(false);
@@ -137,8 +137,8 @@ export function TeacherRecurringSlots({
       setShowCancelDialog(false);
       setSlotToCancel(null);
       setCancelReason("");
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to cancel slot";
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to cancel slot";
       setError(errorMessage);
       toast({
         title: "Error",

@@ -183,12 +183,12 @@ export function LessonList({ userRole }: LessonListProps) {
       // Close modals only after successful deletion
       setConfirmCancelLesson(null);
       setConfirmDeleteLesson(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      setErrorMessage(error.message || "Failed to cancel lesson");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to cancel lesson");
     } finally {
       setCancellingLessons((prev) => {
         const newSet = new Set(prev);

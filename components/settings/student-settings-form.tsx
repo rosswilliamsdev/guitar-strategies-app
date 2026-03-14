@@ -152,7 +152,7 @@ export function StudentSettingsForm({
       router.refresh();
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message);
+        setError(error instanceof Error ? error.message : String(error));
       } else {
         setError("An unexpected error occurred");
       }
@@ -206,7 +206,7 @@ export function StudentSettingsForm({
       }
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message);
+        setError(error instanceof Error ? error.message : String(error));
       } else {
         setError("An unexpected error occurred");
       }

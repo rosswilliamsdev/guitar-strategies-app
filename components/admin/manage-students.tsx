@@ -271,7 +271,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         window.location.reload();
       } else {
         const error = await response.json();
-        toast.error(error.message || "Failed to delete student");
+        toast.error(error instanceof Error ? error.message : "Failed to delete student");
       }
     } catch (error) {
       log.error('Error deleting student:', {

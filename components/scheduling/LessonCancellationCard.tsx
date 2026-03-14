@@ -108,12 +108,12 @@ export function LessonCancellationCard({ studentId }: LessonCancellationCardProp
       // Clear any previous errors
       setError('');
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error('Cancellation error:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-      setErrorMessage(error.message || 'Failed to cancel lesson. Please try again.');
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to cancel lesson. Please try again.');
     } finally {
       setCancellingId(null);
     }

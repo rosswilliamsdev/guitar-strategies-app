@@ -156,7 +156,7 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
         });
       })
       .catch((err) => {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : String(err));
       })
       .finally(() => {
         setLoading(false);
@@ -380,12 +380,12 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
         const newData = await res.json();
         setData(newData);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      setErrorMessage(`Failed to cancel the lesson: ${error.message}`);
+      setErrorMessage(`Failed to cancel the lesson: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setCancellingLesson(null);
     }
