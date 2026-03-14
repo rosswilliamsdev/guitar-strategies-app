@@ -4,17 +4,21 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createStudentChecklistSchema } from "@/lib/validations";
 import { z } from "zod";
-import { apiLog } from '@/lib/logger';
+import { apiLog } from "@/lib/logger";
+import { CurriculumItem, Prisma } from "@prisma/client";
 
 // Disable caching for this route
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 // GET /api/student-checklists - Get all checklists for a student
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user || !["STUDENT", "TEACHER", "ADMIN"].includes(session.user.role)) {
+    if (
+      !session?.user ||
+      !["STUDENT", "TEACHER", "ADMIN"].includes(session.user.role)
+    ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -31,7 +35,7 @@ export async function GET(request: NextRequest) {
       if (!studentProfile) {
         return NextResponse.json(
           { error: "Student profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest) {
       if (!studentId) {
         return NextResponse.json(
           { error: "studentId parameter required for teachers" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -52,21 +56,21 @@ export async function GET(request: NextRequest) {
       if (!teacherProfile) {
         return NextResponse.json(
           { error: "Teacher profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
       const studentProfile = await prisma.studentProfile.findFirst({
         where: {
           id: studentId,
-          teacherId: teacherProfile.id
+          teacherId: teacherProfile.id,
         },
       });
 
       if (!studentProfile) {
         return NextResponse.json(
           { error: "Student not found or not assigned to you" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -76,13 +80,13 @@ export async function GET(request: NextRequest) {
       if (!studentId) {
         return NextResponse.json(
           { error: "studentId parameter required" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       targetStudentId = studentId;
     }
 
-    const whereClause: any = {
+    const whereClause: Prisma.StudentChecklistWhereInput = {
       studentId: targetStudentId,
     };
 
@@ -94,19 +98,45 @@ export async function GET(request: NextRequest) {
           orderBy: { sortOrder: "asc" },
         },
         creator: {
-          select: { name: true, role: true }
-        }
+          select: { name: true, role: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
     // Also fetch teacher curricula assigned to this student
-    let curricula: any[] = [];
+    type CurriculumWithRelations = Prisma.CurriculumGetPayload<{
+      include: {
+        sections: {
+          include: {
+            items: true;
+          };
+        };
+        teacher: {
+          select: {
+            userId: true;
+            user: {
+              select: {
+                name: true;
+                role: true;
+              };
+            };
+          };
+        };
+        studentProgress: {
+          include: {
+            itemProgress: true;
+          };
+        };
+      };
+    }>;
+
+    let curricula: CurriculumWithRelations[] = [];
     if (session.user.role === "TEACHER" || session.user.role === "ADMIN") {
       // Get the teacher ID for this student
       const studentProfile = await prisma.studentProfile.findUnique({
         where: { id: targetStudentId },
-        select: { teacherId: true }
+        select: { teacherId: true },
       });
 
       if (studentProfile?.teacherId) {
@@ -121,26 +151,26 @@ export async function GET(request: NextRequest) {
               include: {
                 items: {
                   orderBy: { sortOrder: "asc" },
-                }
+                },
               },
-              orderBy: { sortOrder: "asc" }
+              orderBy: { sortOrder: "asc" },
             },
             teacher: {
               select: {
                 userId: true,
                 user: {
-                  select: { name: true, role: true }
-                }
-              }
+                  select: { name: true, role: true },
+                },
+              },
             },
             studentProgress: {
               where: {
-                studentId: targetStudentId
+                studentId: targetStudentId,
               },
               include: {
-                itemProgress: true
-              }
-            }
+                itemProgress: true,
+              },
+            },
           },
           orderBy: { createdAt: "desc" },
         });
@@ -151,7 +181,7 @@ export async function GET(request: NextRequest) {
     const checklistsWithStats = checklists.map((checklist) => {
       const totalItems = checklist.items.length;
       const completedItems = checklist.items.filter(
-        (item) => item.isCompleted
+        (item) => item.isCompleted,
       ).length;
       const progressPercent =
         totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
@@ -172,10 +202,12 @@ export async function GET(request: NextRequest) {
       const studentProgress = curriculum.studentProgress?.[0]; // Should only be one progress record per student per curriculum
 
       // Flatten all items from all sections
-      const allItems = curriculum.sections.flatMap((section: any) =>
-        section.items.map((item: any) => {
+      const allItems = curriculum.sections.flatMap((section) =>
+        section.items.map((item) => {
           // Find the progress for this specific item
-          const itemProgress = studentProgress?.itemProgress?.find((progress: any) => progress.itemId === item.id);
+          const itemProgress = studentProgress?.itemProgress?.find(
+            (progress) => progress.itemId === item.id,
+          );
           const isCompleted = itemProgress?.status === "COMPLETED";
 
           return {
@@ -186,12 +218,13 @@ export async function GET(request: NextRequest) {
             completedAt: itemProgress?.completedAt || null,
             sortOrder: item.sortOrder,
           };
-        })
+        }),
       );
 
       const totalItems = allItems.length;
-      const completedItems = allItems.filter((item: any) => item.isCompleted).length;
-      const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+      const completedItems = allItems.filter((item) => item.isCompleted).length;
+      const progressPercent =
+        totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
       return {
         id: curriculum.id,
@@ -205,14 +238,14 @@ export async function GET(request: NextRequest) {
         createdByRole: "TEACHER",
         creator: {
           name: curriculum.teacher.user.name,
-          role: curriculum.teacher.user.role
+          role: curriculum.teacher.user.role,
         },
         items: allItems,
         stats: {
           totalItems,
           completedItems,
           progressPercent,
-        }
+        },
       };
     });
 
@@ -221,13 +254,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ checklists: allChecklists });
   } catch (error) {
-    apiLog.error('Error fetching student checklists:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+    apiLog.error("Error fetching student checklists:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
       { error: "Failed to fetch checklists" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -253,17 +286,17 @@ export async function POST(request: NextRequest) {
       if (!studentProfile) {
         return NextResponse.json(
           { error: "Student profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
-      
+
       targetStudentId = studentProfile.id;
     } else if (session.user.role === "TEACHER") {
       // Teachers need to specify which student the checklist is for
       if (!body.studentId) {
         return NextResponse.json(
           { error: "studentId is required for teachers" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -274,31 +307,28 @@ export async function POST(request: NextRequest) {
       if (!teacherProfile) {
         return NextResponse.json(
           { error: "Teacher profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
       // Verify the teacher has access to this student
       const studentProfile = await prisma.studentProfile.findFirst({
-        where: { 
+        where: {
           id: body.studentId,
-          teacherId: teacherProfile.id 
+          teacherId: teacherProfile.id,
         },
       });
 
       if (!studentProfile) {
         return NextResponse.json(
           { error: "Student not found or not assigned to you" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
       targetStudentId = studentProfile.id;
     } else {
-      return NextResponse.json(
-        { error: "Invalid user role" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Invalid user role" }, { status: 403 });
     }
 
     const checklist = await prisma.studentChecklist.create({
@@ -318,17 +348,17 @@ export async function POST(request: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    apiLog.error('Error creating checklist:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+    apiLog.error("Error creating checklist:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
       { error: "Failed to create checklist" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -211,7 +211,7 @@ export function ManageLessons({ lessons }: ManageLessonsProps) {
         window.location.reload();
       } else {
         const error = await response.json();
-        toast.error(error.message || "Failed to delete lesson");
+        toast.error(error instanceof Error ? error.message : "Failed to delete lesson");
       }
     } catch (error) {
       log.error("Error deleting lesson:", {
@@ -249,7 +249,7 @@ export function ManageLessons({ lessons }: ManageLessonsProps) {
         window.location.reload();
       } else {
         const error = await response.json();
-        toast.error(error.message || "Failed to delete lessons");
+        toast.error(error instanceof Error ? error.message : "Failed to delete lessons");
       }
     } catch (error) {
       log.error("Error deleting lessons:", {

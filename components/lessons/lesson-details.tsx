@@ -120,10 +120,10 @@ export function LessonDetails({
                     }
 
                     // Item not found in either location
-                    log.warn(`Checklist item not found: ${itemId}`);
+                    log.warn(`Progress item not found: ${itemId}`);
                     return null;
                   } catch (err) {
-                    log.error(`Error fetching checklist item ${itemId}:`, {
+                    log.error(`Error fetching progress item ${itemId}:`, {
                       error: err instanceof Error ? err.message : String(err),
                       stack: err instanceof Error ? err.stack : undefined,
                     });
@@ -221,13 +221,13 @@ export function LessonDetails({
         </Card>
       )}
 
-      {/* Checklist Items Completed */}
+      {/* Items Practiced & Completed */}
       {checklistItems.length > 0 && (
         <Card className="p-6">
           <div className="flex items-center space-x-2 mb-4">
             <CheckSquare className="h-5 w-5 text-turquoise-500" />
             <h3 className="text-lg font-semibold text-foreground">
-              Checklist Items Completed
+              Items Practiced & Completed
             </h3>
           </div>
           <div className="space-y-2">
@@ -253,7 +253,7 @@ export function LessonDetails({
           <div className="mt-4 p-3 bg-turquoise-50 border border-turquoise-200 rounded-lg">
             <p className="text-sm text-turquoise-700">
               <span className="font-semibold">{checklistItems.length}</span>{" "}
-              checklist item(s) were completed during this lesson.
+              item(s) were practiced and completed during this lesson.
             </p>
           </div>
         </Card>

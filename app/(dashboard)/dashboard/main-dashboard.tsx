@@ -235,7 +235,7 @@ export function MainDashboard({
         return [
           {
             title: "Create New Lesson",
-            description: "Add a new lesson to your curriculum",
+            description: "Record a completed lesson with your student",
             href: "/lessons/new",
             buttonText: "Create Lesson",
           },

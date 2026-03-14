@@ -4,8 +4,15 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, ChevronRight, Users, CheckCircle, Trophy, Star, Crown, Music, Music2, Volume2, Trash2, MoreVertical } from "lucide-react";
-import { log, emailLog } from '@/lib/logger';
+import {
+  Plus,
+  Users,
+  CheckCircle,
+  Star,
+  Music,
+  Trash2,
+} from "lucide-react";
+import { log} from "@/lib/logger";
 
 interface CurriculumSection {
   id: string;
@@ -57,10 +64,18 @@ interface CurriculumListProps {
   userRole: string;
 }
 
+/**
+ * Teacher Checklist List
+ *
+ * Note: Displays teacher-created checklists (stored as Curriculum models in database).
+ * User-facing language uses "Checklists" for clarity.
+ */
 export function CurriculumList({ userRole }: CurriculumListProps) {
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingCurriculum, setDeletingCurriculum] = useState<string | null>(null);
+  const [deletingCurriculum, setDeletingCurriculum] = useState<string | null>(
+    null,
+  );
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,17 +83,17 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
 
     // Refetch when tab becomes visible or window gains focus
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         fetchCurriculums();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', fetchCurriculums);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", fetchCurriculums);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', fetchCurriculums);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", fetchCurriculums);
     };
   }, []);
 
@@ -86,70 +101,80 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
     try {
       const timestamp = Date.now();
       const response = await fetch(`/api/curriculums?_t=${timestamp}`, {
-        cache: 'no-store',
+        cache: "no-store",
         headers: {
-          'Cache-Control': 'no-cache',
+          "Cache-Control": "no-cache",
         },
       });
       if (response.ok) {
         const data = await response.json();
-        log.info('Fetched curriculums from API', {
+        log.info("Fetched curriculums from API", {
           count: data.curriculums?.length || 0,
-          curriculums: data.curriculums?.map((c: any) => ({
+          curriculums: data.curriculums?.map((c: Curriculum) => ({
             id: c.id,
             title: c.title,
             sectionCount: c.sections?.length || 0,
-            itemCount: c.sections?.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0) || 0
-          }))
+            itemCount:
+              c.sections?.reduce(
+                (sum: number, s: CurriculumSection) =>
+                  sum + (s.items?.length || 0),
+                0,
+              ) || 0,
+          })),
         });
         // API returns { curriculums: [...] }, extract the array
         setCurriculums(data.curriculums || []);
       } else {
-        log.error('Failed to fetch curriculums', {
+        log.error("Failed to fetch curriculums", {
           status: response.status,
-          statusText: response.statusText
+          statusText: response.statusText,
         });
       }
     } catch (error) {
-      log.error('Error fetching curriculums:', {
+      log.error("Error fetching curriculums:", {
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteCurriculum = async (curriculumId: string, curriculumTitle: string) => {
+  const handleDeleteCurriculum = async (
+    curriculumId: string,
+    curriculumTitle: string,
+  ) => {
     setDeletingCurriculum(curriculumId);
     try {
       const response = await fetch(`/api/curriculums/${curriculumId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
-      
+
       if (response.ok) {
-        log.info('Curriculum deleted successfully', {
+        log.info("Curriculum deleted successfully", {
           curriculumId,
-          curriculumTitle
+          curriculumTitle,
         });
         // Remove the curriculum from the local state
-        setCurriculums(prev => prev.filter(c => c.id !== curriculumId));
+        setCurriculums((prev) => prev.filter((c) => c.id !== curriculumId));
       } else {
         const errorData = await response.json();
-        log.error('Failed to delete curriculum', {
+        log.error("Failed to delete curriculum", {
           status: response.status,
           error: errorData.error,
-          curriculumId
+          curriculumId,
         });
-        alert('Failed to delete curriculum. Please try again.');
+        alert("Failed to delete curriculum. Please try again.");
       }
     } catch (error) {
-      log.error('Error deleting curriculum:', {
+      log.error("Error deleting curriculum:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
-        curriculumId
+        curriculumId,
       });
-      alert('An error occurred while deleting the curriculum. Please try again.');
+      alert(
+        "An error occurred while deleting the curriculum. Please try again.",
+      );
     } finally {
       setDeletingCurriculum(null);
       setShowDeleteModal(null);
@@ -157,7 +182,8 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
   };
 
   const getProgressColor = (percent: number) => {
-    if (percent === 100) return "bg-gradient-to-r from-teal-400 via-cyan-400 to-slate-400 shadow-lg";
+    if (percent === 100)
+      return "bg-gradient-to-r from-teal-400 via-cyan-400 to-slate-400 shadow-lg";
     if (percent >= 75) return "bg-turquoise-500";
     if (percent >= 50) return "bg-blue-500";
     if (percent >= 25) return "bg-yellow-500";
@@ -215,10 +241,11 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
           const studentProgress =
             userRole === "STUDENT" ? curriculum.studentProgress?.[0] : null;
 
-          const totalItems = curriculum.sections?.reduce(
-            (sum, section) => sum + (section.items?.length || 0),
-            0
-          ) || 0;
+          const totalItems =
+            curriculum.sections?.reduce(
+              (sum, section) => sum + (section.items?.length || 0),
+              0,
+            ) || 0;
 
           return (
             <div key={curriculum.id} className="relative">
@@ -238,25 +265,29 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                   <Trash2 className="h-3 w-3" />
                 </Button>
               )}
-              
+
               <Link href={`/curriculums/${curriculum.id}`}>
                 <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="space-y-3">
                     {/* Header */}
                     <div className="flex items-start justify-between">
-                      <div className="flex-1 pr-8">  {/* Add right padding to avoid delete button overlap */}
+                      <div className="flex-1 pr-8">
+                        {" "}
+                        {/* Add right padding to avoid delete button overlap */}
                         <div className="flex items-center gap-2">
                           <h3 className="text-lg font-semibold text-foreground hover:text-primary">
                             {curriculum.title}
                           </h3>
-                          {userRole === "STUDENT" && studentProgress && studentProgress.progressPercent === 100 && (
-                            <span className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-teal-100 via-cyan-100 to-slate-100 text-teal-800 border border-teal-200 flex items-center gap-1 shadow-md">
-                              <Music className="h-3 w-3 text-teal-600" />
-                              <Star className="h-2 w-2 text-cyan-500" />
-                              Mastered!
-                              <Star className="h-2 w-2 text-slate-400" />
-                            </span>
-                          )}
+                          {userRole === "STUDENT" &&
+                            studentProgress &&
+                            studentProgress.progressPercent === 100 && (
+                              <span className="px-3 py-1 text-xs font-medium rounded-full bg-gradient-to-r from-teal-100 via-cyan-100 to-slate-100 text-teal-800 border border-teal-200 flex items-center gap-1 shadow-md">
+                                <Music className="h-3 w-3 text-teal-600" />
+                                <Star className="h-2 w-2 text-cyan-500" />
+                                Mastered!
+                                <Star className="h-2 w-2 text-slate-400" />
+                              </span>
+                            )}
                         </div>
                         {curriculum.description && (
                           <p className="text-sm text-muted-foreground mt-1">
@@ -287,13 +318,18 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                     {userRole === "STUDENT" && studentProgress && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Progress</span>
-                          <span className={`font-medium ${studentProgress.progressPercent === 100 ? 'text-teal-600' : ''}`}>
+                          <span className="text-muted-foreground">
+                            Progress
+                          </span>
+                          <span
+                            className={`font-medium ${studentProgress.progressPercent === 100 ? "text-teal-600" : ""}`}
+                          >
                             {studentProgress.progressPercent === 100 ? (
                               <span className="flex items-center gap-1">
                                 <Music className="h-4 w-4 text-teal-600" />
                                 <Star className="h-3 w-3 text-cyan-500" />
-                                {studentProgress.completedItems} / {studentProgress.totalItems} mastered!
+                                {studentProgress.completedItems} /{" "}
+                                {studentProgress.totalItems} mastered!
                               </span>
                             ) : (
                               `${studentProgress.completedItems} / ${studentProgress.totalItems} completed`
@@ -303,7 +339,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                         <div className="w-full bg-gray-200 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all ${getProgressColor(
-                              studentProgress.progressPercent
+                              studentProgress.progressPercent,
                             )}`}
                             style={{
                               width: `${studentProgress.progressPercent}%`,
@@ -357,19 +393,27 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
                 Delete Checklist
               </h3>
               <p className="text-gray-600">
-                Are you sure you want to delete &quot;{curriculums.find(c => c.id === showDeleteModal)?.title}&quot;? This action cannot be undone.
+                Are you sure you want to delete &quot;
+                {curriculums.find((c) => c.id === showDeleteModal)?.title}
+                &quot;? This action cannot be undone.
                 {(() => {
-                  const curriculum = curriculums.find(c => c.id === showDeleteModal);
-                  const hasProgress = (curriculum?.studentProgress?.length || 0) > 0;
-                  return hasProgress && (
-                    <span className="block mt-2 text-amber-600 font-medium">
-                      Warning: This checklist has student progress data that will be lost.
-                    </span>
+                  const curriculum = curriculums.find(
+                    (c) => c.id === showDeleteModal,
+                  );
+                  const hasProgress =
+                    (curriculum?.studentProgress?.length || 0) > 0;
+                  return (
+                    hasProgress && (
+                      <span className="block mt-2 text-amber-600 font-medium">
+                        Warning: This checklist has student progress data that
+                        will be lost.
+                      </span>
+                    )
                   );
                 })()}
               </p>
             </div>
-            
+
             <div className="flex gap-3 justify-end">
               <Button
                 variant="secondary"
@@ -381,15 +425,18 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
               <Button
                 variant="destructive"
                 onClick={() => {
-                  const curriculum = curriculums.find(c => c.id === showDeleteModal);
+                  const curriculum = curriculums.find(
+                    (c) => c.id === showDeleteModal,
+                  );
                   if (curriculum) {
                     handleDeleteCurriculum(curriculum.id, curriculum.title);
                   }
                 }}
                 disabled={deletingCurriculum === showDeleteModal}
-                
               >
-                {deletingCurriculum === showDeleteModal ? 'Deleting...' : 'Delete Checklist'}
+                {deletingCurriculum === showDeleteModal
+                  ? "Deleting..."
+                  : "Delete Checklist"}
               </Button>
             </div>
           </div>

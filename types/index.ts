@@ -149,6 +149,91 @@ export type InvoiceItem = PrismaInvoiceItem & {
   lesson?: Lesson;
 };
 
+export interface InvoiceCreateRequest {
+  month: string;
+  dueDate: Date;
+  items: {
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+    lessonDate?: Date;
+    lessonId?: string;
+  }[];
+  notes?: string;
+  studentId?: string;
+  customFullName?: string;
+  customEmail?: string;
+}
+
+export interface InvoiceUpdateRequest {
+  month: string;
+  dueDate: Date;
+  items: {
+    id?: string;
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+    lessonDate?: Date;
+    lessonId?: string;
+  }[];
+  studentId?: string | null;
+  customFullName?: string | null;
+  customEmail?: string | null;
+}
+
+// ========================================
+// Curriculum & Checklist Types
+// ========================================
+
+/**
+ * Represents items a student can practice during a lesson.
+ * Can be from either:
+ * - Teacher Curriculums (createdByRole === "TEACHER")
+ * - Student Checklists (createdByRole === "STUDENT" or undefined)
+ */
+export interface StudentProgressItem {
+  id: string;
+  title: string;
+  createdByRole?: string;
+  creatorName?: string;
+  sections: ProgressSection[];
+  studentProgress?: {
+    itemProgress: Array<{
+      itemId: string;
+      status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "NEEDS_REVIEW";
+    }>;
+  };
+}
+
+export interface ProgressSection {
+  id: string;
+  title: string;
+  category: string;
+  items: ProgressItemDetail[];
+}
+
+export interface ProgressItemDetail {
+  id: string;
+  title: string;
+  description?: string;
+  isCompleted?: boolean;
+  completedAt?: Date | null;
+}
+
+// API Response type for student checklists endpoint
+export interface ChecklistAPIResponse {
+  checklists: Array<
+    import("@prisma/client").StudentChecklist & {
+      items: import("@prisma/client").StudentChecklistItem[];
+      creator?: {
+        name: string;
+      };
+    }
+  >;
+}
+
 // ========================================
 // Library Types
 // ========================================

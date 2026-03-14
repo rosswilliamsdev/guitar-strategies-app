@@ -107,8 +107,8 @@ export function EmailTemplatesManager() {
 
       setSuccess('Template saved successfully!');
       await loadTemplates();
-    } catch (error: any) {
-      setError(error.message || 'Failed to save template');
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to save template');
     } finally {
       setIsLoading(false);
     }
@@ -142,8 +142,8 @@ export function EmailTemplatesManager() {
 
       setSuccess('Template created successfully!');
       await loadTemplates();
-    } catch (error: any) {
-      setError(error.message || 'Failed to create template');
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Failed to create template');
     } finally {
       setIsLoading(false);
     }

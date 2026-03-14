@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { apiLog } from '@/lib/logger';
+import { LessonLink } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -153,7 +154,7 @@ export async function PUT(request: NextRequest) {
     });
 
     // Create new links if any
-    let createdLinks: any[] = [];
+    let createdLinks: LessonLink[] = [];
     if (links && Array.isArray(links) && links.length > 0) {
       createdLinks = await Promise.all(
         links.map(async (link) => {

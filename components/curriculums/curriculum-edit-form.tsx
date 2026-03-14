@@ -35,6 +35,11 @@ interface CurriculumEditFormProps {
   curriculum: CurriculumData;
 }
 
+/**
+ * Teacher Checklist Edit Form
+ *
+ * Note: Edits teacher-created checklists (Curriculum model in database).
+ */
 export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

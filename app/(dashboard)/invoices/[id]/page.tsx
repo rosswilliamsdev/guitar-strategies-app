@@ -1,8 +1,9 @@
-import { notFound } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
-import { InvoiceTemplate } from '@/components/invoices/invoice-template';
+import { notFound } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { InvoiceTemplate } from "@/components/invoices/invoice-template";
+import { InvoiceItem } from "@/types";
 
 type InvoiceWithRelations = {
   id: string;
@@ -79,9 +80,14 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   }
 
   // Check authorization
-  const isTeacher = session.user.role === 'TEACHER' && invoice.teacherId === session.user.teacherProfile?.id;
-  const isStudent = session.user.role === 'STUDENT' && invoice.studentId && invoice.studentId === session.user.studentProfile?.id;
-  const isAdmin = session.user.role === 'ADMIN';
+  const isTeacher =
+    session.user.role === "TEACHER" &&
+    invoice.teacherId === session.user.teacherProfile?.id;
+  const isStudent =
+    session.user.role === "STUDENT" &&
+    invoice.studentId &&
+    invoice.studentId === session.user.studentProfile?.id;
+  const isAdmin = session.user.role === "ADMIN";
 
   if (!isTeacher && !isStudent && !isAdmin) {
     notFound();
@@ -95,7 +101,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
     paymentNotes: invoice.paymentNotes ?? undefined,
     customFullName: invoice.customFullName ?? undefined,
     customEmail: invoice.customEmail ?? undefined,
-    items: invoice.items.map((item: any) => ({
+    items: invoice.items.map((item: InvoiceItem) => ({
       id: item.id,
       description: item.description,
       lessonDate: item.lessonDate ?? undefined,
@@ -110,11 +116,13 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
       paypalEmail: invoice.teacher.paypalEmail ?? undefined,
       zelleEmail: invoice.teacher.zelleEmail ?? undefined,
     },
-    student: invoice.student ? {
-      ...invoice.student,
-      phoneNumber: invoice.student.phoneNumber ?? undefined,
-      parentEmail: invoice.student.parentEmail ?? undefined,
-    } : undefined,
+    student: invoice.student
+      ? {
+          ...invoice.student,
+          phoneNumber: invoice.student.phoneNumber ?? undefined,
+          parentEmail: invoice.student.parentEmail ?? undefined,
+        }
+      : undefined,
   };
 
   return (
@@ -145,12 +153,14 @@ export async function generateMetadata({ params }: InvoicePageProps) {
 
   if (!invoice) {
     return {
-      title: 'Invoice Not Found',
+      title: "Invoice Not Found",
     };
   }
 
-  const studentName = invoice.student ? invoice.student.user.name : invoice.customFullName;
-  
+  const studentName = invoice.student
+    ? invoice.student.user.name
+    : invoice.customFullName;
+
   return {
     title: `${invoice.invoiceNumber} - ${studentName} | Guitar Strategies`,
     description: `Invoice ${invoice.invoiceNumber} for ${studentName}`,

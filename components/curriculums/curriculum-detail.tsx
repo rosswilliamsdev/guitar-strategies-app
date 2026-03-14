@@ -103,22 +103,30 @@ export function CurriculumDetail({
   const fetchCurriculum = async () => {
     try {
       const timestamp = Date.now();
-      const response = await fetch(`/api/curriculums/${curriculumId}?_t=${timestamp}`, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
+      const response = await fetch(
+        `/api/curriculums/${curriculumId}?_t=${timestamp}`,
+        {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
         },
-      });
+      );
       if (response.ok) {
         const data = await response.json();
         // API returns { curriculum: {...} }, extract the curriculum object
         const curriculumData = data.curriculum || data;
 
-        log.info('Fetched curriculum detail', {
+        log.info("Fetched curriculum detail", {
           curriculumId,
           title: curriculumData.title,
           sectionCount: curriculumData.sections?.length || 0,
-          itemCount: curriculumData.sections?.reduce((sum: number, s: any) => sum + (s.items?.length || 0), 0) || 0,
+          itemCount:
+            curriculumData.sections?.reduce(
+              (sum: number, s: CurriculumSection) =>
+                sum + (s.items?.length || 0),
+              0,
+            ) || 0,
         });
 
         setCurriculum(curriculumData);
@@ -170,7 +178,7 @@ export function CurriculumDetail({
         curriculumId,
       });
       alert(
-        "An error occurred while deleting the curriculum. Please try again."
+        "An error occurred while deleting the curriculum. Please try again.",
       );
     } finally {
       setIsDeleting(false);
@@ -237,8 +245,15 @@ export function CurriculumDetail({
   }
 
   // Get all items from all sections in a flat list
-  const allItems = curriculum.sections?.flatMap((section) => section.items || []) || [];
+  const allItems =
+    curriculum.sections?.flatMap((section) => section.items || []) || [];
 
+  /**
+   * Teacher Checklist Detail View
+   *
+   * Note: Displays a teacher-created checklist (Curriculum model in database).
+   * Students use this to track their progress through teacher-assigned checklists.
+   */
   return (
     <Card className="p-6">
       {/* Header with title and edit button */}
@@ -343,7 +358,9 @@ export function CurriculumDetail({
                 >
                   {userRole === "STUDENT" ? (
                     <Checkbox
-                      ref={(el) => { checkboxRefs.current[item.id] = el; }}
+                      ref={(el) => {
+                        checkboxRefs.current[item.id] = el;
+                      }}
                       checked={isCompleted}
                       onCheckedChange={(checked) =>
                         handleToggleProgress(item.id, checked as boolean)
@@ -400,8 +417,8 @@ export function CurriculumDetail({
                 Delete Checklist
               </h3>
               <p className="text-gray-600">
-                Are you sure you want to delete "{curriculum?.title}"? This
-                action cannot be undone.
+                Are you sure you want to delete &quot;{curriculum?.title}&quot;?
+                This action cannot be undone.
                 {curriculum?.studentProgress &&
                   Array.isArray(curriculum.studentProgress) &&
                   curriculum.studentProgress.length > 0 && (

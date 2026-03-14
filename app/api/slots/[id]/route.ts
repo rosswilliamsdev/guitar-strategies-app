@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { updateSlotSchema, cancelSlotSchema } from "@/lib/validations";
 import { calculateRefundAmount } from "@/lib/slot-helpers";
 import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
@@ -139,9 +140,9 @@ export async function PUT(
       );
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.RecurringSlotUpdateInput = {};
     if (status !== undefined) updateData.status = status;
-    if (monthlyRate !== undefined) updateData.monthlyRate = monthlyRate;
+    if (monthlyRate !== undefined) updateData.perLessonPrice = monthlyRate;
 
     const updatedSlot = await prisma.recurringSlot.update({
       where: { id: slotId },

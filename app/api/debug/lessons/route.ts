@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { apiLog } from "@/lib/logger";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     });
 
     let profileId: string | undefined;
-    let whereClause: any = {};
+    const whereClause: Prisma.LessonWhereInput = {};
 
     if (session.user.role === "TEACHER") {
       const teacherProfile = await prisma.teacherProfile.findUnique({
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
       if (!teacherProfile) {
         return NextResponse.json(
           { error: "Teacher profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
       if (!studentProfile) {
         return NextResponse.json(
           { error: "Student profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
           "Cache-Control": "no-store, no-cache, must-revalidate",
           Pragma: "no-cache",
         },
-      }
+      },
     );
   } catch (error) {
     apiLog.error("Debug endpoint error:", {
@@ -129,7 +130,7 @@ export async function GET(request: NextRequest) {
         error: "Internal Server Error",
         details: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

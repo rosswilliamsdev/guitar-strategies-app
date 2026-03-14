@@ -90,12 +90,12 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
         router.push('/students');
         router.refresh();
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       log.error('Error inviting student', {
-        error: error.message,
-        stack: error.stack
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
       });
-      setError(error.message || "Failed to create student account");
+      setError(error instanceof Error ? error.message : "Failed to create student account");
     } finally {
       setIsLoading(false);
     }

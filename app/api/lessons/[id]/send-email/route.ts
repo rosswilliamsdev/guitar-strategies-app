@@ -13,6 +13,17 @@ import { apiLog, emailLog } from "@/lib/logger";
 import { sendEmail, checkEmailPreference } from "@/lib/email";
 import { renderEmailWithFallback } from "@/lib/email-templates";
 
+interface AttachmentMetadata {
+  fileName?: string;
+  originalName?: string;
+  fileUrl: string;
+}
+
+interface Link {
+  title?: string;
+  url: string;
+}
+
 /**
  * POST /api/lessons/[id]/send-email
  *
@@ -21,7 +32,7 @@ import { renderEmailWithFallback } from "@/lib/email-templates";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -59,14 +70,14 @@ export async function POST(
     if (!teacherProfile || lesson.teacherId !== teacherProfile.id) {
       return NextResponse.json(
         { error: "Not authorized to send email for this lesson" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Check if student has LESSON_COMPLETED email preference enabled
     const shouldSendEmail = await checkEmailPreference(
       lesson.student.userId,
-      "LESSON_COMPLETED"
+      "LESSON_COMPLETED",
     );
 
     if (!shouldSendEmail) {
@@ -76,7 +87,7 @@ export async function POST(
       });
       return NextResponse.json(
         { message: "Student has lesson completion emails disabled" },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -96,7 +107,7 @@ export async function POST(
           <div class="section-title">📎 Attachments (${lesson.attachments.length})</div>
           ${lesson.attachments
             .map(
-              (att: any) => `
+              (att: AttachmentMetadata) => `
           <div class="attachment-item">
             <table class="attachment-table">
               <tr>
@@ -107,7 +118,7 @@ export async function POST(
               </tr>
             </table>
           </div>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -122,11 +133,11 @@ export async function POST(
           <div class="section-title">🔗 Links (${lesson.links.length})</div>
           ${lesson.links
             .map(
-              (link: any) => `
+              (link: Link) => `
           <div class="link-item">
             <a href="${link.url}" target="_blank">${link.title || link.url}</a>
           </div>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -162,7 +173,7 @@ export async function POST(
 
       return NextResponse.json(
         { message: "Email sent successfully" },
-        { status: 200 }
+        { status: 200 },
       );
     } else {
       emailLog.error("Failed to send lesson completion email", {
@@ -173,7 +184,7 @@ export async function POST(
 
       return NextResponse.json(
         { error: "Failed to send email" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
@@ -184,7 +195,7 @@ export async function POST(
 
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

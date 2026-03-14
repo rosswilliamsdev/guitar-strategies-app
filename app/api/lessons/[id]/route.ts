@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { sanitizeRichText, sanitizePlainText } from "@/lib/sanitize";
 import {
   updateLessonOptimistic,
@@ -132,7 +133,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     const body = await request.json();
 
     // Prepare update data - only include fields that are provided
-    const updateData: any = {};
+    const updateData: Prisma.LessonUncheckedUpdateInput = {};
 
     if (body.studentId !== undefined) updateData.studentId = body.studentId;
     if (body.duration !== undefined) updateData.duration = body.duration || 30;

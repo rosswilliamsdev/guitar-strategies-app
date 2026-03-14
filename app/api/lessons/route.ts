@@ -38,6 +38,7 @@ import {
   createPaginatedResponse,
   addPaginationHeaders,
 } from "@/lib/pagination";
+import { Prisma, LessonStatus } from "@prisma/client";
 
 /**
  * GET /api/lessons
@@ -80,11 +81,11 @@ async function handleGET(request: NextRequest) {
     const paginationParams = getPaginationParams(request);
     const { skip, take } = getPrismaOffsetPagination(paginationParams);
 
-    const whereClause: any = {};
+    const whereClause: Prisma.LessonWhereInput = {};
 
-    // Add status filter if provided
-    if (status) {
-      whereClause.status = status;
+    // Add status filter if provided (validate against LessonStatus enum)
+    if (status && Object.values(LessonStatus).includes(status as LessonStatus)) {
+      whereClause.status = status as LessonStatus;
     }
 
     // Add future filter - only lessons after current date
@@ -94,8 +95,9 @@ async function handleGET(request: NextRequest) {
 
     // Add date range filter if provided
     if (dateFrom || dateTo) {
+      const existingDateFilter = whereClause.date as Prisma.DateTimeFilter | undefined;
       whereClause.date = {
-        ...(whereClause.date || {}),
+        ...(existingDateFilter || {}),
         ...(dateFrom && { gte: new Date(dateFrom) }),
         ...(dateTo && { lte: new Date(dateTo) }),
       };
@@ -110,7 +112,7 @@ async function handleGET(request: NextRequest) {
       if (!teacherProfile) {
         return NextResponse.json(
           { error: "Teacher profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -129,7 +131,7 @@ async function handleGET(request: NextRequest) {
       if (!studentProfile) {
         return NextResponse.json(
           { error: "Student profile not found" },
-          { status: 404 }
+          { status: 404 },
         );
       }
 
@@ -189,7 +191,7 @@ async function handleGET(request: NextRequest) {
 
         return { lessons, total };
       },
-      CACHE_DURATIONS.DYNAMIC_SHORT // Cache for 1 minute since lessons change frequently
+      CACHE_DURATIONS.DYNAMIC_SHORT, // Cache for 1 minute since lessons change frequently
     );
 
     const { lessons, total } = cachedData;
@@ -201,9 +203,9 @@ async function handleGET(request: NextRequest) {
         ? new Date(
             Math.max(
               ...lessons.map((l) =>
-                new Date(l.updatedAt || l.createdAt).getTime()
-              )
-            )
+                new Date(l.updatedAt || l.createdAt).getTime(),
+              ),
+            ),
           )
         : new Date();
 
@@ -220,7 +222,7 @@ async function handleGET(request: NextRequest) {
       lessons,
       paginationParams.page || 1,
       paginationParams.limit || 20,
-      total
+      total,
     );
 
     // Create response with cache headers
@@ -240,7 +242,7 @@ async function handleGET(request: NextRequest) {
     });
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -296,7 +298,7 @@ async function handlePOST(request: NextRequest) {
     if (!teacherProfile) {
       return NextResponse.json(
         { error: "Teacher profile not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -311,7 +313,7 @@ async function handlePOST(request: NextRequest) {
     if (!studentProfile) {
       return NextResponse.json(
         { error: "Student not found or not assigned to you" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -331,10 +333,10 @@ async function handlePOST(request: NextRequest) {
 
     // Sanitize plain text fields
     const sanitizedFocusAreas = validatedData.focusAreas?.map((area) =>
-      sanitizePlainText(area)
+      sanitizePlainText(area),
     );
     const sanitizedSongsPracticed = validatedData.songsPracticed?.map((song) =>
-      sanitizePlainText(song)
+      sanitizePlainText(song),
     );
 
     // Create lesson with sanitized data
@@ -369,7 +371,7 @@ async function handlePOST(request: NextRequest) {
     await invalidateLessonCache(
       lesson.id,
       teacherProfile.id,
-      validatedData.studentId
+      validatedData.studentId,
     );
 
     // Note: Email is sent separately after attachments/links are uploaded
@@ -389,7 +391,7 @@ async function handlePOST(request: NextRequest) {
 
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

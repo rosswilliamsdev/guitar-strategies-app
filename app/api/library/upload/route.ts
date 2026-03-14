@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { uploadFileToBlob, buildLibraryPath } from '@/lib/blob-storage';
 import { apiLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
+import { Instrument, LibraryCategory } from '@prisma/client';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -60,8 +61,8 @@ async function handlePOST(request: NextRequest) {
         fileSize: file.size,
         fileUrl: blob.url,
         teacherId: teacherProfile.id,
-        instrument: instrument as any,
-        category: category ? (category as any) : null,
+        instrument: instrument as Instrument,
+        category: category ? (category as LibraryCategory) : null,
         isPublic,
       }
     });

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ProfileValidationAlert } from "@/components/teacher/profile-validation-alert";
 import { SkeletonDashboardCard, Skeleton } from "@/components/ui/skeleton";
 
-interface TeacherDashboardProps {
+export interface TeacherDashboardProps {
   teacherId: string;
   hideTitle?: boolean;
   stats: {

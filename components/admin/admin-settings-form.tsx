@@ -7,15 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Save, 
-  RefreshCw, 
-  Mail, 
-  DollarSign, 
+import {
+  Save,
+  RefreshCw,
+  Mail,
+  DollarSign,
   Calendar,
   Settings,
   CheckCircle,
-  XCircle
+  XCircle,
 } from "lucide-react";
 
 interface SystemSettings {
@@ -23,7 +23,7 @@ interface SystemSettings {
   defaultInvoiceDueDays: number;
   latePaymentReminderDays: number;
   invoiceNumberFormat: string;
-  
+
   // Email System Settings
   emailSenderName: string;
   emailSenderAddress: string;
@@ -31,7 +31,7 @@ interface SystemSettings {
   enableInvoiceNotifications: boolean;
   enableReminderEmails: boolean;
   emailFooterText: string;
-  
+
   // Lesson Defaults
   defaultLessonDuration30: boolean;
   defaultLessonDuration60: boolean;
@@ -50,14 +50,14 @@ export function AdminSettingsForm() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch("/api/admin/settings");
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || "Failed to fetch settings");
       }
-      
+
       setSettings(result.settings);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -73,7 +73,7 @@ export function AdminSettingsForm() {
       setSaving(true);
       setError(null);
       setSuccess(null);
-      
+
       const response = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: {
@@ -81,16 +81,16 @@ export function AdminSettingsForm() {
         },
         body: JSON.stringify(settings),
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || "Failed to save settings");
       }
-      
+
       setSettings(result.settings);
       setSuccess("Settings saved successfully!");
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
@@ -100,9 +100,12 @@ export function AdminSettingsForm() {
     }
   };
 
-  const updateSetting = (key: keyof SystemSettings, value: any) => {
+  const updateSetting = (
+    key: keyof SystemSettings,
+    value: string | boolean | number,
+  ) => {
     if (!settings) return;
-    
+
     setSettings({
       ...settings,
       [key]: value,
@@ -151,7 +154,7 @@ export function AdminSettingsForm() {
           <span>{success}</span>
         </div>
       )}
-      
+
       {error && (
         <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
           <XCircle className="h-5 w-5" />
@@ -173,45 +176,62 @@ export function AdminSettingsForm() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="defaultInvoiceDueDays">Default Due Date (days after generation)</Label>
+              <Label htmlFor="defaultInvoiceDueDays">
+                Default Due Date (days after generation)
+              </Label>
               <Input
                 id="defaultInvoiceDueDays"
                 type="number"
                 min="1"
                 max="90"
                 value={settings.defaultInvoiceDueDays}
-                onChange={(e) => updateSetting('defaultInvoiceDueDays', parseInt(e.target.value) || 14)}
+                onChange={(e) =>
+                  updateSetting(
+                    "defaultInvoiceDueDays",
+                    parseInt(e.target.value) || 14,
+                  )
+                }
               />
               <p className="text-xs text-muted-foreground mt-1">
                 How many days after invoice generation is payment due
               </p>
             </div>
-            
+
             <div>
-              <Label htmlFor="latePaymentReminderDays">Late Payment Reminder (days after due)</Label>
+              <Label htmlFor="latePaymentReminderDays">
+                Late Payment Reminder (days after due)
+              </Label>
               <Input
                 id="latePaymentReminderDays"
                 type="number"
                 min="1"
                 max="30"
                 value={settings.latePaymentReminderDays}
-                onChange={(e) => updateSetting('latePaymentReminderDays', parseInt(e.target.value) || 7)}
+                onChange={(e) =>
+                  updateSetting(
+                    "latePaymentReminderDays",
+                    parseInt(e.target.value) || 7,
+                  )
+                }
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Days after due date to send overdue reminder
               </p>
             </div>
           </div>
-          
+
           <div>
             <Label htmlFor="invoiceNumberFormat">Invoice Number Format</Label>
             <Input
               id="invoiceNumberFormat"
               value={settings.invoiceNumberFormat}
-              onChange={(e) => updateSetting('invoiceNumberFormat', e.target.value)}
+              onChange={(e) =>
+                updateSetting("invoiceNumberFormat", e.target.value)
+              }
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Use {"{YEAR}"} and {"{NUMBER}"} placeholders. Example: INV-{"{YEAR}"}-{"{NUMBER}"}
+              Use {"{YEAR}"} and {"{NUMBER}"} placeholders. Example: INV-
+              {"{YEAR}"}-{"{NUMBER}"}
             </p>
           </div>
         </CardContent>
@@ -235,61 +255,77 @@ export function AdminSettingsForm() {
               <Input
                 id="emailSenderName"
                 value={settings.emailSenderName}
-                onChange={(e) => updateSetting('emailSenderName', e.target.value)}
+                onChange={(e) =>
+                  updateSetting("emailSenderName", e.target.value)
+                }
               />
             </div>
-            
+
             <div>
               <Label htmlFor="emailSenderAddress">Sender Email Address</Label>
               <Input
                 id="emailSenderAddress"
                 type="email"
                 value={settings.emailSenderAddress}
-                onChange={(e) => updateSetting('emailSenderAddress', e.target.value)}
+                onChange={(e) =>
+                  updateSetting("emailSenderAddress", e.target.value)
+                }
               />
             </div>
           </div>
-          
+
           <div>
             <Label htmlFor="emailFooterText">Email Footer Text</Label>
             <Textarea
               id="emailFooterText"
               value={settings.emailFooterText}
-              onChange={(e) => updateSetting('emailFooterText', e.target.value)}
+              onChange={(e) => updateSetting("emailFooterText", e.target.value)}
               rows={2}
             />
           </div>
-          
+
           <div className="space-y-3">
             <Label className="text-sm font-medium">Email Notifications</Label>
-            
+
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="enableBookingConfirmations"
                 checked={settings.enableBookingConfirmations}
-                onCheckedChange={(checked) => updateSetting('enableBookingConfirmations', checked)}
+                onCheckedChange={(checked) =>
+                  updateSetting("enableBookingConfirmations", checked)
+                }
               />
-              <Label htmlFor="enableBookingConfirmations" className="font-normal">
+              <Label
+                htmlFor="enableBookingConfirmations"
+                className="font-normal"
+              >
                 Send booking confirmation emails
               </Label>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="enableInvoiceNotifications"
                 checked={settings.enableInvoiceNotifications}
-                onCheckedChange={(checked) => updateSetting('enableInvoiceNotifications', checked)}
+                onCheckedChange={(checked) =>
+                  updateSetting("enableInvoiceNotifications", checked)
+                }
               />
-              <Label htmlFor="enableInvoiceNotifications" className="font-normal">
+              <Label
+                htmlFor="enableInvoiceNotifications"
+                className="font-normal"
+              >
                 Send invoice notification emails
               </Label>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="enableReminderEmails"
                 checked={settings.enableReminderEmails}
-                onCheckedChange={(checked) => updateSetting('enableReminderEmails', checked)}
+                onCheckedChange={(checked) =>
+                  updateSetting("enableReminderEmails", checked)
+                }
               />
               <Label htmlFor="enableReminderEmails" className="font-normal">
                 Send reminder and overdue emails
@@ -312,26 +348,38 @@ export function AdminSettingsForm() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label className="text-sm font-medium">Available Lesson Durations</Label>
+            <Label className="text-sm font-medium">
+              Available Lesson Durations
+            </Label>
             <div className="flex items-center space-x-6 mt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="defaultLessonDuration30"
                   checked={settings.defaultLessonDuration30}
-                  onCheckedChange={(checked) => updateSetting('defaultLessonDuration30', checked)}
+                  onCheckedChange={(checked) =>
+                    updateSetting("defaultLessonDuration30", checked)
+                  }
                 />
-                <Label htmlFor="defaultLessonDuration30" className="font-normal">
+                <Label
+                  htmlFor="defaultLessonDuration30"
+                  className="font-normal"
+                >
                   30-minute lessons
                 </Label>
               </div>
-              
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="defaultLessonDuration60"
                   checked={settings.defaultLessonDuration60}
-                  onCheckedChange={(checked) => updateSetting('defaultLessonDuration60', checked)}
+                  onCheckedChange={(checked) =>
+                    updateSetting("defaultLessonDuration60", checked)
+                  }
                 />
-                <Label htmlFor="defaultLessonDuration60" className="font-normal">
+                <Label
+                  htmlFor="defaultLessonDuration60"
+                  className="font-normal"
+                >
                   60-minute lessons
                 </Label>
               </div>
@@ -340,32 +388,44 @@ export function AdminSettingsForm() {
               At least one duration must be enabled
             </p>
           </div>
-          
+
           <div>
-            <Label htmlFor="defaultAdvanceBookingDays">Default Advance Booking Window (days)</Label>
+            <Label htmlFor="defaultAdvanceBookingDays">
+              Default Advance Booking Window (days)
+            </Label>
             <Input
               id="defaultAdvanceBookingDays"
               type="number"
               min="1"
               max="90"
               value={settings.defaultAdvanceBookingDays}
-              onChange={(e) => updateSetting('defaultAdvanceBookingDays', parseInt(e.target.value) || 14)}
+              onChange={(e) =>
+                updateSetting(
+                  "defaultAdvanceBookingDays",
+                  parseInt(e.target.value) || 14,
+                )
+              }
             />
             <p className="text-xs text-muted-foreground mt-1">
               How far in advance students can book lessons by default
             </p>
           </div>
-          
+
           <div>
-            <Label htmlFor="cancellationPolicyText">Cancellation Policy Text</Label>
+            <Label htmlFor="cancellationPolicyText">
+              Cancellation Policy Text
+            </Label>
             <Textarea
               id="cancellationPolicyText"
               value={settings.cancellationPolicyText}
-              onChange={(e) => updateSetting('cancellationPolicyText', e.target.value)}
+              onChange={(e) =>
+                updateSetting("cancellationPolicyText", e.target.value)
+              }
               rows={3}
             />
             <p className="text-xs text-muted-foreground mt-1">
-              This text will be displayed to users when booking or canceling lessons
+              This text will be displayed to users when booking or canceling
+              lessons
             </p>
           </div>
         </CardContent>
@@ -381,8 +441,12 @@ export function AdminSettingsForm() {
           )}
           Reset
         </Button>
-        
-        <Button onClick={saveSettings} disabled={saving} className="bg-primary hover:bg-primary/90">
+
+        <Button
+          onClick={saveSettings}
+          disabled={saving}
+          className="bg-primary hover:bg-primary/90"
+        >
           {saving ? (
             <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
           ) : (

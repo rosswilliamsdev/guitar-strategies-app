@@ -86,14 +86,15 @@ export async function GET(request: NextRequest) {
         });
     }
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     apiLog.error('Test endpoint error:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
-    return NextResponse.json({ 
-      error: error.message || 'Test failed',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    return NextResponse.json({
+      error: errorMessage || 'Test failed',
+      stack: process.env.NODE_ENV === 'development' && error instanceof Error ? error.stack : undefined
     }, { status: 500 });
   }
 }
@@ -222,13 +223,14 @@ export async function POST(request: NextRequest) {
         : 'Email failed after all retry attempts'
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     apiLog.error('Email test error:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
     return NextResponse.json({ 
-      error: error.message || 'Email test failed'
+      error: errorMessage || 'Email test failed'
     }, { status: 500 });
   }
 }

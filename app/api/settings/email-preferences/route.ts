@@ -20,7 +20,7 @@ const emailPreferencesSchema = z.object({
         "SYSTEM_UPDATES",
       ]),
       enabled: z.boolean(),
-    })
+    }),
   ),
 });
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       { error: "Failed to fetch email preferences" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -80,7 +80,7 @@ export async function PUT(request: NextRequest) {
         where: {
           userId_type: {
             userId: session.user.id,
-            type: pref.type as any,
+            type: pref.type,
           },
         },
         update: {
@@ -88,7 +88,7 @@ export async function PUT(request: NextRequest) {
         },
         create: {
           userId: session.user.id,
-          type: pref.type as any,
+          type: pref.type,
           enabled: pref.enabled,
         },
       });
@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest) {
       });
       return NextResponse.json(
         { error: "Invalid data provided", details: error.issues },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -133,7 +133,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(
       { error: "Failed to update email preferences" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

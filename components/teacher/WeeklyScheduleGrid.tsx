@@ -85,11 +85,14 @@ export function WeeklyScheduleGrid({
       const newErrors = { ...errors };
       delete newErrors[errorKey];
       setErrors(newErrors);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorKey = `${index}-${field}`;
+      const errorMessage = error instanceof Error && 'errors' in error
+        ? (error as { errors: Array<{ message: string }> }).errors[0]?.message || "Invalid input"
+        : "Invalid input";
       setErrors({
         ...errors,
-        [errorKey]: error.errors?.[0]?.message || "Invalid input",
+        [errorKey]: errorMessage,
       });
     }
 
@@ -156,8 +159,8 @@ export function WeeklyScheduleGrid({
         setSuccess("");
         successTimeoutRef.current = null;
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || "Failed to save availability");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to save availability");
 
       // Auto-clear error after 5 seconds
       setTimeout(() => {

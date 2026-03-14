@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { updateBillingSchema } from "@/lib/validations";
 import { apiLog, dbLog } from '@/lib/logger';
 
@@ -80,7 +81,7 @@ export async function PUT(
       );
     }
 
-    const updateData: any = {};
+    const updateData: Prisma.MonthlyBillingUpdateInput = {};
     if (actualLessons !== undefined) updateData.actualLessons = actualLessons;
     if (status !== undefined) updateData.status = status;
     if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod;

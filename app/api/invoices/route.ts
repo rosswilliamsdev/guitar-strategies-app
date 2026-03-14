@@ -1,35 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
-import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
-import { createInvoiceSchema } from '@/lib/validations';
-import { apiLog, dbLog, invoiceLog } from '@/lib/logger';
-import { withRateLimit } from '@/lib/rate-limit';
-import { getPaginationParams, getPrismaOffsetPagination, createPaginatedResponse } from '@/lib/pagination';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
+import { dbQuery, criticalDbQuery } from "@/lib/db-with-retry";
+import { apiLog } from "@/lib/logger";
+import {
+  getPaginationParams,
+  getPrismaOffsetPagination,
+  createPaginatedResponse,
+} from "@/lib/pagination";
+import { Prisma, InvoiceStatus } from "@prisma/client";
 
 async function handleGET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== 'TEACHER') {
-      return NextResponse.json({ error: 'Access denied. Teachers only.' }, { status: 403 });
+    if (session.user.role !== "TEACHER") {
+      return NextResponse.json(
+        { error: "Access denied. Teachers only." },
+        { status: 403 },
+      );
     }
 
     const url = new URL(request.url);
-    const studentId = url.searchParams.get('studentId');
-    const month = url.searchParams.get('month');
-    const status = url.searchParams.get('status');
+    const studentId = url.searchParams.get("studentId");
+    const month = url.searchParams.get("month");
+    const status = url.searchParams.get("status");
 
     // Get pagination parameters
     const paginationParams = getPaginationParams(request);
     const { skip, take } = getPrismaOffsetPagination(paginationParams);
 
-    const where: any = {
+    const where: Prisma.InvoiceWhereInput = {
       teacherId: session.user.teacherProfile?.id,
     };
 
@@ -42,12 +48,12 @@ async function handleGET(request: NextRequest) {
     }
 
     if (status) {
-      where.status = status;
+      where.status = status as InvoiceStatus;
     }
 
     // Use retry logic for database queries
     const [invoices, total] = await Promise.all([
-      dbQuery(() => 
+      dbQuery(() =>
         prisma.invoice.findMany({
           where,
           include: {
@@ -64,11 +70,11 @@ async function handleGET(request: NextRequest) {
             items: true,
           },
           orderBy: {
-            createdAt: 'desc',
+            createdAt: "desc",
           },
           skip,
           take,
-        })
+        }),
       ),
       dbQuery(() => prisma.invoice.count({ where })),
     ]);
@@ -77,16 +83,19 @@ async function handleGET(request: NextRequest) {
       invoices,
       paginationParams.page || 1,
       paginationParams.limit || 20,
-      total
+      total,
     );
 
     return NextResponse.json(paginatedResponse);
   } catch (error) {
-    apiLog.error('Error fetching invoices:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    apiLog.error("Error fetching invoices:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -95,60 +104,75 @@ async function handlePOST(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role !== 'TEACHER') {
-      return NextResponse.json({ error: 'Access denied. Teachers only.' }, { status: 403 });
+    if (session.user.role !== "TEACHER") {
+      return NextResponse.json(
+        { error: "Access denied. Teachers only." },
+        { status: 403 },
+      );
     }
 
     if (!session.user.teacherProfile?.id) {
-      return NextResponse.json({ error: 'Teacher profile not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: "Teacher profile not found" },
+        { status: 404 },
+      );
     }
 
     const body = await request.json();
-    
+
     // Check if this is a custom invoice or regular invoice
     let studentId: string | null = null;
     let customFullName: string | null = null;
     let customEmail: string | null = null;
-    
+
     if (body.studentId) {
       // Regular invoice - validate that the student exists and belongs to this teacher
-      const student = await dbQuery(() => 
+      const student = await dbQuery(() =>
         prisma.studentProfile.findUnique({
-          where: { 
+          where: {
             id: body.studentId,
           },
           include: {
             user: true,
           },
-        })
+        }),
       );
 
       if (!student) {
-        return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+        return NextResponse.json(
+          { error: "Student not found" },
+          { status: 404 },
+        );
       }
 
       if (student.teacherId !== session.user.teacherProfile.id) {
-        return NextResponse.json({ error: 'Student does not belong to this teacher' }, { status: 403 });
+        return NextResponse.json(
+          { error: "Student does not belong to this teacher" },
+          { status: 403 },
+        );
       }
-      
+
       studentId = body.studentId;
     } else if (body.customFullName && body.customEmail) {
       // Custom invoice for non-system student
       customFullName = body.customFullName;
       customEmail = body.customEmail;
     } else {
-      return NextResponse.json({ 
-        error: 'Either studentId or customFullName/customEmail must be provided' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            "Either studentId or customFullName/customEmail must be provided",
+        },
+        { status: 400 },
+      );
     }
 
-    
     // Generate invoice number
     const year = new Date().getFullYear();
-    const lastInvoice = await dbQuery(() => 
+    const lastInvoice = await dbQuery(() =>
       prisma.invoice.findFirst({
         where: {
           teacherId: session.user.teacherProfile!.id,
@@ -157,21 +181,24 @@ async function handlePOST(request: NextRequest) {
           },
         },
         orderBy: {
-          invoiceNumber: 'desc',
+          invoiceNumber: "desc",
         },
-      })
+      }),
     );
 
     let nextNumber = 1;
     if (lastInvoice) {
-      const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[2]);
+      const lastNumber = parseInt(lastInvoice.invoiceNumber.split("-")[2]);
       nextNumber = lastNumber + 1;
     }
 
-    const invoiceNumber = `INV-${year}-${nextNumber.toString().padStart(3, '0')}`;
+    const invoiceNumber = `INV-${year}-${nextNumber.toString().padStart(3, "0")}`;
 
     // Calculate totals from items
-    const subtotal = body.items.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0);
+    const subtotal = body.items.reduce(
+      (sum: number, item: { amount: number }) => sum + item.amount,
+      0,
+    );
     const total = subtotal; // No taxes/fees for now
 
     // Parse dueDate - it comes as ISO string from client, interpret as local date
@@ -179,7 +206,11 @@ async function handlePOST(request: NextRequest) {
 
     // Set createdAt to current date at midnight local time to avoid timezone display issues
     const now = new Date();
-    const createdAtLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const createdAtLocal = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     // Use critical retry for invoice creation (financial operation)
     const invoice = await criticalDbQuery(() =>
@@ -196,21 +227,23 @@ async function handlePOST(request: NextRequest) {
           subtotal,
           total,
           items: {
-            create: body.items.map((item: {
-              description: string;
-              quantity: number;
-              rate: number;
-              amount: number;
-              lessonDate?: string;
-              lessonId?: string;
-            }) => ({
-              description: item.description,
-              quantity: item.quantity,
-              rate: item.rate,
-              amount: item.amount,
-              lessonDate: item.lessonDate ? new Date(item.lessonDate) : null,
-              lessonId: item.lessonId || null,
-            })),
+            create: body.items.map(
+              (item: {
+                description: string;
+                quantity: number;
+                rate: number;
+                amount: number;
+                lessonDate?: string;
+                lessonId?: string;
+              }) => ({
+                description: item.description,
+                quantity: item.quantity,
+                rate: item.rate,
+                amount: item.amount,
+                lessonDate: item.lessonDate ? new Date(item.lessonDate) : null,
+                lessonId: item.lessonId || null,
+              }),
+            ),
           },
         },
         include: {
@@ -226,21 +259,24 @@ async function handlePOST(request: NextRequest) {
           },
           items: true,
         },
-      })
+      }),
     );
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (error) {
-    apiLog.error('Error creating invoice:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    
+    apiLog.error("Error creating invoice:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
-    
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 

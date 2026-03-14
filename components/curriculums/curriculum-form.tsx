@@ -22,6 +22,13 @@ interface ChecklistFormProps {
   };
 }
 
+/**
+ * Teacher Checklist Form
+ *
+ * Note: Despite the "Curriculum" naming in the codebase, this component creates
+ * teacher-authored checklists (stored as Curriculum in the database).
+ * See CLAUDE.md "Progress Tracking: Curriculums vs Checklists" for details.
+ */
 export function CurriculumForm({ checklist }: ChecklistFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

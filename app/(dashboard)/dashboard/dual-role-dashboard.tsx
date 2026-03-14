@@ -1,7 +1,7 @@
 "use client";
 
 import { User } from "next-auth";
-import { TeacherDashboard } from "@/components/dashboard/teacher-dashboard";
+import { TeacherDashboard, TeacherDashboardProps } from "@/components/dashboard/teacher-dashboard";
 import { AdminStats, formatRelativeTime } from "@/lib/dashboard-stats";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
 
 interface DualRoleDashboardProps {
   user: User;
-  teacherData: any; // TeacherData type from the dashboard
+  teacherData: Omit<TeacherDashboardProps, "hideTitle">;
   adminStats: AdminStats;
 }
 

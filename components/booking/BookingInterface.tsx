@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { AvailabilityCalendar } from "@/components/scheduling/AvailabilityCalendar";
 import { BookingSuccessModal } from "@/components/booking/BookingSuccessModal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { Lesson, RecurringSlot } from "@/types";
 
 interface TimeSlot {
   start: Date;
@@ -16,13 +16,26 @@ interface TimeSlot {
   available: boolean;
 }
 
+type BookingResult =
+  | {
+      type: "single";
+      lesson: Lesson;
+      teacherName: string;
+    }
+  | {
+      type: "recurring";
+      recurringSlot: RecurringSlot;
+      lessons: Lesson[];
+      teacherName: string;
+    };
+
 interface BookingInterfaceProps {
   teacherId: string;
   teacherName: string;
   timezone?: string;
   onSelectionChange?: (
     hasSelection: boolean,
-    selectedSlots: any[],
+    selectedSlots: TimeSlot[],
     bookingMode: "single" | "recurring",
   ) => void;
 }
@@ -38,8 +51,9 @@ export function BookingInterface({
   const [success, setSuccess] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [bookingResult, setBookingResult] = useState<any>(null);
-  const router = useRouter();
+  const [bookingResult, setBookingResult] = useState<BookingResult | null>(
+    null,
+  );
 
   const handleBookSlot = async (slots: TimeSlot[], duration: 30 | 60) => {
     setLoading(true);
@@ -75,9 +89,13 @@ export function BookingInterface({
       });
       setShowSuccessModal(true);
       setSuccess(data.message || "Lesson booked successfully!");
-    } catch (error: any) {
-      setError(error.message || "Failed to book lesson");
-      toast.error(error.message || "Failed to book lesson");
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : "Failed to book lesson",
+      );
+      toast.error(
+        error instanceof Error ? error.message : "Failed to book lesson",
+      );
     } finally {
       setLoading(false);
     }
@@ -120,9 +138,17 @@ export function BookingInterface({
       setSuccess(
         data.message || "Successfully booked your weekly lesson time!",
       );
-    } catch (error: any) {
-      setError(error.message || "Failed to book weekly lesson time");
-      toast.error(error.message || "Failed to book weekly lesson time");
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to book weekly lesson time",
+      );
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to book weekly lesson time",
+      );
     } finally {
       setLoading(false);
     }
@@ -168,9 +194,19 @@ export function BookingInterface({
           }}
           bookingType={bookingResult.type}
           teacherName={bookingResult.teacherName}
-          lesson={bookingResult.lesson}
-          recurringSlot={bookingResult.recurringSlot}
-          lessons={bookingResult.lessons}
+          lesson={
+            bookingResult.type === "single" ? bookingResult.lesson : undefined
+          }
+          recurringSlot={
+            bookingResult.type === "recurring"
+              ? bookingResult.recurringSlot
+              : undefined
+          }
+          lessons={
+            bookingResult.type === "recurring"
+              ? bookingResult.lessons
+              : undefined
+          }
         />
       )}
     </div>
