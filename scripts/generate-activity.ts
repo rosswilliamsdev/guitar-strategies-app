@@ -117,7 +117,7 @@ async function generateRecentActivity() {
       }
     });
 
-    log.info('Successfully generated recent activity:', activities);
+    log.info('Successfully generated recent activity:', { activities });
     log.info('\nRefresh your admin dashboard to see the new activity!');
 
   } catch (error) {

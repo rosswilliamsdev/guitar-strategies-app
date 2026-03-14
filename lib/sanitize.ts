@@ -9,9 +9,14 @@
  * Client-side uses DOMPurify with native browser DOM.
  */
 
+// Type for DOMPurify sanitize method
+interface DOMPurifyInstance {
+  sanitize(dirty: string, config?: Record<string, unknown>): string;
+}
+
 // Only import DOMPurify on client-side (browser has native DOM)
 // On server-side, we use regex-based sanitization instead
-let DOMPurify: any = null;
+let DOMPurify: DOMPurifyInstance | null = null;
 
 if (typeof window !== 'undefined') {
   // Dynamic import for client-side only
@@ -64,7 +69,7 @@ function serverSanitizeHtml(html: string, allowedTags: string[] = []): string {
  * Configuration for DOMPurify to allow safe HTML tags and attributes
  * while removing dangerous elements and scripts.
  */
-const RICH_TEXT_CONFIG: any = {
+const RICH_TEXT_CONFIG = {
   // Allowed HTML tags for rich text content
   ALLOWED_TAGS: [
     // Text formatting
@@ -85,8 +90,8 @@ const RICH_TEXT_CONFIG: any = {
     'span', 'div',
     // Definition lists
     'dl', 'dt', 'dd',
-  ],
-  
+  ] as const,
+
   // Allowed attributes
   ALLOWED_ATTR: [
     // Links
@@ -99,36 +104,36 @@ const RICH_TEXT_CONFIG: any = {
     'alt', 'aria-label', 'aria-describedby',
     // Data attributes (for Tiptap editor)
     'data-type', 'data-id', 'data-mention',
-  ],
-  
+  ] as const,
+
   // Allowed URI schemes
   ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|sms):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
 
   // Keep safe styles
   KEEP_CONTENT: true,
-  
+
   // Remove dangerous elements entirely (don't just empty them)
-  FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button'],
-  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange'],
-};
+  FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button'] as const,
+  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange'] as const,
+} as const;
 
 /**
  * Strict configuration for plain text fields (no HTML allowed)
  */
-const PLAIN_TEXT_CONFIG: DOMPurify.Config = {
-  ALLOWED_TAGS: [],
-  ALLOWED_ATTR: [],
+const PLAIN_TEXT_CONFIG = {
+  ALLOWED_TAGS: [] as const,
+  ALLOWED_ATTR: [] as const,
   KEEP_CONTENT: true,
-};
+} as const;
 
 /**
  * Configuration for titles and names (very limited formatting)
  */
-const TITLE_CONFIG: DOMPurify.Config = {
-  ALLOWED_TAGS: ['b', 'i', 'em', 'strong'],
-  ALLOWED_ATTR: [],
+const TITLE_CONFIG = {
+  ALLOWED_TAGS: ['b', 'i', 'em', 'strong'] as const,
+  ALLOWED_ATTR: [] as const,
   KEEP_CONTENT: true,
-};
+} as const;
 
 /**
  * Sanitizes rich HTML content (for lesson notes, descriptions, etc.)
@@ -139,11 +144,11 @@ export function sanitizeRichText(html: string | null | undefined): string {
 
   // Use server-safe sanitization if DOMPurify not available (server-side)
   if (!DOMPurify || typeof window === 'undefined') {
-    return serverSanitizeHtml(html, RICH_TEXT_CONFIG.ALLOWED_TAGS || []);
+    return serverSanitizeHtml(html, [...RICH_TEXT_CONFIG.ALLOWED_TAGS]);
   }
 
   // Clean the HTML with DOMPurify (client-side)
-  const clean = DOMPurify.sanitize(html, RICH_TEXT_CONFIG as any);
+  const clean = DOMPurify.sanitize(html, RICH_TEXT_CONFIG);
 
   // Additional security: Remove javascript: protocol from remaining links
   return String(clean).replace(/javascript:/gi, '');
@@ -161,7 +166,7 @@ export function sanitizePlainText(text: string | null | undefined): string {
     return serverSanitizeHtml(text, []);
   }
 
-  return String(DOMPurify.sanitize(text, PLAIN_TEXT_CONFIG as any));
+  return String(DOMPurify.sanitize(text, PLAIN_TEXT_CONFIG));
 }
 
 /**
@@ -172,10 +177,10 @@ export function sanitizeTitle(text: string | null | undefined): string {
 
   // Use server-safe sanitization if DOMPurify not available (server-side)
   if (!DOMPurify || typeof window === 'undefined') {
-    return serverSanitizeHtml(text, TITLE_CONFIG.ALLOWED_TAGS || []);
+    return serverSanitizeHtml(text, [...TITLE_CONFIG.ALLOWED_TAGS]);
   }
 
-  return String(DOMPurify.sanitize(text, TITLE_CONFIG as any));
+  return String(DOMPurify.sanitize(text, TITLE_CONFIG));
 }
 
 /**
@@ -210,10 +215,12 @@ export function sanitizeInput(
   
   // Remove links if not allowed (for rich text)
   if (options.type === 'rich' && options.allowLinks === false) {
-    const tempConfig = { ...RICH_TEXT_CONFIG };
-    tempConfig.ALLOWED_TAGS = tempConfig.ALLOWED_TAGS?.filter((tag: string) => tag !== 'a');
     if (DOMPurify && typeof window !== 'undefined') {
-      sanitized = String(DOMPurify.sanitize(sanitized, tempConfig as any));
+      const tempConfig = {
+        ...RICH_TEXT_CONFIG,
+        ALLOWED_TAGS: RICH_TEXT_CONFIG.ALLOWED_TAGS.filter((tag) => tag !== 'a'),
+      };
+      sanitized = String(DOMPurify.sanitize(sanitized, tempConfig));
     } else {
       // Server-side: use regex to remove links
       sanitized = sanitized.replace(/<a\b[^<]*(?:(?!<\/a>)<[^<]*)*<\/a>/gi, '');
@@ -272,18 +279,22 @@ export function sanitizeUrl(url: string | null | undefined): string {
 /**
  * Batch sanitize multiple fields in an object
  */
-export function sanitizeObject<T extends Record<string, any>>(
+export function sanitizeObject<T extends Record<string, unknown>>(
   obj: T,
   schema: Record<keyof T, SanitizeOptions>
 ): T {
   const sanitized = { ...obj };
-  
+
   for (const [key, options] of Object.entries(schema)) {
     if (key in sanitized) {
-      sanitized[key as keyof T] = sanitizeInput(sanitized[key as keyof T], options as SanitizeOptions) as any;
+      const value = sanitized[key as keyof T];
+      sanitized[key as keyof T] = sanitizeInput(
+        typeof value === 'string' ? value : String(value),
+        options as SanitizeOptions
+      ) as T[keyof T];
     }
   }
-  
+
   return sanitized;
 }
 
