@@ -25,7 +25,7 @@ import {
   DollarSign,
   User as UserIcon,
 } from "lucide-react";
-import type { StudentProfile, User, Lesson } from "@/types";
+import type { StudentProfile, User, Lesson, InvoiceCreateRequest } from "@/types";
 import { log } from "@/lib/logger";
 
 interface InvoiceFormProps {
@@ -192,14 +192,18 @@ export function InvoiceForm({
     setItems([...items, newItem]);
   };
 
-  const updateItem = (id: string, field: keyof InvoiceItemForm, value: any) => {
+  const updateItem = (
+    id: string,
+    field: keyof InvoiceItemForm,
+    value: string | number | Date | undefined,
+  ) => {
     setItems(
       items.map((item) => {
         if (item.id === id) {
           const updated = { ...item, [field]: value };
 
           // Handle rate display updates specially
-          if (field === "rateDisplay") {
+          if (field === "rateDisplay" && typeof value === "string") {
             const numericValue = parseFloat(value) || 0;
             updated.rate = Math.round(numericValue * 100);
             updated.amount = updated.quantity * updated.rate;
@@ -217,7 +221,7 @@ export function InvoiceForm({
           return updated;
         }
         return item;
-      })
+      }),
     );
   };
 
@@ -274,7 +278,7 @@ export function InvoiceForm({
       const [year, month, day] = dueDate.split("-");
       const localDueDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
-      const requestBody: any = {
+      const requestBody: InvoiceCreateRequest = {
         month: selectedMonth,
         dueDate: localDueDate,
         items: items.map((item) => ({
@@ -286,15 +290,16 @@ export function InvoiceForm({
           lessonId: item.lessonId,
         })),
         notes,
+        // Add either studentId or custom invoice fields
+        ...(selectedStudentId === "custom"
+          ? {
+              customFullName,
+              customEmail,
+            }
+          : {
+              studentId: selectedStudentId,
+            }),
       };
-
-      // Add either studentId or custom invoice fields
-      if (selectedStudentId === "custom") {
-        requestBody.customFullName = customFullName;
-        requestBody.customEmail = customEmail;
-      } else {
-        requestBody.studentId = selectedStudentId;
-      }
 
       const response = await fetch("/api/invoices", {
         method: "POST",

@@ -149,6 +149,40 @@ export type InvoiceItem = PrismaInvoiceItem & {
   lesson?: Lesson;
 };
 
+export interface InvoiceCreateRequest {
+  month: string;
+  dueDate: Date;
+  items: {
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+    lessonDate?: Date;
+    lessonId?: string;
+  }[];
+  notes?: string;
+  studentId?: string;
+  customFullName?: string;
+  customEmail?: string;
+}
+
+export interface InvoiceUpdateRequest {
+  month: string;
+  dueDate: Date;
+  items: {
+    id?: string;
+    description: string;
+    quantity: number;
+    rate: number;
+    amount: number;
+    lessonDate?: Date;
+    lessonId?: string;
+  }[];
+  studentId?: string | null;
+  customFullName?: string | null;
+  customEmail?: string | null;
+}
+
 // ========================================
 // Library Types
 // ========================================

@@ -23,7 +23,13 @@ import {
   DollarSign,
   User as UserIcon,
 } from "lucide-react";
-import type { StudentProfile, User, Invoice, InvoiceItem } from "@/types";
+import type {
+  StudentProfile,
+  User,
+  Invoice,
+  InvoiceItem,
+  InvoiceUpdateRequest,
+} from "@/types";
 import { log } from "@/lib/logger";
 
 interface InvoiceEditFormProps {
@@ -57,16 +63,16 @@ export function InvoiceEditForm({
 
   // Initialize form state from invoice
   const [selectedStudentId, setSelectedStudentId] = useState(
-    invoice.studentId || "custom"
+    invoice.studentId || "custom",
   );
   const [selectedMonth, setSelectedMonth] = useState(invoice.month);
   const [dueDate, setDueDate] = useState(
-    format(new Date(invoice.dueDate), "yyyy-MM-dd")
+    format(new Date(invoice.dueDate), "yyyy-MM-dd"),
   );
 
   // Custom invoice fields
   const [customFullName, setCustomFullName] = useState(
-    invoice.customFullName || ""
+    invoice.customFullName || "",
   );
   const [customEmail, setCustomEmail] = useState(invoice.customEmail || "");
 
@@ -81,7 +87,7 @@ export function InvoiceEditForm({
       rate: item.rate,
       rateDisplay: (item.rate / 100).toFixed(2),
       amount: item.amount,
-    }))
+    })),
   );
 
   // Teacher's hourly rate
@@ -121,14 +127,18 @@ export function InvoiceEditForm({
     setItems([...items, newItem]);
   };
 
-  const updateItem = (id: string, field: keyof InvoiceItemForm, value: any) => {
+  const updateItem = (
+    id: string,
+    field: keyof InvoiceItemForm,
+    value: string | number | Date | undefined,
+  ) => {
     setItems(
       items.map((item) => {
         if (item.id === id) {
           const updated = { ...item, [field]: value };
 
           // Handle rate display updates specially
-          if (field === "rateDisplay") {
+          if (field === "rateDisplay" && typeof value === "string") {
             const numericValue = parseFloat(value) || 0;
             updated.rate = Math.round(numericValue * 100);
             updated.amount = updated.quantity * updated.rate;
@@ -146,7 +156,7 @@ export function InvoiceEditForm({
           return updated;
         }
         return item;
-      })
+      }),
     );
   };
 
@@ -169,10 +179,10 @@ export function InvoiceEditForm({
       const localDueDate = new Date(
         parseInt(year),
         parseInt(month) - 1,
-        parseInt(day)
+        parseInt(day),
       );
 
-      const requestBody: any = {
+      const requestBody: InvoiceUpdateRequest = {
         month: selectedMonth,
         dueDate: localDueDate,
         items: items.map((item) => ({
@@ -184,18 +194,19 @@ export function InvoiceEditForm({
           lessonDate: item.lessonDate,
           lessonId: item.lessonId,
         })),
+        // Add either studentId or custom invoice fields
+        ...(selectedStudentId === "custom"
+          ? {
+              customFullName,
+              customEmail,
+              studentId: null,
+            }
+          : {
+              studentId: selectedStudentId,
+              customFullName: null,
+              customEmail: null,
+            }),
       };
-
-      // Add either studentId or custom invoice fields
-      if (selectedStudentId === "custom") {
-        requestBody.customFullName = customFullName;
-        requestBody.customEmail = customEmail;
-        requestBody.studentId = null;
-      } else {
-        requestBody.studentId = selectedStudentId;
-        requestBody.customFullName = null;
-        requestBody.customEmail = null;
-      }
 
       const response = await fetch(`/api/invoices/${invoice.id}`, {
         method: "PUT",
@@ -224,8 +235,6 @@ export function InvoiceEditForm({
       setIsLoading(false);
     }
   };
-
-  const selectedStudent = students.find((s) => s.id === selectedStudentId);
 
   return (
     <Card className="p-6">
@@ -385,7 +394,7 @@ export function InvoiceEditForm({
                         updateItem(
                           item.id,
                           "quantity",
-                          parseInt(e.target.value) || 1
+                          parseInt(e.target.value) || 1,
                         )
                       }
                       className="mt-1"

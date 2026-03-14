@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { log } from "@/lib/logger";
 import type { StudentProfile, User } from "@/types";
+import { StudentChecklistItem } from "@prisma/client";
 
 // TODO: can these interfaces be extracted?
 
@@ -60,7 +61,7 @@ interface CurriculumItem {
   id: string;
   title: string;
   description?: string;
-  isCompleted?: boolean,
+  isCompleted?: boolean;
   completedAt?: Date | null;
 }
 
@@ -86,7 +87,6 @@ interface StudentCurriculum {
 }
 
 export function LessonForm({
-  teacherId,
   lessonId,
   students,
   initialData,
@@ -136,7 +136,7 @@ export function LessonForm({
     if (initialData?.existingLinks && initialData.existingLinks.length > 0) {
       const existingUrls = initialData.existingLinks.map(
         //TODO: seems like link should return a string?
-        (link: {url: string}) => link.url,
+        (link: { url: string }) => link.url,
       );
       setLinks(existingUrls);
     }
@@ -158,7 +158,7 @@ export function LessonForm({
   }, [initialData]);
 
   // Fetch student's checklists when student is selected
-  // Using any types for now because 
+  // Using any types for now because
   useEffect(() => {
     const fetchStudentChecklists = async () => {
       if (!formData.studentId) {
@@ -842,7 +842,8 @@ export function LessonForm({
                                       );
                                       const isCompleted =
                                         progress?.status === "COMPLETED" ||
-                                        (item as any)?.isCompleted;
+                                        (item as StudentChecklistItem)
+                                          ?.isCompleted;
                                       const isSelected =
                                         selectedCurriculumItems.includes(
                                           item.id,

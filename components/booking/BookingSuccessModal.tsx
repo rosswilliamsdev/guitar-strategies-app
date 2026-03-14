@@ -17,15 +17,14 @@ import {
   CheckCircle,
   Calendar,
   Clock,
-  RefreshCw,
   User,
-  DollarSign,
   CalendarDays,
   ChevronRight,
   Sparkles,
   Bell,
 } from "lucide-react";
-import { format, addWeeks } from "date-fns";
+import { format } from "date-fns";
+import type { Lesson, RecurringSlot } from "@/types";
 
 // Helper function to format timezone names for display
 const formatTimezone = (timezone: string): string => {
@@ -42,22 +41,6 @@ const formatTimezone = (timezone: string): string => {
 
   return timezoneMap[timezone] || timezone;
 };
-
-interface Lesson {
-  id: string;
-  date: string;
-  duration: number;
-  price?: number;
-  status: string;
-}
-
-interface RecurringSlot {
-  id: string;
-  dayOfWeek: number;
-  startTime: string;
-  duration: number;
-  perLessonPrice?: number;
-}
 
 interface BookingSuccessModalProps {
   open: boolean;
@@ -280,7 +263,7 @@ export function BookingSuccessModal({
               <div className="flex items-start gap-3">
                 <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <p className="text-sm">
-                  You'll receive a confirmation email with all the details
+                  You&apos;ll receive a confirmation email with all the details
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -308,7 +291,7 @@ export function BookingSuccessModal({
                   <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <p className="text-sm">
                     Monthly payments ensure your time remains reserved -
-                    cancellations don't affect payment
+                    cancellations don&apos;t affect payment
                   </p>
                 </div>
               )}
