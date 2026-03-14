@@ -6,7 +6,7 @@
  */
 
 import { prisma } from '@/lib/db';
-import { Prisma } from '@prisma/client';
+import { Prisma, Lesson, TeacherAvailability, RecurringSlot } from '@prisma/client';
 
 export class OptimisticLockingError extends Error {
   constructor(message: string, public currentVersion?: number, public attemptedVersion?: number) {
@@ -15,20 +15,26 @@ export class OptimisticLockingError extends Error {
   }
 }
 
+// Type for Prisma model delegate with basic CRUD operations
+interface PrismaModelDelegate<T> {
+  update(args: { where: { id: string; version: number }; data: Record<string, unknown> }): Promise<T>;
+  findUnique(args: { where: { id: string } }): Promise<{ version: number } | null>;
+}
+
 /**
  * Generic optimistic update function
  * Updates a record only if the version matches, incrementing version on success
  */
 export async function optimisticUpdate<T extends { version: number }>(
-  model: any, // Prisma model delegate
+  model: PrismaModelDelegate<T>,
   id: string,
   expectedVersion: number,
   updateData: Partial<T>
 ): Promise<T> {
   try {
     // Remove version from updateData to avoid conflicts
-    const { version: _, ...dataWithoutVersion } = updateData as any;
-    
+    const { version: _, ...dataWithoutVersion } = updateData as Record<string, unknown>;
+
     const updated = await model.update({
       where: {
         id,
@@ -66,9 +72,14 @@ export async function optimisticUpdate<T extends { version: number }>(
 export async function updateLessonOptimistic(
   id: string,
   expectedVersion: number,
-  updateData: Partial<Prisma.LessonUpdateInput>
+  updateData: Partial<Lesson> | Prisma.LessonUncheckedUpdateInput
 ) {
-  return optimisticUpdate(prisma.lesson, id, expectedVersion, updateData as any);
+  return optimisticUpdate(
+    prisma.lesson as unknown as PrismaModelDelegate<Lesson>,
+    id,
+    expectedVersion,
+    updateData as Partial<Lesson>
+  );
 }
 
 /**
@@ -77,9 +88,14 @@ export async function updateLessonOptimistic(
 export async function updateTeacherAvailabilityOptimistic(
   id: string,
   expectedVersion: number,
-  updateData: Partial<Prisma.TeacherAvailabilityUpdateInput>
+  updateData: Partial<TeacherAvailability>
 ) {
-  return optimisticUpdate(prisma.teacherAvailability, id, expectedVersion, updateData as any);
+  return optimisticUpdate(
+    prisma.teacherAvailability as unknown as PrismaModelDelegate<TeacherAvailability>,
+    id,
+    expectedVersion,
+    updateData
+  );
 }
 
 /**
@@ -88,9 +104,14 @@ export async function updateTeacherAvailabilityOptimistic(
 export async function updateRecurringSlotOptimistic(
   id: string,
   expectedVersion: number,
-  updateData: Partial<Prisma.RecurringSlotUpdateInput>
+  updateData: Partial<RecurringSlot>
 ) {
-  return optimisticUpdate(prisma.recurringSlot, id, expectedVersion, updateData as any);
+  return optimisticUpdate(
+    prisma.recurringSlot as unknown as PrismaModelDelegate<RecurringSlot>,
+    id,
+    expectedVersion,
+    updateData
+  );
 }
 
 /**
@@ -122,9 +143,9 @@ export async function retryOptimisticUpdate<T>(
  * Transaction-safe booking operation with optimistic locking
  * Ensures atomic booking updates with version checking
  */
-export async function atomicBookingUpdate(operations: Array<() => Promise<any>>) {
+export async function atomicBookingUpdate(operations: Array<() => Promise<unknown>>) {
   return await prisma.$transaction(async (tx) => {
-    const results = [];
+    const results: unknown[] = [];
     for (const operation of operations) {
       results.push(await operation());
     }

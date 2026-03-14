@@ -1,8 +1,11 @@
-import { prisma } from '@/lib/db';
-import { addDays, format, startOfMonth, endOfMonth } from 'date-fns';
-import { sendEmail, createInvoiceEmail } from '@/lib/email';
-import { getSystemSettings, isEmailTypeEnabled } from '@/lib/admin-settings';
-import { invoiceLog, emailLog } from '@/lib/logger';
+import { prisma } from "@/lib/db";
+import { addDays, format, startOfMonth, endOfMonth } from "date-fns";
+import { sendEmail, createInvoiceEmail } from "@/lib/email";
+import { getSystemSettings, isEmailTypeEnabled } from "@/lib/admin-settings";
+import { invoiceLog, emailLog } from "@/lib/logger";
+import { Teacher } from "@/components/admin/manage-teachers";
+import { TeacherProfile } from "@prisma/client";
+import { TeacherProfileData } from "@/types";
 
 export interface InvoiceItem {
   description: string;
@@ -34,17 +37,17 @@ async function generateInvoiceNumber(teacherId: string): Promise<string> {
       },
     },
     orderBy: {
-      invoiceNumber: 'desc',
+      invoiceNumber: "desc",
     },
   });
 
   let nextNumber = 1;
   if (lastInvoice) {
-    const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[2]);
+    const lastNumber = parseInt(lastInvoice.invoiceNumber.split("-")[2]);
     nextNumber = lastNumber + 1;
   }
 
-  return `INV-${year}-${nextNumber.toString().padStart(3, '0')}`;
+  return `INV-${year}-${nextNumber.toString().padStart(3, "0")}`;
 }
 
 /**
@@ -52,7 +55,7 @@ async function generateInvoiceNumber(teacherId: string): Promise<string> {
  */
 export async function createAutomaticInvoice(data: CreateInvoiceData) {
   const invoiceNumber = await generateInvoiceNumber(data.teacherId);
-  
+
   // Calculate totals
   const subtotal = data.items.reduce((sum, item) => sum + item.amount, 0);
   const total = subtotal;
@@ -67,7 +70,7 @@ export async function createAutomaticInvoice(data: CreateInvoiceData) {
       subtotal,
       total,
       items: {
-        create: data.items.map(item => ({
+        create: data.items.map((item) => ({
           description: item.description,
           quantity: item.quantity,
           rate: item.rate,
@@ -118,50 +121,53 @@ export async function createSingleLessonInvoice(lessonId: string) {
   });
 
   if (!lesson || !lesson.teacher.lessonSettings) {
-    throw new Error('Lesson or teacher settings not found');
+    throw new Error("Lesson or teacher settings not found");
   }
 
   // Get system settings for due date calculation
   const systemSettings = await getSystemSettings();
 
   // Calculate price based on duration
-  const rate = lesson.duration === 60 
-    ? lesson.teacher.lessonSettings.price60Min || 0
-    : lesson.teacher.lessonSettings.price30Min || 0;
+  const rate =
+    lesson.duration === 60
+      ? lesson.teacher.lessonSettings.price60Min || 0
+      : lesson.teacher.lessonSettings.price30Min || 0;
 
-  const items: InvoiceItem[] = [{
-    description: `Guitar Lesson - ${format(lesson.date, 'MMM dd, yyyy')}`,
-    quantity: 1,
-    rate,
-    amount: rate,
-    lessonDate: lesson.date,
-    lessonId: lesson.id,
-  }];
+  const items: InvoiceItem[] = [
+    {
+      description: `Guitar Lesson - ${format(lesson.date, "MMM dd, yyyy")}`,
+      quantity: 1,
+      rate,
+      amount: rate,
+      lessonDate: lesson.date,
+      lessonId: lesson.id,
+    },
+  ];
 
   const dueDate = addDays(new Date(), systemSettings.defaultInvoiceDueDays);
 
   const invoice = await createAutomaticInvoice({
     teacherId: lesson.teacherId,
     studentId: lesson.studentId,
-    month: format(lesson.date, 'yyyy-MM'),
+    month: format(lesson.date, "yyyy-MM"),
     dueDate,
     items,
   });
 
   // Send invoice email to student (only if enabled)
-  if (await isEmailTypeEnabled('invoice')) {
+  if (await isEmailTypeEnabled("invoice")) {
     try {
       const paymentInfo = buildPaymentInfo(lesson.teacher);
-      
+
       const emailContent = createInvoiceEmail(
-        lesson.student.user.name || 'Student',
+        lesson.student.user.name || "Student",
         invoice.invoiceNumber,
         invoice.total,
-        format(invoice.dueDate, 'MMM dd, yyyy'),
-        lesson.teacher.user.name || 'Teacher',
+        format(invoice.dueDate, "MMM dd, yyyy"),
+        lesson.teacher.user.name || "Teacher",
         invoice.month,
         items.length,
-        paymentInfo
+        paymentInfo,
       );
 
       await sendEmail({
@@ -170,11 +176,11 @@ export async function createSingleLessonInvoice(lessonId: string) {
         html: emailContent,
       });
     } catch (error) {
-      emailLog.error('Failed to send single lesson invoice email', {
+      emailLog.error("Failed to send single lesson invoice email", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         invoiceId: invoice.id,
-        studentEmail: lesson.student.user.email
+        studentEmail: lesson.student.user.email,
       });
     }
   }
@@ -186,21 +192,23 @@ export async function createSingleLessonInvoice(lessonId: string) {
  * Generate monthly invoices for all recurring lessons
  * This should be run on the 1st of each month
  */
-export async function generateMonthlyRecurringInvoices(targetMonth: Date = new Date()) {
-  const monthString = format(targetMonth, 'yyyy-MM');
+export async function generateMonthlyRecurringInvoices(
+  targetMonth: Date = new Date(),
+) {
+  const monthString = format(targetMonth, "yyyy-MM");
   const startDate = startOfMonth(targetMonth);
   const endDate = endOfMonth(targetMonth);
 
-  invoiceLog.info('Starting monthly invoice generation', {
+  invoiceLog.info("Starting monthly invoice generation", {
     monthString,
     year: targetMonth.getFullYear(),
-    month: targetMonth.getMonth() + 1
+    month: targetMonth.getMonth() + 1,
   });
 
   // Get all active recurring slots
   const recurringSlots = await prisma.recurringSlot.findMany({
     where: {
-      status: 'ACTIVE',
+      status: "ACTIVE",
     },
     include: {
       teacher: {
@@ -221,11 +229,11 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
             lte: endDate,
           },
           status: {
-            in: ['SCHEDULED', 'COMPLETED'],
+            in: ["SCHEDULED", "COMPLETED"],
           },
         },
         orderBy: {
-          date: 'asc',
+          date: "asc",
         },
       },
     },
@@ -248,39 +256,40 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
       });
 
       if (existingInvoice) {
-        invoiceLog.debug('Invoice already exists', {
+        invoiceLog.debug("Invoice already exists", {
           studentName: slot.student.user.name,
           month: monthString,
-          studentId: slot.student.id
+          studentId: slot.student.id,
         });
         continue;
       }
 
       if (slot.lessons.length === 0) {
-        invoiceLog.debug('No lessons found for student in month', {
+        invoiceLog.debug("No lessons found for student in month", {
           studentName: slot.student.user.name,
           month: monthString,
-          studentId: slot.student.id
+          studentId: slot.student.id,
         });
         continue;
       }
 
       if (!slot.teacher.lessonSettings) {
-        invoiceLog.warn('No lesson settings for teacher', {
+        invoiceLog.warn("No lesson settings for teacher", {
           teacherName: slot.teacher.user.name,
-          teacherId: slot.teacher.id
+          teacherId: slot.teacher.id,
         });
         continue;
       }
 
       // Calculate price based on duration
-      const rate = slot.duration === 60
-        ? slot.teacher.lessonSettings.price60Min || 0
-        : slot.teacher.lessonSettings.price30Min || 0;
+      const rate =
+        slot.duration === 60
+          ? slot.teacher.lessonSettings.price60Min || 0
+          : slot.teacher.lessonSettings.price30Min || 0;
 
       // Create invoice items for each lesson in the month
-      const items: InvoiceItem[] = slot.lessons.map(lesson => ({
-        description: `Guitar Lesson - ${format(lesson.date, 'MMM dd, yyyy')}`,
+      const items: InvoiceItem[] = slot.lessons.map((lesson) => ({
+        description: `Guitar Lesson - ${format(lesson.date, "MMM dd, yyyy")}`,
         quantity: 1,
         rate,
         amount: rate,
@@ -301,19 +310,19 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
       });
 
       // Send invoice email to student (only if enabled)
-      if (await isEmailTypeEnabled('invoice')) {
+      if (await isEmailTypeEnabled("invoice")) {
         try {
           const paymentInfo = buildPaymentInfo(slot.teacher);
-          
+
           const emailContent = createInvoiceEmail(
-            slot.student.user.name || 'Student',
+            slot.student.user.name || "Student",
             invoice.invoiceNumber,
             invoice.total,
-            format(invoice.dueDate, 'MMM dd, yyyy'),
-            slot.teacher.user.name || 'Teacher',
+            format(invoice.dueDate, "MMM dd, yyyy"),
+            slot.teacher.user.name || "Teacher",
             invoice.month,
             items.length,
-            paymentInfo
+            paymentInfo,
           );
 
           await sendEmail({
@@ -322,50 +331,54 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
             html: emailContent,
           });
 
-          invoiceLog.info('Invoice created and sent', {
+          invoiceLog.info("Invoice created and sent", {
             invoiceNumber: invoice.invoiceNumber,
             studentName: slot.student.user.name,
             studentId: slot.student.id,
-            total: invoice.total
+            total: invoice.total,
           });
         } catch (emailError) {
-          emailLog.error('Failed to send monthly invoice email', {
+          emailLog.error("Failed to send monthly invoice email", {
             studentName: slot.student.user.name,
             studentId: slot.student.id,
-            error: emailError instanceof Error ? emailError.message : String(emailError),
+            error:
+              emailError instanceof Error
+                ? emailError.message
+                : String(emailError),
             stack: emailError instanceof Error ? emailError.stack : undefined,
-            invoiceNumber: invoice.invoiceNumber
+            invoiceNumber: invoice.invoiceNumber,
           });
-          results.errors.push(`Failed to send email for ${slot.student.user.name}: ${emailError instanceof Error ? emailError.message : 'Unknown error'}`);
+          results.errors.push(
+            `Failed to send email for ${slot.student.user.name}: ${emailError instanceof Error ? emailError.message : "Unknown error"}`,
+          );
         }
       } else {
-        invoiceLog.info('Invoice created (email disabled)', {
+        invoiceLog.info("Invoice created (email disabled)", {
           invoiceNumber: invoice.invoiceNumber,
           studentName: slot.student.user.name,
           studentId: slot.student.id,
-          total: invoice.total
+          total: invoice.total,
         });
       }
 
       results.invoicesCreated++;
-
     } catch (error) {
-      const errorMessage = `Failed to create invoice for ${slot.student.user.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
-      invoiceLog.error('Failed to create invoice', {
+      const errorMessage = `Failed to create invoice for ${slot.student.user.name}: ${error instanceof Error ? error.message : "Unknown error"}`;
+      invoiceLog.error("Failed to create invoice", {
         studentName: slot.student.user.name,
         studentId: slot.student.id,
         error: errorMessage,
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       results.errors.push(errorMessage);
     }
   }
 
-  invoiceLog.info('Monthly invoice generation completed', {
+  invoiceLog.info("Monthly invoice generation completed", {
     invoicesCreated: results.invoicesCreated,
     errorsCount: results.errors.length,
     success: results.errors.length === 0,
-    month: monthString
+    month: monthString,
   });
   return results;
 }
@@ -373,10 +386,14 @@ export async function generateMonthlyRecurringInvoices(targetMonth: Date = new D
 /**
  * Build payment information string from teacher profile
  */
-function buildPaymentInfo(teacher: any): { venmoHandle?: string; paypalEmail?: string; zelleEmail?: string; } {
+function buildPaymentInfo(teacher: TeacherProfile): {
+  venmoHandle?: string;
+  paypalEmail?: string;
+  zelleEmail?: string;
+} {
   return {
-    venmoHandle: teacher.venmoHandle,
-    paypalEmail: teacher.paypalEmail,
-    zelleEmail: teacher.zelleEmail
+    venmoHandle: teacher.venmoHandle ?? undefined,
+    paypalEmail: teacher.paypalEmail ?? undefined,
+    zelleEmail: teacher.zelleEmail ?? undefined,
   };
 }

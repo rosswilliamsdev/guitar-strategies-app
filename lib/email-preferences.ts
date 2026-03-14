@@ -1,4 +1,5 @@
 import { emailLog } from './logger';
+import type { Prisma } from '@prisma/client';
 
 /**
  * All available email types in the system
@@ -25,7 +26,7 @@ export const ALL_EMAIL_TYPES = [
  */
 export async function createDefaultEmailPreferences(
   userId: string,
-  tx: any
+  tx: Omit<Prisma.TransactionClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
 ): Promise<void> {
   try {
     // Create all email type preferences with enabled: true

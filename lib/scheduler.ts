@@ -203,7 +203,7 @@ export async function getAvailableSlots(
 async function isSlotAvailable(
   slotStart: Date,
   slotEnd: Date,
-  lessons: any[]
+  lessons: Array<{ date: Date; duration: number }>
 ): Promise<boolean> {
   // Check if slot overlaps with any existing lesson
   for (const lesson of lessons) {
@@ -420,13 +420,13 @@ export async function bookSingleLesson(data: BookingData) {
         })
 
         // Check for conflicts with SELECT FOR UPDATE to prevent race conditions
-        const existingLesson = await prisma.$queryRaw`
-          SELECT id, version FROM "public"."Lesson" 
-          WHERE "teacherId" = ${data.teacherId} 
-            AND "date" = ${normalizedDate} 
+        const existingLesson = await prisma.$queryRaw<Array<{ id: string; version: number }>>`
+          SELECT id, version FROM "public"."Lesson"
+          WHERE "teacherId" = ${data.teacherId}
+            AND "date" = ${normalizedDate}
             AND "status" != 'CANCELLED'
           FOR UPDATE
-        ` as any[]
+        `
 
         if (existingLesson.length > 0) {
           throw new Error('This time slot has been booked by another student')

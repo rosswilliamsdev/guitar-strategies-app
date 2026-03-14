@@ -87,7 +87,7 @@ export function validateRequestSize(
  * @returns null if valid, error response if invalid
  */
 export function validateJsonSize(
-  data: any,
+  data: unknown,
   limitType: RequestLimitType = 'DEFAULT'
 ): NextResponse | null {
   const jsonString = JSON.stringify(data);

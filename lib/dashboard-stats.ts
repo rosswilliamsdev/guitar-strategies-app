@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { startOfMonth, startOfWeek, startOfDay, subDays } from "date-fns";
-import { log, dbLog, emailLog, invoiceLog } from '@/lib/logger';
+import { log } from "@/lib/logger";
 // import { dashboardCache, CacheKeys } from '@/lib/cache'; // Temporarily disabled for connection pooling test
 
 export interface AdminStats {
@@ -16,7 +17,13 @@ export interface AdminStats {
   };
   recentActivity: Array<{
     id: string;
-    type: 'user_created' | 'lesson_completed' | 'teacher_joined' | 'system_event' | 'invoice_generated' | 'email_sent';
+    type:
+      | "user_created"
+      | "lesson_completed"
+      | "teacher_joined"
+      | "system_event"
+      | "invoice_generated"
+      | "email_sent";
     description: string;
     timestamp: Date | string;
     userEmail?: string;
@@ -58,11 +65,11 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
       recentLessons,
       recentUsers,
       recentTeachers,
-      recentInvoices
+      recentInvoices,
     ] = await Promise.all([
       // Total users
       prisma.user.count(),
-      
+
       // Active teachers (have at least one lesson or are recently active)
       prisma.teacherProfile.count({
         where: {
@@ -72,22 +79,22 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
               lessons: {
                 some: {
                   date: {
-                    gte: startOfThisMonth
-                  }
-                }
-              }
+                    gte: startOfThisMonth,
+                  },
+                },
+              },
             },
             {
               students: {
                 some: {
-                  isActive: true
-                }
-              }
-            }
-          ]
-        }
+                  isActive: true,
+                },
+              },
+            },
+          ],
+        },
       }),
-      
+
       // Active students (have lessons this month or are recently active)
       prisma.studentProfile.count({
         where: {
@@ -97,57 +104,57 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
               lessons: {
                 some: {
                   date: {
-                    gte: startOfThisMonth
-                  }
-                }
-              }
+                    gte: startOfThisMonth,
+                  },
+                },
+              },
             },
             {
               joinedAt: {
-                gte: startOfThisMonth
-              }
-            }
-          ]
-        }
+                gte: startOfThisMonth,
+              },
+            },
+          ],
+        },
       }),
-      
+
       // Total lessons
       prisma.lesson.count(),
-      
+
       // Lessons this month
       prisma.lesson.count({
         where: {
           date: {
-            gte: startOfThisMonth
-          }
-        }
+            gte: startOfThisMonth,
+          },
+        },
       }),
-      
+
       // Recent lessons for activity feed
       prisma.lesson.findMany({
         where: {
-          status: 'COMPLETED',
+          status: "COMPLETED",
           date: {
-            gte: sevenDaysAgo
+            gte: sevenDaysAgo,
           },
-          ...(teacherId && { teacherId }) // Filter by teacher if provided
+          ...(teacherId && { teacherId }), // Filter by teacher if provided
         },
         include: {
           student: {
             include: {
-              user: true
-            }
+              user: true,
+            },
           },
           teacher: {
             include: {
-              user: true
-            }
-          }
+              user: true,
+            },
+          },
         },
         orderBy: {
-          date: 'desc'
+          date: "desc",
         },
-        take: 5
+        take: 5,
       }),
 
       // Recent users - only fetch students if teacherId is provided
@@ -155,28 +162,28 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
         ? prisma.user.findMany({
             where: {
               createdAt: {
-                gte: sevenDaysAgo
+                gte: sevenDaysAgo,
               },
-              role: 'STUDENT',
+              role: "STUDENT",
               studentProfile: {
-                teacherId
-              }
+                teacherId,
+              },
             },
             orderBy: {
-              createdAt: 'desc'
+              createdAt: "desc",
             },
-            take: 3
+            take: 3,
           })
         : prisma.user.findMany({
             where: {
               createdAt: {
-                gte: sevenDaysAgo
-              }
+                gte: sevenDaysAgo,
+              },
             },
             orderBy: {
-              createdAt: 'desc'
+              createdAt: "desc",
             },
-            take: 3
+            take: 3,
           }),
 
       // Recent teachers - skip this query if filtering by teacherId
@@ -185,43 +192,43 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
         : prisma.teacherProfile.findMany({
             where: {
               createdAt: {
-                gte: sevenDaysAgo
-              }
+                gte: sevenDaysAgo,
+              },
             },
             include: {
-              user: true
+              user: true,
             },
             orderBy: {
-              createdAt: 'desc'
+              createdAt: "desc",
             },
-            take: 3
+            take: 3,
           }),
 
       // Recent invoices
       prisma.invoice.findMany({
         where: {
           createdAt: {
-            gte: sevenDaysAgo
+            gte: sevenDaysAgo,
           },
-          ...(teacherId && { teacherId }) // Filter by teacher if provided
+          ...(teacherId && { teacherId }), // Filter by teacher if provided
         },
         include: {
           teacher: {
             include: {
-              user: true
-            }
+              user: true,
+            },
           },
           student: {
             include: {
-              user: true
-            }
-          }
+              user: true,
+            },
+          },
         },
         orderBy: {
-          createdAt: 'desc'
+          createdAt: "desc",
         },
-        take: 5
-      })
+        take: 5,
+      }),
     ]);
 
     // Calculate estimated monthly revenue (rough estimate based on lessons and average rates)
@@ -229,65 +236,75 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
     const estimatedRevenue = lessonsThisMonth * avgLessonRate;
 
     // Build recent activity feed
-    const recentActivity: AdminStats['recentActivity'] = [];
-    
+    const recentActivity: AdminStats["recentActivity"] = [];
+
     // Add recent lessons
-    recentLessons.forEach(lesson => {
+    recentLessons.forEach((lesson) => {
       recentActivity.push({
         id: lesson.id,
-        type: 'lesson_completed',
+        type: "lesson_completed",
         description: `${lesson.student.user.name} completed a lesson with ${lesson.teacher.user.name}`,
         timestamp: lesson.date,
-        userEmail: lesson.student.user.email
+        userEmail: lesson.student.user.email,
       });
     });
-    
+
     // Add recent users (only students if filtered by teacherId)
-    recentUsers.forEach(user => {
+    recentUsers.forEach((user) => {
       // When filtering by teacherId, only show student enrollments, not generic user creation
-      const description = teacherId && user.role === 'STUDENT'
-        ? `${user.name} enrolled as a student`
-        : `New ${user.role.toLowerCase()} account created`;
+      const description =
+        teacherId && user.role === "STUDENT"
+          ? `${user.name} enrolled as a student`
+          : `New ${user.role.toLowerCase()} account created`;
 
       recentActivity.push({
         id: user.id,
-        type: 'user_created',
+        type: "user_created",
         description,
         timestamp: user.createdAt,
-        userEmail: user.email
+        userEmail: user.email,
       });
     });
 
     // Add recent teachers (only if not filtering by teacherId)
     if (!teacherId) {
-      recentTeachers.forEach(teacher => {
+      recentTeachers.forEach((teacher) => {
         recentActivity.push({
           id: teacher.id,
-          type: 'teacher_joined',
+          type: "teacher_joined",
           description: `${teacher.user.name} joined as a teacher`,
           timestamp: teacher.createdAt,
-          userEmail: teacher.user.email
+          userEmail: teacher.user.email,
         });
       });
     }
-    
+
     // Add recent invoices
-    recentInvoices.forEach(invoice => {
-      const studentName = invoice.student?.user?.name || invoice.customFullName || 'Custom Student';
+    recentInvoices.forEach((invoice) => {
+      const studentName =
+        invoice.student?.user?.name ||
+        invoice.customFullName ||
+        "Custom Student";
       const studentEmail = invoice.student?.user?.email || invoice.customEmail;
       recentActivity.push({
         id: invoice.id,
-        type: 'invoice_generated',
+        type: "invoice_generated",
         description: `Invoice ${invoice.invoiceNumber} generated for ${studentName}`,
         timestamp: invoice.createdAt,
-        userEmail: studentEmail || undefined
+        userEmail: studentEmail || undefined,
       });
     });
 
     // Sort by timestamp and limit
     recentActivity.sort((a, b) => {
-      const aTime = typeof a.timestamp === 'string' ? new Date(a.timestamp).getTime() : new Date(a.timestamp).getTime();
-      const bTime = typeof b.timestamp === 'string' ? new Date(b.timestamp).getTime() : new Date(b.timestamp).getTime();
+      const aTime =
+        typeof a.timestamp === "string"
+          ? new Date(a.timestamp).getTime()
+          : new Date(a.timestamp).getTime();
+      const bTime =
+        typeof b.timestamp === "string"
+          ? new Date(b.timestamp).getTime()
+          : new Date(b.timestamp).getTime();
       return bTime - aTime;
     });
     const limitedActivity = recentActivity.slice(0, 10);
@@ -301,21 +318,21 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
       revenueThisMonth: estimatedRevenue,
       systemHealth: {
         uptime: 99.9, // Could be calculated from uptime monitoring
-        healthIssues: 0 // Could come from system health checks
+        healthIssues: 0, // Could come from system health checks
       },
-      recentActivity: limitedActivity
+      recentActivity: limitedActivity,
     };
-    
+
     // Cache the result for 2 minutes (temporarily disabled)
     // dashboardCache.set(cacheKey, stats, 1000 * 60 * 2);
-    
+
     return stats;
   } catch (error) {
-    log.error('Error fetching admin stats:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
-    
+    log.error("Error fetching admin stats:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
     // Return safe defaults on error
     return {
       totalUsers: 0,
@@ -326,14 +343,16 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
       revenueThisMonth: 0,
       systemHealth: {
         uptime: 0,
-        healthIssues: 1
+        healthIssues: 1,
       },
-      recentActivity: [{
-        id: 'error',
-        type: 'system_event',
-        description: 'Unable to load admin statistics',
-        timestamp: new Date()
-      }]
+      recentActivity: [
+        {
+          id: "error",
+          type: "system_event",
+          description: "Unable to load admin statistics",
+          timestamp: new Date(),
+        },
+      ],
     };
   }
 }
@@ -343,169 +362,190 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
  * @param filters - Filter options for the activity query
  * @param teacherId - Optional teacher ID to filter activity to only that teacher's students and lessons
  */
-export async function getAllActivity(filters?: {
-  dateRange?: 'today' | 'week' | 'month' | 'all';
-  activityType?: 'user_created' | 'lesson_completed' | 'teacher_joined' | 'system_event' | 'invoice_generated' | 'email_sent' | 'all';
-  userRole?: 'STUDENT' | 'TEACHER' | 'ADMIN' | 'all';
-  userId?: string;
-  limit?: number;
-  offset?: number;
-}, teacherId?: string): Promise<{
-  activities: AdminStats['recentActivity'];
+export async function getAllActivity(
+  filters?: {
+    dateRange?: "today" | "week" | "month" | "all";
+    activityType?:
+      | "user_created"
+      | "lesson_completed"
+      | "teacher_joined"
+      | "system_event"
+      | "invoice_generated"
+      | "email_sent"
+      | "all";
+    userRole?: "STUDENT" | "TEACHER" | "ADMIN" | "all";
+    userId?: string;
+    limit?: number;
+    offset?: number;
+  },
+  teacherId?: string,
+): Promise<{
+  activities: AdminStats["recentActivity"];
   totalCount: number;
 }> {
   try {
     const {
-      dateRange = 'month',
-      activityType = 'all',
-      userRole = 'all',
+      dateRange = "month",
+      activityType = "all",
+      userRole = "all",
       userId,
       limit = 50,
-      offset = 0
+      offset = 0,
     } = filters || {};
 
     // Calculate date filter
     const now = new Date();
     let startDate: Date | undefined;
-    
+
     switch (dateRange) {
-      case 'today':
+      case "today":
         startDate = startOfDay(now);
         break;
-      case 'week':
+      case "week":
         startDate = startOfWeek(now);
         break;
-      case 'month':
+      case "month":
         startDate = startOfMonth(now);
         break;
-      case 'all':
+      case "all":
         startDate = undefined;
         break;
     }
 
     // Build where conditions for different activity types
-    const lessonWhere: any = {
+    const lessonWhere: Prisma.LessonWhereInput = {
       ...(startDate && { date: { gte: startDate } }),
-      status: 'COMPLETED',
-      ...(teacherId && { teacherId }) // Filter by teacher if provided
+      status: "COMPLETED",
+      ...(teacherId && { teacherId }), // Filter by teacher if provided
     };
 
-    const userWhere: any = {
+    const userWhere: Prisma.UserWhereInput = {
       ...(startDate && { createdAt: { gte: startDate } }),
-      ...(userRole !== 'all' && { role: userRole }),
+      ...(userRole !== "all" && { role: userRole }),
       ...(userId && { id: userId }),
       // If filtering by teacherId, only show students of that teacher
       ...(teacherId && {
-        role: 'STUDENT',
+        role: "STUDENT",
         studentProfile: {
-          teacherId
-        }
-      })
+          teacherId,
+        },
+      }),
     };
 
-    const teacherWhere: any = {
+    const teacherWhere: Prisma.TeacherProfileWhereInput = {
       ...(startDate && { createdAt: { gte: startDate } }),
-      ...(userId && { userId })
+      ...(userId && { userId }),
     };
 
     // Fetch different types of activities based on filter
-    const activities: AdminStats['recentActivity'] = [];
+    const activities: AdminStats["recentActivity"] = [];
 
     // Get lessons if needed
-    if (activityType === 'all' || activityType === 'lesson_completed') {
+    if (activityType === "all" || activityType === "lesson_completed") {
       const lessons = await prisma.lesson.findMany({
         where: lessonWhere,
         include: {
           student: { include: { user: true } },
-          teacher: { include: { user: true } }
+          teacher: { include: { user: true } },
         },
-        orderBy: { date: 'desc' }
+        orderBy: { date: "desc" },
       });
 
-      lessons.forEach(lesson => {
+      lessons.forEach((lesson) => {
         activities.push({
           id: lesson.id,
-          type: 'lesson_completed',
+          type: "lesson_completed",
           description: `${lesson.student.user.name} completed a lesson with ${lesson.teacher.user.name}`,
           timestamp: lesson.date,
-          userEmail: lesson.student.user.email
+          userEmail: lesson.student.user.email,
         });
       });
     }
 
     // Get users if needed
-    if (activityType === 'all' || activityType === 'user_created') {
+    if (activityType === "all" || activityType === "user_created") {
       const users = await prisma.user.findMany({
         where: userWhere,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
       });
 
-      users.forEach(user => {
+      users.forEach((user) => {
         // When filtering by teacherId, only show student enrollments, not generic user creation
-        const description = teacherId && user.role === 'STUDENT'
-          ? `${user.name} enrolled as a student`
-          : `New ${user.role.toLowerCase()} account created`;
+        const description =
+          teacherId && user.role === "STUDENT"
+            ? `${user.name} enrolled as a student`
+            : `New ${user.role.toLowerCase()} account created`;
 
         activities.push({
           id: user.id,
-          type: 'user_created',
+          type: "user_created",
           description,
           timestamp: user.createdAt,
-          userEmail: user.email
+          userEmail: user.email,
         });
       });
     }
 
     // Get teachers if needed (skip if filtering by teacherId)
-    if (!teacherId && (activityType === 'all' || activityType === 'teacher_joined')) {
+    if (
+      !teacherId &&
+      (activityType === "all" || activityType === "teacher_joined")
+    ) {
       const teachers = await prisma.teacherProfile.findMany({
         where: teacherWhere,
         include: { user: true },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
       });
 
-      teachers.forEach(teacher => {
+      teachers.forEach((teacher) => {
         activities.push({
           id: teacher.id,
-          type: 'teacher_joined',
+          type: "teacher_joined",
           description: `${teacher.user.name} joined as a teacher`,
           timestamp: teacher.createdAt,
-          userEmail: teacher.user.email
+          userEmail: teacher.user.email,
         });
       });
     }
 
     // Get invoices if needed
-    if (activityType === 'all' || activityType === 'invoice_generated') {
-      const invoiceWhere: any = {
+    if (activityType === "all" || activityType === "invoice_generated") {
+      const invoiceWhere: Prisma.InvoiceWhereInput = {
         ...(startDate && { createdAt: { gte: startDate } }),
-        ...(teacherId && { teacherId }) // Filter by teacher if provided
+        ...(teacherId && { teacherId }), // Filter by teacher if provided
       };
 
       const invoices = await prisma.invoice.findMany({
         where: invoiceWhere,
         include: {
           teacher: { include: { user: true } },
-          student: { include: { user: true } }
+          student: { include: { user: true } },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: "desc" },
       });
 
-      invoices.forEach(invoice => {
-        const studentName = invoice.student?.user?.name || invoice.customFullName || 'Custom Student';
-        const studentEmail = invoice.student?.user?.email || invoice.customEmail;
+      invoices.forEach((invoice) => {
+        const studentName =
+          invoice.student?.user?.name ||
+          invoice.customFullName ||
+          "Custom Student";
+        const studentEmail =
+          invoice.student?.user?.email || invoice.customEmail;
         activities.push({
           id: invoice.id,
-          type: 'invoice_generated',
+          type: "invoice_generated",
           description: `Invoice ${invoice.invoiceNumber} generated for ${studentName}`,
           timestamp: invoice.createdAt,
-          userEmail: studentEmail || undefined
+          userEmail: studentEmail || undefined,
         });
       });
     }
 
     // Sort all activities by timestamp
-    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    activities.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
 
     // Apply pagination
     const totalCount = activities.length;
@@ -513,17 +553,16 @@ export async function getAllActivity(filters?: {
 
     return {
       activities: paginatedActivities,
-      totalCount
+      totalCount,
     };
-
   } catch (error) {
-    log.error('Error fetching all activity:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+    log.error("Error fetching all activity:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return {
       activities: [],
-      totalCount: 0
+      totalCount: 0,
     };
   }
 }
@@ -534,21 +573,21 @@ export async function getAllActivity(filters?: {
 export async function getUserStats(): Promise<UserStats> {
   try {
     const totalUsers = await prisma.user.count();
-    
+
     return {
       totalUsers,
-      platformActivity: 'Active',
-      systemStatus: 'Operational'
+      platformActivity: "Active",
+      systemStatus: "Operational",
     };
   } catch (error) {
-    log.error('Error fetching user stats:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      });
+    log.error("Error fetching user stats:", {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return {
       totalUsers: 0,
-      platformActivity: 'Unknown',
-      systemStatus: 'Error'
+      platformActivity: "Unknown",
+      systemStatus: "Error",
     };
   }
 }
@@ -557,9 +596,9 @@ export async function getUserStats(): Promise<UserStats> {
  * Format currency values for display
  */
 export function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
   }).format(cents / 100);
 }
 
@@ -568,13 +607,13 @@ export function formatCurrency(cents: number): string {
  */
 export function formatRelativeTime(date: Date | string): string {
   const now = new Date();
-  const targetDate = typeof date === 'string' ? new Date(date) : date;
-  
+  const targetDate = typeof date === "string" ? new Date(date) : date;
+
   // Check if date is valid
   if (isNaN(targetDate.getTime())) {
-    return 'Unknown time';
+    return "Unknown time";
   }
-  
+
   const diff = now.getTime() - targetDate.getTime();
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -582,12 +621,12 @@ export function formatRelativeTime(date: Date | string): string {
   const days = Math.floor(hours / 24);
 
   if (days > 0) {
-    return `${days} day${days > 1 ? 's' : ''} ago`;
+    return `${days} day${days > 1 ? "s" : ""} ago`;
   } else if (hours > 0) {
-    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
   } else if (minutes > 0) {
-    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
   } else {
-    return 'Just now';
+    return "Just now";
   }
 }

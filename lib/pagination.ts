@@ -69,7 +69,7 @@ export function calculatePagination(
   page: number,
   limit: number,
   total: number
-): PaginatedResponse<any>['pagination'] {
+): PaginatedResponse<unknown>['pagination'] {
   const totalPages = Math.ceil(total / limit);
   const hasMore = page < totalPages;
 
@@ -183,7 +183,7 @@ export function getPrismaSortOptions(
   sortBy?: string,
   sortOrder: 'asc' | 'desc' = 'desc',
   allowedFields: string[] = []
-): any {
+): Record<string, unknown> {
   if (!sortBy || !allowedFields.includes(sortBy)) {
     return { createdAt: sortOrder }; // Default sort
   }
@@ -191,7 +191,7 @@ export function getPrismaSortOptions(
   // Handle nested fields (e.g., "user.name")
   if (sortBy.includes('.')) {
     const parts = sortBy.split('.');
-    let sortConfig: any = { [parts[parts.length - 1]]: sortOrder };
+    let sortConfig: Record<string, unknown> = { [parts[parts.length - 1]]: sortOrder };
 
     for (let i = parts.length - 2; i >= 0; i--) {
       sortConfig = { [parts[i]]: sortConfig };
@@ -240,7 +240,7 @@ export function validatePaginationParams(params: PaginationParams): {
  */
 export function addPaginationHeaders(
   response: Response,
-  pagination: PaginatedResponse<any>['pagination']
+  pagination: PaginatedResponse<unknown>['pagination']
 ): void {
   response.headers.set('X-Page', pagination.page.toString());
   response.headers.set('X-Limit', pagination.limit.toString());

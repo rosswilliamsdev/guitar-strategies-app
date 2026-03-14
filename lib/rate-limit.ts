@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { log } from "@/lib/logger";
+import type { Redis } from "ioredis";
 
 // Rate limit configurations for different endpoint types
 export const RATE_LIMITS = {
@@ -145,7 +146,7 @@ if (typeof window === "undefined") {
  * Falls back to memory store if Redis is not available
  */
 class RedisRateLimitStore {
-  private redis: any = null;
+  private redis: Redis | null = null;
   private fallbackStore = memoryStore;
 
   constructor() {
@@ -191,6 +192,10 @@ class RedisRateLimitStore {
     key: string,
     windowMs: number
   ): Promise<{ count: number; resetTime: number; blocked: boolean }> {
+    if (!this.redis) {
+      return this.fallbackStore.increment(key, windowMs);
+    }
+
     try {
       const now = Date.now();
       const resetTime = now + windowMs;
@@ -203,6 +208,9 @@ class RedisRateLimitStore {
       pipeline.expire(key, Math.ceil(windowMs / 1000));
 
       const results = await pipeline.exec();
+      if (!results || !results[2]) {
+        throw new Error('Redis pipeline execution failed');
+      }
       const count = results[2][1] as number;
 
       return {
