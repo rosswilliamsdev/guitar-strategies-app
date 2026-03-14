@@ -10,10 +10,10 @@ import { prisma } from '@/lib/db';
 import { dbQuery, criticalDbQuery } from '@/lib/db-with-retry';
 import { withRetry, databaseRetryOptions, emailRetryOptions } from '@/lib/retry';
 import { sendEmail } from '@/lib/email';
-import { apiLog, dbLog, emailLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 // Track attempts for testing
-let testAttempts: Record<string, number> = {};
+const testAttempts: Record<string, number> = {};
 
 export async function GET(request: NextRequest) {
   try {
@@ -87,14 +87,14 @@ export async function GET(request: NextRequest) {
     }
     
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const err = error instanceof Error ? error : new Error(String(error));
     apiLog.error('Test endpoint error:', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        error: err.message,
+        stack: err.stack
       });
-    return NextResponse.json({ 
-      error: errorMessage || 'Test failed',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    return NextResponse.json({
+      error: err.message || 'Test failed',
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     }, { status: 500 });
   }
 }
@@ -107,8 +107,10 @@ async function testDatabaseRetry(testId: string) {
       
       // Simulate failure for first 2 attempts
       if (testAttempts[testId] < 3) {
-        const error = new Error('Simulated connection timeout') as any;
-        error.code = 'P2024'; // Prisma connection pool timeout
+        const error = Object.assign(
+          new Error('Simulated connection timeout'),
+          { code: 'P2024' } // Prisma connection pool timeout
+        );
         throw error;
       }
       
@@ -129,8 +131,10 @@ async function testEmailRetry(testId: string) {
       
       // Simulate rate limiting for first 3 attempts
       if (testAttempts[testId] < 4) {
-        const error = new Error('Rate limit exceeded') as any;
-        error.status = 429;
+        const error = Object.assign(
+          new Error('Rate limit exceeded'),
+          { status: 429 }
+        );
         throw error;
       }
       
@@ -151,15 +155,19 @@ async function testCriticalOperation(testId: string) {
       
       // Simulate network error for first attempt
       if (testAttempts[testId] === 1) {
-        const error = new Error('Network connection lost') as any;
-        error.code = 'ECONNRESET';
+        const error = Object.assign(
+          new Error('Network connection lost'),
+          { code: 'ECONNRESET' }
+        );
         throw error;
       }
-      
+
       // Simulate database deadlock for second attempt
       if (testAttempts[testId] === 2) {
-        const error = new Error('Database deadlock detected') as any;
-        error.code = 'P2023';
+        const error = Object.assign(
+          new Error('Database deadlock detected'),
+          { code: 'P2023' }
+        );
         throw error;
       }
       

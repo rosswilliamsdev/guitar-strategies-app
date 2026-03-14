@@ -87,7 +87,9 @@ async function testBookingRaceCondition(params: {
       passed: successful === 1 && failed === 2,
       results: results.map((r) => ({
         status: r.status,
-        reason: r.status === "rejected" ? (r as any).reason.message : "success",
+        reason: r.status === "rejected"
+          ? (r.reason instanceof Error ? r.reason.message : String(r.reason))
+          : "success",
       })),
     });
   } catch (error: unknown) {
@@ -140,8 +142,12 @@ async function testOptimisticLocking(params: { lessonId: string }) {
       results: results.map((r) => ({
         status: r.status,
         version:
-          r.status === "fulfilled" ? (r as any).value.version : undefined,
-        reason: r.status === "rejected" ? (r as any).reason.message : "success",
+          r.status === "fulfilled"
+            ? (r.value as { version: number }).version
+            : undefined,
+        reason: r.status === "rejected"
+          ? (r.reason instanceof Error ? r.reason.message : String(r.reason))
+          : "success",
       })),
     });
   } catch (error: unknown) {
