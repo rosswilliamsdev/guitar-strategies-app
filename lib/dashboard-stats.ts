@@ -26,7 +26,6 @@ export async function getAdminStats(teacherId?: string): Promise<AdminStats> {
   try {
     const now = new Date();
     const startOfThisMonth = startOfMonth(now);
-    const startOfThisWeek = startOfWeek(now);
     const sevenDaysAgo = subDays(now, 7);
 
     // Parallel queries for better performance
