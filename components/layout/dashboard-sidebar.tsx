@@ -61,13 +61,8 @@ export function DashboardSidebar({
 
   // Get view mode context (call hook unconditionally at top level)
   // Will only be available for teacher-admins when context provider is present
-  let viewModeFromContext: "teacher" | "admin" | null = null;
-  try {
-    const { viewMode } = useViewMode();
-    viewModeFromContext = viewMode;
-  } catch {
-    // Context not available, will use default role-based logic
-  }
+  const viewModeContext = useViewMode();
+  const viewModeFromContext = viewModeContext?.viewMode || null;
 
   // Only use view mode if user is actually a teacher-admin
   const currentViewMode = isTeacherAdmin ? viewModeFromContext : null;

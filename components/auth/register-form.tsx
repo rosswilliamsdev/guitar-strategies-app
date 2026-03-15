@@ -7,10 +7,6 @@ import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PasswordStrengthMeter } from '@/components/ui/password-strength-meter';
 
-interface RegisterFormProps {
-  callbackUrl?: string;
-}
-
 interface Teacher {
   id: string;
   user: {
@@ -18,7 +14,7 @@ interface Teacher {
   };
 }
 
-export function RegisterForm({ callbackUrl }: RegisterFormProps) {
+export function RegisterForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',

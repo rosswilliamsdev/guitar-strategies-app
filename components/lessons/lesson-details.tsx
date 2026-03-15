@@ -68,7 +68,8 @@ interface LessonDetailsProps {
 
 export function LessonDetails({
   lessonId,
-  userId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  userId: _,
   canEdit,
 }: LessonDetailsProps) {
   const [lesson, setLesson] = useState<Lesson | null>(null);

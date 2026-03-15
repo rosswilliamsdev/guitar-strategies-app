@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Filter } from 'lucide-react';
-import type { StudentProfile, InvoiceStatus } from '@/types';
+import type { StudentProfile } from '@/types';
 
 interface InvoiceFiltersProps {
   students: Array<StudentProfile & { user: { id: string; name: string | null } }>;

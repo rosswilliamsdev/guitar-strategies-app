@@ -86,23 +86,20 @@ export function BookingSuccessModal({
     router.refresh(); // Refresh the page to update availability
   };
 
-  const formatPrice = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
-  };
-
-  const getTotalValue = () => {
-    if (bookingType === "single" && lesson?.price) {
-      return formatPrice(lesson.price);
-    }
-    if (bookingType === "recurring" && recurringSlot?.perLessonPrice) {
-      const weeklyValue = recurringSlot.perLessonPrice; // This is already the per-lesson price, which equals weekly for once-per-week lessons
-      const monthlyValue = weeklyValue * 4; // 4 weeks per month average
-      return `${formatPrice(weeklyValue)}/week (~${formatPrice(
-        monthlyValue,
-      )}/month)`;
-    }
-    return null;
-  };
+  // Commenting out getTotalValue as it's not currently used in the UI
+  // const getTotalValue = () => {
+  //   if (bookingType === "single" && lesson?.price) {
+  //     return formatPrice(lesson.price);
+  //   }
+  //   if (bookingType === "recurring" && recurringSlot?.perLessonPrice) {
+  //     const weeklyValue = recurringSlot.perLessonPrice; // This is already the per-lesson price, which equals weekly for once-per-week lessons
+  //     const monthlyValue = weeklyValue * 4; // 4 weeks per month average
+  //     return `${formatPrice(weeklyValue)}/week (~${formatPrice(
+  //       monthlyValue,
+  //     )}/month)`;
+  //   }
+  //   return null;
+  // };
 
   const getNextLessonDate = () => {
     if (bookingType === "single" && lesson) {

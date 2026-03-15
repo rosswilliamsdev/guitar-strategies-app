@@ -313,7 +313,8 @@ export function LessonList({ userRole }: LessonListProps) {
       const dateB = new Date(b.date).getTime();
       return sortOrder === "latest" ? dateB - dateA : dateA - dateB;
     });
-  }, [lessons, searchTerm, selectedStudent, dateFilter, userRole, sortOrder]);
+
+  }, [lessons, searchTerm, selectedStudent, dateFilter, sortOrder]);
 
   if (loading) {
     return (

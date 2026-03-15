@@ -23,7 +23,8 @@ interface StudentDashboardProps {
 }
 
 export function StudentDashboard({
-  studentId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  studentId: _,
   recentLessons = [],
   studentProfile,
 }: StudentDashboardProps) {

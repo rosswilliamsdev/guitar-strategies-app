@@ -46,7 +46,8 @@ interface InvoiceCardProps {
   hourlyRate?: number;
 }
 
-export function InvoiceCard({ invoice, hourlyRate }: InvoiceCardProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function InvoiceCard({ invoice, hourlyRate: _ }: InvoiceCardProps) {
   const router = useRouter();
   const [showPayModal, setShowPayModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);

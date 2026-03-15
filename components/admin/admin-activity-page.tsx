@@ -52,6 +52,7 @@ export function AdminActivityPage() {
 
   useEffect(() => {
     fetchActivity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const updateFilter = (key: keyof ActivityFilters, value: string) => {

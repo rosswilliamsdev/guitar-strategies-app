@@ -131,7 +131,7 @@ export function LibraryList({ items, studentView = false }: LibraryListProps) {
     null
   );
   const [dragEnd, setDragEnd] = useState<{ x: number; y: number } | null>(null);
-  const [mouseDownTime, setMouseDownTime] = useState<number>(0);
+  const [, setMouseDownTime] = useState<number>(0);
   const [sortColumn, setSortColumn] = useState<
     "name" | "fileType" | "instrument"
   >("name");
@@ -593,7 +593,7 @@ export function LibraryList({ items, studentView = false }: LibraryListProps) {
                 const categoryInfo =
                   categoryConfig[category as keyof typeof categoryConfig];
                 const IconComponent = categoryInfo.icon;
-                const fileSize = (item.fileSize / 1024 / 1024).toFixed(1);
+                // const fileSize = (item.fileSize / 1024 / 1024).toFixed(1); // Currently unused
                 const fileExtension =
                   item.fileName.split(".").pop()?.toUpperCase() || "Unknown";
                 const instrumentDisplay = item.instrument

@@ -53,7 +53,8 @@ interface InvoiceItemForm {
 }
 
 export function InvoiceForm({
-  teacherId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  teacherId: _,
   students,
   defaultStudentId,
   defaultMonth,
@@ -115,6 +116,7 @@ export function InvoiceForm({
     if (selectedStudentId && selectedStudentId !== "custom" && selectedMonth) {
       loadLessonsForMonth();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStudentId, selectedMonth]);
 
   const loadLessonsForMonth = async () => {

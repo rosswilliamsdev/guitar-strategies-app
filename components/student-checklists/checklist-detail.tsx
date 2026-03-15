@@ -58,6 +58,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
 
   useEffect(() => {
     fetchChecklist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checklistId]);
 
   // Track completion changes for celebrations

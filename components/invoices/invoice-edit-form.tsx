@@ -52,7 +52,8 @@ interface InvoiceItemForm {
 
 export function InvoiceEditForm({
   invoice,
-  teacherId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  teacherId: _,
   students,
 }: InvoiceEditFormProps) {
   const router = useRouter();

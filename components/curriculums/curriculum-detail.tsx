@@ -71,6 +71,7 @@ export function CurriculumDetail({
 
   useEffect(() => {
     fetchCurriculum();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [curriculumId]);
 
   // Track completion changes for celebrations (students only)
@@ -96,6 +97,7 @@ export function CurriculumDetail({
     }
 
     setPreviousCompletedCount(currentCompletedCount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [curriculum, userRole, previousCompletedCount]);
 
   const fetchCurriculum = async () => {

@@ -54,7 +54,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       } else {
         setError(data.error || 'Failed to reset password. Please try again.');
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);

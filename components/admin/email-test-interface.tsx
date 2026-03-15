@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 interface TestResult {
   success: boolean;
@@ -82,7 +82,7 @@ export default function EmailTestInterface() {
           testType,
         });
       }
-    } catch (error) {
+    } catch {
       setResult({
         success: false,
         message: "Network error: Could not send test email",

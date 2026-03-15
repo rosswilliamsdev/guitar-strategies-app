@@ -207,10 +207,10 @@ export function LibraryBulkUpload({ teacherId }: LibraryBulkUploadProps) {
         });
         return false;
       }
-    } catch (error) {
-      updateFile(fileData.id, { 
-        status: 'error', 
-        error: 'Network error or server unavailable' 
+    } catch {
+      updateFile(fileData.id, {
+        status: 'error',
+        error: 'Network error or server unavailable'
       });
       return false;
     }

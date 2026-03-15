@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save, Plus, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 interface ChecklistItem {
   id?: string;
@@ -24,7 +23,7 @@ interface ChecklistFormProps {
 
 
 export function ChecklistForm({ checklist }: ChecklistFormProps) {
-  const router = useRouter();
+  // const router = useRouter(); // Currently unused
   const [loading, setLoading] = useState(false);
   const [loadingItems, setLoadingItems] = useState(!!checklist);
   const [formData, setFormData] = useState({
@@ -40,6 +39,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
     if (checklist?.id) {
       fetchChecklistItems();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checklist?.id]);
 
   const fetchChecklistItems = async () => {

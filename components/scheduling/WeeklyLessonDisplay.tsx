@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -10,8 +9,7 @@ import {
   Clock,
   DollarSign,
   User,
-  X,
-  AlertCircle
+  X
 } from "lucide-react"
 import { SlotWithDetails } from "@/types"
 import { getDayName, formatSlotTime } from "@/lib/slot-helpers"

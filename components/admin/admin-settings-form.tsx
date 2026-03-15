@@ -13,7 +13,6 @@ import {
   Mail,
   DollarSign,
   Calendar,
-  Settings,
   CheckCircle,
   XCircle,
 } from "lucide-react";

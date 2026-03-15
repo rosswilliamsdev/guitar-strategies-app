@@ -79,6 +79,7 @@ export function CSRFProvider({ children, initialToken }: CSRFProviderProps) {
       // Try to get token from API if not available
       refreshToken();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const contextValue: CSRFContextType = {

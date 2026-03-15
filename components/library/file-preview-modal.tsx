@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { Download, ExternalLink, FileText, Image, Music, File } from "lucide-react";
+import { Download, ExternalLink, FileText, Music, File } from "lucide-react";
 
 interface FilePreviewModalProps {
   isOpen: boolean;

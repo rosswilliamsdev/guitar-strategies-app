@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ExternalLink,
   Package,
   BookOpen,
   Monitor,

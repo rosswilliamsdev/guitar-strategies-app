@@ -81,7 +81,8 @@ export function TeacherDashboard({
   hideTitle = false,
   stats,
   recentLessons,
-  teacherProfile,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  teacherProfile: _,
   loading = false,
 }: TeacherDashboardProps) {
   const dashboardStats = [

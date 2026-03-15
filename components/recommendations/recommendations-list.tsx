@@ -86,26 +86,28 @@ const categoryConfig = {
   },
 };
 
-const priorityConfig = {
-  5: { label: "Essential", color: "bg-red-50 text-red-700 border-red-200" },
-  4: {
-    label: "High Priority",
-    color: "bg-orange-50 text-orange-700 border-orange-200",
-  },
-  3: {
-    label: "Recommended",
-    color: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  },
-  2: { label: "Optional", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  1: {
-    label: "Consider Later",
-    color: "bg-gray-50 text-gray-700 border-gray-200",
-  },
-};
+// Priority config - currently using PriorityBadge component instead
+// const priorityConfig = {
+//   5: { label: "Essential", color: "bg-red-50 text-red-700 border-red-200" },
+//   4: {
+//     label: "High Priority",
+//     color: "bg-orange-50 text-orange-700 border-orange-200",
+//   },
+//   3: {
+//     label: "Recommended",
+//     color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+//   },
+//   2: { label: "Optional", color: "bg-blue-50 text-blue-700 border-blue-200" },
+//   1: {
+//     label: "Consider Later",
+//     color: "bg-gray-50 text-gray-700 border-gray-200",
+//   },
+// };
 
 export function RecommendationsList({
   items,
-  teacherId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  teacherId: _,
 }: RecommendationsListProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
