@@ -68,7 +68,7 @@ export default async function StudentsPage() {
         </Link>
       </div>
 
-      <StudentList teacherId={teacherProfile.id} students={students} />
+      <StudentList students={students} />
     </div>
   );
 }

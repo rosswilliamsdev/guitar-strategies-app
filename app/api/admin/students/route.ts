@@ -13,6 +13,7 @@ import { getValidatedBody } from '@/lib/validated-request';
 import { sendEmail } from '@/lib/email';
 import { renderEmailWithFallback } from '@/lib/email-templates';
 import { createDefaultEmailPreferences } from '@/lib/email-preferences';
+import { emailLog } from '@/lib/logger';
 
 async function handlePOST(request: NextRequest) {
   try {
