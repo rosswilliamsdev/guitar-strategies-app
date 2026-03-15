@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminActivityView } from "@/components/admin/admin-activity-view";
-import { AdminStats } from "@/lib/dashboard-stats";
+import { AdminStats } from "@/types/dashboard";
 import { Loader2, Filter, DollarSign, RefreshCw } from "lucide-react";
 interface ActivityFilters {
   dateRange: 'today' | 'week' | 'month' | 'all';

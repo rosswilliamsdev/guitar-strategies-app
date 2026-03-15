@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AdminStats, formatRelativeTime } from "@/lib/dashboard-stats";
+import { AdminStats, formatRelativeTime } from "@/types/dashboard";
 import {
   Users,
   UserCheck,

@@ -8,7 +8,7 @@ import {
   UserStats,
   AdminStats,
   formatRelativeTime,
-} from "@/lib/dashboard-stats";
+} from "@/types/dashboard";
 import {
   Users,
   UserCheck,
