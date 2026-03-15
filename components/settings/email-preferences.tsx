@@ -181,7 +181,7 @@ export function EmailPreferences({
             Email Preferences
           </h3>
           <p className="text-sm text-muted-foreground">
-            Choose which email notifications you'd like to receive
+            Choose which email notifications you&apos;d like to receive
           </p>
         </div>
       </div>

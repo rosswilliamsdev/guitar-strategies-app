@@ -232,6 +232,7 @@ export const CacheKeys = {
  */
 class RedisCache {
   private client: Redis | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private fallbackCache = new LRUCache<string, any>({
     max: 500,
     ttl: CACHE_DURATIONS.DYNAMIC_MEDIUM * 1000,

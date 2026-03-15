@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 
 export default function GlobalError({
@@ -44,7 +45,7 @@ export default function GlobalError({
                 Something went wrong
               </h1>
               <p className="text-neutral-600 mb-2">
-                We're sorry, but an unexpected error has occurred. Our team has been notified
+                We&apos;re sorry, but an unexpected error has occurred. Our team has been notified
                 and is working to fix the issue.
               </p>
               
@@ -71,13 +72,13 @@ export default function GlobalError({
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Try Again
                 </button>
-                <a
+                <Link
                   href="/"
                   className="inline-flex items-center justify-center px-6 py-3 bg-white text-neutral-700 font-medium rounded-lg border border-neutral-300 hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   <Home className="w-4 h-4 mr-2" />
                   Go to Homepage
-                </a>
+                </Link>
               </div>
             </div>
 

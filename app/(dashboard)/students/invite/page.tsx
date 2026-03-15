@@ -48,7 +48,7 @@ export default async function InviteStudentPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Invite Student</h1>
         <p className="text-muted-foreground">
-          Create an account for a new student and they'll receive login credentials.
+          Create an account for a new student and they&apos;ll receive login credentials.
         </p>
       </div>
 

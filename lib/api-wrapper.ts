@@ -20,12 +20,13 @@ import {
   createBadRequestResponse,
   handleApiError
 } from '@/lib/api-responses';
+import { ValidatedRequest } from '@/lib/validated-request';
 
 // Support both simple and Next.js 15 dynamic route handlers
 type RouteHandler = (request: NextRequest) => Promise<NextResponse>;
 type RouteHandlerWithParams = (
   request: NextRequest,
-  context: { params: Promise<any> }
+  context: { params: Promise<Record<string, string | string[]>> }
 ) => Promise<NextResponse>;
 
 interface ApiWrapperOptions {
@@ -59,7 +60,7 @@ export function withApiMiddleware(
   } = options;
 
   // Extract handler logic into separate function
-  async function executeHandler(request: NextRequest, context?: { params: Promise<any> }): Promise<NextResponse> {
+  async function executeHandler(request: NextRequest, context?: { params: Promise<Record<string, string | string[]>> }): Promise<NextResponse> {
     const startTime = Date.now();
 
     try {
@@ -158,13 +159,13 @@ export function withApiMiddleware(
 
       // Attach validated data to the request for easy access
       if (validatedBody) {
-        (request as any).validatedBody = validatedBody;
+        (request as ValidatedRequest).validatedBody = validatedBody;
       }
       if (validatedQuery) {
-        (request as any).validatedQuery = validatedQuery;
+        (request as ValidatedRequest).validatedQuery = validatedQuery;
       }
       if (validatedParams) {
-        (request as any).validatedParams = validatedParams;
+        (request as ValidatedRequest).validatedParams = validatedParams;
       }
 
       // Call the actual handler - support both handler types
@@ -211,7 +212,7 @@ export function withApiMiddleware(
 
   // Apply rate limiting and CSRF protection
   // Return a function that can handle both signatures
-  const wrappedHandler = async (request: NextRequest, context?: { params: Promise<any> }) => {
+  const wrappedHandler = async (request: NextRequest, context?: { params: Promise<Record<string, string | string[]>> }) => {
     return withRateLimit(async (req: NextRequest) => {
       // Apply CSRF protection if not skipped
       if (!skipCSRF) {

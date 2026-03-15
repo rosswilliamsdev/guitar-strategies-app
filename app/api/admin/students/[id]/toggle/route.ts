@@ -10,10 +10,12 @@ import { getValidatedBody } from '@/lib/validated-request';
 
 async function handlePOST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<Record<string, string | string[]>> }
 ) {
+  const { params } = context;
   try {
-    const { id } = await params;
+    const resolvedParams = await params;
+    const id = resolvedParams.id as string;
     const validatedData = getValidatedBody(request, toggleStatusSchema);
 
     if (!validatedData) {

@@ -66,14 +66,14 @@ export function DualRoleDashboard({ user, teacherData, adminStats }: DualRoleDas
       {view === "teacher" ? (
         <div className="space-y-6">
           <p className="text-muted-foreground">
-            Here's what's happening with your teaching today.
+            Here&apos;s what&apos;s happening with your teaching today.
           </p>
           <TeacherDashboard {...teacherData} hideTitle />
         </div>
       ) : (
         <div className="space-y-6">
           <p className="text-muted-foreground">
-            Here's the latest platform activity.
+            Here&apos;s the latest platform activity.
           </p>
           {/* Simple Admin View - Just Recent Activity */}
           <AdminActivityView adminStats={adminStats} />

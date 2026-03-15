@@ -59,16 +59,18 @@ export function DashboardSidebar({
   const isTeacherAdmin =
     user.role === "TEACHER" && user.teacherProfile?.isAdmin === true;
 
-  // Try to get view mode context (only available for teacher-admins)
-  let currentViewMode: "teacher" | "admin" | null = null;
+  // Get view mode context (call hook unconditionally at top level)
+  // Will only be available for teacher-admins when context provider is present
+  let viewModeFromContext: "teacher" | "admin" | null = null;
   try {
-    if (isTeacherAdmin) {
-      const { viewMode } = useViewMode();
-      currentViewMode = viewMode;
-    }
+    const { viewMode } = useViewMode();
+    viewModeFromContext = viewMode;
   } catch {
-    // Context not available, use default logic
+    // Context not available, will use default role-based logic
   }
+
+  // Only use view mode if user is actually a teacher-admin
+  const currentViewMode = isTeacherAdmin ? viewModeFromContext : null;
 
   const filteredNavItems = navItems.filter((item) => {
     if (!item.roles) return true; // No role restriction

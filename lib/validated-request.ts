@@ -28,7 +28,7 @@ export function getValidatedBody<T>(
   request: NextRequest,
   schema?: ZodSchema<T>
 ): T | undefined {
-  const body = (request as any).validatedBody;
+  const body = (request as ValidatedRequest<T>).validatedBody;
 
   if (schema && body) {
     // Re-validate if schema is provided for extra type safety
@@ -46,7 +46,7 @@ export function getValidatedQuery<T>(
   request: NextRequest,
   schema?: ZodSchema<T>
 ): T | undefined {
-  const query = (request as any).validatedQuery;
+  const query = (request as ValidatedRequest<unknown, T>).validatedQuery;
 
   if (schema && query) {
     const result = schema.safeParse(query);
@@ -63,7 +63,7 @@ export function getValidatedParams<T>(
   request: NextRequest,
   schema?: ZodSchema<T>
 ): T | undefined {
-  const params = (request as any).validatedParams;
+  const params = (request as ValidatedRequest<unknown, unknown, T>).validatedParams;
 
   if (schema && params) {
     const result = schema.safeParse(params);
@@ -211,7 +211,9 @@ export function combineSchemas<T extends Record<string, ZodSchema>>(
 ): {
   [K in keyof T]: T[K] extends ZodSchema<infer U> ? U : never;
 } {
-  return schemas as any;
+  return schemas as {
+    [K in keyof T]: T[K] extends ZodSchema<infer U> ? U : never;
+  };
 }
 
 /**
