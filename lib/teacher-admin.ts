@@ -6,7 +6,7 @@
  */
 
 import { Session } from "next-auth";
-import { Role, TeacherProfile } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 /**
  * Check if a user has admin privileges

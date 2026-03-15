@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { log, emailLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 /**
  * Environment Variable Validation System

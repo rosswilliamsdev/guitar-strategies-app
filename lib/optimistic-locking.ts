@@ -33,7 +33,8 @@ export async function optimisticUpdate<T extends { version: number }>(
 ): Promise<T> {
   try {
     // Remove version from updateData to avoid conflicts
-    const { version: _, ...dataWithoutVersion } = updateData as Record<string, unknown>;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { version, ...dataWithoutVersion } = updateData as Record<string, unknown> & { version?: number };
 
     const updated = await model.update({
       where: {
@@ -144,7 +145,7 @@ export async function retryOptimisticUpdate<T>(
  * Ensures atomic booking updates with version checking
  */
 export async function atomicBookingUpdate(operations: Array<() => Promise<unknown>>) {
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async () => {
     const results: unknown[] = [];
     for (const operation of operations) {
       results.push(await operation());

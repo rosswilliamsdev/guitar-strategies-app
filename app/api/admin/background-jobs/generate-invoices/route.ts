@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateMonthlyInvoices } from "@/lib/background-jobs";
-import { apiLog, emailLog, invoiceLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 /**
  * POST /api/admin/background-jobs/generate-invoices
  * Manually trigger the monthly invoice generation job
  * Admin-only endpoint for testing or emergency use
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
 

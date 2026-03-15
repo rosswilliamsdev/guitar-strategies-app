@@ -218,16 +218,18 @@ export function combineSchemas<T extends Record<string, ZodSchema>>(
 
 /**
  * Create a validated handler wrapper with full type safety
+ * @example
+ * // Example usage with schemas:
+ * const bodySchema = z.object({ name: z.string() });
+ * const querySchema = z.object({ page: z.number() });
+ * const paramsSchema = z.object({ id: z.string() });
+ * const handler = createValidatedHandler();
  */
 export function createValidatedHandler<
   TBody = unknown,
   TQuery = unknown,
   TParams = unknown
->(
-  bodySchema?: ZodSchema<TBody>,
-  querySchema?: ZodSchema<TQuery>,
-  paramsSchema?: ZodSchema<TParams>
-) {
+>() {
   return function <TResponse>(
     handler: (
       request: ValidatedRequest<TBody, TQuery, TParams>

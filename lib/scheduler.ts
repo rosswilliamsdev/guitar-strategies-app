@@ -1,23 +1,15 @@
 import { prisma } from '@/lib/db'
-import { atomicBookingUpdate, retryOptimisticUpdate, OptimisticLockingError } from '@/lib/optimistic-locking'
+import { atomicBookingUpdate, retryOptimisticUpdate } from '@/lib/optimistic-locking'
 import { schedulerLog, dbLog } from '@/lib/logger'
-import { 
-  format, 
-  addDays, 
+import {
+  addDays,
   addWeeks,
-  startOfDay, 
-  endOfDay, 
-  isAfter, 
-  isBefore, 
-  addMinutes,
-  startOfWeek,
-  setHours,
-  setMinutes
+  startOfDay,
+  endOfDay,
+  isAfter,
+  isBefore,
+  addMinutes
 } from 'date-fns'
-import { 
-  toZonedTime,
-  formatInTimeZone 
-} from 'date-fns-tz'
 
 interface TimeSlot {
   start: Date
@@ -122,7 +114,6 @@ export async function getAvailableSlots(
   });
 
   const slots: TimeSlot[] = []
-  const teacherTimezone = teacher.timezone
   const settings = teacher.lessonSettings
 
   // Generate slots for each day in the range
@@ -578,7 +569,7 @@ export async function bookRecurringSlot(
   })
 }
 
-export async function cancelLesson(lessonId: string, userId: string) {
+export async function cancelLesson(lessonId: string) {
   const lesson = await prisma.lesson.findUnique({
     where: { id: lessonId },
     include: {

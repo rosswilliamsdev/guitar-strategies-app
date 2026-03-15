@@ -12,7 +12,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getConnectionPoolStatus } from '@/lib/db';
 import { validateConnectionPooling } from '@/lib/startup-validation';
-import { apiLog, dbLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 /**
  * GET /api/admin/database/pool-status
@@ -22,7 +22,7 @@ import { apiLog, dbLog } from '@/lib/logger';
  * @param request - Next.js request object
  * @returns JSON response with pool status and configuration details
  */
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   try {
     // Verify admin authentication
     const session = await getServerSession(authOptions);

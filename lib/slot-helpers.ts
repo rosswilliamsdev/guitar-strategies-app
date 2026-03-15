@@ -1,4 +1,4 @@
-import { addWeeks, startOfMonth, endOfMonth, format, addDays } from "date-fns";
+import { startOfMonth, endOfMonth, format, addDays } from "date-fns";
 
 /**
  * Calculate how many times a weekly recurring slot occurs in a given month
@@ -26,8 +26,11 @@ export function calculateMonthlyOccurrences(
 /**
  * Calculate monthly rate based on lesson rate and expected occurrences
  * For now, using a simple average of 4.33 lessons per month (52 weeks / 12 months)
+ * @param lessonRate - The rate per lesson
+ * @param _dayOfWeek - The day of week (reserved for future use)
  */
-export function getMonthlyRate(lessonRate: number, dayOfWeek: number): number {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function getMonthlyRate(lessonRate: number, _dayOfWeek: number): number {
   // Average lessons per month for a weekly recurring slot
   const averageLessonsPerMonth = 52 / 12; // ~4.33
   return Math.round(lessonRate * averageLessonsPerMonth);

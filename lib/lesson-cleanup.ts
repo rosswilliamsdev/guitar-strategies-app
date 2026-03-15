@@ -6,7 +6,7 @@
  */
 
 import { prisma } from '@/lib/db';
-import { log, dbLog, schedulerLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 /**
  * Updates past scheduled lessons to appropriate status.

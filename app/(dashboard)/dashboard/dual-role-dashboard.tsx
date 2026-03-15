@@ -22,7 +22,7 @@ interface DualRoleDashboardProps {
   adminStats: AdminStats;
 }
 
-export function DualRoleDashboard({ user, teacherData, adminStats }: DualRoleDashboardProps) {
+export function DualRoleDashboard({ teacherData, adminStats }: DualRoleDashboardProps) {
   // Use the shared view mode context
   const { viewMode: view, setViewMode: setView } = useViewMode();
 

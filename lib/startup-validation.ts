@@ -7,7 +7,7 @@
 
 import { validateDatabaseEnvironment } from './db';
 import { validateEnv, formatValidationResults } from './env-validation';
-import { log, dbLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 /**
  * Validates all critical environment variables and system settings.

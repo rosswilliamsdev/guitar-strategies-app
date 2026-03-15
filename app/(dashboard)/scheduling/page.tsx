@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { SchedulingClient } from '@/components/scheduling/SchedulingClient';
-import { log, dbLog, schedulerLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 export const metadata = {
   title: 'Scheduling - Guitar Strategies',

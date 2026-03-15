@@ -1,5 +1,5 @@
 import { getServerSession } from 'next-auth';
-import { redirect, notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { StudentProfile } from '@/components/students/student-profile';
 
@@ -9,8 +9,8 @@ interface StudentPageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: StudentPageProps) {
-  const { id } = await params;
+export async function generateMetadata() {
+
   // TODO: Fetch student details for metadata
   return {
     title: `Student Profile`,

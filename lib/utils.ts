@@ -12,7 +12,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { formatInTimeZone } from 'date-fns-tz';
-import { format } from 'date-fns';
 
 /**
  * Utility function to merge Tailwind CSS classes with proper precedence.

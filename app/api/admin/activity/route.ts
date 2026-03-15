@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getAllActivity } from '@/lib/dashboard-stats';
-import { apiLog, emailLog, invoiceLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 import { prisma } from '@/lib/db';
 
 export async function GET(request: NextRequest) {

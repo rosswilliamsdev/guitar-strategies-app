@@ -3,9 +3,7 @@ import { addDays, format, startOfMonth, endOfMonth } from "date-fns";
 import { sendEmail, createInvoiceEmail } from "@/lib/email";
 import { getSystemSettings, isEmailTypeEnabled } from "@/lib/admin-settings";
 import { invoiceLog, emailLog } from "@/lib/logger";
-import { Teacher } from "@/components/admin/manage-teachers";
-import { TeacherProfile } from "@prisma/client";
-import { TeacherProfileData } from "@/types";
+import type { TeacherProfile } from "@prisma/client";
 
 export interface InvoiceItem {
   description: string;

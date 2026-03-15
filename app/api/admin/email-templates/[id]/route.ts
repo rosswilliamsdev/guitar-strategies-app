@@ -1,6 +1,5 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db';
-import { withApiMiddleware } from '@/lib/api-wrapper';
 import { log } from '@/lib/logger';
 import {
   createSuccessResponse,
@@ -111,19 +110,6 @@ async function handleDELETE(
     });
     return handleApiError(error);
   }
-}
-
-// Create wrappers that match the expected signature
-async function wrappedGET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return handleGET(request, context);
-}
-
-async function wrappedPUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return handlePUT(request, context);
-}
-
-async function wrappedDELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  return handleDELETE(request, context);
 }
 
 // Export with Next.js 15 handler signature (params as second argument)

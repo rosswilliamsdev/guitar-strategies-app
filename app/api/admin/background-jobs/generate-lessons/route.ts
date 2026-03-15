@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateFutureLessons } from "@/lib/background-jobs";
-import { apiLog, emailLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 /**
  * POST /api/admin/background-jobs/generate-lessons
  * Manually trigger the automatic lesson generation job
  * Admin-only endpoint for testing or emergency use
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const session = await getServerSession(authOptions);
 

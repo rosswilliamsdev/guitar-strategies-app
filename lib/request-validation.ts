@@ -3,7 +3,7 @@
 // ========================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { log, invoiceLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 // Request size limits (in bytes) - should match middleware.ts
 export const REQUEST_LIMITS = {

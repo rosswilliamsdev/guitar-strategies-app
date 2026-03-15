@@ -4,48 +4,6 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { InvoiceTemplate } from "@/components/invoices/invoice-template";
 import { InvoiceItem } from "@/types";
-
-type InvoiceWithRelations = {
-  id: string;
-  invoiceNumber: string;
-  status: string;
-  createdAt: Date;
-  dueDate: Date;
-  month: string;
-  subtotal: number;
-  total: number;
-  paidAt: Date | null;
-  paymentMethod: string | null;
-  paymentNotes: string | null;
-  customFullName: string | null;
-  customEmail: string | null;
-  teacher: {
-    user: {
-      name: string;
-      email: string;
-    };
-    phoneNumber: string | null;
-    venmoHandle: string | null;
-    paypalEmail: string | null;
-    zelleEmail: string | null;
-  };
-  student: {
-    user: {
-      name: string;
-      email: string;
-    };
-    phoneNumber: string | null;
-  } | null;
-  items: Array<{
-    id: string;
-    description: string;
-    lessonDate: Date | null;
-    quantity: number;
-    rate: number;
-    amount: number;
-  }>;
-};
-
 interface InvoicePageProps {
   params: Promise<{ id: string }>;
 }

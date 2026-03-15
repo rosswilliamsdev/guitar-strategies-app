@@ -7,8 +7,7 @@
  */
 
 import { prisma } from "@/lib/db";
-import { TeacherProfile, TeacherLessonSettings, TeacherAvailability } from "@prisma/client";
-import { log, dbLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 export interface TeacherValidationResult {
   isComplete: boolean;
