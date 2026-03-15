@@ -9,7 +9,7 @@ import {
   getEnvironmentMode,
   isProduction 
 } from "@/lib/env-validation";
-import { apiLog, emailLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 /**
  * Admin endpoint for checking environment validation status

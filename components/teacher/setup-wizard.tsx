@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   CheckCircle,
-  Circle,
   ChevronRight,
   ChevronLeft,
   AlertCircle,
@@ -19,7 +18,7 @@ import {
   CreditCard,
   User,
 } from "lucide-react";
-import { TeacherValidationResult, SetupStep } from "@/lib/teacher-validation";
+import type { TeacherValidationResult } from "@/lib/teacher-validation";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
 interface TeacherSetupWizardProps {
@@ -44,7 +43,6 @@ export function TeacherSetupWizard({
   const [validation, setValidation] = useState<TeacherValidationResult | null>(
     initialValidation || null
   );
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Form states
@@ -66,6 +64,7 @@ export function TeacherSetupWizard({
       fetchValidation();
     }
     fetchCurrentData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchValidation = async () => {

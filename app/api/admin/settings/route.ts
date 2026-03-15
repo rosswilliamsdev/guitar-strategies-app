@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import { apiLog, dbLog, emailLog, invoiceLog } from "@/lib/logger";
+import { apiLog } from "@/lib/logger";
 import { withApiMiddleware } from "@/lib/api-wrapper";
 
 // Disable caching for this route
@@ -36,7 +36,7 @@ const adminSettingsSchema = z.object({
  * GET /api/admin/settings
  * Get current admin settings
  */
-async function handleGET(request: NextRequest) {
+async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
 

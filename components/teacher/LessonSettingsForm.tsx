@@ -33,7 +33,6 @@ export function LessonSettingsForm({
     advanceBookingDays: 21,
   },
   onSave,
-  loading = false,
   readonly = false,
 }: LessonSettingsFormProps) {
   const [formData, setFormData] = useState<LessonSettings>(settings);

@@ -28,6 +28,7 @@ export async function executeTransaction<T>(
 ): Promise<T> {
   const {
     timeout = DEFAULT_TRANSACTION_TIMEOUT,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     description = "Database transaction",
     retries = 0,
   } = options;

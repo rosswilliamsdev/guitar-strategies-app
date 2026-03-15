@@ -4,7 +4,6 @@ import { withApiMiddleware } from '@/lib/api-wrapper';
 import { log } from '@/lib/logger';
 import {
   createSuccessResponse,
-  createErrorResponse,
   handleApiError
 } from '@/lib/api-responses';
 

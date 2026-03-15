@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AlertCircle, CheckCircle, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { TeacherValidationResult, SetupStep } from "@/lib/teacher-validation";
+import type { TeacherValidationResult } from "@/lib/teacher-validation";
 interface ProfileValidationAlertProps {
   teacherId: string;
 }
@@ -16,24 +16,7 @@ export function ProfileValidationAlert({ teacherId }: ProfileValidationAlertProp
   const [dismissed, setDismissed] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    fetchValidation();
-
-    // Auto-refresh validation when user returns to the page
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchValidation();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [teacherId]);
-
-  const fetchValidation = async () => {
+  const fetchValidation = useCallback(async () => {
     try {
       // Add cache-busting timestamp to ensure fresh data
       const timestamp = Date.now();
@@ -78,7 +61,24 @@ export function ProfileValidationAlert({ teacherId }: ProfileValidationAlertProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [teacherId]);
+
+  useEffect(() => {
+    fetchValidation();
+
+    // Auto-refresh validation when user returns to the page
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchValidation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [teacherId, fetchValidation]);
 
   if (loading || !validation || dismissed) {
     return null;
@@ -240,24 +240,7 @@ export function ProfileValidationBadge({ teacherId }: ProfileValidationAlertProp
   const [validation, setValidation] = useState<TeacherValidationResult | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchValidation();
-
-    // Auto-refresh validation when user returns to the page
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchValidation();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [teacherId]);
-
-  const fetchValidation = async () => {
+  const fetchValidation = useCallback(async () => {
     try {
       // Add cache-busting timestamp to ensure fresh data
       const timestamp = Date.now();
@@ -277,7 +260,24 @@ export function ProfileValidationBadge({ teacherId }: ProfileValidationAlertProp
     } finally {
       setLoading(false);
     }
-  };
+  }, [teacherId]);
+
+  useEffect(() => {
+    fetchValidation();
+
+    // Auto-refresh validation when user returns to the page
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchValidation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [teacherId, fetchValidation]);
 
   if (loading || !validation) {
     return null;

@@ -60,7 +60,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       loading = false,
       disabled,
       children,
-      role,
       ...props
     },
     ref

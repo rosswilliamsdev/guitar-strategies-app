@@ -138,6 +138,7 @@ export function TimePicker({
           tabIndex={disabled ? -1 : 0}
           role="combobox"
           aria-expanded={isOpen}
+          aria-controls="time-picker-listbox"
           aria-haspopup="listbox"
           aria-disabled={disabled}
           onKeyDown={(e) => {

@@ -4,7 +4,7 @@
 
 import { PrismaClient, Prisma } from '@prisma/client';
 import { withRetry, databaseRetryOptions, criticalRetryOptions } from './retry';
-import { log, dbLog, invoiceLog, schedulerLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 // Import the existing database client configuration
 const globalForPrisma = globalThis as unknown as {

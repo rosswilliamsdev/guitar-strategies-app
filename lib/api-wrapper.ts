@@ -14,11 +14,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { apiLog } from '@/lib/logger';
 import { withCSRFProtection } from '@/lib/csrf';
-import { z, ZodSchema } from 'zod';
+import type { ZodSchema } from 'zod';
 import {
   createValidationErrorResponse,
-  createBadRequestResponse,
-  handleApiError
+  createBadRequestResponse
 } from '@/lib/api-responses';
 import { ValidatedRequest } from '@/lib/validated-request';
 
@@ -87,7 +86,7 @@ export function withApiMiddleware(
           }
 
           validatedBody = validation.data;
-        } catch (error) {
+        } catch {
           return createBadRequestResponse('Invalid JSON in request body');
         }
       }

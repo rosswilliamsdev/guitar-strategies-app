@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import { startOfMonth, startOfWeek, startOfDay, subDays } from "date-fns";
+import { startOfMonth, startOfDay, subDays } from "date-fns";
 import { log } from "@/lib/logger";
 // import { dashboardCache, CacheKeys } from '@/lib/cache'; // Temporarily disabled for connection pooling test
 

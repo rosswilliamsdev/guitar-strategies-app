@@ -5,7 +5,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { log, dbLog } from '@/lib/logger';
+import { log } from '@/lib/logger';
 
 /**
  * Global type definition for Prisma client to prevent multiple instances

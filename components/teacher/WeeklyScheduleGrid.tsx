@@ -32,7 +32,6 @@ export function WeeklyScheduleGrid({
   availability = [],
   onChange,
   onSave,
-  loading = false,
   readonly = false,
 }: WeeklyScheduleGridProps) {
   const [localAvailability, setLocalAvailability] = useState<

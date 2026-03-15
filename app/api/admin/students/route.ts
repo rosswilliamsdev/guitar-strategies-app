@@ -1,19 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcrypt";
-import { apiLog, dbLog, emailLog } from '@/lib/logger';
 import { withAdminValidation } from '@/lib/api-wrapper';
-import { createStudentSchema, paginationSchema } from '@/lib/validations';
+import { createStudentSchema } from '@/lib/validations';
 import {
   createSuccessResponse,
   createErrorResponse,
-  createValidationErrorResponse,
   createConflictResponse,
   handleApiError
 } from '@/lib/api-responses';
-import { getValidatedBody, getValidatedQuery } from '@/lib/validated-request';
+import { getValidatedBody } from '@/lib/validated-request';
 import { sendEmail } from '@/lib/email';
 import { renderEmailWithFallback } from '@/lib/email-templates';
 import { createDefaultEmailPreferences } from '@/lib/email-preferences';

@@ -6,11 +6,10 @@ import Link from "next/link";
 import type { StudentProfile, User } from "@/types";
 
 interface StudentListProps {
-  teacherId: string;
   students: (StudentProfile & { user: User })[];
 }
 
-export function StudentList({ teacherId, students }: StudentListProps) {
+export function StudentList({ students }: StudentListProps) {
   if (students.length === 0) {
     return (
       <Card className="p-8 text-center">

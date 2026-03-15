@@ -23,13 +23,11 @@ import Placeholder from "@tiptap/extension-placeholder";
 import {
   Bold,
   Italic,
-  Underline,
   List,
   ListOrdered,
   Quote,
   Undo,
   Redo,
-  Type,
 } from "lucide-react";
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
