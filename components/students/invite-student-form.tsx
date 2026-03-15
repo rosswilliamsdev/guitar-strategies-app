@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, UserPlus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { log } from "@/lib/logger";
-
 interface InviteStudentFormProps {
   teacherId: string;
   teacherName: string;
@@ -38,7 +36,7 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
     setSuccess("");
 
     try {
-      log.info('Inviting student...', {
+      console.log('Inviting student...', {
         name,
         email,
         teacherId,
@@ -64,7 +62,7 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
 
       const data = await response.json();
 
-      log.info('Student invite response', {
+      console.log('Student invite response', {
         status: response.status,
         ok: response.ok,
         data
@@ -91,7 +89,7 @@ export function InviteStudentForm({ teacherId, teacherName }: InviteStudentFormP
         router.refresh();
       }, 2000);
     } catch (error: unknown) {
-      log.error('Error inviting student', {
+      console.error('Error inviting student', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

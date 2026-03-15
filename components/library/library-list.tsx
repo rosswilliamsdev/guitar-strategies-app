@@ -33,8 +33,6 @@ import {
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { FilePreviewModal } from "./file-preview-modal";
-import { log } from "@/lib/logger";
-
 interface LibraryItem {
   id: string;
   title: string;
@@ -114,7 +112,7 @@ async function handleDownload(item: LibraryItem) {
     link.click();
     document.body.removeChild(link);
   } catch (error) {
-    log.error("Error downloading file:", {
+    console.error("Error downloading file:", {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -388,7 +386,7 @@ export function LibraryList({ items, studentView = false }: LibraryListProps) {
         // Small delay between downloads to avoid overwhelming the browser
         await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (error) {
-        log.error("Error downloading file:", {
+        console.error("Error downloading file:", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
           fileName: item.title,
@@ -412,7 +410,7 @@ export function LibraryList({ items, studentView = false }: LibraryListProps) {
       // Refresh the page to update the list
       window.location.reload();
     } catch (error) {
-      log.error("Error deleting files:", {
+      console.error("Error deleting files:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

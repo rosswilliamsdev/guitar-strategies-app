@@ -8,8 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertCircle, Save, Plus, Eye, Code } from "lucide-react";
-import { log } from "@/lib/logger";
-
 const EMAIL_TYPES = [
   { value: 'STUDENT_WELCOME', label: 'Student Welcome', description: 'Sent when a teacher invites a new student' },
   { value: 'LESSON_BOOKING', label: 'Lesson Booking', description: 'Sent when a lesson is booked' },
@@ -75,7 +73,7 @@ export function EmailTemplatesManager() {
         setTemplates(data.data.templates || []);
       }
     } catch (error) {
-      log.error('Error loading templates', {
+      console.error('Error loading templates', {
         error: error instanceof Error ? error.message : String(error)
       });
     }

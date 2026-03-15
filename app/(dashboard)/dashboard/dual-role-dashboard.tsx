@@ -2,7 +2,7 @@
 
 import { User } from "next-auth";
 import { TeacherDashboard, TeacherDashboardProps } from "@/components/dashboard/teacher-dashboard";
-import { AdminStats, formatRelativeTime } from "@/lib/dashboard-stats";
+import { AdminStats, formatRelativeTime } from "@/types/dashboard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

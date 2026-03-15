@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Plus, X, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { log } from '@/lib/logger';
-
 interface ChecklistItem {
   id?: string;
   title: string;
@@ -61,7 +59,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
       setItems(data.items || []);
       setFormData({ title: data.title });
     } catch (error) {
-      log.error('Error fetching checklist items:', {
+      console.error('Error fetching checklist items:', {
         error: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -165,7 +163,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
 
       // Delete items marked for deletion
       if (itemsToDelete.length > 0) {
-        log.info('Deleting student checklist items', {
+        console.log('Deleting student checklist items', {
           checklistId: savedChecklist.id,
           itemCount: itemsToDelete.length
         });
@@ -216,7 +214,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
       });
 
       if (itemPromises.length > 0) {
-        log.info('Saving student checklist items', {
+        console.log('Saving student checklist items', {
           checklistId: savedChecklist.id,
           itemCount: items.length
         });
@@ -240,7 +238,7 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
       // Use window.location for hard navigation to bypass all caches
       window.location.href = `/curriculums/my/${savedChecklist.id}`;
     } catch (error) {
-      log.error('Error saving checklist:', {
+      console.error('Error saving checklist:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

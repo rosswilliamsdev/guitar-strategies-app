@@ -4,38 +4,9 @@ import { startOfMonth, startOfWeek, startOfDay, subDays } from "date-fns";
 import { log } from "@/lib/logger";
 // import { dashboardCache, CacheKeys } from '@/lib/cache'; // Temporarily disabled for connection pooling test
 
-export interface AdminStats {
-  totalUsers: number;
-  activeTeachers: number;
-  activeStudents: number;
-  totalLessons: number;
-  lessonsThisMonth: number;
-  revenueThisMonth: number;
-  systemHealth: {
-    uptime: number;
-    healthIssues: number;
-  };
-  recentActivity: Array<{
-    id: string;
-    type:
-      | "user_created"
-      | "lesson_completed"
-      | "teacher_joined"
-      | "system_event"
-      | "invoice_generated"
-      | "email_sent";
-    description: string;
-    timestamp: Date | string;
-    userEmail?: string;
-  }>;
-}
-
-export interface UserStats {
-  // For non-specific role users or fallback
-  totalUsers: number;
-  platformActivity: string;
-  systemStatus: string;
-}
+// Re-export types and utilities from shared location (safe for client components)
+export type { AdminStats, UserStats } from "@/types/dashboard";
+export { formatRelativeTime } from "@/types/dashboard";
 
 /**
  * Get comprehensive admin statistics
@@ -605,28 +576,3 @@ export function formatCurrency(cents: number): string {
 /**
  * Format relative time for activity feed
  */
-export function formatRelativeTime(date: Date | string): string {
-  const now = new Date();
-  const targetDate = typeof date === "string" ? new Date(date) : date;
-
-  // Check if date is valid
-  if (isNaN(targetDate.getTime())) {
-    return "Unknown time";
-  }
-
-  const diff = now.getTime() - targetDate.getTime();
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (days > 0) {
-    return `${days} day${days > 1 ? "s" : ""} ago`;
-  } else if (hours > 0) {
-    return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-  } else if (minutes > 0) {
-    return `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
-  } else {
-    return "Just now";
-  }
-}

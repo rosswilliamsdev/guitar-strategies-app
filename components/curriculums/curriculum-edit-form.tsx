@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Plus, X } from "lucide-react";
 import Link from "next/link";
-import { log } from '@/lib/logger';
-
 interface ChecklistItem {
   id?: string;
   title: string;
@@ -150,7 +148,7 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
         section.items.map(item => item.id)
       );
 
-      log.info('Deleting existing items', {
+      console.log('Deleting existing items', {
         curriculumId: curriculum.id,
         itemCount: existingItemIds.length
       });
@@ -170,7 +168,7 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
         const deleteSuccessCount = deleteResults.filter(r => r.success).length;
         const deleteFailCount = deleteResults.filter(r => !r.success).length;
 
-        log.info('Finished deleting items', {
+        console.log('Finished deleting items', {
           total: existingItemIds.length,
           success: deleteSuccessCount,
           failed: deleteFailCount
@@ -185,7 +183,7 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
       let sectionId = curriculum.sections[0]?.id;
 
       if (!sectionId) {
-        log.info('Creating new section for items', {
+        console.log('Creating new section for items', {
           curriculumId: curriculum.id
         });
 
@@ -203,10 +201,10 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
           const sectionData = await sectionResponse.json();
           // API returns { section: {...} }
           sectionId = sectionData.section?.id || sectionData.id;
-          log.info('Section created', { sectionId });
+          console.log('Section created', { sectionId });
         } else {
           const errorData = await sectionResponse.json();
-          log.error('Failed to create section', {
+          console.error('Failed to create section', {
             status: sectionResponse.status,
             error: errorData
           });
@@ -216,7 +214,7 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
 
       // Add all items in parallel
       if (sectionId && items.length > 0) {
-        log.info('Creating items in parallel', {
+        console.log('Creating items in parallel', {
           sectionId,
           itemCount: items.length
         });
@@ -248,9 +246,9 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
         // Log results
         results.forEach(result => {
           if (result.success) {
-            log.info('Item created successfully', { title: result.title });
+            console.log('Item created successfully', { title: result.title });
           } else {
-            log.error('Failed to create item', {
+            console.error('Failed to create item', {
               title: result.title,
               status: result.status,
               error: result.error
@@ -258,7 +256,7 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
           }
         });
 
-        log.info('Finished adding items', {
+        console.log('Finished adding items', {
           total: items.length,
           success: successCount,
           failed: failCount
@@ -271,7 +269,7 @@ export function CurriculumEditForm({ curriculum }: CurriculumEditFormProps) {
 
       router.push(`/curriculums/${curriculum.id}`);
     } catch (error) {
-      log.error('Error updating checklist:', {
+      console.error('Error updating checklist:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

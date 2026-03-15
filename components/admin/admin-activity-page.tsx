@@ -7,8 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdminActivityView } from "@/components/admin/admin-activity-view";
 import { AdminStats } from "@/lib/dashboard-stats";
 import { Loader2, Filter, DollarSign, RefreshCw } from "lucide-react";
-import { log } from '@/lib/logger';
-
 interface ActivityFilters {
   dateRange: 'today' | 'week' | 'month' | 'all';
   activityType: 'user_created' | 'lesson_completed' | 'teacher_joined' | 'system_event' | 'invoice_generated' | 'email_sent' | 'all';
@@ -43,7 +41,7 @@ export function AdminActivityPage() {
       setActivities(data.activities);
       setTotalCount(data.totalCount);
     } catch (error) {
-      log.error('Error fetching activity:', {
+      console.error('Error fetching activity:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -75,7 +73,7 @@ export function AdminActivityPage() {
       // Refresh activity after job execution
       await fetchActivity();
     } catch (error) {
-      log.error('Error triggering invoice generation:', {
+      console.error('Error triggering invoice generation:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

@@ -18,8 +18,6 @@ import {
   Trophy,
 } from "lucide-react";
 import Link from "next/link";
-import { log } from '@/lib/logger';
-
 interface ChecklistItem {
   id: string;
   title: string;
@@ -92,20 +90,20 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       });
       if (response.ok) {
         const data = await response.json();
-        log.info('Fetched student checklist detail', {
+        console.log('Fetched student checklist detail', {
           checklistId,
           title: data.title,
           itemCount: data.items?.length || 0,
         });
         setChecklist(data);
       } else {
-        log.error('Failed to fetch student checklist', {
+        console.error('Failed to fetch student checklist', {
           status: response.status,
           checklistId,
         });
       }
     } catch (error) {
-      log.error('Error fetching checklist:', {
+      console.error('Error fetching checklist:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -158,7 +156,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         fetchChecklist();
       }
     } catch (error) {
-      log.error('Error toggling item:', {
+      console.error('Error toggling item:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -174,18 +172,18 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
       });
 
       if (response.ok) {
-        log.info('Deleted checklist item', { itemId, checklistId });
+        console.log('Deleted checklist item', { itemId, checklistId });
         await fetchChecklist();
       } else {
         const errorData = await response.json();
-        log.error('Failed to delete checklist item', {
+        console.error('Failed to delete checklist item', {
           itemId,
           status: response.status,
           error: errorData
         });
       }
     } catch (error) {
-      log.error('Error deleting item:', {
+      console.error('Error deleting item:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -205,7 +203,7 @@ export function ChecklistDetail({ checklistId }: ChecklistDetailProps) {
         router.push("/curriculums");
       }
     } catch (error) {
-      log.error('Error deleting checklist:', {
+      console.error('Error deleting checklist:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

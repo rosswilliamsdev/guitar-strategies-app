@@ -13,8 +13,6 @@ import {
   CheckSquare,
 } from "lucide-react";
 import { YouTubeEmbed } from "@/components/ui/youtube-embed";
-import { log } from "@/lib/logger";
-
 interface Lesson {
   id: string;
   date: string;
@@ -120,10 +118,10 @@ export function LessonDetails({
                     }
 
                     // Item not found in either location
-                    log.warn(`Progress item not found: ${itemId}`);
+                    console.warn(`Progress item not found: ${itemId}`);
                     return null;
                   } catch (err) {
-                    log.error(`Error fetching progress item ${itemId}:`, {
+                    console.error(`Error fetching progress item ${itemId}:`, {
                       error: err instanceof Error ? err.message : String(err),
                       stack: err instanceof Error ? err.stack : undefined,
                     });
@@ -140,7 +138,7 @@ export function LessonDetails({
               setChecklistItems(validItems);
             }
           } catch (parseError) {
-            log.error("Error parsing checklist items:", {
+            console.error("Error parsing checklist items:", {
               error:
                 parseError instanceof Error
                   ? parseError.message
@@ -151,7 +149,7 @@ export function LessonDetails({
         }
       } catch (error) {
         setError("Failed to load lesson details");
-        log.error("Error fetching lesson:", {
+        console.error("Error fetching lesson:", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
         });

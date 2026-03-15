@@ -22,8 +22,6 @@ import {
 import { TeacherValidationResult, SetupStep } from "@/lib/teacher-validation";
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
-import { log, emailLog, invoiceLog, schedulerLog } from "@/lib/logger";
-
 interface TeacherSetupWizardProps {
   teacherId: string;
   initialValidation?: TeacherValidationResult;
@@ -78,7 +76,7 @@ export function TeacherSetupWizard({
         setValidation(data);
       }
     } catch (error) {
-      log.error("Failed to fetch validation:", {
+      console.error("Failed to fetch validation:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -103,7 +101,7 @@ export function TeacherSetupWizard({
         });
       }
     } catch (error) {
-      log.error("Failed to fetch current data:", {
+      console.error("Failed to fetch current data:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -128,7 +126,7 @@ export function TeacherSetupWizard({
       }
       return false;
     } catch (error) {
-      log.error("Failed to save profile:", {
+      console.error("Failed to save profile:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -153,7 +151,7 @@ export function TeacherSetupWizard({
       }
       return false;
     } catch (error) {
-      log.error("Failed to save payment methods:", {
+      console.error("Failed to save payment methods:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

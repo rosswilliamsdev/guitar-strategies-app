@@ -30,8 +30,6 @@ import type {
   InvoiceItem,
   InvoiceUpdateRequest,
 } from "@/types";
-import { log } from "@/lib/logger";
-
 interface InvoiceEditFormProps {
   invoice: Invoice & {
     student: (StudentProfile & { user: User }) | null;
@@ -105,7 +103,7 @@ export function InvoiceEditForm({
           }
         }
       } catch (error) {
-        log.error("Error loading teacher rate:", {
+        console.error("Error loading teacher rate:", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
         });

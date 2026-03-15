@@ -33,7 +33,6 @@ import {
 import { WeeklyScheduleGrid } from "@/components/teacher/WeeklyScheduleGrid";
 import { LessonSettingsForm } from "@/components/teacher/LessonSettingsForm";
 import { PasswordStrengthMeter } from "@/components/ui/password-strength-meter";
-import { log } from "@/lib/logger";
 import type {
   Role,
   TeacherProfileData,
@@ -112,18 +111,18 @@ export function TeacherSettingsForm({
   // Load current profile data
   const loadProfileData = async (): Promise<void> => {
     try {
-      log.info("Loading profile data...");
+      console.log("Loading profile data...");
       const response = await fetch("/api/settings/teacher", {
         credentials: "include",
         cache: "no-store",
       });
-      log.info("Profile data response", {
+      console.log("Profile data response", {
         status: response.status,
         ok: response.ok,
       });
       if (response.ok) {
         const data: TeacherProfileData = await response.json();
-        log.info("Loaded profile data from API", { data });
+        console.log("Loaded profile data from API", { data });
         setName(data.name || "");
         setEmail(data.email || "");
         setBio(data.bio || "");
@@ -132,15 +131,15 @@ export function TeacherSettingsForm({
         setVenmoHandle(data.venmoHandle || "");
         setPaypalEmail(data.paypalEmail || "");
         setZelleEmail(data.zelleEmail || "");
-        log.info("Profile state updated with new data");
+        console.log("Profile state updated with new data");
       } else {
-        log.error("Failed to load profile data", {
+        console.error("Failed to load profile data", {
           status: response.status,
           statusText: response.statusText,
         });
       }
     } catch (error) {
-      log.error("Error loading profile data:", {
+      console.error("Error loading profile data:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -175,7 +174,7 @@ export function TeacherSettingsForm({
       setEmailPrefs(data.preferences);
       return data.preferences;
     } catch (error) {
-      log.error("Failed to update email preferences", {
+      console.error("Failed to update email preferences", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -212,7 +211,7 @@ export function TeacherSettingsForm({
   const loadSchedulingData = async () => {
     setSchedulingLoading(true);
     try {
-      log.info("Loading scheduling data...");
+      console.log("Loading scheduling data...");
 
       // Load availability with aggressive cache-busting
       const timestamp = Date.now();
@@ -228,21 +227,21 @@ export function TeacherSettingsForm({
         },
       );
 
-      log.info("Availability response received", {
+      console.log("Availability response received", {
         status: availabilityResponse.status,
         ok: availabilityResponse.ok,
       });
 
       if (availabilityResponse.ok) {
         const availabilityData = await availabilityResponse.json();
-        log.info("Availability data parsed", {
+        console.log("Availability data parsed", {
           slotCount: availabilityData.data?.availability?.length || 0,
           slots: availabilityData.data?.availability,
         });
         setAvailability(availabilityData.data?.availability || []);
       } else {
         const errorText = await availabilityResponse.text();
-        log.error("Failed to load availability:", {
+        console.error("Failed to load availability:", {
           status: availabilityResponse.status,
           error: errorText,
           statusText: availabilityResponse.statusText,
@@ -263,9 +262,9 @@ export function TeacherSettingsForm({
         setLessonSettings(settingsData.settings);
       }
 
-      log.info("Scheduling data loaded successfully");
+      console.log("Scheduling data loaded successfully");
     } catch (error) {
-      log.error("Error loading scheduling data:", {
+      console.error("Error loading scheduling data:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -280,7 +279,7 @@ export function TeacherSettingsForm({
     setSchedulingLoading(true);
 
     try {
-      log.info("Saving availability...", {
+      console.log("Saving availability...", {
         slotCount: newAvailability.length,
         slots: newAvailability,
       });
@@ -292,7 +291,7 @@ export function TeacherSettingsForm({
         cache: "no-store",
       });
 
-      log.info("Availability save response", {
+      console.log("Availability save response", {
         status: response.status,
         ok: response.ok,
         statusText: response.statusText,
@@ -300,7 +299,7 @@ export function TeacherSettingsForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        log.error("Availability save failed", {
+        console.error("Availability save failed", {
           status: response.status,
           error: errorData,
         });
@@ -309,7 +308,7 @@ export function TeacherSettingsForm({
 
       const data = await response.json();
 
-      log.info("Availability saved successfully", {
+      console.log("Availability saved successfully", {
         returnedSlots: data.data?.availability?.length || 0,
         data: data,
       });
@@ -318,7 +317,7 @@ export function TeacherSettingsForm({
       // This prevents race conditions with parent re-renders clearing child messages
       return data.data?.availability || [];
     } catch (error: unknown) {
-      log.error("Error saving availability", {
+      console.error("Error saving availability", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -381,11 +380,11 @@ export function TeacherSettingsForm({
         zelleEmail: zelleEmail.trim() === "" ? null : zelleEmail,
       };
 
-      log.info("Submitting teacher profile update", { formData });
+      console.log("Submitting teacher profile update", { formData });
 
       const validatedData = teacherProfileSchema.parse(formData);
 
-      log.info("Validated data", { validatedData });
+      console.log("Validated data", { validatedData });
 
       const response = await fetch("/api/settings/teacher", {
         method: "PUT",
@@ -395,32 +394,32 @@ export function TeacherSettingsForm({
         body: JSON.stringify(validatedData),
       });
 
-      log.info("API response", {
+      console.log("API response", {
         status: response.status,
         ok: response.ok,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        log.error("Profile update failed", { errorData });
+        console.error("Profile update failed", { errorData });
         throw new Error(errorData.error || "Failed to update profile");
       }
 
       const responseData = await response.json();
-      log.info("Profile update successful", { responseData });
+      console.log("Profile update successful", { responseData });
 
       setSuccess("Profile updated successfully!");
       setTimeout(() => setSuccess(""), 3000);
 
       // Reload the profile data to show updated values
-      log.info("Reloading profile data after save...");
+      console.log("Reloading profile data after save...");
       await loadProfileData();
 
       // Don't reset the form - we want to keep the saved values displayed
       // The loadProfileData() call above already updated the form state with fresh data
-      log.info("Profile update complete");
+      console.log("Profile update complete");
     } catch (error) {
-      log.error("Profile update error", {
+      console.error("Profile update error", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

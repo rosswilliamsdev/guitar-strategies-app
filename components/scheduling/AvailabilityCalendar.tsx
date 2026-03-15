@@ -23,8 +23,6 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InlineLoading } from "@/components/ui/loading-spinner";
-import { log } from "@/lib/logger";
-
 // Helper function to format timezone names for display
 //TODO: extract this utility function. It is also used in teacher-schedule-view.tsx
 const formatTimezone = (timezone: string): string => {
@@ -240,12 +238,12 @@ export function AvailabilityCalendar({
         `endDate=${endDate.toISOString()}&` +
         `timezone=${timezone}`;
 
-      log.info("🔗 Fetching availability from:", { url });
+      console.log("🔗 Fetching availability from:", { url });
       const response = await fetch(url);
 
       if (!response.ok) {
         const errorData = await response.json();
-        log.error("❌ Availability API error:", {
+        console.error("❌ Availability API error:", {
           error:
             errorData instanceof Error ? errorData.message : String(errorData),
           stack: errorData instanceof Error ? errorData.stack : undefined,
@@ -254,7 +252,7 @@ export function AvailabilityCalendar({
       }
 
       const data = await response.json();
-      log.info("✅ Availability data received:", data);
+      console.log("✅ Availability data received:", data);
       console.log("🔍 Data structure:", {
         hasSlots: "slots" in data,
         slotsType: typeof data.slots,
@@ -281,11 +279,11 @@ export function AvailabilityCalendar({
         }),
       );
 
-      log.info("🔍 Parsed slots:", { totalSlots: parsedSlots.length });
-      log.info("🔍 Available slots:", {
+      console.log("🔍 Parsed slots:", { totalSlots: parsedSlots.length });
+      console.log("🔍 Available slots:", {
         availableSlots: parsedSlots.filter((s: TimeSlot) => s.available).length,
       });
-      log.info("🔍 Sample slots:", { sampleSlots: parsedSlots.slice(0, 3) });
+      console.log("🔍 Sample slots:", { sampleSlots: parsedSlots.slice(0, 3) });
 
       setSlots(parsedSlots);
     } catch (error: unknown) {
@@ -423,7 +421,7 @@ export function AvailabilityCalendar({
     // Debug logging for specific days
     if (daySlots.length > 0 || date.getDate() === 1) {
       // Sep 1st or any day with slots
-      log.info(`🔍 Slots for ${date.toDateString()}:`, {
+      console.log(`🔍 Slots for ${date.toDateString()}:`, {
         slotsCount: daySlots.length,
         sampleSlots: daySlots.slice(0, 2),
       });

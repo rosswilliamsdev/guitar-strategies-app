@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { FileText, Download, Send, CheckCircle } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import { log, emailLog, invoiceLog } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 interface InvoiceData {
@@ -154,7 +153,7 @@ export function InvoiceTemplate({
       // Download the PDF
       pdf.save(`${invoice.invoiceNumber}.pdf`);
     } catch (error) {
-      log.error("Error generating PDF:", {
+      console.error("Error generating PDF:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -181,7 +180,7 @@ export function InvoiceTemplate({
         alert(result.error || "Failed to send invoice");
       }
     } catch (error) {
-      log.error("Error sending invoice:", {
+      console.error("Error sending invoice:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

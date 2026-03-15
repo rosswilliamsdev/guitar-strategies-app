@@ -12,8 +12,6 @@ import {
 } from "@/lib/confetti";
 import { Edit, ArrowLeft, Trophy, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { log } from "@/lib/logger";
-
 interface CurriculumItem {
   id: string;
   title: string;
@@ -117,7 +115,7 @@ export function CurriculumDetail({
         // API returns { curriculum: {...} }, extract the curriculum object
         const curriculumData = data.curriculum || data;
 
-        log.info("Fetched curriculum detail", {
+        console.log("Fetched curriculum detail", {
           curriculumId,
           title: curriculumData.title,
           sectionCount: curriculumData.sections?.length || 0,
@@ -131,13 +129,13 @@ export function CurriculumDetail({
 
         setCurriculum(curriculumData);
       } else {
-        log.error("Failed to fetch curriculum", {
+        console.error("Failed to fetch curriculum", {
           status: response.status,
           curriculumId,
         });
       }
     } catch (error) {
-      log.error("Error fetching curriculum:", {
+      console.error("Error fetching curriculum:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -156,7 +154,7 @@ export function CurriculumDetail({
       });
 
       if (response.ok) {
-        log.info("Curriculum deleted successfully", {
+        console.log("Curriculum deleted successfully", {
           curriculumId,
           curriculumTitle: curriculum.title,
         });
@@ -164,7 +162,7 @@ export function CurriculumDetail({
         router.push("/curriculums");
       } else {
         const errorData = await response.json();
-        log.error("Failed to delete curriculum", {
+        console.error("Failed to delete curriculum", {
           status: response.status,
           error: errorData.error,
           curriculumId,
@@ -172,7 +170,7 @@ export function CurriculumDetail({
         alert("Failed to delete curriculum. Please try again.");
       }
     } catch (error) {
-      log.error("Error deleting curriculum:", {
+      console.error("Error deleting curriculum:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         curriculumId,
@@ -221,7 +219,7 @@ export function CurriculumDetail({
         fetchCurriculum();
       }
     } catch (error) {
-      log.error("Error updating progress:", {
+      console.error("Error updating progress:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

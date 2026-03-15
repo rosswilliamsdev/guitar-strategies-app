@@ -33,8 +33,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log } from "@/lib/logger";
-
 // Utility function to strip HTML tags and return plain text
 const stripHtml = (html: string): string => {
   const tmp = document.createElement("DIV");
@@ -110,7 +108,7 @@ export function LessonList({ userRole }: LessonListProps) {
         const data = await response.json();
 
         // Log the actual response structure for debugging
-        log.info("Lessons API response received", {
+        console.log("Lessons API response received", {
           hasData: !!data,
           hasDataField: !!data.data,
           hasLessonsField: !!data.lessons,
@@ -124,7 +122,7 @@ export function LessonList({ userRole }: LessonListProps) {
           ? data.data
           : (data.lessons || []);
 
-        log.info("Lessons array extracted", {
+        console.log("Lessons array extracted", {
           count: lessonsArray.length,
           isArray: Array.isArray(lessonsArray),
           firstLessonDate: lessonsArray[0]?.date,
@@ -137,7 +135,7 @@ export function LessonList({ userRole }: LessonListProps) {
         setLessons(sortedLessons);
       } catch (error) {
         setError("Failed to load lessons");
-        log.error("Error fetching lessons:", {
+        console.error("Error fetching lessons:", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
         });
@@ -184,7 +182,7 @@ export function LessonList({ userRole }: LessonListProps) {
       setConfirmCancelLesson(null);
       setConfirmDeleteLesson(null);
     } catch (error: unknown) {
-      log.error("Error cancelling lesson:", {
+      console.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -215,7 +213,7 @@ export function LessonList({ userRole }: LessonListProps) {
   const filteredLessons = useMemo(() => {
     // Log the filtering process for debugging
     const completedLessons = lessons.filter(l => l.status === "COMPLETED");
-    log.info("Filtering lessons", {
+    console.log("Filtering lessons", {
       total: lessons.length,
       completed: completedLessons.length,
       dateFilter,
@@ -294,7 +292,7 @@ export function LessonList({ userRole }: LessonListProps) {
 
       // Log why lessons are filtered out
       if (lesson.status === "COMPLETED" && !passes) {
-        log.info("Completed lesson filtered out", {
+        console.log("Completed lesson filtered out", {
           lessonId: lesson.id,
           date: lesson.date,
           student: lesson.student.user.name,

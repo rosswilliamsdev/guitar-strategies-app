@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Save, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { log } from "@/lib/logger";
 import { useToast } from "@/hooks/use-toast";
 
 interface CreateStudentFormProps {
@@ -94,7 +93,7 @@ export function CreateStudentForm({
 
       router.push("/admin/students");
     } catch (error) {
-      log.error("Error creating student:", {
+      console.error("Error creating student:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

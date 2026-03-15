@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { User, Calendar, Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { log } from "@/lib/logger";
 import Link from "next/link";
 
 interface UpcomingLesson {
@@ -67,7 +66,7 @@ export function LessonManagementModal({
       onUpdate();
       onClose();
     } catch (error) {
-      log.error("Error cancelling lesson:", {
+      console.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

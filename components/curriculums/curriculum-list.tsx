@@ -12,8 +12,6 @@ import {
   Music,
   Trash2,
 } from "lucide-react";
-import { log} from "@/lib/logger";
-
 interface CurriculumSection {
   id: string;
   title: string;
@@ -108,7 +106,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
       });
       if (response.ok) {
         const data = await response.json();
-        log.info("Fetched curriculums from API", {
+        console.log("Fetched curriculums from API", {
           count: data.curriculums?.length || 0,
           curriculums: data.curriculums?.map((c: Curriculum) => ({
             id: c.id,
@@ -125,13 +123,13 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
         // API returns { curriculums: [...] }, extract the array
         setCurriculums(data.curriculums || []);
       } else {
-        log.error("Failed to fetch curriculums", {
+        console.error("Failed to fetch curriculums", {
           status: response.status,
           statusText: response.statusText,
         });
       }
     } catch (error) {
-      log.error("Error fetching curriculums:", {
+      console.error("Error fetching curriculums:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -151,7 +149,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
       });
 
       if (response.ok) {
-        log.info("Curriculum deleted successfully", {
+        console.log("Curriculum deleted successfully", {
           curriculumId,
           curriculumTitle,
         });
@@ -159,7 +157,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
         setCurriculums((prev) => prev.filter((c) => c.id !== curriculumId));
       } else {
         const errorData = await response.json();
-        log.error("Failed to delete curriculum", {
+        console.error("Failed to delete curriculum", {
           status: response.status,
           error: errorData.error,
           curriculumId,
@@ -167,7 +165,7 @@ export function CurriculumList({ userRole }: CurriculumListProps) {
         alert("Failed to delete curriculum. Please try again.");
       }
     } catch (error) {
-      log.error("Error deleting curriculum:", {
+      console.error("Error deleting curriculum:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         curriculumId,

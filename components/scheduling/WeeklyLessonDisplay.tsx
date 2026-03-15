@@ -24,8 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { log } from '@/lib/logger';
-
 interface WeeklyLessonDisplayProps {
   recurringSlots: SlotWithDetails[]
   teacherName: string
@@ -80,7 +78,7 @@ export function WeeklyLessonDisplay({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        log.error('Cancel recurring lessons error response:', {
+        console.error('Cancel recurring lessons error response:', {
         error: errorData instanceof Error ? errorData.message : String(errorData),
         stack: errorData instanceof Error ? errorData.stack : undefined
       });
@@ -97,7 +95,7 @@ export function WeeklyLessonDisplay({
       router.refresh()
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to cancel recurring lessons'
-      log.error('Error cancelling recurring lessons:', {
+      console.error('Error cancelling recurring lessons:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

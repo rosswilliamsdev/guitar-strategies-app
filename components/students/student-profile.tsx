@@ -35,7 +35,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log } from "@/lib/logger";
 import {
   updateStudentByTeacherSchema,
   UpdateStudentByTeacherData,
@@ -231,7 +230,7 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
         description: "Student profile updated successfully",
       });
     } catch (error) {
-      log.error("Error saving student profile:", {
+      console.error("Error saving student profile:", {
         error: error instanceof Error ? error.message : String(error),
       });
       toast({
@@ -345,7 +344,7 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
         description: "Weekly slot cancelled successfully",
       });
     } catch (error) {
-      log.error("Error cancelling slot:", {
+      console.error("Error cancelling slot:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -381,7 +380,7 @@ export function StudentProfile({ studentId }: StudentProfileProps) {
         setData(newData);
       }
     } catch (error: unknown) {
-      log.error("Error cancelling lesson:", {
+      console.error("Error cancelling lesson:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

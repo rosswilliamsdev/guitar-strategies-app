@@ -36,8 +36,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { log } from "@/lib/logger";
-
 interface Recommendation {
   id: string;
   title: string;
@@ -131,7 +129,7 @@ export function RecommendationsList({
         throw new Error("Failed to delete recommendation");
       }
     } catch (error) {
-      log.error("Error deleting recommendation:", {
+      console.error("Error deleting recommendation:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

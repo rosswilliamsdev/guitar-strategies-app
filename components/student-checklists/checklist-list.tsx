@@ -12,8 +12,6 @@ import {
   Trophy,
   Star,
 } from "lucide-react";
-import { log } from "@/lib/logger";
-
 interface ChecklistItem {
   id: string;
   title: string;
@@ -84,20 +82,20 @@ export function StudentChecklistList() {
           // Fallback for direct array response
           setChecklists(data);
         } else {
-          log.warn("API returned unexpected data structure for checklists:", {
+          console.warn("API returned unexpected data structure for checklists:", {
             data,
           });
           setChecklists([]);
         }
       } else {
-        log.error("Failed to fetch checklists:", {
+        console.error("Failed to fetch checklists:", {
           status: response.status,
           statusText: response.statusText,
         });
         setChecklists([]);
       }
     } catch (error) {
-      log.error("Error fetching checklists:", {
+      console.error("Error fetching checklists:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

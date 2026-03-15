@@ -33,7 +33,6 @@ import {
   Save,
   Mail
 } from "lucide-react";
-import { log, emailLog, invoiceLog, schedulerLog } from '@/lib/logger';
 import { updateStudentByTeacherSchema, UpdateStudentByTeacherData } from "@/lib/validations";
 
 export interface Student {
@@ -108,7 +107,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         window.location.reload();
       }
     } catch (error) {
-      log.error('Error toggling student status:', {
+      console.error('Error toggling student status:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });
@@ -139,7 +138,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
       }
 
       const result = await response.json();
-      emailLog.info("Invitation sent from student details modal", {
+      console.log("Invitation sent from student details modal", {
         studentId: studentToView.studentProfile.id,
         flowType: result.flowType,
       });
@@ -155,7 +154,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         setInviteButtonDisabled(false);
       }, 5000);
     } catch (error) {
-      emailLog.error("Error sending invitation from student details modal", {
+      console.error("Error sending invitation from student details modal", {
         error: error instanceof Error ? error.message : String(error),
         studentId: studentToView?.studentProfile?.id,
       });
@@ -235,7 +234,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
 
       window.location.reload();
     } catch (error) {
-      log.error("Error saving student profile:", {
+      console.error("Error saving student profile:", {
         error: error instanceof Error ? error.message : String(error),
       });
       toast({
@@ -274,7 +273,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         toast.error(error instanceof Error ? error.message : "Failed to delete student");
       }
     } catch (error) {
-      log.error('Error deleting student:', {
+      console.error('Error deleting student:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined
       });

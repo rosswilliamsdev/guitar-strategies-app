@@ -39,8 +39,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
-import { log } from "@/lib/logger";
-
 interface Lesson {
   id: string;
   date: Date;
@@ -214,7 +212,7 @@ export function ManageLessons({ lessons }: ManageLessonsProps) {
         toast.error(error instanceof Error ? error.message : "Failed to delete lesson");
       }
     } catch (error) {
-      log.error("Error deleting lesson:", {
+      console.error("Error deleting lesson:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -252,7 +250,7 @@ export function ManageLessons({ lessons }: ManageLessonsProps) {
         toast.error(error instanceof Error ? error.message : "Failed to delete lessons");
       }
     } catch (error) {
-      log.error("Error deleting lessons:", {
+      console.error("Error deleting lessons:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

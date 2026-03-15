@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
-import { log } from "@/lib/logger";
-
 interface UpcomingLesson {
   id: string;
   date: Date;
@@ -70,7 +68,7 @@ export function LessonCancellationCard({
 
       setUpcomingLessons(upcomingLessons);
     } catch (error) {
-      log.error("Error fetching lessons:", {
+      console.error("Error fetching lessons:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
@@ -114,7 +112,7 @@ export function LessonCancellationCard({
       // Clear any previous errors
       setError("");
     } catch (error: unknown) {
-      log.error("Cancellation error:", {
+      console.error("Cancellation error:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

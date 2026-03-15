@@ -23,7 +23,6 @@ import {
   Trash2,
   ExternalLink,
 } from "lucide-react";
-import { log } from "@/lib/logger";
 import type {
   StudentProfile,
   User,
@@ -125,7 +124,7 @@ export function LessonForm({
           setSelectedProgressItems(items);
         }
       } catch (error) {
-        log.error("Error parsing checklist items:", {
+        console.error("Error parsing checklist items:", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
         });
@@ -215,7 +214,7 @@ export function LessonForm({
           });
         } else {
           const errorData = await response.json();
-          log.error("API error:", {
+          console.error("API error:", {
             error:
               errorData instanceof Error
                 ? errorData.message
@@ -224,7 +223,7 @@ export function LessonForm({
           });
         }
       } catch (error) {
-        log.error("Error fetching student checklists:", {
+        console.error("Error fetching student checklists:", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
         });
@@ -370,13 +369,13 @@ export function LessonForm({
 
       // Upload files if any
       if (selectedFiles.length > 0) {
-        log.info(
+        console.log(
           `Uploading ${selectedFiles.length} files for lesson ${currentLessonId}`,
         );
         const fileFormData = new FormData();
         selectedFiles.forEach((file) => {
           fileFormData.append("files", file);
-          log.info(`Added file: ${file.name}, size: ${file.size}`);
+          console.log(`Added file: ${file.name}, size: ${file.size}`);
         });
 
         try {
@@ -390,7 +389,7 @@ export function LessonForm({
 
           if (!fileResponse.ok) {
             const errorData = await fileResponse.json();
-            log.error("File upload failed:", {
+            console.error("File upload failed:", {
               error:
                 errorData instanceof Error
                   ? errorData.message
@@ -403,9 +402,9 @@ export function LessonForm({
           }
 
           const fileResult = await fileResponse.json();
-          log.info("Files uploaded successfully:", fileResult);
+          console.log("Files uploaded successfully:", fileResult);
         } catch (fileError) {
-          log.error("File upload error:", {
+          console.error("File upload error:", {
             error:
               fileError instanceof Error
                 ? fileError.message
@@ -423,7 +422,7 @@ export function LessonForm({
 
       // Handle removed attachments when editing
       if (lessonId && removedAttachmentIds.length > 0) {
-        log.info(`Removing ${removedAttachmentIds.length} attachments`);
+        console.log(`Removing ${removedAttachmentIds.length} attachments`);
         try {
           // Delete each attachment individually
           for (const attachmentId of removedAttachmentIds) {
@@ -436,7 +435,7 @@ export function LessonForm({
 
             if (!removeResponse.ok) {
               const errorData = await removeResponse.json();
-              log.error("Failed to remove attachment:", {
+              console.error("Failed to remove attachment:", {
                 error:
                   errorData instanceof Error
                     ? errorData.message
@@ -445,11 +444,11 @@ export function LessonForm({
                 attachmentId,
               });
             } else {
-              log.info("Attachment removed successfully:", { attachmentId });
+              console.log("Attachment removed successfully:", { attachmentId });
             }
           }
         } catch (removeError) {
-          log.error("Error removing attachments:", {
+          console.error("Error removing attachments:", {
             error:
               removeError instanceof Error
                 ? removeError.message
@@ -482,7 +481,7 @@ export function LessonForm({
 
         if (!linksResponse.ok) {
           const errorData = await linksResponse.json();
-          log.error("Failed to update links:", {
+          console.error("Failed to update links:", {
             error:
               errorData instanceof Error
                 ? errorData.message
@@ -510,7 +509,7 @@ export function LessonForm({
 
         if (!linksResponse.ok) {
           const errorData = await linksResponse.json();
-          log.error("Failed to save links:", {
+          console.error("Failed to save links:", {
             error:
               errorData instanceof Error
                 ? errorData.message
@@ -548,7 +547,7 @@ export function LessonForm({
 
                 if (!response.ok) {
                   const errorData = await response.json();
-                  log.error("Failed to update curriculum item", {
+                  console.error("Failed to update curriculum item", {
                     itemId,
                     curriculumId: progressItem.id,
                     status: response.status,
@@ -573,7 +572,7 @@ export function LessonForm({
 
                 if (!response.ok) {
                   const errorData = await response.json();
-                  log.error("Failed to update checklist item", {
+                  console.error("Failed to update checklist item", {
                     itemId,
                     checklistId: progressItem.id,
                     status: response.status,
@@ -582,12 +581,12 @@ export function LessonForm({
                 }
               }
             } else {
-              log.error("Could not find progress item for item", {
+              console.error("Could not find progress item for item", {
                 itemId,
               });
             }
           } catch (progressError) {
-            log.error("Error updating progress item:", {
+            console.error("Error updating progress item:", {
               itemId,
               error:
                 progressError instanceof Error
@@ -607,7 +606,7 @@ export function LessonForm({
       // Only send for new lessons (not edits)
       if (!lessonId && currentLessonId) {
         try {
-          log.info("Sending lesson completion email", {
+          console.log("Sending lesson completion email", {
             lessonId: currentLessonId,
           });
 
@@ -619,20 +618,20 @@ export function LessonForm({
           );
 
           if (emailResponse.ok) {
-            log.info("Lesson completion email sent successfully", {
+            console.log("Lesson completion email sent successfully", {
               lessonId: currentLessonId,
             });
           } else {
             // Log error but don't block the redirect
             const errorData = await emailResponse.json();
-            log.error("Failed to send lesson completion email", {
+            console.error("Failed to send lesson completion email", {
               lessonId: currentLessonId,
               error: errorData.error || "Unknown error",
             });
           }
         } catch (emailError) {
           // Log error but don't block the redirect
-          log.error("Error sending lesson completion email", {
+          console.error("Error sending lesson completion email", {
             lessonId: currentLessonId,
             error:
               emailError instanceof Error

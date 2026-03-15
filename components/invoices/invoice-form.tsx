@@ -26,8 +26,6 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import type { StudentProfile, User, Lesson, InvoiceCreateRequest } from "@/types";
-import { log } from "@/lib/logger";
-
 interface InvoiceFormProps {
   teacherId: string;
   students: (StudentProfile & { user: User })[];
@@ -102,7 +100,7 @@ export function InvoiceForm({
           }
         }
       } catch (error) {
-        log.error("Error loading teacher rate:", {
+        console.error("Error loading teacher rate:", {
           error: error instanceof Error ? error.message : String(error),
           stack: error instanceof Error ? error.stack : undefined,
         });
@@ -171,7 +169,7 @@ export function InvoiceForm({
         setItems(invoiceItems);
       }
     } catch (error) {
-      log.error("Error loading lessons:", {
+      console.error("Error loading lessons:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });

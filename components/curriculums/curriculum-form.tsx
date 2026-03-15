@@ -9,8 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save, Plus, X } from "lucide-react";
 import Link from "next/link";
-import { log } from "@/lib/logger";
-
 interface ChecklistItem {
   title: string;
 }
@@ -133,14 +131,14 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
       // API returns { curriculum: {...} }, extract the curriculum object
       const savedChecklist = savedResponse.curriculum || savedResponse;
 
-      log.info("Checklist saved", {
+      console.log("Checklist saved", {
         curriculumId: savedChecklist.id,
         title: savedChecklist.title,
       });
 
       // If this is a new checklist and we have items, add them
       if (!checklist && items.length > 0) {
-        log.info("Creating section for checklist items", {
+        console.log("Creating section for checklist items", {
           curriculumId: savedChecklist.id,
           itemCount: items.length,
         });
@@ -162,13 +160,13 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           const createdSection =
             sectionResponseData.section || sectionResponseData;
 
-          log.info("Section created, adding items", {
+          console.log("Section created, adding items", {
             sectionId: createdSection.id,
             itemCount: items.length,
           });
 
           // Add all items to this section in parallel
-          log.info("Creating items in parallel", {
+          console.log("Creating items in parallel", {
             sectionId: createdSection.id,
             itemCount: items.length,
           });
@@ -197,9 +195,9 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           // Log results
           results.forEach((result) => {
             if (result.success) {
-              log.info("Item created successfully", { title: result.title });
+              console.log("Item created successfully", { title: result.title });
             } else {
-              log.error("Failed to create item", {
+              console.error("Failed to create item", {
                 title: result.title,
                 status: result.status,
                 error: result.error,
@@ -207,7 +205,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
             }
           });
 
-          log.info("Finished adding items", {
+          console.log("Finished adding items", {
             total: items.length,
             success: successCount,
             failed: failCount,
@@ -221,7 +219,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
           }
         } else {
           const errorData = await sectionResponse.json();
-          log.error("Failed to create section", {
+          console.error("Failed to create section", {
             status: sectionResponse.status,
             error: errorData,
           });
@@ -230,7 +228,7 @@ export function CurriculumForm({ checklist }: ChecklistFormProps) {
 
       router.push(`/curriculums/${savedChecklist.id}`);
     } catch (error) {
-      log.error("Error saving checklist:", {
+      console.error("Error saving checklist:", {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
