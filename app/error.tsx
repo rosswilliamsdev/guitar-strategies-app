@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
-import { log } from '@/lib/logger';
 import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
@@ -15,8 +14,8 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error using structured logging (not console)
-    log.error('Application error boundary triggered:', {
+    // Log the error (client-side logging uses console, not Winston)
+    console.error('Application error boundary triggered:', {
       message: error.message,
       digest: error.digest,
       stack: error.stack,
