@@ -4,6 +4,9 @@ import { startOfMonth, startOfWeek, startOfDay, subDays } from "date-fns";
 import { log } from "@/lib/logger";
 // import { dashboardCache, CacheKeys } from '@/lib/cache'; // Temporarily disabled for connection pooling test
 
+// Import types for use in this file
+import type { AdminStats, UserStats } from "@/types/dashboard";
+
 // Re-export types and utilities from shared location (safe for client components)
 export type { AdminStats, UserStats } from "@/types/dashboard";
 export { formatRelativeTime } from "@/types/dashboard";
