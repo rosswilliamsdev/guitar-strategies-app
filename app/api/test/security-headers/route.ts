@@ -5,7 +5,7 @@ import { log } from '@/lib/logger';
  * Test endpoint for validating security headers implementation
  * Returns information about the current security configuration
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   const response = NextResponse.json({
     message: 'Security headers test endpoint',
     timestamp: new Date().toISOString(),

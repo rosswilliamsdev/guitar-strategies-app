@@ -10,7 +10,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getCSRFToken, addCSRFCookie } from '@/lib/csrf';
 import { apiLog } from '@/lib/logger';
-import { withRateLimit } from '@/lib/rate-limit';
 
 async function handleGET(request: NextRequest) {
   try {

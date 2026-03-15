@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
-  CreateCurriculumItemData,
   createCurriculumSectionSchema,
   updateCurriculumSectionSchema,
 } from "@/lib/validations";

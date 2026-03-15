@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { studentProfileSchema } from '@/lib/validations';
-import { apiLog, dbLog, emailLog } from '@/lib/logger';
-import { withRateLimit } from '@/lib/rate-limit';
+import { apiLog } from '@/lib/logger';
 
 async function handlePUT(request: NextRequest) {
   try {

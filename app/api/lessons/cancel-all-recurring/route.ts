@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { apiLog, dbLog } from '@/lib/logger'
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     apiLog.info('Starting cancel all recurring lessons request', {
       endpoint: '/api/lessons/cancel-all-recurring',

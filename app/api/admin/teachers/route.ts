@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcrypt";
-import { apiLog, dbLog, emailLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 import { getAdminSession } from "@/lib/admin-auth";
 import { withApiMiddleware } from '@/lib/api-wrapper';
 

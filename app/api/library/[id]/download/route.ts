@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { apiLog, dbLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 export async function POST(
   request: NextRequest,

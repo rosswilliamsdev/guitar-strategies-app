@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { apiLog, dbLog, emailLog } from "@/lib/logger";
+import { apiLog } from "@/lib/logger";
 import { withApiMiddleware } from "@/lib/api-wrapper";
 import {
   getPaginationParams,

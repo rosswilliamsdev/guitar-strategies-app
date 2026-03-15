@@ -18,9 +18,7 @@ import { prisma } from "@/lib/db";
 import { createLessonSchema } from "@/lib/validations";
 import { validateJsonSize } from "@/lib/request-validation";
 import { sanitizeRichText, sanitizePlainText } from "@/lib/sanitize";
-import { apiLog, emailLog } from "@/lib/logger";
-import { sendEmail, checkEmailPreference } from "@/lib/email";
-import { renderEmailWithFallback } from "@/lib/email-templates";
+import { apiLog } from "@/lib/logger";
 import {
   createCachedResponse,
   generateETag,
@@ -71,7 +69,6 @@ async function handleGET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const studentId = searchParams.get("studentId");
-    const teacherId = searchParams.get("teacherId");
     const status = searchParams.get("status");
     const future = searchParams.get("future");
     const dateFrom = searchParams.get("dateFrom");

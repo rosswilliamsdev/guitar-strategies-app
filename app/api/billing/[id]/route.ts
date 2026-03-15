@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { updateBillingSchema } from "@/lib/validations";
-import { apiLog, dbLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 // Update billing record (mark as paid, update actual lessons, etc.)
 export async function PUT(

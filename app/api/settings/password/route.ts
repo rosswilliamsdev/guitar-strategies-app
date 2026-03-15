@@ -4,8 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcrypt';
 import { z } from 'zod';
-import { apiLog, dbLog } from '@/lib/logger';
-import { withRateLimit } from '@/lib/rate-limit';
+import { apiLog } from '@/lib/logger';
 
 const passwordUpdateSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),

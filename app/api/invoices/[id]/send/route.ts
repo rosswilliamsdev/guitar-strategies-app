@@ -4,8 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sendEmail, createInvoiceEmail } from '@/lib/email';
 import { format } from 'date-fns';
-import { apiLog, dbLog, emailLog, invoiceLog } from '@/lib/logger';
-import { withApiMiddleware } from '@/lib/api-wrapper';
+import { apiLog } from '@/lib/logger';
 import { formatDateInTimezone } from '@/lib/utils';
 
 async function handlePOST(

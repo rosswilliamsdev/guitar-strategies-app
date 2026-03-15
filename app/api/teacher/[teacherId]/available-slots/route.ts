@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
 import { getAvailableSlots } from '@/lib/scheduler';
 import { addDays } from 'date-fns';
 import {

@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
-import { apiLog, dbLog, invoiceLog } from "@/lib/logger";
-import { withApiMiddleware } from "@/lib/api-wrapper";
+import { apiLog } from "@/lib/logger";
 
 async function handleGET(
   request: NextRequest,

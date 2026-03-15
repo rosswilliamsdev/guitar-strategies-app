@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { createStudentChecklistSchema } from "@/lib/validations";
 import { z } from "zod";
 import { apiLog } from "@/lib/logger";
-import { CurriculumItem, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 // Disable caching for this route
 export const dynamic = "force-dynamic";

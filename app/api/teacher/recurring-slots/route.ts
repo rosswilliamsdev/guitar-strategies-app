@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -10,7 +9,7 @@ import {
   handleApiError
 } from "@/lib/api-responses";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     

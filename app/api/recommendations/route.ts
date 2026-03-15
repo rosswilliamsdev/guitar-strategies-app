@@ -15,7 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { apiLog, dbLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 import { withApiMiddleware } from '@/lib/api-wrapper';
 
 // Disable caching for this route
@@ -129,7 +129,7 @@ async function handlePOST(request: NextRequest) {
  * @param request - Next.js request object
  * @returns JSON response with recommendations array or error
  */
-async function handleGET(request: NextRequest) {
+async function handleGET() {
   try {
     const session = await getServerSession(authOptions);
     

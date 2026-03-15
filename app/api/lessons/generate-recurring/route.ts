@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateRecurringLessons } from "@/lib/recurring-lessons";
 import { z } from "zod";
-import { apiLog, schedulerLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 const generateRecurringSchema = z.object({
   startDate: z.string().datetime(),

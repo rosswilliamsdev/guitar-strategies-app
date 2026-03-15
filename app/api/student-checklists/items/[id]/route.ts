@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { updateStudentChecklistItemSchema, toggleChecklistItemSchema } from "@/lib/validations";
 import { sendEmail, createChecklistCompletionEmail } from "@/lib/email";
 import { z } from "zod";
-import { apiLog, dbLog, emailLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -146,7 +146,8 @@ export async function PUT(
       id,
     });
 
-    const { id: validatedId, ...updateData } = validatedData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _, ...updateData } = validatedData;
 
     // Handle completion status change
     if (updateData.isCompleted !== undefined) {

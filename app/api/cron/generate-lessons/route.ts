@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateFutureLessons, cleanupJobLogs } from "@/lib/background-jobs";
-import { apiLog, schedulerLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 /**
  * GET /api/cron/generate-lessons

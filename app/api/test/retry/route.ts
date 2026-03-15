@@ -126,7 +126,7 @@ async function testDatabaseRetry(testId: string) {
 // Test email retry with simulated failures
 async function testEmailRetry(testId: string) {
   try {
-    const result = await withRetry(async () => {
+    await withRetry(async () => {
       testAttempts[testId]++;
       
       // Simulate rate limiting for first 3 attempts

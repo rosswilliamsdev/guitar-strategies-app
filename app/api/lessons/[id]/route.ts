@@ -9,7 +9,7 @@ import {
   OptimisticLockingError,
   retryOptimisticUpdate,
 } from "@/lib/optimistic-locking";
-import { apiLog, dbLog, schedulerLog } from "@/lib/logger";
+import { apiLog } from "@/lib/logger";
 import { invalidateLessonCache } from "@/lib/cache";
 
 interface RouteContext {
@@ -191,7 +191,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     }
 
     // Update lesson with optimistic locking
-    const lesson = await retryOptimisticUpdate(async () => {
+    await retryOptimisticUpdate(async () => {
       try {
         return await updateLessonOptimistic(id, expectedVersion, updateData);
       } catch (error) {

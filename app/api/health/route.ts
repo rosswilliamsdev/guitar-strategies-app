@@ -12,9 +12,9 @@
  * to allow monitoring services to check system health.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma, getConnectionPoolStatus } from "@/lib/db";
-import { apiLog, dbLog, emailLog } from "@/lib/logger";
+import { apiLog } from "@/lib/logger";
 
 // Health check response interface
 interface HealthCheckResponse {
@@ -53,7 +53,7 @@ interface HealthCheck {
  * @param request - Next.js request object
  * @returns JSON health check response
  */
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   const startTime = Date.now();
 
   try {

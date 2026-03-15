@@ -4,8 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { updateSlotSchema, cancelSlotSchema } from "@/lib/validations";
-import { calculateRefundAmount } from "@/lib/slot-helpers";
-import { apiLog, dbLog, schedulerLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 // Get slot details
 export async function GET(
@@ -208,7 +207,7 @@ export async function DELETE(
       );
     }
 
-    const { cancelDate, reason, refundAmount } = validation.data;
+    const { cancelDate } = validation.data;
 
     // Get the slot to check permissions
     const slot = await prisma.recurringSlot.findUnique({

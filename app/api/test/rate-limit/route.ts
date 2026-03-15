@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { RATE_LIMITS } from '@/lib/rate-limit';
 
 async function handleGET(request: NextRequest) {
   const timestamp = new Date().toISOString();

@@ -3,14 +3,14 @@
  * Bypasses all caching to verify database connectivity and data retrieval
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { apiLog } from "@/lib/logger";
 import { Prisma } from "@prisma/client";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 

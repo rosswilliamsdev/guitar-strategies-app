@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { put } from '@vercel/blob';
-import { apiLog, dbLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateStudentChecklistSchema } from "@/lib/validations";
 import { z } from "zod";
-import { apiLog, dbLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -206,7 +206,8 @@ export async function PUT(
       id,
     });
 
-    const { id: validatedId, ...updateData } = validatedData;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _, ...updateData } = validatedData;
 
     const updatedChecklist = await prisma.studentChecklist.update({
       where: { id },

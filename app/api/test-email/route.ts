@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendEmail, createBaseTemplate } from '@/lib/email';
-import { apiLog, emailLog, invoiceLog } from '@/lib/logger';
+import { apiLog } from '@/lib/logger';
 
 // POST /api/test-email - Send a test email to verify the system is working
 export async function POST(request: NextRequest) {
