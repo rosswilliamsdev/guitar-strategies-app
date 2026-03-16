@@ -29,4 +29,5 @@ jobs:
       - name: Build
         env:
           DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          RESEND_API_KEY: "re_dummy_key_for_build"
         run: npm run build
