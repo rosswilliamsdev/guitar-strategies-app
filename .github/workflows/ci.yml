@@ -27,4 +27,6 @@ jobs:
         run: npm run lint
 
       - name: Build
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
         run: npm run build
