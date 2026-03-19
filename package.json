@@ -8,6 +8,8 @@
     "vercel-build": "prisma migrate deploy --skip-generate || echo 'Migration failed or already applied' && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "seed": "tsx prisma/seed.ts",
     "db:seed": "npx prisma db seed",
     "postinstall": "prisma generate"
@@ -80,7 +82,8 @@
     "style-loader": "^4.0.0",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.0"
   },
   "eslintConfig": {
     "extends": []
