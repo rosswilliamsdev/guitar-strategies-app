@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { log } from '@/lib/logger';
-import * as Sentry from '@sentry/nextjs';
 
 // Standardized error response structure
 export interface ApiErrorResponse {
@@ -174,27 +173,23 @@ export function handleApiError(error: unknown): NextResponse<ApiErrorResponse> {
       return createBadRequestResponse(error.message);
     }
 
-    // Send unexpected errors to Sentry
-    Sentry.captureException(error, {
-      tags: {
-        component: 'api-handler',
-        errorType: 'application-error',
-      },
+    // Log unexpected errors
+    log.error('Unexpected application error:', {
+      component: 'api-handler',
+      errorType: 'application-error',
+      error: error.message,
+      stack: error.stack,
     });
 
     // Return error message for other Error instances
     return createInternalErrorResponse(error.message, error);
   }
 
-  // Send unknown errors to Sentry
-  Sentry.captureException(new Error(`Unknown error: ${String(error)}`), {
-    tags: {
-      component: 'api-handler',
-      errorType: 'unknown-error',
-    },
-    extra: {
-      originalError: error,
-    },
+  // Log unknown errors
+  log.error('Unknown error:', {
+    component: 'api-handler',
+    errorType: 'unknown-error',
+    error: String(error),
   });
 
   // Default to internal server error

@@ -17,7 +17,7 @@
 
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
@@ -82,7 +82,7 @@ export function RichTextEditor({
     ],
     content: content,
     immediatelyRender: false,
-    onUpdate: ({ editor }) => {
+    onUpdate: ({ editor }: { editor: Editor }) => {
       onChange(editor.getHTML());
     },
     editorProps: {

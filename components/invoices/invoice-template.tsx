@@ -105,6 +105,7 @@ export function InvoiceTemplate({
       const canvas = await html2canvas(invoiceElement, {
         useCORS: true,
         allowTaint: true,
+        // @ts-expect-error - html2canvas@1.4.1 supports 'background' option but types are not provided by the library
         background: "#ffffff",
         width: invoiceElement.scrollWidth,
         height: invoiceElement.scrollHeight,
