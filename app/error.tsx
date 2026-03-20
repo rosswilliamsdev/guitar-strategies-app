@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import Link from 'next/link';
-import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -20,19 +19,6 @@ export default function Error({
       digest: error.digest,
       stack: error.stack,
       timestamp: new Date().toISOString(),
-    });
-
-    // Send to Sentry error tracking
-    Sentry.captureException(error, {
-      tags: {
-        component: 'error-boundary',
-        digest: error.digest,
-      },
-      contexts: {
-        errorBoundary: {
-          componentStack: 'Error boundary in app/error.tsx',
-        },
-      },
     });
   }, [error]);
 

@@ -46,6 +46,8 @@ function generateCSP() {
 }
 
 const nextConfig = {
+  output: "standalone",
+
   eslint: {
     // Warning: This allows production builds to successfully complete even if
     // your project has ESLint errors.
@@ -267,26 +269,4 @@ const nextConfig = {
   },
 };
 
-// Sentry integration
-const { withSentryConfig } = require("@sentry/nextjs");
-
-const sentryOptions = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-
-  // Suppresses source map uploading logs during build
-  silent: true,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-
-  // Only upload source maps in production
-  dryRun: process.env.NODE_ENV !== "production",
-
-  // Enables automatic instrumentation of Vercel Cron Monitors.
-  automaticVercelMonitors: true,
-};
-
-// Make sure adding Sentry options is the last code to run before exporting
-module.exports = process.env.SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryOptions)
-  : nextConfig;
+module.exports = nextConfig;
