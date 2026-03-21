@@ -61,6 +61,8 @@ jobs:
         env:
           ECR_REPO: ${{ secrets.ECR_REPO }}
           IMAGE_TAG: ${{ github.sha }}
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          RESEND_API_KEY: "re_dummy_key_for_build"
         run: |
           docker build -t $ECR_REPO:latest -t $ECR_REPO:$IMAGE_TAG .
           docker push $ECR_REPO:latest
