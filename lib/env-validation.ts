@@ -95,9 +95,21 @@ export function validateEnv(): EnvValidationResult {
 
     if (env.NODE_ENV === "production") {
       // Production-specific validations
-      if (!env.NEXTAUTH_URL || env.NEXTAUTH_URL.includes("localhost")) {
+
+      // Check if NEXTAUTH_URL is missing (fatal error)
+      if (!env.NEXTAUTH_URL) {
         errors.push(
-          "NEXTAUTH_URL must be set to production domain in production environment"
+          "NEXTAUTH_URL must be set in production environment"
+        );
+      } else if (env.NEXTAUTH_URL.includes("localhost")) {
+        // Allow localhost for local Docker testing but warn (non-fatal)
+        warnings.push(
+          "NEXTAUTH_URL uses localhost in production mode - this is only safe for local testing, not production deployments"
+        );
+      } else if (!env.NEXTAUTH_URL.startsWith("https://")) {
+        // Warn about HTTP usage in production (non-fatal to allow IP-based deployments)
+        warnings.push(
+          "NEXTAUTH_URL uses http:// in production - HTTPS is strongly recommended for security. Consider using a reverse proxy (nginx) or load balancer with SSL termination."
         );
       }
 

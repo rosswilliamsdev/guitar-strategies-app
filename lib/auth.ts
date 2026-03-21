@@ -9,6 +9,14 @@ import bcrypt from "bcrypt";
 import { prisma } from "./db";
 import { authLog } from "@/lib/logger";
 
+// Log warning if running in production mode with localhost (relaxed security for Docker testing)
+if (process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL?.includes('localhost')) {
+  authLog.warn('Running in production mode with localhost URL - secure cookies disabled for local testing', {
+    nextauthUrl: process.env.NEXTAUTH_URL,
+    environment: process.env.NODE_ENV
+  });
+}
+
 /**
  * NextAuth.js configuration options.
  *
@@ -30,16 +38,18 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      name: `${process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.includes('localhost') ? '__Secure-' : ''}next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        // Only use secure cookies for production with non-localhost URLs
+        secure: process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.includes('localhost'),
       },
     },
   },
-  useSecureCookies: process.env.NODE_ENV === 'production',
+  // Allow non-secure cookies for localhost testing in production Docker containers
+  useSecureCookies: process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.includes('localhost'),
   providers: [
     CredentialsProvider({
       name: "credentials",
