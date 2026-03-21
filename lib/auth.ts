@@ -9,11 +9,12 @@ import bcrypt from "bcrypt";
 import { prisma } from "./db";
 import { authLog } from "@/lib/logger";
 
-// Log warning if running in production mode with localhost (relaxed security for Docker testing)
-if (process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL?.includes('localhost')) {
-  authLog.warn('Running in production mode with localhost URL - secure cookies disabled for local testing', {
+// Log warning if running in production mode with HTTP (relaxed security for testing/IP-based deployments)
+if (process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.startsWith('https://')) {
+  authLog.warn('Running in production mode with HTTP URL - secure cookies disabled for non-HTTPS deployment', {
     nextauthUrl: process.env.NEXTAUTH_URL,
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    recommendation: 'Use HTTPS with SSL/TLS for production deployments'
   });
 }
 
@@ -38,18 +39,18 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `${process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.includes('localhost') ? '__Secure-' : ''}next-auth.session-token`,
+      name: `${process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL?.startsWith('https://') ? '__Secure-' : ''}next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        // Only use secure cookies for production with non-localhost URLs
-        secure: process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.includes('localhost'),
+        // Only use secure cookies when NEXTAUTH_URL uses HTTPS
+        secure: process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL?.startsWith('https://'),
       },
     },
   },
-  // Allow non-secure cookies for localhost testing in production Docker containers
-  useSecureCookies: process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL?.includes('localhost'),
+  // Only use secure cookies for HTTPS deployments (allows HTTP for localhost/IP-based testing)
+  useSecureCookies: process.env.NODE_ENV === 'production' && process.env.NEXTAUTH_URL?.startsWith('https://'),
   providers: [
     CredentialsProvider({
       name: "credentials",
