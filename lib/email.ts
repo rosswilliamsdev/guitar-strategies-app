@@ -4,7 +4,20 @@ import { emailLog } from "./logger";
 import { prisma } from "./db";
 import { EmailType } from "@prisma/client";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors when RESEND_API_KEY is not available
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error(
+        "RESEND_API_KEY is not configured. Please set the environment variable to send emails."
+      );
+    }
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
 
 export interface EmailData {
   to: string;
@@ -84,7 +97,7 @@ export async function sendEmail(data: EmailData): Promise<boolean> {
   try {
     // Wrap the email sending in retry logic
     const result = await withRetry(async () => {
-      const emailResult = await resend.emails.send({
+      const emailResult = await getResendClient().emails.send({
         from: data.from || "Guitar Strategies <noreply@guitarstrategies.com>",
         to: [data.to],
         subject: data.subject,
@@ -139,7 +152,7 @@ export async function sendEmail(data: EmailData): Promise<boolean> {
 export async function sendEmailFast(data: EmailData): Promise<boolean> {
   try {
     const result = await withRetry(async () => {
-      const emailResult = await resend.emails.send({
+      const emailResult = await getResendClient().emails.send({
         from: data.from || "Guitar Strategies <noreply@guitarstrategies.com>",
         to: [data.to],
         subject: data.subject,
@@ -195,7 +208,7 @@ export function sendEmailAsync(data: EmailData): void {
  */
 export async function sendEmailNoRetry(data: EmailData): Promise<boolean> {
   try {
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: data.from || "Guitar Strategies <noreply@guitarstrategies.com>",
       to: [data.to],
       subject: data.subject,
