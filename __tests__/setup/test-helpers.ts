@@ -9,89 +9,23 @@ import { Session } from 'next-auth';
 import { vi } from 'vitest';
 
 /**
- * Mock teacher session for testing
+ * Mock teacher profile for testing
  */
-export const mockTeacherSession: Session = {
-  user: {
-    id: 'teacher-user-id',
-    email: 'teacher@example.com',
-    name: 'Test Teacher',
-    role: 'TEACHER',
-    teacherProfile: {
-      id: 'teacher-profile-id',
-      bio: 'Test teacher bio',
-      hourlyRate: 6000, // $60 in cents
-    },
-    isAdmin: true,
-  },
-  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-};
-
-/**
- * Mock student session for testing
- */
-export const mockStudentSession: Session = {
-  user: {
-    id: 'student-user-id',
-    email: 'student@example.com',
-    name: 'Test Student',
-    role: 'STUDENT',
-    studentProfile: {
-      id: 'student-profile-id',
-      teacherId: 'teacher-profile-id',
-      skillLevel: 'INTERMEDIATE',
-    },
-    isAdmin: false,
-  },
-  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-};
-
-/**
- * Mock database responses for lessons
- */
-export const mockLesson = {
-  id: 'lesson-id-123',
-  teacherId: 'teacher-profile-id',
-  studentId: 'student-profile-id',
-  date: new Date('2025-03-20T10:00:00Z'),
-  duration: 30,
-  notes: '<p>Great progress on chord changes</p>',
-  homework: 'Practice G to C transitions',
-  progress: 'Improved rhythm accuracy',
-  status: 'COMPLETED' as const,
-  focusAreas: 'Chord transitions,Rhythm',
-  songsPracticed: 'Wonderwall',
-  nextSteps: 'Work on barre chords',
-  studentRating: 5,
-  teacherRating: 4,
-  createdAt: new Date('2025-03-20T10:30:00Z'),
-  updatedAt: new Date('2025-03-20T10:30:00Z'),
-  isRecurring: false,
-  price: 3000,
-  recurringId: null,
-  recurringSlotId: null,
-  checklistItems: null,
-  version: 1,
-  student: {
-    id: 'student-profile-id',
-    userId: 'student-user-id',
-    user: {
-      id: 'student-user-id',
-      email: 'student@example.com',
-      name: 'Test Student',
-    },
-  },
-  teacher: {
-    id: 'teacher-profile-id',
-    userId: 'teacher-user-id',
-    user: {
-      id: 'teacher-user-id',
-      email: 'teacher@example.com',
-      name: 'Test Teacher',
-    },
-  },
-  attachments: [],
-  links: [],
+export const mockTeacherProfile = {
+  id: 'teacher-profile-id',
+  userId: 'teacher-user-id',
+  bio: 'Experienced guitar teacher',
+  hourlyRate: 6000,
+  isActive: true,
+  venmoHandle: '@testteacher',
+  paypalEmail: 'teacher@paypal.com',
+  zelleEmail: null,
+  timezone: 'America/Chicago',
+  phoneNumber: '555-0100',
+  profileImageUrl: null,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
+  isAdmin: true,
 };
 
 /**
@@ -121,23 +55,82 @@ export const mockStudentProfile = {
 };
 
 /**
- * Mock teacher profile for testing
+ * Mock teacher session for testing
  */
-export const mockTeacherProfile = {
-  id: 'teacher-profile-id',
-  userId: 'teacher-user-id',
-  bio: 'Experienced guitar teacher',
-  hourlyRate: 6000,
-  isActive: true,
-  venmoHandle: '@testteacher',
-  paypalEmail: 'teacher@paypal.com',
-  zelleEmail: null,
+export const mockTeacherSession: Session = {
+  user: {
+    id: 'teacher-user-id',
+    email: 'teacher@example.com',
+    name: 'Test Teacher',
+    role: 'TEACHER',
+    teacherProfile: mockTeacherProfile,
+    isAdmin: true,
+  },
+  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+};
+
+/**
+ * Mock student session for testing
+ */
+export const mockStudentSession: Session = {
+  user: {
+    id: 'student-user-id',
+    email: 'student@example.com',
+    name: 'Test Student',
+    role: 'STUDENT',
+    studentProfile: mockStudentProfile,
+    isAdmin: false,
+  },
+  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+};
+
+/**
+ * Mock database responses for lessons
+ */
+export const mockLesson = {
+  id: 'lesson-id-123',
+  teacherId: 'teacher-profile-id',
+  studentId: 'student-profile-id',
+  date: new Date('2025-03-20T10:00:00Z'),
+  duration: 30,
+  notes: '<p>Great progress on chord changes</p>',
+  homework: 'Practice G to C transitions',
+  progress: 'Improved rhythm accuracy',
+  status: 'COMPLETED' as const,
+  focusAreas: 'Chord transitions,Rhythm',
+  songsPracticed: 'Wonderwall',
+  nextSteps: 'Work on barre chords',
+  studentRating: 5,
+  teacherRating: 4,
+  createdAt: new Date('2025-03-20T10:30:00Z'),
+  updatedAt: new Date('2025-03-20T10:30:00Z'),
+  isRecurring: false,
+  price: 3000,
+  recurringId: null,
+  recurringSlotId: null,
   timezone: 'America/Chicago',
-  phoneNumber: '555-0100',
-  profileImageUrl: null,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
-  isAdmin: true,
+  checklistItems: null,
+  version: 1,
+  student: {
+    id: 'student-profile-id',
+    userId: 'student-user-id',
+    user: {
+      id: 'student-user-id',
+      email: 'student@example.com',
+      name: 'Test Student',
+    },
+  },
+  teacher: {
+    id: 'teacher-profile-id',
+    userId: 'teacher-user-id',
+    user: {
+      id: 'teacher-user-id',
+      email: 'teacher@example.com',
+      name: 'Test Teacher',
+    },
+  },
+  attachments: [],
+  links: [],
 };
 
 /**

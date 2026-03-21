@@ -22,7 +22,8 @@ vi.mock('next-auth', () => ({
 }));
 
 // Get reference to mocked getServerSession after mock is set up
-const { getServerSession: mockGetServerSession } = await import('next-auth');
+import { getServerSession } from 'next-auth';
+const mockGetServerSession = vi.mocked(getServerSession);
 
 // Create mock Prisma client in the factory function
 vi.mock('@/lib/db', () => ({
@@ -53,19 +54,26 @@ vi.mock('@/lib/db', () => ({
 }));
 
 // Get reference to mocked prisma after mock is set up
-const { prisma: mockPrisma } = await import('@/lib/db');
+const dbModule = await import('@/lib/db');
+// Apply vi.mocked to individual prisma methods for proper typing
+const mockPrisma = {
+  lesson: vi.mocked(dbModule.prisma.lesson),
+  teacherProfile: vi.mocked(dbModule.prisma.teacherProfile),
+  studentProfile: vi.mocked(dbModule.prisma.studentProfile),
+  user: vi.mocked(dbModule.prisma.user),
+};
 
 // Mock pagination functions
 vi.mock('@/lib/pagination', () => ({
-  getPaginationParams: vi.fn(() => ({ page: 1, limit: 20 })),
+  getPaginationParams: vi.fn((_request: unknown) => ({ page: 1, limit: 20 })),
   getPrismaOffsetPagination: vi.fn(() => ({ skip: 0, take: 20 })),
-  createPaginatedResponse: vi.fn(async (data: unknown[]) => ({
+  createPaginatedResponse: vi.fn(async (data: unknown[], _page: number, _limit: number, _total: number) => ({
     data,
     pagination: {
-      page: 1,
-      limit: 20,
-      total: data.length,
-      totalPages: 1,
+      page: _page,
+      limit: _limit,
+      total: _total,
+      totalPages: Math.ceil(_total / _limit),
     },
   })),
 }));
@@ -112,7 +120,7 @@ describe('GET /api/students', () => {
     mockGetServerSession.mockResolvedValue(null);
 
     const request = createMockRequest('http://localhost:3000/api/students');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(401);
     const data = await response.json();
@@ -127,7 +135,7 @@ describe('GET /api/students', () => {
     mockPrisma.studentProfile.count.mockResolvedValue(1);
 
     const request = createMockRequest('http://localhost:3000/api/students');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -154,7 +162,7 @@ describe('GET /api/students', () => {
     mockPrisma.studentProfile.count.mockResolvedValue(0);
 
     const request = createMockRequest('http://localhost:3000/api/students');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -175,7 +183,7 @@ describe('GET /api/students', () => {
     mockPrisma.teacherProfile.findUnique.mockResolvedValue(null);
 
     const request = createMockRequest('http://localhost:3000/api/students');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(404);
     const data = await response.json();
@@ -201,7 +209,7 @@ describe('GET /api/students', () => {
     const request = createMockRequest(
       'http://localhost:3000/api/students?teacherId=teacher-profile-id'
     );
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -235,7 +243,7 @@ describe('GET /api/students', () => {
     mockPrisma.studentProfile.count.mockResolvedValue(2);
 
     const request = createMockRequest('http://localhost:3000/api/students');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -258,7 +266,7 @@ describe('GET /api/students', () => {
     mockPrisma.studentProfile.count.mockResolvedValue(0);
 
     const request = createMockRequest('http://localhost:3000/api/students');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -273,7 +281,7 @@ describe('GET /api/students', () => {
     mockPrisma.studentProfile.count.mockResolvedValue(1);
 
     const request = createMockRequest('http://localhost:3000/api/students');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(200);
     const data = await response.json();
@@ -316,7 +324,7 @@ describe('GET /api/students', () => {
     mockPrisma.studentProfile.count.mockResolvedValue(15);
 
     const request = createMockRequest('http://localhost:3000/api/students?page=2&limit=10');
-    const response = await GET(request as NextRequest);
+    const response = await GET(request as NextRequest, {} as any);
 
     expect(response.status).toBe(200);
 

@@ -23,38 +23,48 @@ vi.mock('next-auth', () => ({
 }));
 
 // Get reference to mocked getServerSession after mock is set up
-const { getServerSession: mockGetServerSession } = await import('next-auth');
+import { getServerSession } from 'next-auth';
+const mockGetServerSession = vi.mocked(getServerSession);
 
 // Create mock Prisma client in the factory function
-vi.mock('@/lib/db', () => ({
-  prisma: {
-    lesson: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      count: vi.fn(),
+vi.mock('@/lib/db', () => {
+  return {
+    prisma: {
+      lesson: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+        count: vi.fn(),
+      },
+      teacherProfile: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+      },
+      studentProfile: {
+        findUnique: vi.fn(),
+        findMany: vi.fn(),
+        count: vi.fn(),
+      },
+      user: {
+        findUnique: vi.fn(),
+        create: vi.fn(),
+      },
     },
-    teacherProfile: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-    },
-    studentProfile: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      count: vi.fn(),
-    },
-    user: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-    },
-  },
-}));
+  };
+});
 
 // Get reference to mocked prisma after mock is set up
-const { prisma: mockPrisma } = await import('@/lib/db');
+const dbModule = await import('@/lib/db');
+// Apply vi.mocked to individual prisma methods for proper typing
+const mockPrisma = {
+  lesson: vi.mocked(dbModule.prisma.lesson),
+  teacherProfile: vi.mocked(dbModule.prisma.teacherProfile),
+  studentProfile: vi.mocked(dbModule.prisma.studentProfile),
+  user: vi.mocked(dbModule.prisma.user),
+};
 
 // Mock cache functions
 vi.mock('@/lib/cache', () => ({
@@ -496,7 +506,7 @@ describe('DELETE /api/lessons/[id]', () => {
 
   it('returns 403 when user does not have access to lesson', async () => {
     mockGetServerSession.mockResolvedValue(mockTeacherSession);
-    // Return lesson that belongs to a different teacher
+    // Return lesson that belongs to a different teacher (with included relations)
     mockPrisma.lesson.findUnique.mockResolvedValue({
       ...mockLesson,
       teacher: {
@@ -505,7 +515,7 @@ describe('DELETE /api/lessons/[id]', () => {
       student: {
         userId: 'different-student-user-id',
       },
-    });
+    } as any);
 
     const request = createMockRequest('http://localhost:3000/api/lessons/lesson-id-123', {
       method: 'DELETE',
