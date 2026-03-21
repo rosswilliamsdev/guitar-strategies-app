@@ -12,6 +12,11 @@ RUN npm ci
 # ──────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Set dummy DATABASE_URL for build time (not used for actual DB connections)
+# This is required for Prisma client generation and Next.js build
+ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/buildtime?schema=public"
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
