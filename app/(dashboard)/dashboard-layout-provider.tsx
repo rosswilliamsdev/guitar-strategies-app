@@ -58,15 +58,11 @@ export function DashboardLayoutProvider({ children, user }: DashboardLayoutProvi
     }
   }, [viewMode, isTeacherAdmin]);
 
-  // Only provide context for teacher-admins
-  if (isTeacherAdmin) {
-    return (
-      <ViewModeProvider viewMode={viewMode} setViewMode={setViewMode} isTeacherAdmin={true}>
-        {children}
-      </ViewModeProvider>
-    );
-  }
-
-  // For non-teacher-admins, render children without context
-  return <>{children}</>;
+  // Always provide context for all users
+  // The isTeacherAdmin flag controls whether view switching is enabled
+  return (
+    <ViewModeProvider viewMode={viewMode} setViewMode={setViewMode} isTeacherAdmin={isTeacherAdmin}>
+      {children}
+    </ViewModeProvider>
+  );
 }
