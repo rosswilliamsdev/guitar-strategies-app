@@ -6,22 +6,26 @@ test.describe("Registration Flow", () => {
     await page.goto("/register");
 
     // Verify page loads
-    await expect(page.locator("h1, h2")).toContainText(/sign up|register|create account/i);
+    await expect(page.locator("h1, h2")).toContainText(
+      /get started|sign up|register|create account/i,
+    );
 
     // Verify form elements are present
-    await expect(page.locator('#email')).toBeVisible();
-    await expect(page.locator('#password')).toBeVisible();
-    await expect(page.locator('#name')).toBeVisible();
+    await expect(page.locator("#email")).toBeVisible();
+    await expect(page.locator("#password")).toBeVisible();
+    await expect(page.locator("#name")).toBeVisible();
   });
 
   test("registration form has role selection", async ({ page }) => {
     await page.goto("/register");
 
     // Wait for page to load
-    await expect(page.locator("h1, h2")).toContainText(/sign up|register|create account/i);
+    await expect(page.locator("h1, h2")).toContainText(
+      /get started|sign up|register|create account/i,
+    );
 
-    // Verify role selection is present (teacher/student)
-    await expect(page.locator("text=/teacher|student|role/i")).toBeVisible();
+    // Verify role selection dropdown is present (use specific label to avoid strict mode violation)
+    await expect(page.getByLabel("I am a...")).toBeVisible();
   });
 
   test("can navigate to login from registration", async ({ page }) => {
