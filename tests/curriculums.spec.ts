@@ -1,17 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Curriculums and Recommendations", () => {
-  test("teacher can access curriculums page", async ({ page }) => {
-    // Login as teacher
-    await page.goto("/login");
-    await expect(page.locator("h1")).toContainText(/welcome back/i);
-    await page.fill('#email', "teacher@guitarstrategies.com");
-    await page.fill('#password', "Admin123!");
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+  // Use stored teacher authentication state
+  test.use({ storageState: 'playwright/.auth/teacher.json' });
 
-    // Navigate to curriculums
+  test("teacher can access curriculums page", async ({ page }) => {
+    // Navigate to curriculums (already authenticated)
     await page.goto("/curriculums");
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Verify page loads
     await expect(page).toHaveURL("/curriculums");
@@ -22,16 +18,9 @@ test.describe("Curriculums and Recommendations", () => {
   });
 
   test("teacher can access recommendations page", async ({ page }) => {
-    // Login as teacher
-    await page.goto("/login");
-    await expect(page.locator("h1")).toContainText(/welcome back/i);
-    await page.fill('#email', "teacher@guitarstrategies.com");
-    await page.fill('#password', "Admin123!");
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
-
-    // Navigate to recommendations
+    // Navigate to recommendations (already authenticated)
     await page.goto("/recommendations");
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Verify page loads
     await expect(page).toHaveURL("/recommendations");

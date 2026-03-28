@@ -1,14 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Dashboard", () => {
+  // Use stored teacher authentication state
+  test.use({ storageState: 'playwright/.auth/teacher.json' });
+
   test("teacher dashboard loads with stats", async ({ page }) => {
-    // Login as teacher
-    await page.goto("/login");
-    await expect(page.locator("h1")).toContainText(/welcome back/i);
-    await page.fill('#email', "teacher@guitarstrategies.com");
-    await page.fill('#password', "Admin123!");
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+    // Navigate to dashboard (already authenticated)
+    await page.goto("/dashboard");
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Verify dashboard loads
     await expect(page).toHaveURL(/\/dashboard/);
@@ -19,18 +18,14 @@ test.describe("Dashboard", () => {
   });
 
   test("homepage redirects to dashboard when logged in", async ({ page }) => {
-    // Login as teacher
-    await page.goto("/login");
-    await expect(page.locator("h1")).toContainText(/welcome back/i);
-    await page.fill('#email', "teacher@guitarstrategies.com");
-    await page.fill('#password', "Admin123!");
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
-
-    // Try to go to homepage
+    // Try to go to homepage (already authenticated)
     await page.goto("/");
 
-    // Should redirect to dashboard
-    await page.waitForURL(/\/dashboard/, { timeout: 5000 });
+    // Wait for redirect to dashboard
+    await page.waitForURL(/\/dashboard/, { timeout: 30000 });
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
+
+    // Verify we're on dashboard
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 });

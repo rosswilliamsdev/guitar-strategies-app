@@ -1,17 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Invoice Management", () => {
-  test("teacher can access invoices page", async ({ page }) => {
-    // Login as teacher
-    await page.goto("/login");
-    await expect(page.locator("h1")).toContainText(/welcome back/i);
-    await page.fill('#email', "teacher@guitarstrategies.com");
-    await page.fill('#password', "Admin123!");
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
+  // Use stored teacher authentication state
+  test.use({ storageState: 'playwright/.auth/teacher.json' });
 
-    // Navigate to invoices
+  test("teacher can access invoices page", async ({ page }) => {
+    // Navigate to invoices (already authenticated)
     await page.goto("/invoices");
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Verify page loads
     await expect(page).toHaveURL("/invoices");
@@ -21,16 +17,9 @@ test.describe("Invoice Management", () => {
   });
 
   test("teacher can access new invoice page", async ({ page }) => {
-    // Login as teacher
-    await page.goto("/login");
-    await expect(page.locator("h1")).toContainText(/welcome back/i);
-    await page.fill('#email', "teacher@guitarstrategies.com");
-    await page.fill('#password', "Admin123!");
-    await page.click('button[type="submit"]');
-    await page.waitForURL(/\/dashboard/, { timeout: 10000 });
-
-    // Navigate to new invoice
+    // Navigate to new invoice (already authenticated)
     await page.goto("/invoices/new");
+    await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Verify page loads
     await expect(page).toHaveURL("/invoices/new");
