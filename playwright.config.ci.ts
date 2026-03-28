@@ -58,7 +58,7 @@ export default defineConfig({
 
   /* Run production build before tests for stability */
   webServer: {
-    command: "npm run build && node .next/standalone/server.js",
+    command: "npm run build && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static && node .next/standalone/server.js",
     url: "http://localhost:3000",
     timeout: 120000, // 2 minutes for build + startup
     reuseExistingServer: false, // Always fresh server in CI

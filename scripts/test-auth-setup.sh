@@ -18,6 +18,11 @@ echo "🏗️  Building production Next.js app..."
 npm run build
 
 echo ""
+echo "📦 Copying static assets to standalone build..."
+cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
+
+echo ""
 echo "🚀 Starting standalone server in background..."
 node .next/standalone/server.js &
 SERVER_PID=$!

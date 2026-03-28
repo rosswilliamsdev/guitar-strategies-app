@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:standalone": "next build && npm run copy-standalone-assets",
+    "copy-standalone-assets": "cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/",
     "vercel-build": "prisma migrate deploy --skip-generate || echo 'Migration failed or already applied' && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
