@@ -42,6 +42,7 @@ Guitar lesson management platform with a complete internal scheduling system. Te
 See `.claude/rules/typescript-guidelines.md` for comprehensive guidelines on resolving `any` types and TypeScript best practices.
 
 **Quick Reference:**
+
 - Always use `unknown` over `any` for type safety
 - Use Prisma generated types for all database operations
 - Use Zod schema inference (`z.infer<typeof schema>`) for forms and validation
@@ -557,6 +558,7 @@ openssl rand -base64 32
 ### Data Models
 
 **Curriculums (Teacher-Created Learning Paths)**
+
 - **Model**: `Curriculum` with `teacherId`
 - **Ownership**: Created and owned by teachers
 - **Scope**: Can be assigned to multiple students
@@ -565,6 +567,7 @@ openssl rand -base64 32
 - **Use Case**: Standardized learning paths, technique progressions, theory curricula
 
 **Checklists (Student-Specific Task Lists)**
+
 - **Model**: `StudentChecklist` with `studentId`
 - **Ownership**: Can be created by student OR teacher
 - **Scope**: Always belong to a specific student
@@ -575,12 +578,14 @@ openssl rand -base64 32
 ### Lesson Logging
 
 When teachers log lessons, they can mark items as completed from BOTH:
+
 - **Teacher Curriculums** (e.g., "Beginner Guitar Curriculum" → "Open Chords" section)
 - **Student Checklists** (e.g., "Practice Goals for Concert" checklist)
 
 The lesson form combines these as "Practice Progress" or "Student Progress Items" since both represent things the student worked on during the lesson.
 
 **Technical Implementation:**
+
 - **Database Field**: `Lesson.checklistItems` (JSON string array of item IDs)
 - **Contains**: IDs from BOTH `CurriculumItem` AND `StudentChecklistItem`
 - **Distinction**: Check `createdByRole === "TEACHER"` for Curriculum vs Checklist
@@ -590,13 +595,13 @@ The lesson form combines these as "Practice Progress" or "Student Progress Items
 
 ### Type Naming Convention
 
-| Context | Type Name | Location |
-|---------|-----------|----------|
-| Teacher-created learning paths | `Curriculum` | Prisma models |
-| Student-specific tasks | `Checklist` | Prisma models |
-| Code handling BOTH types | `StudentProgressItem` | `types/index.ts` |
-| User-facing UI | "Practice Progress" | Lesson logging interface |
-| Database storage | `checklistItems` | `Lesson.checklistItems` field |
+| Context                        | Type Name             | Location                      |
+| ------------------------------ | --------------------- | ----------------------------- |
+| Teacher-created learning paths | `Curriculum`          | Prisma models                 |
+| Student-specific tasks         | `Checklist`           | Prisma models                 |
+| Code handling BOTH types       | `StudentProgressItem` | `types/index.ts`              |
+| User-facing UI                 | "Practice Progress"   | Lesson logging interface      |
+| Database storage               | `checklistItems`      | `Lesson.checklistItems` field |
 
 ### Invoice Model
 
