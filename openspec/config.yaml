@@ -1,0 +1,73 @@
+schema: spec-driven
+
+# Project context
+# Comprehensive documentation is maintained in .claude/ directory structure
+context: |
+  # Guitar Strategies - Solo Guitar Teacher Management Platform
+
+  ## Tech Stack
+  - Next.js 15 (App Router) with TypeScript 5
+  - Database: Neon PostgreSQL with Prisma ORM 6
+  - Auth: NextAuth v4 (JWT sessions)
+  - UI: shadcn/ui (Radix UI) + TailwindCSS (OpenAI-inspired design)
+  - Rich Text: Tiptap editor
+  - Email: Resend API
+  - File Storage: Vercel Blob
+  - Validation: Zod 4
+  - Logging: Winston with structured domain loggers
+
+  ## Core Philosophy
+  - Teachers book TIME for students, not lessons
+  - Solo teacher model (each teacher manages their own students)
+  - Simple invoicing (no payment processor - teachers collect directly)
+  - All teachers have admin access by default
+
+  ## Key Conventions
+  - TypeScript strict mode - no `any` types (use `unknown` + type guards)
+  - Use Prisma generated types for DB operations
+  - Use Zod schema inference for forms/validation
+  - Server Components by default, 'use client' only when needed
+  - Structured logging with domain-specific loggers (apiLog, dbLog, etc.)
+  - Mobile-first responsive design
+
+  ## Documentation Structure
+  See `.claude/` directory for comprehensive docs:
+  - `.claude/CLAUDE.md` - Quick reference guide
+  - `.claude/architecture/` - Auth, DB schema, scheduling, invoicing, email
+  - `.claude/features/` - Completed features, roadmap, progress tracking
+  - `.claude/design/` - Design system, colors, typography, accessibility
+  - `.claude/api/` - Route patterns, validation schemas
+  - `.claude/rules/` - TypeScript guidelines, git workflow, coding standards
+  - `.claude/infrastructure/` - Env vars, logging, dependencies
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Keep proposals concise and action-oriented (under 750 words)
+    - Always include "Non-goals" section to define scope boundaries
+    - Reference existing .claude/ docs for context instead of duplicating
+    - Consider mobile UX and accessibility from the start
+    - Align with OpenAI-inspired design system (turquoise accents, neutral palette)
+
+  design:
+    - Follow design system in .claude/design/design-system.md
+    - Use turquoise (#14b8b3) as primary accent color
+    - Maintain neutral gray palette for base UI
+    - Ensure WCAG AA contrast standards
+    - Design mobile-first, then scale up
+    - No role-specific colors (unified design for all users)
+
+  tasks:
+    - Break tasks into 1-2 hour chunks maximum
+    - Include acceptance criteria for each task
+    - Specify affected files/components when known
+    - Note any dependencies between tasks
+    - Tag with priority (P0/P1/P2) and area (frontend/backend/db/etc)
+
+  implementation:
+    - Follow TypeScript guidelines in .claude/rules/typescript-guidelines.md
+    - Use absolute imports with @ alias
+    - Validate all inputs with Zod schemas
+    - Use structured logging (import from @/lib/logger)
+    - Write self-documenting code with clear names
+    - Test with multiple user roles (student/teacher/admin)
