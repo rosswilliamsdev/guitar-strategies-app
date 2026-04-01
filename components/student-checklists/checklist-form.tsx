@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ interface ChecklistFormProps {
 
 
 export function ChecklistForm({ checklist }: ChecklistFormProps) {
-  // const router = useRouter(); // Currently unused
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [loadingItems, setLoadingItems] = useState(!!checklist);
   const [formData, setFormData] = useState({
@@ -235,8 +236,8 @@ export function ChecklistForm({ checklist }: ChecklistFormProps) {
         }
       }
 
-      // Use window.location for hard navigation to bypass all caches
-      window.location.href = `/curriculums/my/${savedChecklist.id}`;
+      // Use soft navigation (API already revalidated caches)
+      router.push(`/curriculums/my/${savedChecklist.id}`);
     } catch (error) {
       console.error('Error saving checklist:', {
         error: error instanceof Error ? error.message : String(error),

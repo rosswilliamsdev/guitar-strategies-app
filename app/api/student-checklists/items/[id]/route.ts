@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { updateStudentChecklistItemSchema, toggleChecklistItemSchema } from "@/lib/validations";
@@ -158,6 +159,11 @@ export async function PUT(
       where: { id },
       data: updateData,
     });
+
+    // Invalidate Next.js router & route caches
+    revalidatePath('/curriculums/my');
+    revalidatePath(`/curriculums/my/${item.checklistId}`);
+    revalidatePath('/dashboard');
 
     return NextResponse.json(updatedItem);
   } catch (error) {
