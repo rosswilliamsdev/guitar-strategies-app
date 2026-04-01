@@ -88,7 +88,7 @@ export function InvoiceCard({ invoice, hourlyRate: _ }: InvoiceCardProps) {
         throw new Error('Failed to update invoice');
       }
 
-      router.refresh();
+      // No need for router.refresh() - API route handles revalidatePath()
     } catch (error) {
       console.error('Error marking invoice as paid:', {
         error: error instanceof Error ? error.message : String(error),
@@ -109,7 +109,7 @@ export function InvoiceCard({ invoice, hourlyRate: _ }: InvoiceCardProps) {
         throw new Error(data.error || 'Failed to delete invoice');
       }
 
-      router.refresh();
+      // No need for router.refresh() - API route handles revalidatePath()
     } catch (error) {
       console.error('Error deleting invoice:', {
         error: error instanceof Error ? error.message : String(error),

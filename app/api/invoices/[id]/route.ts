@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
@@ -194,6 +195,10 @@ async function handlePUT(
       },
     });
 
+    // Invalidate Next.js router & route caches
+    revalidatePath('/invoices');
+    revalidatePath('/dashboard');
+
     return NextResponse.json({ invoice });
   } catch (error) {
     apiLog.error("Error updating invoice:", {
@@ -249,6 +254,10 @@ async function handleDELETE(
     await prisma.invoice.delete({
       where: { id: id },
     });
+
+    // Invalidate Next.js router & route caches
+    revalidatePath('/invoices');
+    revalidatePath('/dashboard');
 
     return NextResponse.json({ success: true });
   } catch (error) {

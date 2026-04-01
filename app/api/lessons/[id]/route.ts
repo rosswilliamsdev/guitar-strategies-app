@@ -296,6 +296,10 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
     await invalidateLessonCache(lesson.id, lesson.teacherId, lesson.studentId);
 
+    // Invalidate Next.js router & route caches
+    revalidatePath('/lessons');
+    revalidatePath('/dashboard');
+
     return NextResponse.json({ message: "Lesson cancelled successfully" });
   } catch (error) {
     apiLog.error("Error cancelling lesson:", {

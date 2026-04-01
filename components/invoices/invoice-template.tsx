@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -82,6 +83,7 @@ export function InvoiceTemplate({
   showActions = true,
   compact = false,
 }: InvoiceTemplateProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDownloadPDF = async () => {
@@ -175,8 +177,8 @@ export function InvoiceTemplate({
 
       if (response.ok) {
         alert(`Invoice sent successfully to ${result.recipient}`);
-        // Refresh the page to update invoice status
-        window.location.reload();
+        // Redirect back to invoices list with updated data
+        router.push('/invoices');
       } else {
         alert(result.error || "Failed to send invoice");
       }
