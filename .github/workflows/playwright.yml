@@ -9,8 +9,22 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_TEST }}
       NEXTAUTH_URL: http://localhost:3000
 
