@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sendEmail, createInvoiceEmail } from '@/lib/email';
@@ -106,7 +107,12 @@ async function handlePOST(
       },
     });
 
-    return NextResponse.json({ 
+    // Invalidate Next.js router & route caches
+    revalidatePath('/invoices');
+    revalidatePath('/dashboard');
+    revalidatePath(`/invoices/${id}`);
+
+    return NextResponse.json({
       success: true,
       message: `Invoice sent successfully to ${recipientEmail}`,
       recipient: recipientEmail,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
@@ -226,6 +227,11 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
         fullLesson.teacherId,
         fullLesson.studentId,
       );
+
+      // Invalidate Next.js router & route caches
+      revalidatePath('/lessons');
+      revalidatePath('/dashboard');
+      revalidatePath(`/lessons/${fullLesson.id}`);
     }
 
     return NextResponse.json({ lesson: fullLesson });
@@ -289,6 +295,10 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     });
 
     await invalidateLessonCache(lesson.id, lesson.teacherId, lesson.studentId);
+
+    // Invalidate Next.js router & route caches
+    revalidatePath('/lessons');
+    revalidatePath('/dashboard');
 
     return NextResponse.json({ message: "Lesson cancelled successfully" });
   } catch (error) {

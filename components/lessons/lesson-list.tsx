@@ -94,9 +94,8 @@ export function LessonList({ userRole }: LessonListProps) {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        const timestamp = Date.now();
         // Fetch only COMPLETED lessons since that's all we display
-        const response = await fetch(`/api/lessons?status=COMPLETED&_t=${timestamp}`, {
+        const response = await fetch(`/api/lessons?status=COMPLETED`, {
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache',

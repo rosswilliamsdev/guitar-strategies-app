@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { apiLog } from "@/lib/logger";
@@ -129,6 +130,10 @@ export async function POST(request: NextRequest) {
       itemId,
       status: status || "COMPLETED",
     });
+
+    // Invalidate Next.js router & route caches
+    revalidatePath('/curriculums/my');
+    revalidatePath('/dashboard');
 
     return NextResponse.json({ success: true, itemProgress });
   } catch (error) {

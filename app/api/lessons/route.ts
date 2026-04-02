@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { revalidatePath } from "next/cache";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createLessonSchema } from "@/lib/validations";
@@ -370,6 +371,12 @@ async function handlePOST(request: NextRequest) {
       teacherProfile.id,
       validatedData.studentId,
     );
+
+    // Invalidate Next.js router & route caches so soft navigation
+    // shows fresh data without requiring window.location.href
+    revalidatePath('/lessons');
+    revalidatePath('/dashboard');
+    revalidatePath(`/lessons/${lesson.id}`);
 
     // Note: Email is sent separately after attachments/links are uploaded
     // See /api/lessons/[id]/send-email endpoint

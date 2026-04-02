@@ -641,11 +641,11 @@ export function LessonForm({
         }
       }
 
-      // Success - use hard navigation to bypass cache
+      // Success - use soft navigation (API already revalidated caches)
       if (lessonId) {
-        window.location.href = `/lessons/${lessonId}`;
+        router.push(`/lessons/${lessonId}`);
       } else {
-        window.location.href = "/lessons";
+        router.push("/lessons");
       }
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred");
