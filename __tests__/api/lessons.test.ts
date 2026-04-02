@@ -22,6 +22,12 @@ vi.mock('next-auth', () => ({
   getServerSession: vi.fn(),
 }));
 
+// Mock Next.js cache functions
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
+
 // Get reference to mocked getServerSession after mock is set up
 import { getServerSession } from 'next-auth';
 const mockGetServerSession = vi.mocked(getServerSession);
