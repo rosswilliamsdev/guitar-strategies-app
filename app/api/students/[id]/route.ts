@@ -6,6 +6,7 @@ import { getUpcomingLessonsWithCleanup } from "@/lib/lesson-cleanup";
 import { apiLog } from "@/lib/logger";
 import { updateStudentByTeacherSchema } from "@/lib/validations";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 
 export async function GET(
   request: NextRequest,
@@ -241,6 +242,11 @@ export async function PUT(
       teacherId: session.user.role === "TEACHER" ? session.user.id : undefined,
       updatedFields: Object.keys(validatedData),
     });
+
+    // Invalidate Next.js router & route caches for soft navigation
+    revalidatePath('/admin');
+    revalidatePath('/students');
+    revalidatePath('/dashboard');
 
     return NextResponse.json(updatedStudent);
   } catch (error) {

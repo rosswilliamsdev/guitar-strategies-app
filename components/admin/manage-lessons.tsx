@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ interface ManageLessonsProps {
 }
 
 export function ManageLessons({ lessons }: ManageLessonsProps) {
+  const router = useRouter();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -206,7 +208,7 @@ export function ManageLessons({ lessons }: ManageLessonsProps) {
 
       if (response.ok) {
         toast.success("Lesson has been successfully deleted.");
-        window.location.reload();
+        // No need for reload - API route handles revalidatePath()
       } else {
         const error = await response.json();
         toast.error(error instanceof Error ? error.message : "Failed to delete lesson");
@@ -244,7 +246,7 @@ export function ManageLessons({ lessons }: ManageLessonsProps) {
           `${selectedLessons.size} lesson(s) have been successfully deleted.`
         );
         setSelectedLessons(new Set());
-        window.location.reload();
+        // No need for reload - API route handles revalidatePath()
       } else {
         const error = await response.json();
         toast.error(error instanceof Error ? error.message : "Failed to delete lessons");

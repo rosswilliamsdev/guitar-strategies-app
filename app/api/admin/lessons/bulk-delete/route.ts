@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { z } from 'zod';
 import { apiLog } from '@/lib/logger';
+import { revalidatePath } from 'next/cache';
 
 const bulkDeleteSchema = z.object({
   lessonIds: z.array(z.string()).min(1, 'At least one lesson ID is required'),
@@ -92,6 +93,11 @@ export async function DELETE(request: NextRequest) {
 
       return deleteResult;
     });
+
+    // Invalidate Next.js router & route caches for soft navigation
+    revalidatePath('/admin');
+    revalidatePath('/lessons');
+    revalidatePath('/dashboard');
 
     return NextResponse.json({
       success: true,

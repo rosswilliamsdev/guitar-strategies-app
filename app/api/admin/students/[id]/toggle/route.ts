@@ -7,6 +7,7 @@ import {
   handleApiError
 } from '@/lib/api-responses';
 import { getValidatedBody } from '@/lib/validated-request';
+import { revalidatePath } from 'next/cache';
 
 async function handlePOST(
   request: NextRequest,
@@ -33,6 +34,10 @@ async function handlePOST(
         isActive,
       },
     });
+
+    // Invalidate Next.js router & route caches for soft navigation
+    revalidatePath('/admin');
+    revalidatePath('/students');
 
     return createSuccessResponse(
       { isActive },

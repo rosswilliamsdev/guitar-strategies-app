@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -120,6 +121,7 @@ async function handleDownload(item: LibraryItem) {
 }
 
 export function LibraryList({ items, studentView = false }: LibraryListProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedInstrument, setSelectedInstrument] = useState<string>("all");
@@ -407,8 +409,8 @@ export function LibraryList({ items, studentView = false }: LibraryListProps) {
 
       await Promise.all(deletePromises);
 
-      // Refresh the page to update the list
-      window.location.reload();
+      // No need for reload - API route handles revalidatePath()
+      // Next.js will automatically refetch the library data
     } catch (error) {
       console.error("Error deleting files:", {
         error: error instanceof Error ? error.message : String(error),
