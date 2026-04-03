@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ interface ManageStudentsProps {
 }
 
 export function ManageStudents({ students }: ManageStudentsProps) {
+  const router = useRouter();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -103,8 +105,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
       });
 
       if (response.ok) {
-        // Refresh the page or update the local state
-        window.location.reload();
+        // No need for reload - API route handles revalidatePath()
       }
     } catch (error) {
       console.error('Error toggling student status:', {
@@ -232,7 +233,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         description: "Student profile updated successfully",
       });
 
-      window.location.reload();
+      // No need for reload - API route handles revalidatePath()
     } catch (error) {
       console.error("Error saving student profile:", {
         error: error instanceof Error ? error.message : String(error),
@@ -266,8 +267,7 @@ export function ManageStudents({ students }: ManageStudentsProps) {
         toast.success(
           `${studentToDelete.name} has been successfully removed from the system.`
         );
-        // Refresh the page
-        window.location.reload();
+        // No need for reload - API route handles revalidatePath()
       } else {
         const error = await response.json();
         toast.error(error instanceof Error ? error.message : "Failed to delete student");

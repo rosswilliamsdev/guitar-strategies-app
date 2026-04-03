@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { deleteFileFromBlob } from '@/lib/blob-storage';
 import { apiLog } from '@/lib/logger';
+import { revalidatePath } from 'next/cache';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -57,6 +58,10 @@ export async function DELETE(
       teacherId: teacherProfile.id,
       fileName: libraryItem.fileName
     });
+
+    // Invalidate Next.js router & route caches for soft navigation
+    revalidatePath('/library');
+    revalidatePath('/dashboard');
 
     return NextResponse.json({ success: true }, { status: 200 });
 

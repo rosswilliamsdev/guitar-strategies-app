@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +110,7 @@ export function RecommendationsList({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   teacherId: _,
 }: RecommendationsListProps) {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
@@ -126,7 +128,8 @@ export function RecommendationsList({
       });
 
       if (response.ok) {
-        window.location.reload(); // Simple refresh for now
+        // No need for reload - API route handles revalidatePath()
+        // Next.js will automatically refetch the recommendations
       } else {
         throw new Error("Failed to delete recommendation");
       }
@@ -286,7 +289,7 @@ export function RecommendationsList({
                               size="sm"
                               variant="secondary"
                               onClick={() =>
-                                (window.location.href = `/recommendations/${item.id}/edit`)
+                                router.push(`/recommendations/${item.id}/edit`)
                               }
                               className="px-2 sm:px-3"
                             >

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { apiLog } from '@/lib/logger';
+import { revalidatePath } from 'next/cache';
 
 interface Params {
   params: Promise<{
@@ -156,6 +157,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         where: { id },
       });
     });
+
+    // Invalidate Next.js router & route caches for soft navigation
+    revalidatePath('/admin');
+    revalidatePath('/dashboard');
 
     return NextResponse.json({
       success: true,
