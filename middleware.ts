@@ -42,7 +42,8 @@ function checkRequestSizeLimit(req: NextRequest): NextResponse | null {
   // Set specific limits for different endpoints
   if (
     pathname.includes("/api/lessons/attachments") ||
-    pathname.includes("/api/library")
+    pathname.includes("/api/library") ||
+    pathname.includes("/api/lessons/voice-to-notes") // Voice recordings (audio files)
   ) {
     limit = LIMITS.FILE_UPLOAD;
   } else if (

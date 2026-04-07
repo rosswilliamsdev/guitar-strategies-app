@@ -118,7 +118,7 @@ export function applySecurityHeaders(
     'Permissions-Policy',
     [
       'camera=()',
-      'microphone=()',
+      'microphone=(self)', // Allow microphone on same origin for voice notes feature
       'geolocation=()',
       'interest-cohort=()',
       'payment=()',
