@@ -160,7 +160,7 @@ actionable information. Return ONLY the HTML.
 - **Adoption:** 40%+ of teachers use voice input within 2 weeks of launch
 - **Time savings:** Average lesson logging time drops from ~12 min to ~4 min
 - **Quality:** Note completeness increases (measured by avg character count)
-- **Satisfaction:** Teacher feedback positive (post-feature survey)
+- **Satisfaction:** Teacher feedback will be positive (post-feature survey)
 
 ## Cost Analysis
 
