@@ -27,6 +27,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET_TEST }}
       NEXTAUTH_URL: http://localhost:3000
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
       - uses: actions/checkout@v4
