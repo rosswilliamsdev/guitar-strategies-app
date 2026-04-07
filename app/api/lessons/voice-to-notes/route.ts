@@ -24,10 +24,17 @@ import OpenAI from "openai";
 // via experimental.proxyClientMaxBodySize (set to 20mb for voice recordings)
 export const maxDuration = 60; // 60 seconds max execution time (Whisper + GPT-4 processing)
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-initialize OpenAI client to prevent build-time errors
+// Next.js build imports routes but env vars aren't available during webpack compilation
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return _openai;
+}
 
 /**
  * POST /api/lessons/voice-to-notes
@@ -154,6 +161,7 @@ export async function POST(request: NextRequest) {
  */
 async function transcribeAudio(audioFile: File): Promise<string> {
   try {
+    const openai = getOpenAI();
     const response = await openai.audio.transcriptions.create({
       file: audioFile,
       model: "whisper-1",
@@ -222,6 +230,7 @@ IMPORTANT: Keep the teacher's voice!
 
 Return ONLY the formatted HTML with no empty elements, no explanation, no meta-commentary.`;
 
+    const openai = getOpenAI();
     const response = await openai.chat.completions.create({
       model: "gpt-4-turbo",
       messages: [
