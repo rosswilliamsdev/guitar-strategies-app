@@ -30,7 +30,9 @@ import {
   Redo,
 } from "lucide-react";
 import { Button } from "./button";
+import { VoiceRecorderButton } from "./voice-recorder-button";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Props for the RichTextEditor component.
@@ -73,6 +75,8 @@ export function RichTextEditor({
   placeholder = "Start typing...",
   className,
 }: RichTextEditorProps) {
+  const { toast } = useToast();
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -96,11 +100,44 @@ export function RichTextEditor({
           "prose-blockquote:text-muted-foreground prose-blockquote:border-l-border",
           "prose-ul:text-foreground prose-ol:text-foreground",
           "prose-li:text-foreground",
+          // Reduce spacing for voice-generated content
+          "prose-h2:mt-4 prose-h2:mb-2",
+          "prose-p:my-2",
+          "prose-ul:my-2 prose-ol:my-2",
           className
         ),
       },
     },
   });
+
+  /**
+   * Handle voice transcription completion.
+   * Appends the formatted HTML to the editor content.
+   */
+  const handleVoiceTranscription = (html: string) => {
+    if (!editor) return;
+
+    // Insert the voice-generated content at the end
+    // This appends to existing content rather than replacing it
+    editor.commands.focus("end");
+    editor.commands.insertContent(html);
+
+    toast({
+      title: "Voice notes added",
+      description: "Your narration has been transcribed and formatted.",
+    });
+  };
+
+  /**
+   * Handle voice recording errors.
+   */
+  const handleVoiceError = (error: string) => {
+    toast({
+      title: "Voice recording failed",
+      description: error,
+      variant: "destructive",
+    });
+  };
 
   if (!editor) {
     return null;
@@ -199,6 +236,15 @@ export function RichTextEditor({
         >
           <Redo className="h-4 w-4" />
         </Button>
+
+        {/* Spacer to push voice button to the right */}
+        <div className="flex-1" />
+
+        {/* Voice Recorder Button */}
+        <VoiceRecorderButton
+          onTranscriptionComplete={handleVoiceTranscription}
+          onError={handleVoiceError}
+        />
       </div>
 
       {/* Editor */}

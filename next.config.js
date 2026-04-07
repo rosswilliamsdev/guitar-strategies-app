@@ -60,6 +60,11 @@ const nextConfig = {
 
     // Enhanced security features
     strictNextHead: true,
+
+    // Increase body size limit for voice recording uploads (App Router)
+    // 5 minutes of WebM audio @ ~2MB/min = ~10MB, buffer to 20MB for safety
+    // This applies to middleware body buffering and route handlers
+    middlewareClientMaxBodySize: "20mb",
   },
 
   // Image optimization
@@ -107,7 +112,7 @@ const nextConfig = {
           {
             key: "Permissions-Policy",
             value:
-              "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=()",
+              "camera=(), microphone=(self), geolocation=(), interest-cohort=(), payment=(), usb=()",
           },
         ],
       },
