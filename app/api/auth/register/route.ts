@@ -8,8 +8,6 @@ const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["STUDENT", "TEACHER"], "Role must be STUDENT or TEACHER"),
-  teacherId: z.string().optional(), // Required for students
 });
 
 export async function POST(request: Request) {
@@ -18,31 +16,29 @@ export async function POST(request: Request) {
 
     // Validate input
     const validatedData = registerSchema.parse(body);
-    const { name, email, password, role, teacherId } = validatedData;
+    const { name, email, password } = validatedData;
 
-    // For students, teacherId is required
-    if (role === "STUDENT" && !teacherId) {
-      apiLog.warn("Registration failed - student missing teacherId", { email });
-      return NextResponse.json(
-        { message: "Teacher ID is required for student registration" },
-        { status: 400 }
-      );
-    }
-
-    apiLog.info("Registration attempt", {
-      email,
-      role,
-      teacherId,
-    });
+    apiLog.info("Teacher registration attempt", { email });
 
     // Check if user already exists
     const existingUser = await dbQuery(() =>
       prisma.user.findUnique({
         where: { email },
+        include: {
+          studentProfile: true,
+        },
       })
     );
 
     if (existingUser) {
+      if (existingUser.role === 'STUDENT' || existingUser.studentProfile) {
+        apiLog.warn("Registration failed - email registered as student", { email });
+        return NextResponse.json(
+          { message: "This email is already registered as a student. Please use a different email for your teacher account." },
+          { status: 400 }
+        );
+      }
+
       apiLog.warn("Registration failed - email already exists", { email });
       return NextResponse.json(
         { message: "Email already registered" },
@@ -53,41 +49,28 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await hash(password, 12);
 
-    // Create user with profile based on role
+    // Create teacher user with profile
     const user = await criticalDbQuery(() =>
       prisma.user.create({
         data: {
           name,
           email,
           password: hashedPassword,
-          role,
-          ...(role === "TEACHER" && {
-            teacherProfile: {
-              create: {
-                isActive: true,
-                isAdmin: true,
-              },
+          role: 'TEACHER',
+          teacherProfile: {
+            create: {
+              isActive: true,
+              isAdmin: true,
             },
-          }),
-          ...(role === "STUDENT" &&
-            teacherId && {
-              studentProfile: {
-                create: {
-                  teacherId,
-                  isActive: true,
-                  instrument: "guitar",
-                },
-              },
-            }),
+          },
         },
         include: {
           teacherProfile: true,
-          studentProfile: true,
         },
       })
     );
 
-    apiLog.info("User registered successfully", {
+    apiLog.info("Teacher registered successfully", {
       userId: user.id,
       email: user.email,
       role: user.role,

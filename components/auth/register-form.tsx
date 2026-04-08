@@ -1,33 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { PasswordStrengthMeter } from '@/components/ui/password-strength-meter';
-
-interface Teacher {
-  id: string;
-  user: {
-    name: string;
-  };
-}
 
 export function RegisterForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    role: 'STUDENT' as 'STUDENT' | 'TEACHER',
-    teacherId: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -46,7 +37,19 @@ export function RegisterForm() {
         throw new Error(data.message || 'Registration failed');
       }
 
-      router.push('/login?message=Registration successful');
+      // Auto-login after successful registration
+      const signInResult = await signIn('credentials', {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (signInResult?.ok) {
+        router.push('/dashboard');
+      } else {
+        setError('Registration successful but login failed. Please try logging in manually.');
+        router.push('/login?message=Registration successful');
+      }
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed');
     } finally {
@@ -54,26 +57,9 @@ export function RegisterForm() {
     }
   };
 
-  // Fetch teachers when component mounts
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const teachersResponse = await fetch('/api/teachers');
-        if (teachersResponse.ok) {
-          const teachersData = await teachersResponse.json();
-          setTeachers(teachersData.teachers || []);
-        }
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -133,51 +119,6 @@ export function RegisterForm() {
         <PasswordStrengthMeter password={formData.password} className="mt-2" />
       </div>
 
-      <div>
-        <label htmlFor="role" className="block text-ui-label text-brand-black mb-1">
-          I am a...
-        </label>
-        <select
-          id="role"
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="flex h-10 w-full rounded-button border border-gray-300 bg-white px-3 py-2 text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-tiffany focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={isLoading}
-        >
-          <option value="STUDENT">Student</option>
-          <option value="TEACHER">Teacher</option>
-        </select>
-      </div>
-
-      {formData.role === 'STUDENT' && (
-        <div>
-          <label htmlFor="teacherId" className="block text-ui-label text-brand-black mb-1">
-            Select Your Teacher <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="teacherId"
-            name="teacherId"
-            value={formData.teacherId}
-            onChange={handleChange}
-            className="flex h-10 w-full rounded-button border border-gray-300 bg-white px-3 py-2 text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-tiffany focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            required={formData.role === 'STUDENT'}
-            disabled={isLoading}
-          >
-            <option value="">-- Select a teacher --</option>
-            {teachers.map((teacher) => (
-              <option key={teacher.id} value={teacher.id}>
-                {teacher.user.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-gray-500 mt-1">
-            Don&apos;t see your teacher? Ask them to create an account first.
-          </p>
-        </div>
-      )}
-
-
       <Button
         type="submit"
         className="w-full"
@@ -192,6 +133,12 @@ export function RegisterForm() {
           'Create Account'
         )}
       </Button>
+
+      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-button">
+        <p className="text-sm text-blue-800">
+          📧 Are you a student? Your teacher will send you an invitation email
+        </p>
+      </div>
     </form>
   );
 }
