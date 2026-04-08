@@ -31,7 +31,8 @@ import type {
   ProgressItemDetail,
   ChecklistAPIResponse,
 } from "@/types";
-import { StudentChecklistItem } from "@prisma/client";
+import { StudentChecklistItem, Lesson } from "@prisma/client";
+import { LastLessonSummary } from "@/components/lessons/last-lesson-summary";
 
 interface Attachment {
   id: string;
@@ -81,6 +82,12 @@ export function LessonForm({
     useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
+
+  // Last lesson summary state
+  const [lastLesson, setLastLesson] = useState<Pick<
+    Lesson,
+    "id" | "date" | "notes" | "studentId"
+  > | null>(null);
 
   const [formData, setFormData] = useState({
     studentId: initialData?.studentId || "",
@@ -232,6 +239,68 @@ export function LessonForm({
 
     fetchStudentChecklists();
   }, [formData.studentId, lessonId]);
+
+  // Separate useEffect for last lesson - ensures it always re-runs when student changes
+  useEffect(() => {
+    console.log('[LastLesson useEffect] Triggered for studentId:', formData.studentId);
+
+    if (!formData.studentId) {
+      console.log('[LastLesson useEffect] No studentId, clearing');
+      setLastLesson(null);
+      return;
+    }
+
+    // Clear immediately when student changes
+    console.log('[LastLesson useEffect] Clearing lastLesson state');
+    setLastLesson(null);
+
+    let cancelled = false;
+
+    const fetchLastLesson = async () => {
+      console.log('[LastLesson fetch] Starting fetch for:', formData.studentId);
+      try {
+        // Add timestamp to bypass both client and server caching
+        const url = `/api/lessons?studentId=${formData.studentId}&status=COMPLETED&limit=1&_t=${Date.now()}`;
+
+        const response = await fetch(url, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+          },
+        });
+
+        console.log('[LastLesson fetch] Response:', response.ok, 'cancelled:', cancelled);
+
+        if (!response.ok || cancelled) {
+          return;
+        }
+
+        const data = await response.json();
+        console.log('[LastLesson fetch] Data received:', data.data?.length || 0, 'lessons');
+
+        // Only update if we haven't cancelled (student hasn't changed)
+        if (!cancelled && data.data && data.data.length > 0) {
+          const lesson = data.data[0];
+          console.log('[LastLesson fetch] Setting lesson for student:', lesson.studentId);
+          setLastLesson({
+            id: lesson.id,
+            date: lesson.date,
+            notes: lesson.notes,
+            studentId: lesson.studentId,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching last lesson:", error);
+      }
+    };
+
+    fetchLastLesson();
+
+    return () => {
+      console.log('[LastLesson cleanup] Cancelling fetch for:', formData.studentId);
+      cancelled = true;
+    };
+  }, [formData.studentId]);
 
   // File handling
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -696,6 +765,13 @@ export function LessonForm({
             Choose which student this lesson is for
           </p>
         </div>
+
+        {/* Last Lesson Summary */}
+        {lastLesson && lastLesson.studentId === formData.studentId && (
+          <div className="mt-4 mb-4">
+            <LastLessonSummary lesson={lastLesson} />
+          </div>
+        )}
 
         {/* Practice Progress */}
         {formData.studentId && studentProgressItems.length > 0 && (

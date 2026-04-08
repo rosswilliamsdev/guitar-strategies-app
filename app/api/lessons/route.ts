@@ -138,61 +138,103 @@ async function handleGET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    // Generate cache key for Redis/memory caching
-    const profileId =
-      session.user.role === "TEACHER"
-        ? (
-            await prisma.teacherProfile.findUnique({
-              where: { userId: session.user.id },
-            })
-          )?.id
-        : (
-            await prisma.studentProfile.findUnique({
-              where: { userId: session.user.id },
-            })
-          )?.id;
+    // Skip caching for "last lesson" lookups (limit=1 + status + studentId)
+    // These need real-time data for lesson form summaries
+    const isLastLessonLookup =
+      paginationParams.limit === 1 &&
+      status === 'COMPLETED' &&
+      studentId !== null;
 
-    if (!profileId) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+    apiLog.info('[GET /api/lessons] Cache decision', {
+      limit: paginationParams.limit,
+      status,
+      studentId,
+      isLastLessonLookup,
+    });
+
+    let lessons, total;
+
+    if (isLastLessonLookup) {
+      // Direct database query without caching for last lesson lookups
+      [lessons, total] = await Promise.all([
+        prisma.lesson.findMany({
+          where: whereClause,
+          include: {
+            student: {
+              include: { user: true },
+            },
+            teacher: {
+              include: { user: true },
+            },
+            attachments: true,
+            links: true,
+          },
+          orderBy: {
+            date: future === "true" ? "asc" : "desc",
+          },
+          skip,
+          take,
+        }),
+        prisma.lesson.count({ where: whereClause }),
+      ]);
+    } else {
+      // Use caching for normal lesson list queries
+      const profileId =
+        session.user.role === "TEACHER"
+          ? (
+              await prisma.teacherProfile.findUnique({
+                where: { userId: session.user.id },
+              })
+            )?.id
+          : (
+              await prisma.studentProfile.findUnique({
+                where: { userId: session.user.id },
+              })
+            )?.id;
+
+      if (!profileId) {
+        return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      }
+
+      const cacheKey =
+        session.user.role === "TEACHER"
+          ? CacheKeys.teacherLessons(profileId, paginationParams.page)
+          : CacheKeys.studentLessons(profileId, paginationParams.page);
+
+      // Use Redis cache with automatic fallback
+      const cachedData = await getCachedData(
+        cacheKey,
+        async () => {
+          const [lessons, total] = await Promise.all([
+            prisma.lesson.findMany({
+              where: whereClause,
+              include: {
+                student: {
+                  include: { user: true },
+                },
+                teacher: {
+                  include: { user: true },
+                },
+                attachments: true,
+                links: true,
+              },
+              orderBy: {
+                date: future === "true" ? "asc" : "desc",
+              },
+              skip,
+              take,
+            }),
+            prisma.lesson.count({ where: whereClause }),
+          ]);
+
+          return { lessons, total };
+        },
+        CACHE_DURATIONS.DYNAMIC_SHORT, // Cache for 1 minute since lessons change frequently
+      );
+
+      lessons = cachedData.lessons;
+      total = cachedData.total;
     }
-
-    const cacheKey =
-      session.user.role === "TEACHER"
-        ? CacheKeys.teacherLessons(profileId, paginationParams.page)
-        : CacheKeys.studentLessons(profileId, paginationParams.page);
-
-    // Use Redis cache with automatic fallback
-    const cachedData = await getCachedData(
-      cacheKey,
-      async () => {
-        const [lessons, total] = await Promise.all([
-          prisma.lesson.findMany({
-            where: whereClause,
-            include: {
-              student: {
-                include: { user: true },
-              },
-              teacher: {
-                include: { user: true },
-              },
-              attachments: true,
-              links: true,
-            },
-            orderBy: {
-              date: future === "true" ? "asc" : "desc",
-            },
-            skip,
-            take,
-          }),
-          prisma.lesson.count({ where: whereClause }),
-        ]);
-
-        return { lessons, total };
-      },
-      CACHE_DURATIONS.DYNAMIC_SHORT, // Cache for 1 minute since lessons change frequently
-    );
-
-    const { lessons, total } = cachedData;
 
     // Generate ETag for HTTP cache validation
     const etag = generateETag({ lessons, timestamp: Date.now() });
@@ -212,8 +254,29 @@ async function handleGET(request: NextRequest) {
       return createNotModifiedResponse();
     }
 
-    // Also set in memory cache for quick access
-    lessonCache.set(cacheKey, lessons);
+    // Also set in memory cache for quick access (skip for last lesson lookups)
+    if (!isLastLessonLookup) {
+      const profileId =
+        session.user.role === "TEACHER"
+          ? (
+              await prisma.teacherProfile.findUnique({
+                where: { userId: session.user.id },
+              })
+            )?.id
+          : (
+              await prisma.studentProfile.findUnique({
+                where: { userId: session.user.id },
+              })
+            )?.id;
+
+      if (profileId) {
+        const cacheKey =
+          session.user.role === "TEACHER"
+            ? CacheKeys.teacherLessons(profileId, paginationParams.page)
+            : CacheKeys.studentLessons(profileId, paginationParams.page);
+        lessonCache.set(cacheKey, lessons);
+      }
+    }
 
     // Create paginated response
     const paginatedResponse = await createPaginatedResponse(
