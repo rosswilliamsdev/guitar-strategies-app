@@ -69,11 +69,11 @@ async function handleGET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const studentId = searchParams.get("studentId");
-    const status = searchParams.get("status");
-    const future = searchParams.get("future");
-    const dateFrom = searchParams.get("dateFrom");
-    const dateTo = searchParams.get("dateTo");
+    const studentId = searchParams.get("studentId") || undefined;
+    const status = searchParams.get("status") || undefined;
+    const future = searchParams.get("future") || undefined;
+    const dateFrom = searchParams.get("dateFrom") || undefined;
+    const dateTo = searchParams.get("dateTo") || undefined;
 
     // Get pagination parameters
     const paginationParams = getPaginationParams(request);
@@ -143,7 +143,7 @@ async function handleGET(request: NextRequest) {
     const isLastLessonLookup =
       paginationParams.limit === 1 &&
       status === 'COMPLETED' &&
-      studentId !== null;
+      studentId !== undefined;
 
     apiLog.info('[GET /api/lessons] Cache decision', {
       limit: paginationParams.limit,
