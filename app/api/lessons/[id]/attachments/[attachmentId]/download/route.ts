@@ -13,7 +13,7 @@ export async function GET(
     // Get the attachment to access its file URL
     const attachment = await prisma.lessonAttachment.findUnique({
       where: { id: attachmentId },
-      select: { url: true }
+      select: { fileUrl: true }
     });
 
     if (!attachment) {
@@ -23,7 +23,7 @@ export async function GET(
     }
 
     // Generate signed URL for secure download
-    const signedUrl = await getSignedDownloadUrl(attachment.url);
+    const signedUrl = await getSignedDownloadUrl(attachment.fileUrl);
 
     return NextResponse.json({
       success: true,
