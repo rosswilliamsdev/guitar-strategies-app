@@ -1,10 +1,50 @@
-import { put, del } from '@vercel/blob';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { log } from '@/lib/logger';
 
 /**
- * Centralized Vercel Blob Storage Utility
+ * Centralized S3 Storage Utility (migrated from Vercel Blob)
  * Handles file uploads, deletions, and validation for the Guitar Strategies app
  */
+
+// Initialize S3 client
+let s3Client: S3Client | null = null;
+
+function getS3Client(): S3Client {
+  if (s3Client) return s3Client;
+
+  const requiredEnvVars = {
+    AWS_REGION: process.env.AWS_REGION,
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+    S3_BUCKET_NAME: process.env.S3_BUCKET_NAME,
+  };
+
+  const missingVars = Object.entries(requiredEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingVars.length > 0) {
+    throw new Error(
+      `S3 storage is not configured. Missing environment variables: ${missingVars.join(', ')}`
+    );
+  }
+
+  s3Client = new S3Client({
+    region: requiredEnvVars.AWS_REGION!,
+    credentials: {
+      accessKeyId: requiredEnvVars.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: requiredEnvVars.AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+
+  return s3Client;
+}
+
+function buildS3Url(key: string): string {
+  const bucket = process.env.S3_BUCKET_NAME;
+  const region = process.env.AWS_REGION;
+  return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+}
 
 // File validation constants
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
@@ -116,7 +156,7 @@ export function validateFile(file: File): FileValidationResult {
 }
 
 /**
- * Upload file to Vercel Blob Storage
+ * Upload file to S3 Storage
  * @param file - The file to upload
  * @param path - The storage path (e.g., 'library/teacherId/filename' or 'lessons/teacherId/lessonId/filename')
  * @returns Upload result with URL or throws error
@@ -126,39 +166,54 @@ export async function uploadFileToBlob(
   path: string
 ): Promise<BlobUploadResult> {
   try {
-    // Validate Vercel Blob is configured
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      throw new Error('Vercel Blob storage is not configured. Please set BLOB_READ_WRITE_TOKEN.');
-    }
+    // Get S3 client (validates configuration)
+    const client = getS3Client();
+    const bucket = process.env.S3_BUCKET_NAME!;
 
     // Validate the file
     const validation = validateFile(file);
     if (!validation.valid) {
-      throw new Error(validation.error);
+      throw new Error((validation as FileValidationError).error);
     }
 
-    log.info('Uploading file to blob storage', {
+    log.info('Uploading file to S3 storage', {
       fileName: file.name,
       fileSize: file.size,
       mimeType: file.type,
       path
     });
 
-    // Upload to Vercel Blob
-    const blob = await put(path, file, {
-      access: 'public',
-      addRandomSuffix: false, // We already add timestamp for uniqueness
+    // Convert File to Buffer for S3 upload
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // Upload to S3
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: path,
+      Body: buffer,
+      ContentType: file.type,
+      ContentDisposition: `inline; filename="${file.name}"`,
     });
 
-    log.info('File uploaded successfully', {
-      url: blob.url,
-      pathname: blob.pathname
+    await client.send(command);
+
+    const url = buildS3Url(path);
+
+    log.info('File uploaded successfully to S3', {
+      url,
+      pathname: path
     });
 
-    return blob;
+    return {
+      url,
+      pathname: path,
+      contentType: file.type,
+      contentDisposition: `inline; filename="${file.name}"`,
+    };
 
   } catch (error) {
-    log.error('Failed to upload file to blob storage', {
+    log.error('Failed to upload file to S3 storage', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       fileName: file.name,
@@ -169,32 +224,61 @@ export async function uploadFileToBlob(
 }
 
 /**
- * Delete file from Vercel Blob Storage
- * @param url - The blob URL to delete
+ * Delete file from S3 Storage
+ * @param url - The S3 URL to delete
  * @returns Promise that resolves when deletion is complete
  */
 export async function deleteFileFromBlob(url: string): Promise<void> {
   try {
-    // Validate Vercel Blob is configured
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      log.warn('Vercel Blob storage is not configured, skipping deletion', { url });
+    // Get S3 client (validates configuration)
+    const client = getS3Client();
+    const bucket = process.env.S3_BUCKET_NAME!;
+
+    // Extract the key (path) from the S3 URL
+    const key = extractS3KeyFromUrl(url);
+    if (!key) {
+      log.warn('Could not extract S3 key from URL, skipping deletion', { url });
       return;
     }
 
-    log.info('Deleting file from blob storage', { url });
+    log.info('Deleting file from S3 storage', { url, key });
 
-    await del(url);
+    const command = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
 
-    log.info('File deleted successfully', { url });
+    await client.send(command);
+
+    log.info('File deleted successfully from S3', { url });
 
   } catch (error) {
-    log.error('Failed to delete file from blob storage', {
+    log.error('Failed to delete file from S3 storage', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       url
     });
     // Don't throw - deletion failures shouldn't break the app
     // The file becomes orphaned but we can clean up later
+  }
+}
+
+/**
+ * Extract S3 key from S3 URL
+ * @param url - Full S3 URL (e.g., https://bucket.s3.region.amazonaws.com/path/to/file)
+ * @returns The key (path) or null if invalid
+ */
+function extractS3KeyFromUrl(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    // Remove leading slash from pathname
+    return urlObj.pathname.substring(1);
+  } catch (err) {
+    log.error('Failed to extract S3 key from URL', {
+      url,
+      error: err instanceof Error ? err.message : String(err)
+    });
+    return null;
   }
 }
 
