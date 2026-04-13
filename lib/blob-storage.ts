@@ -1,4 +1,5 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl as awsGetSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { log } from '@/lib/logger';
 
 /**
@@ -317,5 +318,44 @@ export function extractFileNameFromUrl(url: string): string {
       error: err instanceof Error ? err.message : String(err)
     });
     return 'unknown';
+  }
+}
+
+/**
+ * Generate a signed URL for secure file downloads from private S3 bucket
+ * @param url - The S3 URL stored in the database
+ * @param expiresIn - Expiration time in seconds (default: 3600 = 1 hour)
+ * @returns Signed URL that grants temporary access
+ */
+export async function getSignedDownloadUrl(url: string, expiresIn: number = 3600): Promise<string> {
+  try {
+    const client = getS3Client();
+    const bucket = process.env.S3_BUCKET_NAME!;
+
+    // Extract the key from the stored URL
+    const key = extractS3KeyFromUrl(url);
+    if (!key) {
+      throw new Error('Could not extract S3 key from URL');
+    }
+
+    log.info('Generating signed URL for download', { key, expiresIn });
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    const signedUrl = await awsGetSignedUrl(client, command, { expiresIn });
+
+    log.info('Signed URL generated successfully', { key });
+
+    return signedUrl;
+  } catch (error) {
+    log.error('Failed to generate signed URL', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      url
+    });
+    throw error;
   }
 }

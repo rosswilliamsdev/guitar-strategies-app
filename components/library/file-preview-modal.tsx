@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Download, ExternalLink, FileText, Music, File } from "lucide-react";
@@ -20,14 +20,38 @@ interface FilePreviewModalProps {
   onDownload: () => void;
 }
 
-export function FilePreviewModal({ 
-  isOpen, 
-  onClose, 
-  file, 
-  onDownload 
+export function FilePreviewModal({
+  isOpen,
+  onClose,
+  file,
+  onDownload
 }: FilePreviewModalProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [previewError, setPreviewError] = useState(false);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+
+  // Fetch signed URL when modal opens
+  useEffect(() => {
+    if (file && isOpen) {
+      setIsLoading(true);
+      setPreviewError(false);
+
+      fetch(`/api/library/${file.id}/download`, { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+          if (data.signedUrl) {
+            setSignedUrl(data.signedUrl);
+          } else {
+            setPreviewError(true);
+          }
+          setIsLoading(false);
+        })
+        .catch(() => {
+          setPreviewError(true);
+          setIsLoading(false);
+        });
+    }
+  }, [file, isOpen]);
 
   if (!file) return null;
 
@@ -68,22 +92,23 @@ export function FilePreviewModal({
       );
     }
 
+    if (isLoading || !signedUrl) {
+      return (
+        <div className="flex items-center justify-center h-96 bg-muted/50 rounded-lg">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
     switch (fileType) {
       case 'pdf':
         return (
           <div className="w-full h-96 bg-muted/50 rounded-lg overflow-hidden">
-            {isLoading && (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            )}
             <iframe
-              src={file.fileUrl}
+              src={signedUrl}
               className="w-full h-full"
               title={file.title}
-              onLoad={() => setIsLoading(false)}
               onError={() => {
-                setIsLoading(false);
                 setPreviewError(true);
               }}
             />
@@ -93,18 +118,11 @@ export function FilePreviewModal({
       case 'image':
         return (
           <div className="w-full bg-muted/50 rounded-lg overflow-hidden flex items-center justify-center min-h-96">
-            {isLoading && (
-              <div className="absolute flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            )}
             <img
-              src={file.fileUrl}
+              src={signedUrl}
               alt={file.title}
               className="max-w-full max-h-96 object-contain"
-              onLoad={() => setIsLoading(false)}
               onError={() => {
-                setIsLoading(false);
                 setPreviewError(true);
               }}
             />
@@ -114,18 +132,11 @@ export function FilePreviewModal({
       case 'text':
         return (
           <div className="w-full h-96 bg-muted/50 rounded-lg overflow-hidden">
-            {isLoading && (
-              <div className="flex items-center justify-center h-full">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            )}
             <iframe
-              src={file.fileUrl}
+              src={signedUrl}
               className="w-full h-full"
               title={file.title}
-              onLoad={() => setIsLoading(false)}
               onError={() => {
-                setIsLoading(false);
                 setPreviewError(true);
               }}
             />
@@ -166,7 +177,8 @@ export function FilePreviewModal({
           </Button>
           <Button
             variant="secondary"
-            onClick={() => window.open(file.fileUrl, '_blank')}
+            onClick={() => signedUrl && window.open(signedUrl, '_blank')}
+            disabled={!signedUrl}
           >
             <ExternalLink className="h-4 w-4 mr-2" />
             Open in New Tab

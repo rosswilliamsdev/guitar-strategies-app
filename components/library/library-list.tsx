@@ -101,12 +101,17 @@ const categoryConfig = {
 
 async function handleDownload(item: LibraryItem) {
   try {
-    // Increment download count
-    await fetch(`/api/library/${item.id}/download`, { method: "POST" });
+    // Get signed URL and increment download count
+    const response = await fetch(`/api/library/${item.id}/download`, { method: "POST" });
+    const data = await response.json();
 
-    // Open file in new tab (browser will display or download based on file type)
+    if (!response.ok || !data.signedUrl) {
+      throw new Error(data.error || 'Failed to get download URL');
+    }
+
+    // Open file in new tab using signed URL
     const link = document.createElement("a");
-    link.href = item.fileUrl;
+    link.href = data.signedUrl;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     document.body.appendChild(link);
@@ -373,12 +378,17 @@ export function LibraryList({ items, studentView = false }: LibraryListProps) {
 
     for (const item of selectedItemsData) {
       try {
-        // Increment download count
-        await fetch(`/api/library/${item.id}/download`, { method: "POST" });
+        // Get signed URL and increment download count
+        const response = await fetch(`/api/library/${item.id}/download`, { method: "POST" });
+        const data = await response.json();
 
-        // Open file in new tab (browser will display or download based on file type)
+        if (!response.ok || !data.signedUrl) {
+          throw new Error(data.error || 'Failed to get download URL');
+        }
+
+        // Open file in new tab using signed URL
         const link = document.createElement("a");
-        link.href = item.fileUrl;
+        link.href = data.signedUrl;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         document.body.appendChild(link);

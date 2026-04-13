@@ -377,7 +377,17 @@ export function LessonDetails({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => window.open(`/api/lessons/${lessonId}/attachments/${attachment.id}`, "_blank")}
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/lessons/${lessonId}/attachments/${attachment.id}/download`);
+                      const data = await response.json();
+                      if (data.signedUrl) {
+                        window.open(data.signedUrl, "_blank");
+                      }
+                    } catch (error) {
+                      console.error("Failed to download attachment:", error);
+                    }
+                  }}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
