@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { put } from '@vercel/blob';
+import { uploadFileToBlob } from '@/lib/blob-storage';
 import { apiLog } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -43,32 +43,20 @@ export async function POST(request: NextRequest) {
 
     const attachments = [];
 
-    // Check if we have a valid Vercel Blob token
-    const hasValidBlobToken = process.env.BLOB_READ_WRITE_TOKEN && 
-                              process.env.BLOB_READ_WRITE_TOKEN !== 'vercel_blob_rw_xxxxxxxxxxxxxxxxxxxx' &&
-                              !process.env.BLOB_READ_WRITE_TOKEN.includes('xxxx');
-
     for (const file of files) {
       let fileUrl: string;
 
-      if (hasValidBlobToken) {
-        try {
-          // Upload to Vercel Blob
-          const blob = await put(`lessons/${lessonId}/${file.name}`, file, {
-            access: 'public',
-          });
-          fileUrl = blob.url;
-        } catch (blobError) {
-          apiLog.error('Vercel Blob upload failed:', {
-        error: blobError instanceof Error ? blobError.message : String(blobError),
-        stack: blobError instanceof Error ? blobError.stack : undefined
-      });
-          // Fallback to placeholder URL for development
-          fileUrl = `#file-placeholder-${file.name}`;
-        }
-      } else {
-        // Development fallback - just use a placeholder URL
-        apiLog.info('Using development fallback for file upload (no valid BLOB_READ_WRITE_TOKEN)');
+      try {
+        // Upload to S3
+        const key = `lessons/${lessonId}/${Date.now()}-${file.name}`;
+        const result = await uploadFileToBlob(file, key);
+        fileUrl = result.url;
+      } catch (uploadError) {
+        apiLog.error('File upload failed:', {
+          error: uploadError instanceof Error ? uploadError.message : String(uploadError),
+          stack: uploadError instanceof Error ? uploadError.stack : undefined
+        });
+        // Fallback to placeholder URL for development
         fileUrl = `#file-placeholder-${file.name}`;
       }
 
