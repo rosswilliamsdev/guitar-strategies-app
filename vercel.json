@@ -1,8 +1,1 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/generate-lessons",
-      "schedule": "0 2 * * *"
-    }
-  ]
-}
+{}
