@@ -16,7 +16,7 @@ test.describe("Registration Flow", () => {
     await expect(page.locator("#name")).toBeVisible();
   });
 
-  test("registration form has role selection", async ({ page }) => {
+  test("registration is teacher-only with student invitation notice", async ({ page }) => {
     await page.goto("/register");
 
     // Wait for page to load
@@ -24,8 +24,12 @@ test.describe("Registration Flow", () => {
       /get started|sign up|register|create account/i,
     );
 
-    // Verify role selection dropdown is present (use specific label to avoid strict mode violation)
-    await expect(page.getByLabel("I am a...")).toBeVisible();
+    // Verify no role selection dropdown (teacher-only registration)
+    await expect(page.getByLabel("I am a...")).not.toBeVisible();
+
+    // Verify student invitation notice is displayed
+    await expect(page.locator("text=Are you a student?")).toBeVisible();
+    await expect(page.locator("text=/teacher will send you an invitation/i")).toBeVisible();
   });
 
   test("can navigate to login from registration", async ({ page }) => {

@@ -44,15 +44,26 @@ A complete guitar lesson management platform with built-in scheduling, invoicing
 
 ## 🛠️ Tech Stack
 
+### Core Application
 - **Framework**: Next.js 15.4.6 with App Router
 - **Language**: TypeScript 5
-- **Database**: PostgreSQL with Prisma ORM 6.13.0
+- **Database**: PostgreSQL with Prisma ORM 6.13.0 (hosted on Neon)
 - **Authentication**: NextAuth.js v4.24.11
 - **Styling**: TailwindCSS 3.4.17 + Typography plugin
 - **Rich Text**: Tiptap editor with React integration
 - **UI Components**: Radix UI primitives
 - **Icons**: Lucide React
 - **Validation**: Zod schemas
+
+### AWS Infrastructure
+- **Hosting**: EC2 with Docker containerization
+- **Container Registry**: Amazon ECR
+- **File Storage**: S3 with public read access
+- **Automated Jobs**: Lambda + EventBridge (daily lesson generation)
+- **Monitoring**: CloudWatch logs and metrics
+- **Email**: Resend (external service)
+
+See [AWS Setup Guide](./openspec/changes/aws-service-expansion/AWS_SETUP_GUIDE.md) for detailed configuration.
 
 ## 🏃‍♂️ Quick Start
 
@@ -79,10 +90,30 @@ npm install
 
 3. **Set up environment variables**
 
+Create a `.env` file with the following required variables:
+
 ```bash
-cp .env.example .env
-# Update .env with your database URL and auth secret
+# Database (PostgreSQL)
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+
+# Authentication (NextAuth.js)
+NEXTAUTH_SECRET="your-secret-key-here"  # Generate with: openssl rand -base64 32
+NEXTAUTH_URL="http://localhost:3000"
+
+# AWS S3 (File Storage) - Optional for local development
+AWS_REGION="us-east-1"
+AWS_ACCESS_KEY_ID="your-access-key-id"
+AWS_SECRET_ACCESS_KEY="your-secret-access-key"
+S3_BUCKET_NAME="guitar-strategies-files"
+
+# Email (Resend) - Optional for local development
+RESEND_API_KEY="re_..."
+
+# OpenAI (Voice-to-text lesson notes) - Optional
+OPENAI_API_KEY="sk-proj-..."
 ```
+
+See [AWS Setup Guide](./openspec/changes/aws-service-expansion/AWS_SETUP_GUIDE.md) for S3 configuration.
 
 4. **Set up the database**
 
