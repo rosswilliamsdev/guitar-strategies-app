@@ -79,7 +79,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "css-loader": "^7.1.2",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-next": "15.4.6",
     "postcss-loader": "^8.2.0",
     "style-loader": "^4.0.0",
