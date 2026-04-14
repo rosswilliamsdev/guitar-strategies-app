@@ -65,6 +65,28 @@ A complete guitar lesson management platform with built-in scheduling, invoicing
 
 See [AWS Setup Guide](./openspec/changes/aws-service-expansion/AWS_SETUP_GUIDE.md) for detailed configuration.
 
+## 🔒 Security & Operations
+
+### Automated Security Scanning
+- **npm audit** - Dependency vulnerability scanning on every PR
+- **Trivy** - Docker image vulnerability scanning (OS + Node.js CVEs)
+- **Dependabot** - Automated security patch PRs (weekly)
+- **SARIF Upload** - Vulnerability tracking in GitHub Security tab
+
+### CI/CD Pipeline
+- **Type checking** - TypeScript strict mode (`tsc --noEmit`)
+- **Linting** - ESLint with Next.js config
+- **Unit tests** - Vitest (100% API route coverage)
+- **E2E tests** - Playwright (15 test suites covering auth, scheduling, invoicing)
+- **Build verification** - Ensures production builds succeed
+- **Security gates** - Blocks PRs with high/critical vulnerabilities
+
+### Deployment
+- **Image Registry** - Amazon ECR with commit-hash tagging
+- **Immutable Tags** - Every deploy uses exact commit hash (no "latest")
+- **Health Checks** - `/api/health` endpoint verifies DB, S3, and system health
+- **Automated Rollback** - Failed health checks trigger automatic rollback
+
 ## 🏃‍♂️ Quick Start
 
 ### Prerequisites
