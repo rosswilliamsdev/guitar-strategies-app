@@ -65,7 +65,7 @@ jobs:
         run: npm run build
 
   docker:
-    needs: quality
+    needs: [quality, security-audit]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
@@ -82,7 +82,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push Docker image
+      - name: Build Docker image
         env:
           ECR_REPO: ${{ secrets.ECR_REPO }}
           IMAGE_TAG: ${{ github.sha }}
@@ -90,6 +90,26 @@ jobs:
           RESEND_API_KEY: "re_dummy_key_for_build"
           OPENAI_API_KEY: "sk-dummy_key_for_build"
         run: |
-          docker build -t $ECR_REPO:latest -t $ECR_REPO:$IMAGE_TAG .
-          docker push $ECR_REPO:latest
+          docker build -t $ECR_REPO:$IMAGE_TAG .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.ECR_REPO }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Push Docker image to ECR
+        env:
+          ECR_REPO: ${{ secrets.ECR_REPO }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
           docker push $ECR_REPO:$IMAGE_TAG
