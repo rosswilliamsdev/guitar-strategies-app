@@ -60,7 +60,7 @@
     "node-fetch": "^3.3.2",
     "openai": "^6.33.0",
     "prisma": "^6.13.0",
-    "react": "19.1.0",
+    "react": "19.2.5",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.5.2",
     "resend": "^6.0.1",
